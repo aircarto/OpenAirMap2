@@ -63,7 +63,6 @@ function isEmptyObject(obj) {
 }
 
 //Mesures dropdown list (attention seul un élément peut etre coché)
-//todo: UN SEUL ELEMENT PEUT ETRE COCHE + ON NE PEUT PAS DECOCHER !!
 for (let key in mesures) {
   if (mesures.hasOwnProperty(key)) {
       let button = document.createElement('button');
@@ -87,11 +86,24 @@ for (let key in mesures) {
       button.onclick= function (){
         let check_array=getArrayFromLocalStorage(mesures_local);
         if(isValueInObject(check_array, code)){
-          button.classList.remove("active");
-          removeItemFromLocalStorageArray(mesures_local, code)
+          console.warn("on ne peut pas decocher")
         } else {
+          //on elève les autres
+          localStorage.removeItem(mesures_local);
+          let listItems = document.querySelectorAll('#dropdown_mesures li');
+          listItems.forEach(li => {
+            // Find all button elements inside the current li element
+            let buttons = li.querySelectorAll('button');
+            // Iterate over each button element and remove the class
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+          });
+          //on ajoute le nouveau
           addItemToLocalStorageArray(mesures_local, code);
           button.classList.add("active");
+          //ICI ON PEUT FETCHER LES DATAS
+
         }
       }
       let li = document.createElement('li'); 
@@ -107,10 +119,9 @@ for (let key in sources) {
       let name = sources[key].name
       let code = sources[key].code
       let activated = sources[key].activated
-
       button.innerHTML = name; 
-      button.className="dropdown-item";
       button.classList.add("dropdown-item");
+      //save inside local storage the initial config (if empty)
       if(isEmptyObject(getArrayFromLocalStorage(sources_local))){
         if (activated) {
           addItemToLocalStorageArray(sources_local, code);
@@ -130,6 +141,8 @@ for (let key in sources) {
         } else {
           addItemToLocalStorageArray(sources_local, code);
           button.classList.add("active");
+          //ICI ON PEUT FETCHER LES DATAS
+          loadSource(code);
         }
       }
       let li = document.createElement('li'); 
@@ -138,12 +151,56 @@ for (let key in sources) {
   }
 }
 
+function loadSource(id){
+  console.log("Loading data for " + id) ;
+
+}
+
 //Pas de temps dropdown List
 for (let key in pas_de_temps) {
   if (pas_de_temps.hasOwnProperty(key)) {
       let button = document.createElement('button');
-      button.innerHTML = pas_de_temps[key].name; 
-      button.className="dropdown-item";
+      let name = pas_de_temps[key].name
+      let code = pas_de_temps[key].code
+      let activated = pas_de_temps[key].activated
+      button.innerHTML = name; 
+      button.classList.add("dropdown-item");
+      //save inside local storage the initial config (if empty)
+      if(isEmptyObject(getArrayFromLocalStorage(pas_de_temps))){
+        if (activated) {
+          addItemToLocalStorageArray(pas_de_temps, code);
+        }
+      }
+       //on vérifie le local storage (object) pour voir si l'élément est déjà présent
+       let check_array=getArrayFromLocalStorage(pas_de_temps);
+       if(isValueInObject(check_array, code)){
+         button.classList.add("active");
+       }
+
+       button.onclick= function (){
+        let check_array=getArrayFromLocalStorage(pas_de_temps);
+        if(isValueInObject(check_array, code)){
+          console.warn("on ne peut pas decocher")
+        } else {
+          //on elève les autres
+          localStorage.removeItem(pas_de_temps);
+          let listItems = document.querySelectorAll('#dropdown_pas_de_temps li');
+          listItems.forEach(li => {
+            // Find all button elements inside the current li element
+            let buttons = li.querySelectorAll('button');
+            // Iterate over each button element and remove the class
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+          });
+          //on ajoute le nouveau
+          addItemToLocalStorageArray(pas_de_temps, code);
+          button.classList.add("active");
+          //ICI ON PEUT FETCHER LES DATAS
+
+        }
+      }
+
       let li = document.createElement('li'); 
       li.appendChild(button); 
       dropdown_pas_de_temps.appendChild(li); 
