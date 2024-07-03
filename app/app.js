@@ -1,6 +1,19 @@
 console.log("OpenAirMap V2")
 
+//variable pour les layers leaflet
+var nebuleair = new L.layerGroup();
+var sensor_commmunity = new L.layerGroup();
+var sensor_commmunity = new L.layerGroup();
+var atmo_micro = new L.layerGroup();
+var atmo_ref = new L.layerGroup();
+var modelisationPMAtmoSud = new L.layerGroup();
+var modelisationICAIRAtmoSud = new L.layerGroup();
+var signalair = new L.layerGroup();
+var purpleAir = new L.layerGroup();
 
+
+
+//variable pour le DOM
 var sidePanel = document.getElementById('side-panel');
 var mapContainer = document.getElementById('map-container');
 var dropdown_mesures = document.getElementById('dropdown_mesures');
@@ -135,9 +148,11 @@ for (let key in sources) {
       //on ajoute la fonction pour le onclick
       button.onclick= function (){
         let check_array=getArrayFromLocalStorage(sources_local);
+        //si l'élément est déjà coché
         if(isValueInObject(check_array, code)){
           button.classList.remove("active");
-          removeItemFromLocalStorageArray(sources_local, code)
+          removeItemFromLocalStorageArray(sources_local, code);
+          removeSource(code);
         } else {
           addItemToLocalStorageArray(sources_local, code);
           button.classList.add("active");
@@ -149,11 +164,6 @@ for (let key in sources) {
       li.appendChild(button); 
       dropdown_sources.appendChild(li); 
   }
-}
-
-function loadSource(id){
-  console.log("Loading data for " + id) ;
-
 }
 
 //Pas de temps dropdown List
@@ -207,12 +217,63 @@ for (let key in pas_de_temps) {
   }
 }
 
+//Chargement des sources depuis un bouton
+function loadSource(source){
+  console.log("Loading data for " + source) ;
+  switch(source){
+    case 'nebuleair':loadNebuleAir();break;
+    case 'sensor_commmunity':loadSensorCommunity();break;
+    case 'purpleair':loadSensorCommunity();break;
+    case 'atmo_micro':loadAtmoMicro();break;
+    case 'atmo_ref':loadAtmoRef();break;
+    case 'mod_pm':loadModPM();break;
+    case 'icairh':loadicairh();break;
+    case 'vents':loadVents();break;
+    case 'signalair':loadSignalAir();break;
+  }
+}
 
+//Chargement des sources depuis un bouton
+function removeSource(source){
+  console.log("Remove data for " + source) ;
+  switch(source){
+    case 'nebuleair': map.removeLayer(nebuleair);break;
+    case 'sensor_commmunity': map.removeLayer(sensor_commmunity);break;
+    case 'purpleair': map.removeLayer(purpleair);break;
+    case 'atmo_micro': map.removeLayer(atmo_micro);break;
+    case 'atmo_ref': map.removeLayer(atmo_ref);break;
+    case 'mod_pm': map.removeLayer(mod_pm);break;
+    case 'icairh': map.removeLayer(mod_pm);break;
+    case 'vents': map.removeLayer(mod_pm);break;
+    case 'signalair': map.removeLayer(signalair);break;
+
+  }
+}
+
+//chargement des sources depuis la mémoire locale (au démarrage de l'appli)
+for (let key in sources) {
+  let code = sources[key].code
+  //on vérifie le local storage (object) pour voir si l'élément est déjà présent
+  let check_array=getArrayFromLocalStorage(sources_local);
+  if(isValueInObject(check_array, code)){
+    loadSource(code);
+  }
+}
+
+//side panel
+function openSidePanel(){
+  console.log("Opening side panel");
+  sidePanel.classList.add('col-2');
+  sidePanel.style.display = 'block'; 
+  mapContainer.classList.remove('col-12'); 
+  mapContainer.classList.add('col-10'); 
+}
 
 
 function closeSidePanel(){
   console.log("Closing side panel");
-  sidePanel.classList.remove('col-2'); 
+  sidePanel.classList.remove('col-2');
+  sidePanel.style.display = 'none';
   mapContainer.classList.remove('col-10'); 
   mapContainer.classList.add('col-12'); 
 }
@@ -226,7 +287,7 @@ function goToPosition(position) {
 }
 
 function notAllowed(err) {
-  console.log("Vous n'avez pas autorisé la détection de la position.")
+  //console.log("Vous n'avez pas autorisé la détection de la position.")
   //openToast("Vous n'avez pas autorisé la détection de la position."); 
   map.setView(coordsCenter, zoomLevel);
 }

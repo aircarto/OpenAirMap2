@@ -1,6 +1,6 @@
 var config = {
 	"coordsCenter": [43.29490421, 5.37188392], //loc par défaut pour la carte
-	"zoomLevel": 15,                            //zoom por défaut
+	"zoomLevel": 12,                            //zoom por défaut
 	"minZoom": 1,
 	"maxZoom": 21,                              //dézoom max
 	"compoundUpper": "PM25",                    //polluant affiché par défaut
@@ -29,7 +29,8 @@ var sources = {
 	"stationRef_atmosud": {"name": "Stations de référence AtmoSud", "code": "atmo_ref", "activated": false},
 	"Mod_horaire_pm": {"name": "Modélisation horaire PM AtmoSud", "code": "mod_pm", "activated": false},
 	"Mod_horaire_icairh": {"name": "Modélisation horaire ICAIRh AtmoSud", "code": "icairh", "activated": false},
-	"vents": {"name": "Vents", "code": "vents", "activated": false}
+	"vents": {"name": "Vents", "code": "vents", "activated": false},
+	"signalair": {"name": "Signal'Air", "code": "signalair", "activated": false}
 }
 
 var pas_de_temps = {
