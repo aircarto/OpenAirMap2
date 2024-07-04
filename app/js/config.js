@@ -37,6 +37,6 @@ var pas_de_temps = {
 	"direct" : {"name": "2 minutes", "code": "2min", "activated": true},
 	"quart-horaire": {"name": "Quart-horaire", "code": "qh", "activated": false},
 	"hoaraire": {"name": "Horaire", "code": "h", "activated": false},
-	"journalier": {"name": "Journalier", "code": "j", "activated": false}
+	"journalier": {"name": "Journalier", "code": "d", "activated": false}
 }
 

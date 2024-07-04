@@ -5,9 +5,11 @@ var now = new Date();
 var year = now.getFullYear();
 var month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
 var day = now.getDate().toString().padStart(2, '0');
+
 var hours = now.getHours().toString().padStart(2, '0');
 var minutes = now.getMinutes().toString().padStart(2, '0');
 var seconds = now.getSeconds().toString().padStart(2, '0');
+
 var date_YMD = year + '-' + month + '-' + day;
 var date_YDM = year + '-' + day + '-' + month;
 var formattedTime = hours + ':' + minutes + ':' + seconds;
@@ -136,7 +138,20 @@ for (let key in mesures) {
           addItemToLocalStorageArray(mesures_local, code);
           button.classList.add("active");
           //ICI ON PEUT FETCHER LES DATAS
-
+          console.log("Changement du type de mesure: " + getArrayFromLocalStorage(mesures_local));
+          //attention il faut éventuellement vider le cache
+          //il faut aussi prendre en compte les source de données déjà ouverte
+          console.log("Necessite le renouvellement de: " + getArrayFromLocalStorage(sources_local))
+          //loop over the object (ex: ["nebuleair","signalair"])
+          for (let item of getArrayFromLocalStorage(sources_local)) {
+            //console.log(item);
+            //pas forcément besoin d'un remove layer mais plutot d'un clearLayed
+            //TODO clear the cache!!
+            //removeSource(code);
+            clearLayer(code);
+            //get the new data
+            loadSource(item);
+          }
         }
       }
       let li = document.createElement('li'); 
@@ -172,6 +187,7 @@ for (let key in sources) {
         if(isValueInObject(check_array, code)){
           button.classList.remove("active");
           removeItemFromLocalStorageArray(sources_local, code);
+          //on elève la layer de la carte
           removeSource(code);
         } else {
           addItemToLocalStorageArray(sources_local, code);
@@ -196,24 +212,24 @@ for (let key in pas_de_temps) {
       button.innerHTML = name; 
       button.classList.add("dropdown-item");
       //save inside local storage the initial config (if empty)
-      if(isEmptyObject(getArrayFromLocalStorage(pas_de_temps))){
+      if(isEmptyObject(getArrayFromLocalStorage(pas_de_temps_local))){
         if (activated) {
-          addItemToLocalStorageArray(pas_de_temps, code);
+          addItemToLocalStorageArray(pas_de_temps_local, code);
         }
       }
        //on vérifie le local storage (object) pour voir si l'élément est déjà présent
-       let check_array=getArrayFromLocalStorage(pas_de_temps);
+       let check_array=getArrayFromLocalStorage(pas_de_temps_local);
        if(isValueInObject(check_array, code)){
          button.classList.add("active");
        }
 
        button.onclick= function (){
-        let check_array=getArrayFromLocalStorage(pas_de_temps);
+        let check_array=getArrayFromLocalStorage(pas_de_temps_local);
         if(isValueInObject(check_array, code)){
           console.warn("on ne peut pas decocher")
         } else {
           //on elève les autres
-          localStorage.removeItem(pas_de_temps);
+          localStorage.removeItem(pas_de_temps_local);
           let listItems = document.querySelectorAll('#dropdown_pas_de_temps li');
           listItems.forEach(li => {
             // Find all button elements inside the current li element
@@ -224,7 +240,7 @@ for (let key in pas_de_temps) {
             });
           });
           //on ajoute le nouveau
-          addItemToLocalStorageArray(pas_de_temps, code);
+          addItemToLocalStorageArray(pas_de_temps_local, code);
           button.classList.add("active");
           //ICI ON PEUT FETCHER LES DATAS
 
@@ -253,7 +269,7 @@ function loadSource(source){
   }
 }
 
-//Chargement des sources depuis un bouton
+//Enlever les sources depuis un bouton
 function removeSource(source){
   console.log("Remove data for " + source) ;
   switch(source){
@@ -266,9 +282,25 @@ function removeSource(source){
     case 'icairh': map.removeLayer(mod_pm);break;
     case 'vents': map.removeLayer(mod_pm);break;
     case 'signalair': map.removeLayer(signalair);break;
-
   }
 }
+
+//Enlever les layer depuis un bouton
+function clearLayer(source){
+  console.log("Clearing layer  for " + source) ;
+  switch(source){
+    case 'nebuleair': nebuleair.clearLayers();break;
+    case 'sensor_commmunity': map.removeLayer(sensor_commmunity);break;
+    case 'purpleair': map.removeLayer(purpleair);break;
+    case 'atmo_micro': map.removeLayer(atmo_micro);break;
+    case 'atmo_ref': map.removeLayer(atmo_ref);break;
+    case 'mod_pm': map.removeLayer(mod_pm);break;
+    case 'icairh': map.removeLayer(mod_pm);break;
+    case 'vents': map.removeLayer(mod_pm);break;
+    case 'signalair': map.removeLayer(signalair);break;
+  }
+}
+
 
 //chargement des sources depuis la mémoire locale (au démarrage de l'appli)
 for (let key in sources) {

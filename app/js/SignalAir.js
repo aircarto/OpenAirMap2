@@ -26,8 +26,8 @@ var year = now2.getFullYear();
 var month = (now2.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
 var day_minus3 = now2.getDate().toString().padStart(2, '0');
 // Format the date
-var date_YDM_minus3 = year + '-' + day_minus3 + '-' + month;
-console.log(date_YDM_minus3);
+var date_YMD_minus3 = year + '-' + month + '-' + day_minus3;
+console.log(date_YMD_minus3);
 
 function loadSignalAir() {
     console.log("%cSignalAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
@@ -37,7 +37,7 @@ function loadSignalAir() {
     for (let key in signalair_json) {
         let code = signalair_json[key].code
         let url = signalair_json[key].url
-        let full_url = 'https://www.signalair.eu/fr/flux/geojson/'+url+'/'+date_YDM_minus3+'/'+date_YDM
+        let full_url = 'https://www.signalair.eu/fr/flux/geojson/'+url+'/'+date_YMD_minus3+'/'+date_YMD
         let img = signalair_json[key].img
         console.log(full_url);
         $.ajax({
