@@ -1,13 +1,14 @@
 /*
 Récupération des données des signalements
 
-Odeurs : https://www.signalair.eu/fr/flux/geojson/gq1jrnp9/
+https://www.signalair.eu/fr/flux/[format]/[id]/[date_deb]/[date_fin].
 
-Bruits : https://www.signalair.eu/fr/flux/geojson/yq7b5jal/
+Odeurs :gq1jrnp9
+Bruits : yq7b5jal
+Visuels : 28qg73y9
+Brûlages : yib5aa1n
 
-Visuels : https://www.signalair.eu/fr/flux/geojson/28qg73y9/
 
-Brûlages : https://www.signalair.eu/fr/flux/geojson/yib5aa1n/
 
 */
 
@@ -33,15 +34,14 @@ function loadSignalAir() {
                 var signalair_odeur_icon = L.icon(icon_param);
                 L.marker([lat, long], { icon: signalair_odeur_icon })
                 .on('click', function (){
+                    //lorsque l'on clique sur un élément
                     console.log("Clicked on signalair id " + value.properties.id_declaration)
-                    openSidePanel()
+                    openSidePanel_signalair(value.properties, "odeur")
                 })
                 .addTo(signalair);
             }); //end each
-
             //ajouter la layer sur la carte
             map.addLayer(signalair);
-
         },
         error: function(xhr, status, error) {
           console.error('Error fetching data from signalair:', error);  // Handle error

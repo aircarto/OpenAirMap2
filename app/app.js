@@ -15,6 +15,14 @@ var purpleAir = new L.layerGroup();
 
 //variable pour le DOM
 var sidePanel = document.getElementById('side-panel');
+var card1 = document.getElementById('card1');
+var card1_body = document.getElementById('card1_body');
+var card1_img = document.getElementById('card1_img');
+var card1_title = document.getElementById('card1_title');
+var card1_text = document.getElementById('card1_text');
+var card1_button = document.getElementById('card1_button');
+
+
 var mapContainer = document.getElementById('map-container');
 var dropdown_mesures = document.getElementById('dropdown_mesures');
 var dropdown_sources = document.getElementById('dropdown_sources');
@@ -261,12 +269,15 @@ for (let key in sources) {
 }
 
 //side panel
-function openSidePanel(){
-  console.log("Opening side panel");
+function openSidePanel_signalair(data, nuisance_type){
+  console.log("Opening side panel for SignalAir");
+  console.log(data.city);
+  card1_title.innerHTML = "Nuisance: " + nuisance_type;
   sidePanel.classList.add('col-2');
   sidePanel.style.display = 'block'; 
   mapContainer.classList.remove('col-12'); 
-  mapContainer.classList.add('col-10'); 
+  mapContainer.classList.add('col-10');
+  mapContainer.style.paddingLeft ='10px'; 
 }
 
 
@@ -276,6 +287,8 @@ function closeSidePanel(){
   sidePanel.style.display = 'none';
   mapContainer.classList.remove('col-10'); 
   mapContainer.classList.add('col-12'); 
+  mapContainer.style.paddingLeft ='30px'; 
+
 }
 
  //Automatic location 
