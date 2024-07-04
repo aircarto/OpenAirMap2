@@ -1,5 +1,20 @@
 console.log("OpenAirMap V2")
 
+//récupérer la date et l'heure (client side!)
+var now = new Date();
+var year = now.getFullYear();
+var month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
+var day = now.getDate().toString().padStart(2, '0');
+var hours = now.getHours().toString().padStart(2, '0');
+var minutes = now.getMinutes().toString().padStart(2, '0');
+var seconds = now.getSeconds().toString().padStart(2, '0');
+var date_YMD = year + '-' + month + '-' + day;
+var date_YDM = year + '-' + day + '-' + month;
+var formattedTime = hours + ':' + minutes + ':' + seconds;
+
+console.log("Date: " + date_YMD);
+console.log("Time: " + formattedTime);
+
 //variable pour les layers leaflet
 var nebuleair = new L.layerGroup();
 var sensor_commmunity = new L.layerGroup();
@@ -11,8 +26,6 @@ var modelisationICAIRAtmoSud = new L.layerGroup();
 var signalair = new L.layerGroup();
 var purpleAir = new L.layerGroup();
 
-
-
 //variable pour le DOM
 var sidePanel = document.getElementById('side-panel');
 var card1 = document.getElementById('card1');
@@ -21,7 +34,6 @@ var card1_img = document.getElementById('card1_img');
 var card1_title = document.getElementById('card1_title');
 var card1_text = document.getElementById('card1_text');
 var card1_button = document.getElementById('card1_button');
-
 
 var mapContainer = document.getElementById('map-container');
 var dropdown_mesures = document.getElementById('dropdown_mesures');
