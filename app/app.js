@@ -312,24 +312,28 @@ for (let key in sources) {
   }
 }
 
-//side panel
+//OPEN SIDE PANEL
+/*
+Sur un grand écran on veut un side panel moins large (col-lg) 
+que sur un petit écran (col) sinon il est trop fin
+*/
 function openSidePanel_signalair(data, nuisance_type){
   console.log("Opening side panel for SignalAir");
   console.log(data.city);
   card1_title.innerHTML = "Nuisance: " + nuisance_type;
-  sidePanel.classList.add('col-2');
+  sidePanel.classList.add('col-12','col-sm-4', 'col-lg-3'); 
   sidePanel.style.display = 'block'; 
   mapContainer.classList.remove('col-12'); 
-  mapContainer.classList.add('col-10');
+  mapContainer.classList.add('col-8', 'col-lg-9');
   mapContainer.style.paddingLeft ='10px'; 
 }
 
-
+//CLOSE SIDE PANEL
 function closeSidePanel(){
   console.log("Closing side panel");
-  sidePanel.classList.remove('col-2');
+  sidePanel.classList.remove('col-2','col-sm-4','col-lg-3');
   sidePanel.style.display = 'none';
-  mapContainer.classList.remove('col-10'); 
+  mapContainer.classList.remove('col-8', 'col-lg-9'); 
   mapContainer.classList.add('col-12'); 
   mapContainer.style.paddingLeft ='30px'; 
 

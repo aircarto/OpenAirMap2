@@ -48,12 +48,14 @@ function loadNebuleAir() {
                 //par défaut c'est le point gris
                 var icon_param = {
                     iconUrl: 'img/nebuleair/nebuleAir_default.png',
-                    iconSize: [50, 50], // size of the icon
-                    iconAnchor: [5, 70], // point of the icon which will correspond to marker's location
+                    iconSize: [40, 40], // size of the icon
+                    iconAnchor: [5, 40], // point of the icon which will correspond to marker's location
                 }
                 
                 //si le capteur est connecté on change la couleur
                 if (value.connected) {
+                    //les icone connectés sont plus grand que les gris
+                    icon_param.iconSize= [50, 50]
                     //en fonction du polluant (mesures) on adapte la couleur
                     //pour les pm1 et les pm25
                     if (mesures == "pm1" || mesures == "pm25") {
@@ -93,18 +95,18 @@ function loadNebuleAir() {
                     //textSize (if number under 10)
                     var textSize = 32;
                     var x_position = -10;
-                    var y_position = 68;
+                    var y_position = 38;
                     //smaller text size if number is greater than 9
                     if (roundedvalue >= 10) {
                         textSize = 25;
                         x_position = -5;
-                        y_position = 62;
+                        y_position = 32;
                         }
 
                     if (roundedvalue >= 100) {
                         textSize = 20;
                         x_position = -4;
-                        y_position = 56;
+                        y_position = 26;
                         }
 
                     var text_param = L.divIcon({

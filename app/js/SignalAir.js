@@ -55,7 +55,7 @@ function loadSignalAir() {
                         var icon_param = {
                             iconUrl: 'img/signalair/' + img,
                             iconSize: [35, 35], // size of the icon
-                            iconAnchor: [0, 0], // point of the icon which will correspond to marker's location
+                            iconAnchor: [15, 15], // point of the icon which will correspond to marker's location
                         }
                         var signalair_odeur_icon = L.icon(icon_param);
                         L.marker([lat, long], { icon: signalair_odeur_icon })
