@@ -27,7 +27,7 @@ var month = (now2.getMonth() + 1).toString().padStart(2, '0'); // Months are zer
 var day_minus3 = now2.getDate().toString().padStart(2, '0');
 // Format the date
 var date_YMD_minus3 = year + '-' + month + '-' + day_minus3;
-console.log(date_YMD_minus3);
+//console.log(date_YMD_minus3);
 
 function loadSignalAir() {
     console.log("%cSignalAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
@@ -39,14 +39,14 @@ function loadSignalAir() {
         let url = signalair_json[key].url
         let full_url = 'https://www.signalair.eu/fr/flux/geojson/'+url+'/'+date_YMD_minus3+'/'+date_YMD
         let img = signalair_json[key].img
-        console.log(full_url);
+        //console.log(full_url);
         $.ajax({
             url: full_url,
             method: 'GET',
             //dataType: 'json',  
             success: function(data) {
                 if (data) {
-                    console.log(data);              
+                    //console.log(data);              
                     $.each(data.features, function(index, value){
                         var coordinates = value.geometry.coordinates;
                         var lat = coordinates[1];  
@@ -56,9 +56,13 @@ function loadSignalAir() {
                             iconUrl: 'img/signalair/' + img,
                             iconSize: [35, 35], // size of the icon
                             iconAnchor: [15, 15], // point of the icon which will correspond to marker's location
+                            popupAnchor: [0, -10]
                         }
                         var signalair_odeur_icon = L.icon(icon_param);
+                        //popup lorsque l'on clique sur un élément
+                        var signalAirPopup = '<b>'+signalair_json[key].name+'<b>'
                         L.marker([lat, long], { icon: signalair_odeur_icon })
+                        .bindPopup(signalAirPopup)
                         .on('click', function (){
                             //lorsque l'on clique sur un élément
                             console.log("Clicked on signalair id " + value.properties.id_declaration)

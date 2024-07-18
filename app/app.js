@@ -319,13 +319,61 @@ que sur un petit écran (col) sinon il est trop fin
 */
 function openSidePanel_signalair(data, nuisance_type){
   console.log("Opening side panel for SignalAir");
-  console.log(data.city);
+  card1_img.src="img/signalair/logoSignalAir.png"
   card1_title.innerHTML = "Nuisance: " + nuisance_type;
+  card1_text.innerHTML =  `
+    Ville:   ${data["city"]} </br>
+    <table class="table">
+      <tbody>
+        <tr>
+          <td>Niveau de gêne</td>
+          <td>${data["niveau-de-gene"]}</td>
+        </tr>
+        <tr>
+          <td>Symptômes déclarés</td>
+          <td>${data["si-oui-quels-symptomes"]}</td>
+        </tr>
+        <tr>
+          <td>Origine de la nuisance</td>
+          <td>${data["origine-de-la-nuisance"]} ${data["description-de-lorigine-de-la-nuisance"]}</td>
+        </tr>
+        <tr>
+          <td>Durée de la nuisance</td>
+          <td>${data["duree-de-la-nuisance"]}</td>
+        </tr>
+        <tr>
+        <td>Commentaires</td>
+        <td>${data["remarque-commentaire"]}</td>
+      </tr>
+      </tbody>
+    </table>
+    <a href="https://www.signalair.eu/fr/" target="_blank" class="btn btn-primary" id="card1_button">Faire un signalement</a>
+
+     `;
+
   sidePanel.classList.add('col-12','col-sm-4', 'col-lg-3'); 
   sidePanel.style.display = 'block'; 
   mapContainer.classList.remove('col-12'); 
   mapContainer.classList.add('col-8', 'col-lg-9');
   mapContainer.style.paddingLeft ='10px'; 
+}
+
+function openSidePanel_nebuleAir(data){
+  console.log("openSidePanel_nebuleAir");
+  card1_img.src="img/nebuleair/NebuleAir_nev.png"
+  card1_title.innerHTML = "Capteur citoyen : " + data.sensorId;
+  // Crée une nouvelle div
+  const newDiv = document.createElement('div');
+  newDiv.id = 'squaresContainer';
+  card1_text.innerHTML="";  //empty content from previous opening
+  card1_text.appendChild(newDiv);
+  createColorSquares();
+
+  sidePanel.classList.add('col-12','col-sm-4', 'col-lg-3'); 
+  sidePanel.style.display = 'block'; 
+  mapContainer.classList.remove('col-12'); 
+  mapContainer.classList.add('col-8', 'col-lg-9');
+  mapContainer.style.paddingLeft ='10px';
 }
 
 //CLOSE SIDE PANEL
@@ -336,7 +384,6 @@ function closeSidePanel(){
   mapContainer.classList.remove('col-8', 'col-lg-9'); 
   mapContainer.classList.add('col-12'); 
   mapContainer.style.paddingLeft ='30px'; 
-
 }
 
  //Automatic location 

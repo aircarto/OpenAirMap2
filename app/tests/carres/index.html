@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .square {
+            width: 15%;
+            height: 30px;
+            margin: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h3>Test carrés</h3>
+    <div id="squaresContainer"></div>
+    <script>
+        // JSON data containing the colors
+        const colorsJSON = `{
+            "colors": ["#4FF0E6", "#51CCAA", "#EDE663", "#ED5E58", "#881B33", "#74287D"]
+        }`;
+
+        function createColorSquares() {
+            const container = document.getElementById('squaresContainer');
+            const colors = JSON.parse(colorsJSON).colors;
+            for (let i = 0; i < colors.length; i++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                square.style.backgroundColor = colors[i];
+                container.appendChild(square);
+            }
+        }
+
+        createColorSquares();
+    </script>
+</body>
+</html>

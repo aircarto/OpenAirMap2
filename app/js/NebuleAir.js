@@ -36,7 +36,7 @@ function loadNebuleAir() {
 
     $.ajax({
         method: "GET",
-        url: "https://aircarto.fr/API_V2/capteurs/metadata?capteurType=NebuleAir",
+        url: "https://api.aircarto.fr/capteurs/metadata?capteurType=NebuleAir",
         // data: ({timespan: timespanLower}),
         success: function (data) {
             console.log(data);
@@ -50,8 +50,13 @@ function loadNebuleAir() {
                     iconUrl: 'img/nebuleair/nebuleAir_default.png',
                     iconSize: [40, 40], // size of the icon
                     iconAnchor: [5, 40], // point of the icon which will correspond to marker's location
+                    popupAnchor: [0, -10],
+                    tooltipAnchor: [-50, -10]
                 }
-                
+
+                //Tooltip
+                var nebuleAirTooltip = value['sensorId'];
+
                 //si le capteur est connecté on change la couleur
                 if (value.connected) {
                     //les icone connectés sont plus grand que les gris
@@ -81,15 +86,22 @@ function loadNebuleAir() {
                             }
                         }
                     }
-                }
+              
+                } 
                 //create icons
                 var nebuleAir_icon = L.icon(icon_param);
                 //create a marker from icon
                 L.marker([value['latitude'], value['longitude']], { icon: nebuleAir_icon })
+                .bindTooltip(nebuleAirTooltip, {direction: 'center'})
+                .on('click', function () {
+                    console.log("Click on device: " + value['sensorId'])
+                    openSidePanel_nebuleAir(value)
+                })
                 .addTo(nebuleair);
                 
+                
                 //TEXTE
-                //si le capteur est connecté on affiche la valeur
+                //si le capteur est connecté on affiche la valeur (ajout d'un marker)
                 if (value.connected) {
                     let roundedvalue = Math.round(parseFloat(value[mesure_maj_pas_de_temps]));
                     //textSize (if number under 10)
@@ -115,8 +127,9 @@ function loadNebuleAir() {
                         iconAnchor: [x_position, y_position],
                         popupAnchor: [30, -60] // point from which the popup should open relative to the iconAnchor
                       });
-                L.marker([value['latitude'], value['longitude']], { icon: text_param })
-                .addTo(nebuleair);
+
+                    L.marker([value['latitude'], value['longitude']], { icon: text_param })
+                    .addTo(nebuleair);
                 }
 
 
@@ -125,11 +138,11 @@ function loadNebuleAir() {
             }); //end each
             //ajouter la layer sur la carte
             map.addLayer(nebuleair);
-        },
+        }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);
             console.error('Status:', status);
             console.error('Response:', xhr.responseText);
-        }
-      });
-}
+        } 
+      });//end ajax
+} //end function loadNebuleAir()

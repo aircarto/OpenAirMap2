@@ -22,6 +22,7 @@
      crossorigin=""
    ></script>
     <!-- JS FILES -->
+    <script src="js/color_line.js";></script>
     <script src="js/config.js"></script>
     <script src="js/NebuleAir.js"></script>
     <script src="js/SignalAir.js"></script>
@@ -38,42 +39,56 @@
 
 </head>
 <body>
-    <!-- NAV BAR  -->
-    <div class="row align-items-center text-center" id="nav-bar">
-        <div class="col justify-content-center align-items-center" style="background-color:none;"><h3>OpenAirMap</h3></div>
-         <!-- Mesures  -->
-         <div class="col">
-          <div class="dropdown">
-              <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                Sources de données
-              </a>
-              <ul class="dropdown-menu" id="dropdown_sources">
-              </ul>
-            </div>
-      </div>
-        <!-- Mesures  -->
-        <div class="col">
-            <div class="dropdown">
+    <!-- NAV BAR 1 -->
+ 
+  
+
+  <!-- NavBar 2 -->
+    <nav class="navbar navbar-expand-lg fixed-top" id="nav-bar">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">OpenAirMap</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          
+          <div class="offcanvas-body">
+            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+              <!-- Sources -->
+              <li class="nav-item dropdown ms-2 mb-1">
+                <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                  Sources de données
+                </a>
+                <ul class="dropdown-menu" id="dropdown_sources">
+                </ul>
+              </li>
+              <!-- Mesure -->
+              <li class="nav-item dropdown ms-2 mb-1">
                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                   Mesures
                 </a>
                 <ul class="dropdown-menu" id="dropdown_mesures">
                 </ul>
-              </div>
-        </div>
-
-         <!-- Pas de temps  -->
-         <div class="col">
-            <div class="dropdown">
+              </li>
+              <!-- Pas de temps -->
+              <li class="nav-item dropdown ms-2 mb-1">
                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                   Pas de temps
                 </a>
                 <ul class="dropdown-menu" id="dropdown_pas_de_temps">
                 </ul>
-              </div>
-        </div>
+              </li>
+            </ul>
+          </div>
 
-    </div>
+        </div>
+      </div>
+    </nav>
+    <!-- Fin Navbar -->
         
     <div class="row align-items-start">
         <!-- SIDE PANEL  -->
@@ -82,14 +97,14 @@
             
             <!-- CARD TOP  -->
             <div class="card ml-0" id="card1" style="width: 100%;">
-              <img id="card1_img" src="img/signalair/logoSignalAir.png" class="card-img-top" alt="...">
+              <img id="card1_img" src="" class="card-img-top" alt="...">
               <div class="card-body" id="card_1_body">
                 <h5 class="card-title" id="card1_title"></h5>
                 <p class="card-text" id="card1_text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                <a href="https://www.signalair.eu/fr/" class="btn btn-primary" id="card1_button">Faire un signalement</a>
               </div>
             </div>
         </div>
+        
         <!-- MAP  -->
         <div class="col-12" id="map-container">
             <div id="map"></div>
