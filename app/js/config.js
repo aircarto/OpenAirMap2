@@ -1,6 +1,6 @@
 var config = {
 	"coordsCenter": [43.29490421, 5.37188392], //loc par défaut pour la carte
-	"zoomLevel": 12,                            //zoom por défaut
+	"zoomLevel": 9,                            //zoom por défaut
 	"minZoom": 1,
 	"maxZoom": 21,                              //dézoom max
 	"compoundUpper": "PM25",                    //polluant affiché par défaut

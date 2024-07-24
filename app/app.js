@@ -18,15 +18,14 @@ console.log("Date: " + date_YMD);
 console.log("Time: " + formattedTime);
 
 //variable pour les layers leaflet
-var nebuleair = new L.layerGroup();
-var sensor_commmunity = new L.layerGroup();
-var sensor_commmunity = new L.layerGroup();
-var atmo_micro = new L.layerGroup();
-var atmo_ref = new L.layerGroup();
-var modelisationPMAtmoSud = new L.layerGroup();
-var modelisationICAIRAtmoSud = new L.layerGroup();
-var signalair = new L.layerGroup();
-var purpleAir = new L.layerGroup();
+var nebuleair_layer = new L.layerGroup();
+var sensor_commmunity_layer = new L.layerGroup();
+var purpleair_layer = new L.layerGroup();
+var atmo_micro_layer = new L.layerGroup();
+var atmo_ref_layer = new L.layerGroup();
+var modelisationPMAtmoSud_layer = new L.layerGroup();
+var modelisationICAIRAtmoSud_layer = new L.layerGroup();
+var signalair_layer = new L.layerGroup();
 
 //variable pour le DOM
 var sidePanel = document.getElementById('side-panel');
@@ -97,7 +96,7 @@ function isEmptyObject(obj) {
   return Object.keys(obj).length === 0;
 }
 
-//Mesures dropdown list (attention seul un élément peut etre coché)
+//MESURES dropdown list (attention seul un élément peut etre coché)
 for (let key in mesures) {
   if (mesures.hasOwnProperty(key)) {
       let button = document.createElement('button');
@@ -145,9 +144,6 @@ for (let key in mesures) {
           //loop over the object (ex: ["nebuleair","signalair"])
           for (let item of getArrayFromLocalStorage(sources_local)) {
             //console.log(item);
-            //pas forcément besoin d'un remove layer mais plutot d'un clearLayed
-            //TODO clear the cache!!
-            //removeSource(code);
             clearLayer(code);
             //get the new data
             loadSource(item);
@@ -160,7 +156,7 @@ for (let key in mesures) {
   }
 }
 
-//Source de donnée dropdown List
+//SOURCE de donnée dropdown List
 for (let key in sources) {
   if (sources.hasOwnProperty(key)) {
       let button = document.createElement('button');
@@ -188,7 +184,7 @@ for (let key in sources) {
           button.classList.remove("active");
           removeItemFromLocalStorageArray(sources_local, code);
           //on elève la layer de la carte
-          removeSource(code);
+          clearLayer(code);
         } else {
           addItemToLocalStorageArray(sources_local, code);
           button.classList.add("active");
@@ -243,7 +239,17 @@ for (let key in pas_de_temps) {
           addItemToLocalStorageArray(pas_de_temps_local, code);
           button.classList.add("active");
           //ICI ON PEUT FETCHER LES DATAS
-
+          console.log("Changement du pas de temps: " + getArrayFromLocalStorage(pas_de_temps_local));
+          //attention il faut éventuellement vider le cache
+          //il faut aussi prendre en compte les source de données déjà ouverte
+          console.log("Necessite le renouvellement de: " + getArrayFromLocalStorage(sources_local))
+          //loop over the object (ex: ["nebuleair","signalair"])
+          for (let item of getArrayFromLocalStorage(sources_local)) {
+            //console.log(item);
+            clearLayer(code);
+            //get the new data
+            loadSource(item);
+          }
         }
       }
 
@@ -260,8 +266,8 @@ function loadSource(source){
     case 'nebuleair':loadNebuleAir();break;
     case 'sensor_commmunity':loadSensorCommunity();break;
     case 'purpleair':loadSensorCommunity();break;
-    case 'atmo_micro':loadAtmoMicro();break;
-    case 'atmo_ref':loadAtmoRef();break;
+    case 'atmo_micro':load_atmoSud_microStations();break;
+    case 'atmo_ref':load_atmoSud_stationsRef();break;
     case 'mod_pm':loadModPM();break;
     case 'icairh':loadicairh();break;
     case 'vents':loadVents();break;
@@ -269,35 +275,19 @@ function loadSource(source){
   }
 }
 
-//Enlever les sources depuis un bouton
-function removeSource(source){
-  console.log("Remove data for " + source) ;
-  switch(source){
-    case 'nebuleair': map.removeLayer(nebuleair);break;
-    case 'sensor_commmunity': map.removeLayer(sensor_commmunity);break;
-    case 'purpleair': map.removeLayer(purpleair);break;
-    case 'atmo_micro': map.removeLayer(atmo_micro);break;
-    case 'atmo_ref': map.removeLayer(atmo_ref);break;
-    case 'mod_pm': map.removeLayer(mod_pm);break;
-    case 'icairh': map.removeLayer(mod_pm);break;
-    case 'vents': map.removeLayer(mod_pm);break;
-    case 'signalair': map.removeLayer(signalair);break;
-  }
-}
-
-//Enlever les layer depuis un bouton
+//Enlever les layers lorsque l'on change de pas de temps ou de source
 function clearLayer(source){
   console.log("Clearing layer  for " + source) ;
   switch(source){
-    case 'nebuleair': nebuleair.clearLayers();break;
-    case 'sensor_commmunity': map.removeLayer(sensor_commmunity);break;
-    case 'purpleair': map.removeLayer(purpleair);break;
-    case 'atmo_micro': map.removeLayer(atmo_micro);break;
-    case 'atmo_ref': map.removeLayer(atmo_ref);break;
-    case 'mod_pm': map.removeLayer(mod_pm);break;
-    case 'icairh': map.removeLayer(mod_pm);break;
-    case 'vents': map.removeLayer(mod_pm);break;
-    case 'signalair': map.removeLayer(signalair);break;
+    case 'nebuleair': nebuleair_layer.clearLayers();break;
+    case 'sensor_commmunity': sensor_commmunity_layer.clearLayers();break;
+    case 'purpleair': purpleair_layer.clearLayers();break;
+    case 'atmo_micro': atmo_micro_layer.clearLayers();break;
+    case 'atmo_ref': atmo_ref_layer.clearLayers();break;
+    case 'mod_pm': modelisationPMAtmoSud_layer.clearLayers();break;
+    case 'icairh': modelisationICAIRAtmoSud_layer.clearLayers();break;
+    case 'vents': map.clearLayers();break;
+    case 'signalair': signalair_layer.clearLayers();break;
   }
 }
 
@@ -317,6 +307,14 @@ for (let key in sources) {
 Sur un grand écran on veut un side panel moins large (col-lg) 
 que sur un petit écran (col) sinon il est trop fin
 */
+function openSidePanel_generic(){
+  sidePanel.classList.add('col-12','col-sm-4', 'col-lg-3'); 
+  sidePanel.style.display = 'block'; 
+  mapContainer.classList.remove('col-12'); 
+  mapContainer.classList.add('col-8', 'col-lg-9');
+  mapContainer.style.paddingLeft ='10px'; 
+}
+
 function openSidePanel_signalair(data, nuisance_type){
   console.log("Opening side panel for SignalAir");
   card1_img.src="img/signalair/logoSignalAir.png"
@@ -351,11 +349,7 @@ function openSidePanel_signalair(data, nuisance_type){
 
      `;
 
-  sidePanel.classList.add('col-12','col-sm-4', 'col-lg-3'); 
-  sidePanel.style.display = 'block'; 
-  mapContainer.classList.remove('col-12'); 
-  mapContainer.classList.add('col-8', 'col-lg-9');
-  mapContainer.style.paddingLeft ='10px'; 
+     openSidePanel_generic() 
 }
 
 function openSidePanel_nebuleAir(data){
@@ -363,17 +357,51 @@ function openSidePanel_nebuleAir(data){
   card1_img.src="img/nebuleair/NebuleAir_nev.png"
   card1_title.innerHTML = "Capteur citoyen : " + data.sensorId;
   // Crée une nouvelle div
-  const newDiv = document.createElement('div');
-  newDiv.id = 'squaresContainer';
+  const newDiv_gauges = document.createElement('div');
+  newDiv_gauges.id = 'squaresContainer';
   card1_text.innerHTML="";  //empty content from previous opening
-  card1_text.appendChild(newDiv);
+  card1_text.appendChild(newDiv_gauges);
   createColorSquares();
 
-  sidePanel.classList.add('col-12','col-sm-4', 'col-lg-3'); 
-  sidePanel.style.display = 'block'; 
-  mapContainer.classList.remove('col-12'); 
-  mapContainer.classList.add('col-8', 'col-lg-9');
-  mapContainer.style.paddingLeft ='10px';
+  openSidePanel_generic()
+
+}
+
+function openSidePanel_microStation(data){
+  console.log("openSidePanel_microStation");
+  card1_img.src="img/microStationsAtmoSud/microStation_photo.jpg"
+  card1_title.innerHTML = "Micro station AtmoSud : " + data.nom_site;
+  // Crée une nouvelle div pour les gauges
+  const newDiv_gauges = document.createElement('div');
+  newDiv_gauges.id = 'squaresContainer';
+  card1_text.innerHTML="";  //empty content from previous opening
+  card1_text.appendChild(newDiv_gauges);
+  createColorSquares();
+  // Crée une nouvelle div pour les courbes
+  const newDiv_chart = document.createElement('div');
+  newDiv_chart.id = 'chart';
+  card1_text.appendChild(newDiv_chart);
+
+  openSidePanel_generic()
+
+}
+
+function openSidePanel_stationRef(data){
+  console.log("openSidePanel_stationRef");
+  card1_img.src="img/microStationsAtmoSud/microStation_photo.jpg"
+  card1_title.innerHTML = "Station de référence AtmoSud : " + data.id_station;
+  // Crée une nouvelle div pour les gauges
+  const newDiv_gauges = document.createElement('div');
+  newDiv_gauges.id = 'squaresContainer';
+  card1_text.innerHTML="";  //empty content from previous opening
+  card1_text.appendChild(newDiv_gauges);
+  createColorSquares();
+  // Crée une nouvelle div pour les courbes
+  const newDiv_chart = document.createElement('div');
+  newDiv_chart.id = 'chart';
+  card1_text.appendChild(newDiv_chart);
+
+  openSidePanel_generic()
 }
 
 //CLOSE SIDE PANEL

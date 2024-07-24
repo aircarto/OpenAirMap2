@@ -18,6 +18,7 @@ var seuils_PM10 = {
 
 function loadNebuleAir() {
     console.log("%cloadNebuleAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
+    nebuleair_layer.clearLayers();
     var pas_de_temps=getArrayFromLocalStorage(pas_de_temps_local)
     var mesures=getArrayFromLocalStorage(mesures_local)
     console.log("Pas de temps : "+ pas_de_temps);
@@ -93,11 +94,7 @@ function loadNebuleAir() {
                 //create a marker from icon
                 L.marker([value['latitude'], value['longitude']], { icon: nebuleAir_icon })
                 .bindTooltip(nebuleAirTooltip, {direction: 'center'})
-                .on('click', function () {
-                    console.log("Click on device: " + value['sensorId'])
-                    openSidePanel_nebuleAir(value)
-                })
-                .addTo(nebuleair);
+                .addTo(nebuleair_layer);
                 
                 
                 //TEXTE
@@ -129,7 +126,11 @@ function loadNebuleAir() {
                       });
 
                     L.marker([value['latitude'], value['longitude']], { icon: text_param })
-                    .addTo(nebuleair);
+                    .on('click', function () {
+                        console.log("Click on device: " + value['sensorId'])
+                        openSidePanel_nebuleAir(value)
+                    })
+                    .addTo(nebuleair_layer);
                 }
 
 
@@ -137,7 +138,7 @@ function loadNebuleAir() {
 
             }); //end each
             //ajouter la layer sur la carte
-            map.addLayer(nebuleair);
+            map.addLayer(nebuleair_layer);
         }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);

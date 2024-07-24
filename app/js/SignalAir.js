@@ -31,6 +31,7 @@ var date_YMD_minus3 = year + '-' + month + '-' + day_minus3;
 
 function loadSignalAir() {
     console.log("%cSignalAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
+    signalair_layer.clearLayers();
     const url_odeurs = 'https://www.signalair.eu/fr/flux/geojson/gq1jrnp9/';
     
     //loop inside signalair JSON
@@ -68,10 +69,10 @@ function loadSignalAir() {
                             console.log("Clicked on signalair id " + value.properties.id_declaration)
                             openSidePanel_signalair(value.properties, code)
                         })
-                        .addTo(signalair);
+                        .addTo(signalair_layer);
                     }); //end each
                     //ajouter la layer sur la carte
-                    map.addLayer(signalair);
+                    map.addLayer(signalair_layer);
                 } else{
                     console.log("No data for " + code)
                 }
