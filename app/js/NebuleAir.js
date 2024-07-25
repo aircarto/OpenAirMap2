@@ -190,7 +190,11 @@ function retreive_historiqueData_nebuleAir(sensorId){
             am5.ready(function() {
                 //création de l'élément root
                 amchart_root = am5.Root.new("chartdiv_sensor");
-                //création du chart
+                //prepare the data
+                let data_PM1 = data.map(function (e) {
+                    return { value: e.PM1, date: new Date(e.time).getTime() }
+                  });
+                //Instantiating the chart (création du chart XYChart)
                 var chart = amchart_root.container.children.push(
                     am5xy.XYChart.new(amchart_root, {
                       panX: true,
@@ -201,7 +205,48 @@ function retreive_historiqueData_nebuleAir(sensorId){
                       pinchZoomX: true,
                     })
                   );
-              });
+                //ajout de l'axe X (horizonzal -> datetime)
+                var xAxis = chart.xAxes.push(
+                    am5xy.DateAxis.new(amchart_root, {
+                      renderer: am5xy.AxisRendererX.new(amchart_root, {}),
+                      baseInterval: {
+                        timeUnit: "minute",
+                        count: 1
+                      }
+                    })
+                  );
+                //ajout de l'axe Y (vertical -> data)
+                var yAxis = chart.yAxes.push(
+                    am5xy.ValueAxis.new(amchart_root, {
+                      renderer: am5xy.AxisRendererY.new(amchart_root, {})
+                    })
+                  );
+                
+                //ajout des données (series) en ligne (LineSeries)
+                let series_PM1 = chart.series.push(
+                    am5xy.LineSeries.new(amchart_root, {
+                        name: "PM1",
+                        xAxis: xAxis,
+                        yAxis: yAxis,
+                        valueYField: "value",
+                        valueXField: "date",
+                        legendValueText: "{valueY}",
+                        tooltip: am5.Tooltip.new(amchart_root, {
+                            pointerOrientation: "horizontal",
+                            labelText: "{valueY}"
+                        })
+                  }));
+                
+                //ajout des datas
+                series_PM1.data.setAll(data_PM1);
+                series_PM1.appear();
+                //load chart
+                chart.appear(1000, 100);
+
+                
+              }); //end am5 ready
+
+
         }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);
