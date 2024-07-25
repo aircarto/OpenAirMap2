@@ -30,6 +30,7 @@ var sources = {
 	"Mod_horaire_pm": {"name": "Modélisation horaire PM AtmoSud", "code": "mod_pm", "activated": false},
 	"Mod_horaire_icairh": {"name": "Modélisation horaire ICAIRh AtmoSud", "code": "icairh", "activated": false},
 	"vents": {"name": "Vents", "code": "vents", "activated": false},
+	"mobileair": {"name": "MobileAir", "code": "mobileair", "activated": false},
 	"signalair": {"name": "Signal'Air", "code": "signalair", "activated": false}
 }
 

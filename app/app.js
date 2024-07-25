@@ -17,6 +17,9 @@ var formattedTime = hours + ':' + minutes + ':' + seconds;
 console.log("Date: " + date_YMD);
 console.log("Time: " + formattedTime);
 
+//Amcharts chart
+var amchart_root; 
+
 //variable pour les layers leaflet
 var nebuleair_layer = new L.layerGroup();
 var sensor_commmunity_layer = new L.layerGroup();
@@ -26,6 +29,8 @@ var atmo_ref_layer = new L.layerGroup();
 var modelisationPMAtmoSud_layer = new L.layerGroup();
 var modelisationICAIRAtmoSud_layer = new L.layerGroup();
 var signalair_layer = new L.layerGroup();
+var mobileair_layer = new L.layerGroup();
+
 
 //variable pour le DOM
 var sidePanel = document.getElementById('side-panel');
@@ -272,6 +277,8 @@ function loadSource(source){
     case 'icairh':loadicairh();break;
     case 'vents':loadVents();break;
     case 'signalair':loadSignalAir();break;
+    case 'mobileair':loadMobileAir();break;
+
   }
 }
 
@@ -288,6 +295,8 @@ function clearLayer(source){
     case 'icairh': modelisationICAIRAtmoSud_layer.clearLayers();break;
     case 'vents': map.clearLayers();break;
     case 'signalair': signalair_layer.clearLayers();break;
+    case 'mobileair': mobileair_layer.clearLayers();break;
+
   }
 }
 
@@ -352,25 +361,12 @@ function openSidePanel_signalair(data, nuisance_type){
      openSidePanel_generic() 
 }
 
-function openSidePanel_nebuleAir(data){
-  console.log("openSidePanel_nebuleAir");
-  card1_img.src="img/nebuleair/NebuleAir_nev.png"
-  card1_title.innerHTML = "Capteur citoyen : " + data.sensorId;
-  // Crée une nouvelle div
-  const newDiv_gauges = document.createElement('div');
-  newDiv_gauges.id = 'squaresContainer';
-  card1_text.innerHTML="";  //empty content from previous opening
-  card1_text.appendChild(newDiv_gauges);
-  createColorSquares();
-
-  openSidePanel_generic()
-
-}
-
 function openSidePanel_microStation(data){
   console.log("openSidePanel_microStation");
   card1_img.src="img/microStationsAtmoSud/microStation_photo.jpg"
-  card1_title.innerHTML = "Micro station AtmoSud : " + data.nom_site;
+  card1_title.innerHTML = data.nom_site;
+  card1_subtitle.innerHTML = "Micro station AtmoSud";
+
   // Crée une nouvelle div pour les gauges
   const newDiv_gauges = document.createElement('div');
   newDiv_gauges.id = 'squaresContainer';
@@ -388,8 +384,10 @@ function openSidePanel_microStation(data){
 
 function openSidePanel_stationRef(data){
   console.log("openSidePanel_stationRef");
-  card1_img.src="img/microStationsAtmoSud/microStation_photo.jpg"
-  card1_title.innerHTML = "Station de référence AtmoSud : " + data.id_station;
+  card1_img.src="https://www.atmosud.org/sites/sud/files/styles/slider/public/medias/images/2022-04/station_longchamp_1.jpg?itok=y8Oi_LxY"
+  card1_title.innerHTML =  data.nom_station;
+  card1_subtitle.innerHTML = "Station de référence AtmoSud";
+
   // Crée une nouvelle div pour les gauges
   const newDiv_gauges = document.createElement('div');
   newDiv_gauges.id = 'squaresContainer';

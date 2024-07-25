@@ -128,8 +128,8 @@ function load_atmoSud_stationsRef() {
                 var valeur_polluant = Math.round(value["valeur"]);
                 var icon_param = {
                     iconUrl: 'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
-                    iconSize: [80, 80], // size of the icon
-                    iconAnchor: [5, 70], // point of the icon which will correspond to marker's location
+                    iconSize: [50, 50], // size of the icon
+                    iconAnchor: [5, 50], // point of the icon which will correspond to marker's location
                     //popupAnchor: [30, -60] // point from which the popup should open relative to the iconAnchor
                   }
                 //pour les pm1 et les PM25 on change l'icone
@@ -165,13 +165,13 @@ function load_atmoSud_stationsRef() {
                 // TEXTE pour affichage de la mesure
                 //textSize (if number under 10)
                 var textSize = 32;
-                var x_position = -10;
-                var y_position = 41;
+                var x_position = -12;
+                var y_position = 48;
                 //smaller text size if number is greater than 9
                 if (valeur_polluant >= 10) {
                     textSize = 25;
                     x_position = -5;
-                    y_position = 32;
+                    y_position = 43;
                     }
 
                 if (valeur_polluant >= 100) {

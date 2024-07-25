@@ -147,3 +147,66 @@ function loadNebuleAir() {
         } 
       });//end ajax
 } //end function loadNebuleAir()
+
+//OUVERTURE DU SIDE PANEL
+function openSidePanel_nebuleAir(data){
+    console.log("openSidePanel_nebuleAir");
+    retreive_historiqueData_nebuleAir(data.sensorId);
+    card1_img.src="img/nebuleair/NebuleAir_nev.png"
+    card1_title.innerHTML =  data.sensorId;
+    card1_subtitle.innerHTML = "Capteur citoyen";
+  
+    // Crée une nouvelle div
+    const newDiv_gauges = document.createElement('div');
+    newDiv_gauges.id = 'squaresContainer';
+    card1_text.innerHTML="";  //empty content from previous opening
+    card1_text.appendChild(newDiv_gauges);
+    createColorSquares();
+  
+    openSidePanel_generic()
+  
+  } //end openside panel
+
+//RECUPERATION DES DONNEE D'UN CAPTEUR
+function retreive_historiqueData_nebuleAir(sensorId){
+    const start = Date.now(); //actual timestamp to measure response time
+    console.log("Retreive data for sensor: "  + sensorId);
+    full_url= `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=-2h&stop=now`
+    $.ajax({
+        method: "GET",
+        url: full_url,
+        // data: ({timespan: timespanLower}),
+        success: function (data) {
+            const end = Date.now();
+            const requestTimer = (end - start) / 1000;
+            console.log(`Data gathered in %c${requestTimer} sec`, "color: red;");
+            console.log(data);
+            //création du root element de AMChart
+            //si le root élément a déjà été crée il faut le supprimer
+            if (amchart_root != undefined) {
+                console.log("DISPOSE AMChart root (already created)")
+                amchart_root.dispose();
+              }
+            am5.ready(function() {
+                //création de l'élément root
+                amchart_root = am5.Root.new("chartdiv_sensor");
+                //création du chart
+                var chart = amchart_root.container.children.push(
+                    am5xy.XYChart.new(amchart_root, {
+                      panX: true,
+                      panY: true,
+                      wheelX: "panX",
+                      wheelY: "zoomX",
+                      maxTooltipDistance: 0,
+                      pinchZoomX: true,
+                    })
+                  );
+              });
+        }, //end ajax sucess
+        error: function(xhr, status, error){
+            console.error('Error:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+        } 
+      });//end ajax
+  } //end retreive data
