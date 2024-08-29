@@ -41,3 +41,21 @@ var pas_de_temps = {
 	"journalier": {"name": "Journalier", "code": "d", "activated": false}
 }
 
+var seuils_PM1_PM25 = {
+    "bon": {"code":"bon", "color_hex":"#79c5cc","min": 0, "max": 10},
+    "moyen": {"code":"moyen", "color_hex":"#64bca6","min": 11, "max": 20},
+    "degrade": {"code":"degrade", "color_hex":"#ebe95f","min": 21, "max": 25},
+    "mauvais": {"code":"mauvais", "color_hex":"#e85957","min": 26, "max": 50},
+    "tres_mauvais": {"code":"tres_mauvais", "color_hex":"#941f36","min": 51, "max": 75},
+    "extr_mauvais": {"code":"extr_mauvais", "color_hex":"#89207d","min": 76, "max": 99999}
+}
+
+var seuils_PM10 = {
+    "bon": {"code":"bon", "color_hex":"#79c5cc","min": 0, "max": 20},
+    "moyen": {"code":"moyen", "color_hex":"#64bca6","min": 21, "max": 40},
+    "degrade": {"code":"degrade", "color_hex":"#ebe95f","min": 41, "max": 50},
+    "mauvais": {"code":"mauvais", "color_hex":"#e85957","min": 51, "max": 100},
+    "tres_mauvais": {"code":"tres_mauvais", "color_hex":"#941f36","min": 101, "max": 150},
+    "extr_mauvais": {"code":"extr_mauvais", "color_hex":"#89207d","min": 151, "max": 99999}
+}
+

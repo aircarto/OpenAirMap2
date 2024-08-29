@@ -1,20 +1,5 @@
-var seuils_PM1_PM25 = {
-    "bon": {"code":"bon","min": 0, "max": 10},
-    "moyen": {"code":"moyen","min": 11, "max": 20},
-    "degrade": {"code":"degrade","min": 21, "max": 25},
-    "mauvais": {"code":"mauvais","min": 26, "max": 50},
-    "tres_mauvais": {"code":"tres_mauvais","min": 51, "max": 75},
-    "extr_mauvais": {"code":"extr_mauvais","min": 76, "max": 99999}
-}
-
-var seuils_PM10 = {
-    "bon": {"code":"bon","min": 0, "max": 20},
-    "moyen": {"code":"moyen","min": 21, "max": 40},
-    "degrade": {"code":"degrade","min": 41, "max": 50},
-    "mauvais": {"code":"mauvais","min": 51, "max": 100},
-    "tres_mauvais": {"code":"tres_mauvais","min": 101, "max": 150},
-    "extr_mauvais": {"code":"extr_mauvais","min": 151, "max": 99999}
-}
+var pas_de_temps_chart = "2h"
+var historique_chart = "168h"
 
 function loadNebuleAir() {
     console.log("%cloadNebuleAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
@@ -50,13 +35,8 @@ function loadNebuleAir() {
                 var icon_param = {
                     iconUrl: 'img/nebuleair/nebuleAir_default.png',
                     iconSize: [40, 40], // size of the icon
-                    iconAnchor: [5, 40], // point of the icon which will correspond to marker's location
-                    popupAnchor: [0, -10],
-                    tooltipAnchor: [-50, -10]
-                }
-
-                //Tooltip
-                var nebuleAirTooltip = value['sensorId'];
+                    iconAnchor: [5, 40] // point of the icon which will correspond to marker's location   
+                }                
 
                 //si le capteur est connecté on change la couleur
                 if (value.connected) {
@@ -69,8 +49,10 @@ function loadNebuleAir() {
                             let code = seuils_PM1_PM25[key].code
                             let min = seuils_PM1_PM25[key].min
                             let max = seuils_PM1_PM25[key].max
+                            let value_rounded = Math.round(value[mesure_maj_pas_de_temps]);
+
                             //si la valeur est entre le max et le min
-                            if (value[mesure_maj_pas_de_temps] >= min & value[mesure_maj_pas_de_temps] <= max) {
+                            if (value_rounded >= min & value_rounded <= max) {
                                 icon_param.iconUrl = 'img/nebuleair/nebuleAir_'+code+'.png';
                             }
                         }
@@ -81,8 +63,10 @@ function loadNebuleAir() {
                             let code = seuils_PM10[key].code
                             let min = seuils_PM10[key].min
                             let max = seuils_PM10[key].max
+                            let value_rounded = Math.round(value[mesure_maj_pas_de_temps]);
+
                             //si la valeur est entre le max et le min
-                            if (value[mesure_maj_pas_de_temps] >= min & value[mesure_maj_pas_de_temps] <= max) {
+                            if (value_rounded >= min & value_rounded <= max) {
                                 icon_param.iconUrl = 'img/nebuleair/nebuleAir_'+code+'.png';
                             }
                         }
@@ -93,7 +77,6 @@ function loadNebuleAir() {
                 var nebuleAir_icon = L.icon(icon_param);
                 //create a marker from icon
                 L.marker([value['latitude'], value['longitude']], { icon: nebuleAir_icon })
-                .bindTooltip(nebuleAirTooltip, {direction: 'center'})
                 .addTo(nebuleair_layer);
                 
                 
@@ -122,13 +105,23 @@ function loadNebuleAir() {
                         className: 'my-div-icon',
                         html: '<div id="textDiv" style="font-size: ' + textSize + 'px;">' + roundedvalue + '</div>',
                         iconAnchor: [x_position, y_position],
-                        popupAnchor: [30, -60] // point from which the popup should open relative to the iconAnchor
                       });
-
+                    
+                    //tooltip -> survol
+                    //Popup -> lorsque l'on clique
+                    var nebuleAirTooltip = value['sensorId'];
+                    var nebuleAirPopup = '<b>'+value['sensorId']+'<b>'
+                    
                     L.marker([value['latitude'], value['longitude']], { icon: text_param })
+                    .bindTooltip(nebuleAirTooltip, {
+                        direction: 'center',
+                        offset: [0, -50] })
+                    .bindPopup(nebuleAirPopup,{
+                        offset: [20, -30]
+                    })
                     .on('click', function () {
                         console.log("Click on device: " + value['sensorId'])
-                        openSidePanel_nebuleAir(value)
+                        openSidePanel_nebuleAir(value, pas_de_temps, "24h", mesures)
                     })
                     .addTo(nebuleair_layer);
                 }
@@ -149,29 +142,103 @@ function loadNebuleAir() {
 } //end function loadNebuleAir()
 
 //OUVERTURE DU SIDE PANEL
-function openSidePanel_nebuleAir(data){
+function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
     console.log("openSidePanel_nebuleAir");
-    retreive_historiqueData_nebuleAir(data.sensorId);
-    card1_img.src="img/nebuleair/NebuleAir_nev.png"
+    retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps, historique, mesures );
+    card1_img.src="img/nebuleair/NebuleAir_photo.png"
     card1_title.innerHTML =  data.sensorId;
     card1_subtitle.innerHTML = "Capteur citoyen";
-  
+    card1_text.innerHTML=""; //empty content from previous opening
+
+    //on ajoute la fonction onclick sur chaque bouton
+    //historique
+    var btn_historique_1h = document.getElementById("btn_historique_1h");
+    var btn_historique_3h = document.getElementById("btn_historique_3h");
+    var btn_historique_24h = document.getElementById("btn_historique_24h");
+    var btn_historique_1sem = document.getElementById("btn_historique_1sem");
+    var btn_historique_1m = document.getElementById("btn_historique_1m");
+    var btn_historique_1a = document.getElementById("btn_historique_1a");
+
+    btn_historique_1h.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '1h', mesures);
+        historique_chart = "1h";
+    };
+    btn_historique_3h.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '3h', mesures);
+        historique_chart = "3h";
+    };
+    btn_historique_24h.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '24h', mesures);
+        historique_chart = "24h";
+    };
+    btn_historique_1sem.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '7d', mesures);
+        historique_chart = "7d";
+    };
+    btn_historique_1m.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '30d', mesures);
+        historique_chart = "30d";
+    };
+    btn_historique_1a.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '365d', mesures);
+        historique_chart = "365d";
+    };
+    //pas de temps
+    var btn_pas_de_temps_2min = document.getElementById("btn_pas_de_temps_2min");
+    var btn_pas_de_temps_qh = document.getElementById("btn_pas_de_temps_qh");
+    var btn_pas_de_temps_h = document.getElementById("btn_pas_de_temps_h");
+    var btn_pas_de_temps_d = document.getElementById("btn_pas_de_temps_d");
+
+    btn_pas_de_temps_2min.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, '2m', historique_chart, mesures);
+        pas_de_temps_chart = "2m";
+    };
+    btn_pas_de_temps_qh.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, '15m', historique_chart, mesures);
+        pas_de_temps_chart = "15m";
+    };
+    btn_pas_de_temps_h.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, '1h', historique_chart, mesures);
+        pas_de_temps_chart = "1h";
+    };
+    btn_pas_de_temps_d.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, '1d', historique_chart, mesures);
+        pas_de_temps_chart = "1d";
+    };
+
+    
+
+    //adaptation des boutons en fonction de l'historique du pas de temps et des mesures
+    //var historique_button = document.getElementById("btn_historique_"+historique);
+    //historique_button.checked = true;
+    //var historique_button = document.getElementById("btn_pas_de_temps_"+pas_de_temps);
+    //historique_button.checked = true;
+
     // Crée une nouvelle div
+    // -> plutot sur la carte!
+    /*
     const newDiv_gauges = document.createElement('div');
     newDiv_gauges.id = 'squaresContainer';
     card1_text.innerHTML="";  //empty content from previous opening
     card1_text.appendChild(newDiv_gauges);
     createColorSquares();
-  
+    */
+
+    //fonction semblable pour tous les types de capteurs
     openSidePanel_generic()
   
   } //end openside panel
 
-//RECUPERATION DES DONNEE D'UN CAPTEUR
-function retreive_historiqueData_nebuleAir(sensorId){
+//RECUPERATION DES DONNEE D'UN CAPTEUR -> CHART
+function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, mesures){
     const start = Date.now(); //actual timestamp to measure response time
-    console.log("Retreive data for sensor: "  + sensorId);
-    full_url= `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=-2h&stop=now`
+    console.log("Retreive data for sensor: "  + sensorId );
+    console.log("Pas de temps: "  + pas_de_temps );
+    console.log("Historique: "  + historique );
+    console.log("Mesures: "  + mesures );
+
+    full_url= `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${pas_de_temps}`
+    console.log(full_url);
     $.ajax({
         method: "GET",
         url: full_url,
@@ -222,9 +289,9 @@ function retreive_historiqueData_nebuleAir(sensorId){
                     })
                   );
                 
-                //ajout des données (series) en ligne (LineSeries)
+                //ajout des données (series) en ligne simple (LineSeries) ou en lignes smoothed (SmoothedXLineSeries)
                 let series_PM1 = chart.series.push(
-                    am5xy.LineSeries.new(amchart_root, {
+                    am5xy.SmoothedXLineSeries.new(amchart_root, {
                         name: "PM1",
                         xAxis: xAxis,
                         yAxis: yAxis,
@@ -237,6 +304,11 @@ function retreive_historiqueData_nebuleAir(sensorId){
                         })
                   }));
                 
+                //on peut changer ici la taille du trait
+                series_PM1.strokes.template.setAll({
+                    strokeWidth: 2
+                  });
+
                 //ajout des datas
                 series_PM1.data.setAll(data_PM1);
                 series_PM1.appear();

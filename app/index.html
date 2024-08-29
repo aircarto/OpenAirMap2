@@ -104,21 +104,110 @@
     <div class="row align-items-start">
         
       <!-- SIDE PANEL  -->
-        <div class="col-2" id="side-panel" style="display: none;">
-            Side Panel <button class="btn" onclick="closeSidePanel()"><i class="bi bi-x-circle"></i></button>
+        <div class="" id="side-panel" style="display: none; padding-left: 20px;">
+           <button class="btn" onclick="closeSidePanel()" style="display: none;"><i class="bi bi-x-circle"></i></button>
             
-            <!-- CARD  -->
-            <div class="card ml-0" id="card1" style="width: 100%;">
-              <img id="card1_img" src="" class="card-img-top" alt="...">
-              <div class="card-body" id="card_1_body">
-                <h5 class="card-title" id="card1_title"></h5>
-                <h6 class="card-subtitle mb-2 text-body-secondary" id="card1_subtitle"></h6>
+            <div class="row" style="margin-top: 50px;">
 
-                <p class="card-text" id="card1_text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                <div id="chartdiv_sensor"></div>
-                <div id="chartdiv"></div>
+              <!-- CARD 1 : PHOTO -->
+              <div class="col-sm-6 mb-3">
+                <div class="card h-100" id="card1" >
+                  <img id="card1_img" src="" class="card-img-top" alt="...">
+                  <div class="card-body" id="card_1_body">
+                    <h5 class="card-title" id="card1_title"></h5>
+                    <h6 class="card-subtitle mb-2 text-body-secondary" id="card1_subtitle"></h6>
+
+                    <p class="card-text" id="card1_text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                    <div id="chartdiv"></div>
+                  </div>
+                </div>
+              </div>
+               <!-- CARD 2: TEXT  -->
+              <div class="col-sm-6">
+                <div class="card" id="card2">
+                  <div class="card-body">
+                    <h5 class="card-title" id="card2_title"></h5>
+                    <h6 class="card-subtitle mb-2 text-body-secondary" id="card2_subtitle"></h6>
+                    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                    <a href="#" class="btn btn-primary">Go somewhere</a>
+                  </div>
+                </div>
+              </div>
+              <!-- CARD 3 : AMChart -->
+              <div class="col-sm-12">
+                <div class="card" id="card3">
+                  <div class="card-body">
+                    <h5 class="card-title">Historique des mesures</h5>
+                    <div id="chartdiv_sensor"></div>
+                    <!-- historique -->
+                    <div class="text-center">
+
+                    <div class="btn-group mt-1" role="group" aria-label="Basic radio toggle button group">
+                      
+                      <input type="radio" class="btn-check" name="btn_historique_" id="btn_historique_" autocomplete="off" disabled>
+                      <label class="btn btn-outline-primary" for="btn_historique_">Historique</label>
+                    
+                      <input type="radio" class="btn-check" name="btn_historique_1h" id="btn_historique_1h" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_historique_1h">1h</label>
+                    
+                      <input type="radio" class="btn-check" name="btn_historique_3h" id="btn_historique_3h" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_historique_3h">3h</label>
+
+                      <input type="radio" class="btn-check" name="btn_historique_24h" id="btn_historique_24h" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_historique_24h">24h</label>
+
+                      <input type="radio" class="btn-check" name="btn_historique_1sem" id="btn_historique_1sem" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_historique_1sem">1 semaine</label>
+
+                      <input type="radio" class="btn-check" name="btn_historique_1m" id="btn_historique_1m" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_historique_1m">1 mois</label>
+
+                      <input type="radio" class="btn-check" name="btn_historique_1a" id="btn_historique_1a" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_historique_1a">1 ans</label>
+
+                    </div>
+
+                     <!-- Pas de temps -->
+                     <div class="btn-group mt-1" role="group" aria-label="Basic radio toggle button group">
+                      
+                      <input type="radio" class="btn-check" name="btn_pas_de_temps_" id="btn_pas_de_temps_" autocomplete="off" disabled>
+                      <label class="btn btn-outline-primary" for="btn_pas_de_temps_">Pas de temps</label>
+                    
+                      <input type="radio" class="btn-check" name="btn_pas_de_temps_2min" id="btn_pas_de_temps_2min" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_pas_de_temps_2min">2m</label>
+                    
+                      <input type="radio" class="btn-check" name="btn_pas_de_temps_qh" id="btn_pas_de_temps_qh" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_pas_de_temps_qh">15m</label>
+
+                      <input type="radio" class="btn-check" name="btn_pas_de_temps_h" id="btn_pas_de_temps_h" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_pas_de_temps_h">1h</label>
+
+                      <input type="radio" class="btn-check" name="btn_pas_de_temps_d" id="btn_pas_de_temps_d" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_pas_de_temps_d">1j</label>
+                    </div>
+
+                     <!-- Polluants -->
+                     <div class="btn-group mt-1" role="group" aria-label="Basic radio toggle button group">
+                      <input type="radio" class="btn-check" name="btn_poluant_" id="btn_poluant_" autocomplete="off" disabled>
+                      <label class="btn btn-outline-primary" for="btn_poluant_">Mesures</label>
+                    
+                      <input type="radio" class="btn-check" name="btn_poluant_PM1" id="btn_poluant_PM1" autocomplete="off" checked >
+                      <label class="btn btn-outline-primary" for="btn_poluant_PM1">PM1</label>
+
+                      <input type="radio" class="btn-check" name="btn_pouluant_PM25" id="btn_pouluant_PM25" autocomplete="off" >
+                      <label class="btn btn-outline-primary" for="btn_poluant_PM25">PM2.5</label>
+                    
+                      <input type="radio" class="btn-check" name="btn_poluant_PM10" id="btn_poluant_PM10" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_poluant_PM10">PM10</label>
+                    </div>
+                  </div>
+
+                  </div>
+                </div>
               </div>
             </div>
+             
+        
 
         </div>
         
@@ -126,6 +215,7 @@
         <div class="col-12" id="map-container">
             <div id="map"></div>
         </div>
+       
     </div>
 
 

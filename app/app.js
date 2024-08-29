@@ -311,16 +311,24 @@ for (let key in sources) {
   }
 }
 
+//actualisation des sources toutes les minutes
+//TODO avec la fonction setInterval
+
 //OPEN SIDE PANEL
 /*
 Sur un grand écran on veut un side panel moins large (col-lg) 
 que sur un petit écran (col) sinon il est trop fin
 */
 function openSidePanel_generic(){
-  sidePanel.classList.add('col-12','col-sm-4', 'col-lg-3'); 
-  sidePanel.style.display = 'block'; 
+  //side panel
+  // sur smartphone -> toute la place (col-12)
+  // sur ordi petit (sm) -> 6 colonnes
+  // sur grand écran (lg) -> 5 colonnes
+  sidePanel.classList.add('col-12','col-sm-6', 'col-lg-5'); 
+  sidePanel.style.display = 'block';
+  //map 
   mapContainer.classList.remove('col-12'); 
-  mapContainer.classList.add('col-8', 'col-lg-9');
+  mapContainer.classList.add('col-6', 'col-lg-7');
   mapContainer.style.paddingLeft ='10px'; 
 }
 
