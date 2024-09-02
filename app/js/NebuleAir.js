@@ -1,5 +1,6 @@
-var pas_de_temps_chart = "2h"
-var historique_chart = "168h"
+var pas_de_temps_chart = "1h"
+var historique_chart = "24h"
+var mesures_array = [];
 
 function loadNebuleAir() {
     console.log("%cloadNebuleAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
@@ -132,6 +133,8 @@ function loadNebuleAir() {
             }); //end each
             //ajouter la layer sur la carte
             map.addLayer(nebuleair_layer);
+           
+               
         }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);
@@ -144,75 +147,99 @@ function loadNebuleAir() {
 //OUVERTURE DU SIDE PANEL
 function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
     console.log("openSidePanel_nebuleAir");
-    retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps, historique, mesures );
+
+    //il faut passer à la fonction un array pour mesures
+    // Clear the array by setting its length to 0
+    mesures_array.length = 0;
+    mesures_array.push(mesures)
+
+    //on lance la fonction pour récupérer les datas de mesures
+    retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps, historique, mesures_array );
+
     card1_img.src="img/nebuleair/NebuleAir_photo.png"
     card1_title.innerHTML =  data.sensorId;
     card1_subtitle.innerHTML = "Capteur citoyen";
     card1_text.innerHTML=""; //empty content from previous opening
 
     //on ajoute la fonction onclick sur chaque bouton
-    //historique
+    //1.historique
     var btn_historique_1h = document.getElementById("btn_historique_1h");
     var btn_historique_3h = document.getElementById("btn_historique_3h");
     var btn_historique_24h = document.getElementById("btn_historique_24h");
-    var btn_historique_1sem = document.getElementById("btn_historique_1sem");
-    var btn_historique_1m = document.getElementById("btn_historique_1m");
-    var btn_historique_1a = document.getElementById("btn_historique_1a");
+    var btn_historique_1sem = document.getElementById("btn_historique_7d");
+    var btn_historique_1m = document.getElementById("btn_historique_30d");
+    var btn_historique_1a = document.getElementById("btn_historique_365d");
 
     btn_historique_1h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '1h', mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '1h', mesures_array);
         historique_chart = "1h";
     };
     btn_historique_3h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '3h', mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '3h', mesures_array);
         historique_chart = "3h";
     };
     btn_historique_24h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '24h', mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '24h', mesures_array);
         historique_chart = "24h";
     };
     btn_historique_1sem.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '7d', mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '7d', mesures_array);
         historique_chart = "7d";
     };
     btn_historique_1m.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '30d', mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '30d', mesures_array);
         historique_chart = "30d";
     };
     btn_historique_1a.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '365d', mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '365d', mesures_array);
         historique_chart = "365d";
     };
-    //pas de temps
+
+    //2.pas de temps
     var btn_pas_de_temps_2min = document.getElementById("btn_pas_de_temps_2min");
     var btn_pas_de_temps_qh = document.getElementById("btn_pas_de_temps_qh");
     var btn_pas_de_temps_h = document.getElementById("btn_pas_de_temps_h");
     var btn_pas_de_temps_d = document.getElementById("btn_pas_de_temps_d");
-
+    
     btn_pas_de_temps_2min.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '2m', historique_chart, mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, '2m', historique_chart, mesures_array);
         pas_de_temps_chart = "2m";
     };
     btn_pas_de_temps_qh.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '15m', historique_chart, mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, '15m', historique_chart, mesures_array);
         pas_de_temps_chart = "15m";
     };
     btn_pas_de_temps_h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '1h', historique_chart, mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, '1h', historique_chart, mesures_array);
         pas_de_temps_chart = "1h";
     };
     btn_pas_de_temps_d.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '1d', historique_chart, mesures);
+        retreive_historiqueData_nebuleAir(data.sensorId, '1d', historique_chart, mesures_array);
         pas_de_temps_chart = "1d";
     };
 
-    
+    //3. Mesures (ATTENTION: ici on peut choisir plusieurs polluants -> add_mesure = true)
+    var btn_poluant_pm1 = document.getElementById("btn_poluant_pm1");
+    var btn_poluant_pm25 = document.getElementById("btn_poluant_pm25");
+    var btn_poluant_pm10 = document.getElementById("btn_poluant_pm10");
 
-    //adaptation des boutons en fonction de l'historique du pas de temps et des mesures
-    //var historique_button = document.getElementById("btn_historique_"+historique);
-    //historique_button.checked = true;
-    //var historique_button = document.getElementById("btn_pas_de_temps_"+pas_de_temps);
-    //historique_button.checked = true;
+    btn_poluant_pm1.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart, mesures_array, "pm1", true);
+    };
+    btn_poluant_pm25.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart, mesures_array, "pm25", true);
+    };
+    btn_poluant_pm10.onclick = function() {
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart, mesures_array, "pm10", true);
+    };
+
+    //adaptation des boutons en fonction de l'historique, du pas de temps et des mesures
+    var historique_button_checked = document.getElementById("btn_historique_"+historique);
+    historique_button_checked.checked = true;
+    var historique_button_checked = document.getElementById("btn_pas_de_temps_"+pas_de_temps);
+    historique_button_checked.checked = true;
+    var historique_mesure_checked = document.getElementById("btn_poluant_"+mesures);
+    historique_mesure_checked.checked = true;
 
     // Crée une nouvelle div
     // -> plutot sur la carte!
@@ -229,16 +256,64 @@ function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
   
   } //end openside panel
 
-//RECUPERATION DES DONNEE D'UN CAPTEUR -> CHART
-function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, mesures){
+
+/*
+RECUPERATION DES DONNEE D'UN CAPTEUR -> CHART
+mesures_array est un array (ex: [PM1, PM2.5])
+mesure est le polluant qu'il faut ajouter à mesure_array (si add_mesure est true)
+*/
+
+function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, mesures_array, mesure, add_mesure){
     const start = Date.now(); //actual timestamp to measure response time
+    ////si add_mesure est true alors il faut ajouter le polluant à mesures_array
+    if (add_mesure) {
+       console.log("need to add mesure to array"); 
+       mesures_array.push(mesure)
+    }
+
     console.log("Retreive data for sensor: "  + sensorId );
     console.log("Pas de temps: "  + pas_de_temps );
     console.log("Historique: "  + historique );
-    console.log("Mesures: "  + mesures );
+    console.log("Mesures: "  + mesures_array );
+    console.log("Adding mesure: " + add_mesure)
+
+    //il faut unchecked les boutons 
+    var inputs = document.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+    inputs.forEach(function(input) {
+        input.checked = false;
+    });
+
+    //attention pour le pas de temps des boutons il faut convertir ()
+    var pas_de_temps_btn;
+    if (pas_de_temps == "2m" || pas_de_temps == "2min" ) {pas_de_temps_btn = "2min"}
+    if (pas_de_temps == "15m" || pas_de_temps == "qh") {pas_de_temps_btn = "qh"}
+    if (pas_de_temps == "1h" || pas_de_temps == "h") {pas_de_temps_btn = "h"}
+    if (pas_de_temps == "24h" || pas_de_temps == "1d") {pas_de_temps_btn = "d"}
+
+    console.log("btn_pas_de_temps_"+pas_de_temps_btn)
+
+    //on checked le input qui a été sélectioné
+    var historique_button_checked = document.getElementById("btn_historique_"+historique);
+    historique_button_checked.checked = true;
+    var historique_button_checked = document.getElementById("btn_pas_de_temps_"+pas_de_temps_btn);
+    historique_button_checked.checked = true;
+    //attention à l'array pour les mesures!!
+    //on ajout le checked pour chaque polluant sélectionné
+    mesures_array.forEach(function(element) {
+        var historique_mesure_checked = document.getElementById("btn_poluant_"+element);
+        historique_mesure_checked.checked = true;
+    });
+    
+
+    //pour le pas de temps (pour l'URL) il faut convertir (2min, qh, h et d -->en--> 2m, 15m, 1h et 1d)
+    if (pas_de_temps == "2min") {pas_de_temps = "2m"}
+    if (pas_de_temps == "qh") {pas_de_temps = "15m"}
+    if (pas_de_temps == "h") {pas_de_temps = "1h"}
+    if (pas_de_temps == "d") {pas_de_temps = "1d"}
 
     full_url= `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${pas_de_temps}`
     console.log(full_url);
+
     $.ajax({
         method: "GET",
         url: full_url,
@@ -248,75 +323,121 @@ function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, m
             const requestTimer = (end - start) / 1000;
             console.log(`Data gathered in %c${requestTimer} sec`, "color: red;");
             console.log(data);
+
+            //il faut crée des timeUnit AMCHART spécifique en fonction du pas de temps
+            var baseInterval_timeUnit_local;
+            var baseInterval_count;
+            if (pas_de_temps == "2m" || pas_de_temps == "2min" ) {baseInterval_timeUnit_local = "minute"; baseInterval_count=2}
+            if (pas_de_temps == "15m" || pas_de_temps == "qh") {baseInterval_timeUnit_local = "minute"; baseInterval_count=15}
+            if (pas_de_temps == "1h" || pas_de_temps == "h") {baseInterval_timeUnit_local = "hour"; baseInterval_count=1}
+            if (pas_de_temps == "24h" || pas_de_temps == "1d") {baseInterval_timeUnit_local = "day"; baseInterval_count=1}
+
             //création du root element de AMChart
             //si le root élément a déjà été crée il faut le supprimer
             if (amchart_root != undefined) {
                 console.log("DISPOSE AMChart root (already created)")
                 amchart_root.dispose();
               }
+
             am5.ready(function() {
-                //création de l'élément root
-                amchart_root = am5.Root.new("chartdiv_sensor");
+
                 //prepare the data
                 let data_PM1 = data.map(function (e) {
                     return { value: e.PM1, date: new Date(e.time).getTime() }
-                  });
-                //Instantiating the chart (création du chart XYChart)
-                var chart = amchart_root.container.children.push(
-                    am5xy.XYChart.new(amchart_root, {
-                      panX: true,
-                      panY: true,
-                      wheelX: "panX",
-                      wheelY: "zoomX",
-                      maxTooltipDistance: 0,
-                      pinchZoomX: true,
-                    })
-                  );
+                });
+                let data_PM25 = data.map(function (e) {
+                    return { value: e.PM25, date: new Date(e.time).getTime() }
+                });
+                let data_PM10 = data.map(function (e) {
+                    return { value: e.PM10, date: new Date(e.time).getTime() }
+                });
+            
+                // Create root element
+                amchart_root = am5.Root.new("chartdiv_sensor");
+
+                // Create chart
+         
+                var chart = amchart_root.container.children.push(am5xy.XYChart.new(amchart_root, {
+                    panX: false,
+                    panY: false,
+                    wheelX: "panX",
+                    wheelY: "zoomX",
+                    paddingLeft: 0
+                }));
+
+
+                // Add cursor
+                // sans le cursor le tooltip n'apparait pas...
+                var cursor = chart.set("cursor", am5xy.XYCursor.new(amchart_root, {
+                    behavior: "zoomX"
+                }));
+
+                cursor.lineY.set("visible", false);
+
+
                 //ajout de l'axe X (horizonzal -> datetime)
-                var xAxis = chart.xAxes.push(
-                    am5xy.DateAxis.new(amchart_root, {
-                      renderer: am5xy.AxisRendererX.new(amchart_root, {}),
-                      baseInterval: {
-                        timeUnit: "minute",
-                        count: 1
-                      }
-                    })
-                  );
+                var xAxis = chart.xAxes.push(am5xy.DateAxis.new(amchart_root, {
+                    maxDeviation: 0.2,
+                    baseInterval: {
+                        timeUnit: baseInterval_timeUnit_local,  //il faut adapter en fonction du pas de temps! (valeur possible AMCHART: minute, hour, day, week, month, year)
+                        count: baseInterval_count
+                    },
+                    renderer: am5xy.AxisRendererX.new(amchart_root, {
+                        minorGridEnabled:true
+                    }),
+                    tooltip: am5.Tooltip.new(amchart_root, {})
+                 }));
+
+          
                 //ajout de l'axe Y (vertical -> data)
-                var yAxis = chart.yAxes.push(
-                    am5xy.ValueAxis.new(amchart_root, {
-                      renderer: am5xy.AxisRendererY.new(amchart_root, {})
-                    })
-                  );
-                
+                var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(amchart_root, {
+                    renderer: am5xy.AxisRendererY.new(amchart_root, {})
+                }));
+
+                //PM1
                 //ajout des données (series) en ligne simple (LineSeries) ou en lignes smoothed (SmoothedXLineSeries)
-                let series_PM1 = chart.series.push(
-                    am5xy.SmoothedXLineSeries.new(amchart_root, {
-                        name: "PM1",
+                var series_PM1 = chart.series.push(am5xy.SmoothedXLineSeries.new(amchart_root, {
+                    name: "PM1",
+                    xAxis: xAxis,
+                    yAxis: yAxis,
+                    valueYField: "value",
+                    valueXField: "date",
+                    tooltip: am5.Tooltip.new(amchart_root, {
+                        labelText: "{valueY}"
+                    })
+                }));
+
+                //on peut changer ici la taille du trait
+                series_PM1.strokes.template.setAll({
+                    strokeWidth: 2
+                });
+
+                series_PM1.data.setAll(data_PM1);        
+                series_PM1.appear(1000);
+
+                //PM2.5
+                if (mesures_array.includes("pm25")) {
+                    var series_PM25 = chart.series.push(am5xy.SmoothedXLineSeries.new(amchart_root, {
+                        name: "PM2.5",
                         xAxis: xAxis,
                         yAxis: yAxis,
                         valueYField: "value",
                         valueXField: "date",
-                        legendValueText: "{valueY}",
                         tooltip: am5.Tooltip.new(amchart_root, {
-                            pointerOrientation: "horizontal",
                             labelText: "{valueY}"
                         })
-                  }));
-                
-                //on peut changer ici la taille du trait
-                series_PM1.strokes.template.setAll({
-                    strokeWidth: 2
-                  });
+                    }));
+                    //on peut changer ici la taille du trait
+                    series_PM25.strokes.template.setAll({
+                        strokeWidth: 2
+                    });
+                    series_PM25.data.setAll(data_PM25);        
+                    series_PM25.appear(1000);
+                }
 
-                //ajout des datas
-                series_PM1.data.setAll(data_PM1);
-                series_PM1.appear();
-                //load chart
                 chart.appear(1000, 100);
 
-                
-              }); //end am5 ready
+            }); //end am5 ready
 
 
         }, //end ajax sucess

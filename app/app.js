@@ -56,10 +56,11 @@ Pour les dropdown:
   un classe de "dropdown-item"
 */
 
-// Function to save array to local storage
+// Function to save array to local storage (erase and save)
 function saveArrayToLocalStorage(key, array) {
   localStorage.setItem(key, JSON.stringify(array));
 }
+
  // Function to get array from local storage
 function getArrayFromLocalStorage(key) {
   const storedArray = localStorage.getItem(key);
@@ -320,6 +321,7 @@ Sur un grand écran on veut un side panel moins large (col-lg)
 que sur un petit écran (col) sinon il est trop fin
 */
 function openSidePanel_generic(){
+  //console.log("openSidePane_generic");
   //side panel
   // sur smartphone -> toute la place (col-12)
   // sur ordi petit (sm) -> 6 colonnes
@@ -420,19 +422,8 @@ function closeSidePanel(){
   mapContainer.style.paddingLeft ='30px'; 
 }
 
- //Automatic location 
-function goToPosition(position) {
-  map.setView(
-    [position.coords.latitude, position.coords.longitude],
-    zoomLevel
-  );
-}
 
-function notAllowed(err) {
-  //console.log("Vous n'avez pas autorisé la détection de la position.")
-  //openToast("Vous n'avez pas autorisé la détection de la position."); 
-  map.setView(coordsCenter, zoomLevel);
-}
+
 
 //Leaflet Map obj creation
 let coordsCenter = config.coordsCenter;
@@ -454,9 +445,30 @@ L.tileLayer(
   }
 ).addTo(map);
 
- //Location test
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(goToPosition, notAllowed);
+//Location et Zoom par défaut récupéré dans config.js
+//si existe dans Local Storage alors prends les variables en local
+if ('Lat' in localStorage) {
+  let coordsCenter_local_lat = localStorage.getItem('Lat');
+  let coordsCenter_local_long = localStorage.getItem('Long');
+  let zoomLevel_local = localStorage.getItem('Zoom');
+  map.setView([coordsCenter_local_lat, coordsCenter_local_long], zoomLevel_local);
 } else {
   map.setView(coordsCenter, zoomLevel);
-}
+} 
+
+
+// Dès que l'on bouge la cart on enregistre LAT/LONG/ZOOM
+map.on('moveend', function() {
+ // Get the map's center coordinates
+ var center = map.getCenter();
+ var currentZoom = map.getZoom();
+ var lat = center.lat;
+ var lng = center.lng;
+ // Log the latitude and longitude to the console
+ saveArrayToLocalStorage("Lat", lat);
+ saveArrayToLocalStorage("Long", lng);
+ saveArrayToLocalStorage("Zoom", currentZoom);
+});
+
+
+

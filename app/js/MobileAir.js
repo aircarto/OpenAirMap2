@@ -12,7 +12,7 @@ function loadMobileAir() {
 
     let full_url_mobileair = `
     https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${capteur_ID}&
-    start=-2d&
+    start=-6d&
     end=now&
     GPSnull=false&
     format=JSON
@@ -38,7 +38,6 @@ function loadMobileAir() {
             $.each(data, function (key, value) {
                 //création de ronds
                 var circle_param = {
-                    
                     fillOpacity: 1,
                     radius: 5   
                 }
@@ -74,14 +73,19 @@ function loadMobileAir() {
                         }
                     }
                 
-                if (mesures == "pm1") {var mobileAirTooltip = 'MobileAir '+value['sensorId']+'<br />PM1: ' + value['PM1'];}
-                if (mesures == "pm25") {var mobileAirTooltip = 'MobileAir '+value['sensorId']+'<br />PM2.5: ' + value['PM25'];}
-                if (mesures == "pm10") {var mobileAirTooltip = 'MobileAir '+value['sensorId']+'<br />PM10: ' + value['PM10'];}
+                //création du tooltip (qui change en fonction du polluant)
+                if (mesures == "pm1") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+'</b><br/>PM1: ' + value['PM1'];}
+                if (mesures == "pm25") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+'</b><br/>PM2.5: ' + value['PM25'];}
+                if (mesures == "pm10") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+'</b><br/>PM10: ' + value['PM10'];}
 
                 L.circle([value['lat'], value['lon']], circle_param)
                 .bindTooltip(mobileAirTooltip, {
                     direction: 'center',
                     offset: [0, -50]
+                })
+                .on('click', function () {
+                    console.log("Click on path from sensor: " + value['sensorId'])
+                    openSidePanel_mobileAir(value, pas_de_temps, "24h", mesures)
                 })
                 .addTo(mobileair_layer);
 
@@ -98,3 +102,19 @@ function loadMobileAir() {
         } 
       });//end ajax
 }//end loadMobilAir function
+
+function openSidePanel_mobileAir(data, pas_de_temps, historique, mesures){
+    console.log("openSidePanel_mobileAir");
+    //card 1
+    card1_img.src="img/nebuleair/NebuleAir_photo.png"
+    card1_title.innerHTML =  "MobileAir "+data.sensorId;
+    card1_subtitle.innerHTML = "Capteur citoyen de mesure en mobilité";
+    card1_text.innerHTML=""; //empty content from previous opening
+    //card 2
+    card2_text.innerHTML="Le MobileAir est un capteur mobile de la qualité de l'air. Il fonctionne sur batterie et communique les mesures en temps réel via le résau mobile. Il est équipé d'une puce GPS qui permet la géolocalisation des données."; //empty content from previous opening
+    card2_link.innerHTML="AirCarto.fr"; //empty content from previous opening
+
+
+    //fonction semblable pour tous les types de capteurs
+    openSidePanel_generic();
+} //end openSidePanel_mobileAir
