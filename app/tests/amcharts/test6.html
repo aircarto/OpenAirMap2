@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chart.js Line Chart with Hover Event</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    #myChart {
+      width: 80%;
+      height: 400px;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="myChart"></canvas>
+
+<script>
+  // Data for the chart
+  const data = {
+    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+    datasets: [{
+      label: 'My Line Chart',
+      data: [
+        { x: 'January', y: 10 },
+        { x: 'February', y: 20 },
+        { x: 'March', y: 15 },
+        { x: 'April', y: 25 },
+        { x: 'May', y: 30 },
+        { x: 'June', y: 35 },
+        { x: 'July', y: 40 }
+      ],
+      borderColor: 'rgba(75, 192, 192, 1)',
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      fill: false,
+    }]
+  };
+
+  // Chart configuration
+  const config = {
+    type: 'line',
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              // Log data on tooltip appearance
+              console.log('Tooltip Data:', context.raw);
+              return `Value: ${context.raw.y}`;
+            }
+          }
+        }
+      },
+      onHover: function(event, chartElement) {
+        if (chartElement.length > 0) {
+          const element = chartElement[0];
+          const datasetIndex = element.datasetIndex;
+          const index = element.index;
+          const dataPoint = data.datasets[datasetIndex].data[index];
+          //console.log('Hovered Data Point:', dataPoint);
+        }
+      }
+    }
+  };
+
+  // Create the chart
+  const ctx = document.getElementById('myChart').getContext('2d');
+  new Chart(ctx, config);
+</script>
+
+</body>
+</html>

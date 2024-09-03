@@ -2,7 +2,7 @@ var config = {
 	"coordsCenter": [43.29490421, 5.37188392], //loc par défaut pour la carte
 	"zoomLevel": 9,                            //zoom por défaut
 	"minZoom": 1,
-	"maxZoom": 21,                              //dézoom max
+	"maxZoom": 18,                              //zoom max -> en dessus le fond de carte devient blanc (plus de données visuelle)
 	"compoundUpper": "PM25",                    //polluant affiché par défaut
 	"timespanLower": 60,                        //pas de temps de base 2min, 15min, 60min ou journéé (??)
 	"timeLength": 24,                           // historique

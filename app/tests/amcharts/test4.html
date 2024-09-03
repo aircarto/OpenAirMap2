@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>amCharts 4 XY Chart</title>
+    <script src="https://www.amcharts.com/lib/4/core.js"></script>
+    <script src="https://www.amcharts.com/lib/4/charts.js"></script>
+    <script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chartdiv"></div>
+    <script>
+        // JavaScript to create the chart goes here
+        // Import amCharts 4 modules
+am4core.ready(function() {
+
+    // Apply the animated theme
+    am4core.useTheme(am4themes_animated);
+
+    // Create chart instance
+    var chart = am4core.create("chartdiv", am4charts.XYChart);
+
+    // Add data
+    chart.data = [
+        { date: "2024-08-01", value: 50 },
+        { date: "2024-08-02", value: 55 },
+        { date: "2024-08-03", value: 53 },
+        { date: "2024-08-04", value: 60 }
+    ];
+
+    // Create X axis (Date Axis)
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.renderer.grid.template.location = 0;
+    dateAxis.renderer.minGridDistance = 50;
+
+    // Create Y axis (Value Axis)
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Create series
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "value";
+    series.dataFields.dateX = "date";
+    series.name = "Value";
+    series.strokeWidth = 2;
+    series.tooltipText = "{name}: [bold]{valueY}[/]";
+
+    // Add cursor
+    chart.cursor = new am4charts.XYCursor();
+
+    // Add scrollbar
+    chart.scrollbarX = new am4core.Scrollbar();
+
+    // Add legend
+    chart.legend = new am4charts.Legend();
+
+
+    // Variables to track the last data context
+    let lastDataContext = null;
+
+    // Add event listener for tooltip appearance
+    series.tooltip.events.on("shown", function(ev) {
+        console.log("Tooltip show");
+    });
+
+    series.tooltip.events.on("input", function(ev) {
+        console.log("Tooltip input");
+    });
+
+    series.tooltip.events.on("over", function(ev) {
+        console.log("Tooltip over");
+    });
+
+    series.tooltip.events.on("toggled", function(ev) {
+        console.log("Tooltip toggled");
+    });
+
+    series.tooltip.events.on("down", function(ev) {
+        console.log("Tooltip down");
+    });
+
+    series.tooltip.events.on("hit", function(ev) {
+        console.log("Tooltip hit");
+    });
+
+  
+
+    });
+
+    </script>
+</body>
+</html>

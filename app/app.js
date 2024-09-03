@@ -313,7 +313,16 @@ for (let key in sources) {
 }
 
 //actualisation des sources toutes les minutes
-//TODO avec la fonction setInterval
+//TEST AVEC MOBILEAIR 
+function reload_layers(source){
+  console.log("⏰ Reloading layers");
+  clearLayer("mobileair");
+  //get the new data
+  loadSource("mobileair");
+}
+
+setInterval(reload_layers, 9990000); //60000 -> 1min
+
 
 //OPEN SIDE PANEL
 /*

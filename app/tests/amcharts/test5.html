@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>amCharts 4 XY Chart with Hover Logging</title>
+    <script src="https://www.amcharts.com/lib/4/core.js"></script>
+    <script src="https://www.amcharts.com/lib/4/charts.js"></script>
+    <script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chartdiv"></div>
+    <script>
+        am4core.ready(function() {
+            // Apply the animated theme
+            am4core.useTheme(am4themes_animated);
+
+            // Create chart instance
+            var chart = am4core.create("chartdiv", am4charts.XYChart);
+
+            // Add data
+            chart.data = [
+                { date: "2024-08-01", value: 50 },
+                { date: "2024-08-02", value: 55 },
+                { date: "2024-08-03", value: 53 },
+                { date: "2024-08-04", value: 60 }
+            ];
+
+            // Create X axis (Date Axis)
+            var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+            dateAxis.renderer.grid.template.location = 0;
+            dateAxis.renderer.minGridDistance = 50;
+
+            // Create Y axis (Value Axis)
+            var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+            // Create series
+            var series = chart.series.push(new am4charts.LineSeries());
+            series.dataFields.valueY = "value";
+            series.dataFields.dateX = "date";
+            series.name = "Value";
+            series.strokeWidth = 2;
+            series.tooltipText = "{name}: [bold]{valueY}[/]";
+
+            // Add cursor
+            var cursor = new am4charts.XYCursor();
+            cursor.tooltipText = "";
+            chart.cursor = cursor;
+
+            // Add scrollbar
+            chart.scrollbarX = new am4core.Scrollbar();
+
+            // Add legend
+            chart.legend = new am4charts.Legend();
+
+            // Add chart title
+            var title = chart.titles.create();
+            title.text = "Simple XY Chart";
+            title.fontSize = 25;
+            title.marginBottom = 20;
+
+            // Add event listener for cursor move
+            chart.cursor.events.on("cursorPositionChanged", function(event) {
+                console.log("MOVE");
+                var dataItem = series.getDataItemByPosition(event.target.point);
+                if (dataItem) {
+                    console.log("Hovered data point:", dataItem.dataContext);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PM1 Over Time</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+    <canvas id="myChart" width="400" height="200"></canvas>
+    <script>
+
+        var ctx = document.getElementById('myChart').getContext('2d');
+
+        var data = {
+            labels: [],
+            datasets: [{
+                label: 'PM1',
+                data: [],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 1
+            }]
+        };
+
+        // Parse data and populate chart data
+        var dataPoints = [
+            {
+                "time": "10:10:08",
+                "sensorId": "002",
+                "sessionId": 5,
+                "sat": 5,
+                "PM1": 7.4,
+                "PM25": 8.2,
+                "PM10": 11.1,
+                "lat": 43.2839225,
+                "lon": 5.3857213333333
+            },
+            {
+                "time": "10:11:08",
+                "sensorId": "002",
+                "sessionId": 5,
+                "sat": 5,
+                "PM1": 8.4,
+                "PM25": 8.2,
+                "PM10": 11.1,
+                "lat": 43.2839225,
+                "lon": 5.3857213333333
+            },
+            {
+                "time": "10:12:08",
+                "sensorId": "002",
+                "sessionId": 5,
+                "sat": 5,
+                "PM1": 7.4,
+                "PM25": 8.2,
+                "PM10": 11.1,
+                "lat": 43.2839225,
+                "lon": 5.3857213333333
+            }
+            // ... other data points
+        ];
+
+        dataPoints.forEach(function(dataPoint) {
+            data.labels.push(new Date(dataPoint.time).toLocaleTimeString());
+            data.datasets[0].data.push(dataPoint.PM1);
+        });
+
+        var options = {
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'minute'
+                    }
+                }
+            }
+        };
+
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: options
+        });
+    </script>
+</body>
+</html>

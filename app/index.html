@@ -37,6 +37,10 @@
     <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/plugins/exporting.js"></script>
+    <!-- chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@1.27.0/build/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
     <!-- Cookies -->
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
@@ -139,6 +143,8 @@
                   <div class="card-body">
                     <h5 class="card-title">Historique des mesures</h5>
                     <div id="chartdiv_sensor"></div>
+                    <canvas id="chartcanvas_sensor"></canvas>
+
                     <!-- historique -->
                     <div class="text-center">
 
