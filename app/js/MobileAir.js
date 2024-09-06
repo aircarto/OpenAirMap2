@@ -1,3 +1,8 @@
+var selected_point_timespan;
+var old_selected_point_timespan;
+
+var circles = {}
+
 function loadMobileAir() {
     console.log("%cloadMobileAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
     mobileair_layer.clearLayers();
@@ -25,21 +30,38 @@ function loadMobileAir() {
         // data: ({timespan: timespanLower}),
         success: function (data) {
             console.log(data);
-             //création de l'array de points pour la polyline
-            //prepare the data
-            let polyLine_data = data.map(function (e) {
-                return [e.lat, e.lon]
-              });
-            var polyline = L.polyline(polyLine_data, {
-                color: 'gray'
-            }).addTo(mobileair_layer);
 
+            //POLYLINE
+            //il faut une polyline par session
+            // Function to group data by sessionId
+            function groupBySessionId(arr) {
+                return arr.reduce((acc, item) => {
+                    if (!acc[item.sessionId]) {
+                        acc[item.sessionId] = [];
+                    }
+                    acc[item.sessionId].push([item.lat, item.lon]);
+                    return acc;
+                }, {});
+            }
+            // Group data
+            const groupedData = groupBySessionId(data);
+
+            // Create and add polylines for each sessionId
+            Object.keys(groupedData).forEach(sessionId => {
+                const polylineData = groupedData[sessionId];
+                const polyline = L.polyline(polylineData, {
+                    color: 'gray' // You can set different colors if you want
+                }).addTo(map);
+            });
+
+            //POINTS (circle)
             //pour chaque data on crée un point sur la carte
             $.each(data, function (key, value) {
                 //création de ronds
                 var circle_param = {
+                    opacity : 0,
                     fillOpacity: 1,
-                    radius: 5   
+                    radius: 8   
                 }
                 //en fonction du polluant (mesures) on adapte la couleur
                     //pour les pm1 et les pm25
@@ -92,8 +114,9 @@ function loadMobileAir() {
                 if (mesures == "pm1") { var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>PM1: ' + value['PM1'] + ' µg/m&sup3';}
                 if (mesures == "pm25") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>session ID: '+ value['sessionId']+'<br/>PM2.5: ' + value['PM25']+ ' µg/m&sup3';}
                 if (mesures == "pm10") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>session ID: '+ value['sessionId']+'<br/>PM10: ' + value['PM10']+ ' µg/m&sup3';}
-
-                L.circle([value['lat'], value['lon']], circle_param)
+                
+                // Créer un objet pour stocker les marqueurs par ID
+                var circle = L.circle([value['lat'], value['lon']], circle_param)
                 .bindTooltip(mobileAirTooltip, {
                     direction: 'center',
                     offset: [0, -50]
@@ -103,6 +126,11 @@ function loadMobileAir() {
                     openSidePanel_mobileAir(value, pas_de_temps, "24h", mesures)
                 })
                 .addTo(mobileair_layer);
+                //changer le timestamp en unix
+                var unixTimestamp = new Date(value['time']).getTime();
+
+                // Stocker le marqueur dans l'objet markers avec son ID
+                circles[unixTimestamp] = circle;
 
             }); //end each
 
@@ -181,69 +209,47 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
             const filteredData = data.filter(item => item.sessionId === sessionId);
             console.log(filteredData);
 
-            //Ici on utilise un graph chart.js
             
              // Convert the raw data
-            const times = filteredData.map(d => new Date(d.time));
+            const times = filteredData.map(d => new Date(d.time).getTime()/1000);
             const pm1Values = filteredData.map(d => d.PM1);
 
-            // Create the chart
-            const ctx = document.getElementById('chartcanvas_sensor').getContext('2d');
-            const myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                labels: times,
-                datasets: [{
-                    label: 'PM1 Levels Over Time',
-                    data: filteredData.map(d => ({ x: new Date(d.time), y: d.PM1 })),
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    fill: false,
-                }]
-                },
-                options: {
-                responsive: true,
-                scales: {
-                    x: {
-                    type: 'time',
-                    time: {
-                        unit: 'minute'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Time'
-                    }
-                    },
-                    y: {
-                    title: {
-                        display: true,
-                        text: 'PM1'
-                    }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                        const dataPoint = context.raw;
-                        console.log('Tooltip Data:', dataPoint);
-                        return `Time: ${dataPoint.x.toLocaleString()}, PM1: ${dataPoint.y}`;
-                        }
-                    }
-                    }
-                },
-                onHover: function(event, chartElement) {
-                    if (chartElement.length > 0) {
-                    const element = chartElement[0];
-                    const dataPoint = rawData[element.index];
-                    console.log('Hovered Data Point:', dataPoint);
-                    }
-                }
-                }
+            const dataForChart_pm1 = filteredData.map(item => {
+                return {
+                    x: new Date(item.time).getTime(), // Convert time to Unix timestamp
+                    y: item.PM1 // Use PM1 as y value
+                };
             });
-           
+            
+            //Ici on utilise un graph canvasJS
+            var chart = new CanvasJS.Chart("chartdiv_sensor",
+                {
+                zoomEnabled: true, 
+                //EVENT handler     
+                toolTip: {
+                    updated: function(e) {
+                        //première fois
+                        if (selected_point_timespan === "") {
+                            console.log("First time");
+                            selected_point_timespan = e.entries[0].dataPoint.x;
+                            highlight_circle_on_map(selected_point_timespan, old_selected_point_timespan);
+                        }
+                        //si ca change
+                        if (selected_point_timespan != e.entries[0].dataPoint.x) {
+                            old_selected_point_timespan = selected_point_timespan;
+                            selected_point_timespan = e.entries[0].dataPoint.x;
+                            highlight_circle_on_map(selected_point_timespan, old_selected_point_timespan);
+                        }
+                }},
+                data: [{        
+                    type: "area",
+                    xValueType: "dateTime",
+                    dataPoints: dataForChart_pm1
+                }]
+            });
 
-
+            chart.render();
+            
         }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);
@@ -253,4 +259,17 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
       });//end ajax
 
 } //fin retreive_historique data
+
+function highlight_circle_on_map(selected_point_timespan, old_selected_point_timespan) {
+    
+        circles[selected_point_timespan].setStyle({
+            opacity :1,
+            color: "red"
+        });
+
+        circles[old_selected_point_timespan].setStyle({
+            opacity: 0,
+        });
+    
+}
 

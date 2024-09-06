@@ -161,6 +161,10 @@ function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
     card1_subtitle.innerHTML = "Capteur citoyen";
     card1_text.innerHTML=""; //empty content from previous opening
 
+    card2_text.innerHTML="Le capteur NebuleAir est un dispositif de mesure de l'air extérieur développé par AirCarto et AtmoSud. Il peut être placé sur le rebord d'une fenêtre ou sur un balcon afin de mesurer le taux de particules fines présent dans l'air. Il communique ses données toutes 2 minutes et les envoies sur les serveurs d'AirCarto via une connexion WIFI."
+    card2_link.innerHTML="AirCarto.fr"; //empty content from previous opening
+    card2_link.href = "https://aircarto.fr";
+
     //on ajoute la fonction onclick sur chaque bouton
     //1.historique
     var btn_historique_1h = document.getElementById("btn_historique_1h");
@@ -259,12 +263,14 @@ function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
 
 /*
 RECUPERATION DES DONNEE D'UN CAPTEUR -> CHART
-mesures_array est un array (ex: [PM1, PM2.5])
-mesure est le polluant qu'il faut ajouter à mesure_array (si add_mesure est true)
+    mesures_array est un array (ex: [PM1, PM2.5])
+    mesure est le polluant qu'il faut ajouter à mesure_array (si add_mesure est true)
 */
 
 function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, mesures_array, mesure, add_mesure){
     const start = Date.now(); //actual timestamp to measure response time
+    //il faut vider le div chartdiv_sensor (dans le cas ou canvasJS l'a utilisé juste avant)
+    document.getElementById("chartdiv_sensor").innerHTML = "";
     ////si add_mesure est true alors il faut ajouter le polluant à mesures_array
     if (add_mesure) {
        console.log("need to add mesure to array"); 
@@ -403,7 +409,7 @@ function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, m
                     valueYField: "value",
                     valueXField: "date",
                     tooltip: am5.Tooltip.new(amchart_root, {
-                        labelText: "{valueY}"
+                        labelText: "PM1: {valueY} µg/m³"
                     })
                 }));
 
@@ -424,7 +430,7 @@ function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, m
                         valueYField: "value",
                         valueXField: "date",
                         tooltip: am5.Tooltip.new(amchart_root, {
-                            labelText: "{valueY}"
+                            labelText: "PM2.5: {valueY} µg/m³"
                         })
                     }));
                     //on peut changer ici la taille du trait
@@ -433,6 +439,26 @@ function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, m
                     });
                     series_PM25.data.setAll(data_PM25);        
                     series_PM25.appear(1000);
+                }
+
+                //PM10
+                if (mesures_array.includes("pm10")) {
+                    var series_PM10 = chart.series.push(am5xy.SmoothedXLineSeries.new(amchart_root, {
+                        name: "PM10",
+                        xAxis: xAxis,
+                        yAxis: yAxis,
+                        valueYField: "value",
+                        valueXField: "date",
+                        tooltip: am5.Tooltip.new(amchart_root, {
+                            labelText: "PM10: {valueY} µg/m³"
+                        })
+                    }));
+                    //on peut changer ici la taille du trait
+                    series_PM10.strokes.template.setAll({
+                        strokeWidth: 2
+                    });
+                    series_PM10.data.setAll(data_PM10);        
+                    series_PM10.appear(1000);
                 }
 
                 chart.appear(1000, 100);

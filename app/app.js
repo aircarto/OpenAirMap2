@@ -40,6 +40,10 @@ var card1_img = document.getElementById('card1_img');
 var card1_title = document.getElementById('card1_title');
 var card1_text = document.getElementById('card1_text');
 var card1_button = document.getElementById('card1_button');
+var card2 = document.getElementById('card2');
+var card2_title = document.getElementById('card2_title');
+var card2_text = document.getElementById('card2_text');
+var card2_button = document.getElementById('card2_button');
 
 var mapContainer = document.getElementById('map-container');
 var dropdown_mesures = document.getElementById('dropdown_mesures');
@@ -401,25 +405,6 @@ function openSidePanel_microStation(data){
 
 }
 
-function openSidePanel_stationRef(data){
-  console.log("openSidePanel_stationRef");
-  card1_img.src="https://www.atmosud.org/sites/sud/files/styles/slider/public/medias/images/2022-04/station_longchamp_1.jpg?itok=y8Oi_LxY"
-  card1_title.innerHTML =  data.nom_station;
-  card1_subtitle.innerHTML = "Station de référence AtmoSud";
-
-  // Crée une nouvelle div pour les gauges
-  const newDiv_gauges = document.createElement('div');
-  newDiv_gauges.id = 'squaresContainer';
-  card1_text.innerHTML="";  //empty content from previous opening
-  card1_text.appendChild(newDiv_gauges);
-  createColorSquares();
-  // Crée une nouvelle div pour les courbes
-  const newDiv_chart = document.createElement('div');
-  newDiv_chart.id = 'chart';
-  card1_text.appendChild(newDiv_chart);
-
-  openSidePanel_generic()
-}
 
 //CLOSE SIDE PANEL
 function closeSidePanel(){

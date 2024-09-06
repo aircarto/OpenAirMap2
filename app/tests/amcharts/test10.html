@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Marker Color Change with External Script</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 400px;
+            width: 70%;
+            float: left;
+        }
+        #buttons {
+            float: left;
+            width: 30%;
+            padding: 10px;
+        }
+        button {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="buttons">
+        <button onclick="changeMarkerColor(1, 'red')">Change Color of Point 1</button>
+        <button onclick="changeMarkerColor(2, 'red')">Change Color of Point 2</button>
+        <button onclick="changeMarkerColor(3, 'red')">Change Color of Point 3</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialiser la carte
+        var map = L.map('map').setView([51.505, -0.09], 13);
+
+        // Ajouter une couche OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Définir des points avec leurs coordonnées
+        var points = [
+            { id: 1, lat: 51.5, lon: -0.09, color: 'blue' },
+            { id: 2, lat: 51.51, lon: -0.1, color: 'green' },
+            { id: 3, lat: 51.49, lon: -0.08, color: 'purple' }
+        ];
+
+        // Créer un objet pour stocker les marqueurs par ID
+        var markers = {};
+
+        // Ajouter des marqueurs à la carte
+        points.forEach(function(point) {
+
+            var marker = L.circleMarker([point.lat, point.lon], {
+                radius: 10,
+                color: point.color,
+                fillColor: point.color,
+                fillOpacity: 0.5
+            }).addTo(map);
+
+            // Stocker le marqueur dans l'objet markers avec son ID
+            markers[point.id] = marker;
+        }); //end for each
+        console.log(markers);
+
+        // Fonction pour changer la couleur du marqueur
+        function changeMarkerColor(id, color) {
+            if (markers[id]) {
+                markers[id].setStyle({
+                    color: color,
+                    fillColor: color
+                });
+            } else {
+                console.log("Marqueur avec l'ID " + id + " n'existe pas.");
+            }
+        }
+    </script>
+</body>
+</html>

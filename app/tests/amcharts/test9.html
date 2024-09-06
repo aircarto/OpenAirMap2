@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CanvasJS Chart with Mouseover Event</title>
+</head>
+<body>
+  <div id="chartContainer" style="height: 370px; width: 100%;"></div>
+  <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+  <script>
+    window.onload = function() {
+      const dataPoints = [
+        { x: new Date(2024, 8, 3, 10, 10, 8), y: 7.4, sensorId: "002", sessionId: 5, sat: 5, PM25: 8.2, PM10: 11.1, lat: 43.2839225, lon: 5.3857213333333 },
+        { x: new Date(2024, 8, 3, 10, 10, 18), y: 7.2, sensorId: "002", sessionId: 5, sat: 6, PM25: 8, PM10: 10.8, lat: 43.283976166667, lon: 5.3856125 },
+        { x: new Date(2024, 8, 3, 10, 10, 28), y: 5.6, sensorId: "002", sessionId: 5, sat: 6, PM25: 6.2, PM10: 8.4, lat: 43.284018166667, lon: 5.3855205 },
+        { x: new Date(2024, 8, 3, 10, 18, 12), y: 5.5, sensorId: "002", sessionId: 5, sat: 5, PM25: 6.1, PM10: 8.2, lat: 43.285986833333, lon: 5.3805931666667 }
+      ];
+
+      const chart = new CanvasJS.Chart("chartContainer", {
+        animationEnabled: true,
+        theme: "light2",
+        title: {
+          text: "PM1 Levels Over Time"
+        },
+        axisX: {
+          title: "Time",
+          valueFormatString: "HH:mm:ss",
+          labelAngle: -45
+        },
+        axisY: {
+          title: "PM1"
+        },
+        data: [{
+          type: "line",
+          dataPoints: dataPoints
+        }]
+      });
+
+      chart.render();
+
+      // Attach mouseover event to log data point
+      document.getElementById("chartContainer").addEventListener("mousemove", function(event) {
+        const chartInstance = chart.get("data")[0];
+        const dataPointIndex = chartInstance.getMouseOverDataPointIndex(event.clientX, event.clientY);
+        if (dataPointIndex !== -1) {
+          const dataPoint = dataPoints[dataPointIndex];
+          console.log("Hovered Data Point:", dataPoint);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

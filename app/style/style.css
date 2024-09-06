@@ -9,13 +9,13 @@ html, body {
     }
 
 
-
-
 #map-container {
     height: calc(100vh - 60px);
     margin-top: 50px;
     padding-right: 30px;
     padding-left: 30px;
+    position: relative; /* Ensure the button is positioned relative to the map */
+
     }
 
 #map {
@@ -43,4 +43,46 @@ html, body {
     max-width: 100%;
   }
 
+  #div_button_seuils_ {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Adjust position to fully center the button */
 
+    bottom: 15px;
+    z-index: 1000;
+  }
+
+  #btn_default {
+    background-color: #999999;
+    color: black;
+  }
+  
+  #btn_bon {
+    background-color: #4FF0E6;
+    color: black;
+  }
+  
+  #btn_moyen {
+    background-color: #51CCAA;
+    color: black;
+  }
+  
+  #btn_degrade {
+    background-color: #EDE663;
+    color: black;
+  }
+  
+  #btn_mauvais {
+    background-color: #ED5E58;
+    color: white;
+  }
+  
+  #btn_tres_mauvais {
+    background-color: #881B33;
+    color: white;
+  }
+  
+  #btn_extr_mauvais {
+    background-color: #74287D;
+    color: white;
+  }

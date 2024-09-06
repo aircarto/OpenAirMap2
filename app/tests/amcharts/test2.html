@@ -96,45 +96,19 @@ am5.ready(function() {
 
 
 
+  var cursor = chart.get("cursor");
+cursor.setAll({
+  //snapToSeries: [series, series2],
+  xAxis: xAxis,
+  yAxis: yAxis
+});
 
-
-cursor.events.on("cursormoved", function(){
-                    console.log("cursor moved!");
+cursor.events.on("cursormoved", function(e){
+                    console.log("cursor moved!" + e);
+                    console.log(e);
                 });
 
- // Add event listener for pointerover
- chart.series.events.on("pointerover", function(ev) {
-    var dataItem = ev.target.dataItem;
-    if (dataItem) {
-      console.log("Mouse over data point:", dataItem.dataContext);
-    }
-  });
-
-  // Add event listener for pointerout
-  chart.series.events.on("pointerout", function(ev) {
-    console.log("Mouse out of data point");
-  });
-
-  // Add event listener for click
-  chart.series.events.on("click", function(ev) {
-    var dataItem = ev.target.dataItem;
-    if (dataItem) {
-      console.log("Data point clicked:", dataItem.dataContext);
-    }
-  });
-
-  // Add event listener for tooltip show
-  chart.series.get("tooltip").events.on("shown", function(ev) {
-    var dataItem = ev.target.dataItem;
-    if (dataItem) {
-      console.log("Tooltip shown for data point:", dataItem.dataContext);
-    }
-  });
-
-  // Add event listener for tooltip hide
-  chart.series.get("tooltip").events.on("hidden", function(ev) {
-    console.log("Tooltip hidden");
-  });
+ 
                
 
 });

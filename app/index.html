@@ -37,9 +37,9 @@
     <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/plugins/exporting.js"></script>
-    <!-- chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/luxon@1.27.0/build/luxon.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- canvasjs -->
+    <script type="text/javascript" src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+
 
 
     <!-- Cookies -->
@@ -54,11 +54,7 @@
 
 </head>
 <body>
-    <!-- NAV BAR 1 -->
- 
-  
-
-  <!-- NavBar 2 -->
+  <!-- NavBar  -->
     <nav class="navbar navbar-expand-lg fixed-top" id="nav-bar">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">OpenAirMap</a>
@@ -120,9 +116,7 @@
                   <div class="card-body" id="card_1_body">
                     <h5 class="card-title" id="card1_title"></h5>
                     <h6 class="card-subtitle mb-2 text-body-secondary" id="card1_subtitle"></h6>
-
-                    <p class="card-text" id="card1_text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                    <div id="chartdiv"></div>
+                    <p class="card-text" id="card1_text"></p>
                   </div>
                 </div>
               </div>
@@ -137,18 +131,31 @@
                   </div>
                 </div>
               </div>
-              <!-- CARD 3 : AMChart -->
+              <!-- CARD 3 : Graphs -->
               <div class="col-sm-12">
                 <div class="card" id="card3">
                   <div class="card-body">
-                    <h5 class="card-title">Historique des mesures</h5>
+                    <h5 class="card-title text-center">Historique des mesures
+                     <!-- Polluants -->
+                     <div class="btn-group btn-group-sm mt-1" role="group" aria-label="Basic radio toggle button group">
+                     
+                      <input type="radio" class="btn-check" name="btn_poluant_pm1" id="btn_poluant_pm1" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_poluant_pm1">PM1</label>
+
+                      <input type="radio" class="btn-check" name="btn_poluant_pm25" id="btn_poluant_pm25" autocomplete="off" >
+                      <label class="btn btn-outline-primary" for="btn_poluant_pm25">PM2.5</label>
+                    
+                      <input type="radio" class="btn-check" name="btn_poluant_pm10" id="btn_poluant_pm10" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_poluant_pm10">PM10</label>
+                    </div>
+                  </h5>
+                    <!-- CHART -->
                     <div id="chartdiv_sensor"></div>
-                    <canvas id="chartcanvas_sensor"></canvas>
 
                     <!-- historique -->
                     <div class="text-center">
 
-                    <div class="btn-group mt-1" role="group" aria-label="Basic radio toggle button group">
+                    <div class="btn-group btn-group-sm mt-1" role="group" aria-label="Basic radio toggle button group">
                       
                       <input type="radio" class="btn-check" name="btn_historique_" id="btn_historique_" autocomplete="off" disabled>
                       <label class="btn btn-outline-primary" for="btn_historique_">Historique</label>
@@ -174,7 +181,7 @@
                     </div>
 
                      <!-- Pas de temps -->
-                     <div class="btn-group mt-1" role="group" aria-label="Basic radio toggle button group">
+                     <div class="btn-group btn-group-sm mt-1" role="group" aria-label="Basic radio toggle button group">
                       
                       <input type="radio" class="btn-check" name="btn_pas_de_temps_" id="btn_pas_de_temps_" autocomplete="off" disabled>
                       <label class="btn btn-outline-primary" for="btn_pas_de_temps_">Pas de temps</label>
@@ -192,20 +199,6 @@
                       <label class="btn btn-outline-primary" for="btn_pas_de_temps_d">1j</label>
                     </div>
 
-                     <!-- Polluants -->
-                     <div class="btn-group mt-1" role="group" aria-label="Basic radio toggle button group">
-                      <input type="radio" class="btn-check" name="btn_poluant_" id="btn_poluant_" autocomplete="off" disabled>
-                      <label class="btn btn-outline-primary" for="btn_poluant_">Mesures</label>
-                    
-                      <input type="radio" class="btn-check" name="btn_poluant_pm1" id="btn_poluant_pm1" autocomplete="off">
-                      <label class="btn btn-outline-primary" for="btn_poluant_pm1">PM1</label>
-
-                      <input type="radio" class="btn-check" name="btn_poluant_pm25" id="btn_poluant_pm25" autocomplete="off" >
-                      <label class="btn btn-outline-primary" for="btn_poluant_pm25">PM2.5</label>
-                    
-                      <input type="radio" class="btn-check" name="btn_poluant_pm10" id="btn_poluant_pm10" autocomplete="off">
-                      <label class="btn btn-outline-primary" for="btn_poluant_pm10">PM10</label>
-                    </div>
                   </div>
 
                   </div>
@@ -219,8 +212,77 @@
         
         <!-- MAP  -->
         <div class="col-12" id="map-container">
-            <div id="map"></div>
-        </div>
+        
+          <div id="map"></div>
+
+          <!-- Seuils -->
+          <div class="btn-group btn-group-sm" id="div_button_seuils_" role="group">
+            <button
+              class="btn"
+              id="btn_default"
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title="pas de donnée pour ce type de particule / ce pas de temps"
+            >
+              Pas de donnée
+            </button>
+            <button
+              class="btn"
+              id="btn_bon"
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title="0 à 10 &#181;g/m&#179;"
+            >
+              Bon
+            </button>
+            <button
+              class="btn"
+              id="btn_moyen"
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title="11 à 20 &#181;g/m&#179;"
+            >
+              Moyen
+            </button>
+            <button
+              class="btn"
+              id="btn_degrade"
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title="21 à 25 &#181;g/m&#179;"
+            >
+              Dégradé
+            </button>
+            <button
+              class="btn"
+              id="btn_mauvais"
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title="26 à 50 &#181;g/m&#179;"
+            >
+              Mauvais
+            </button>
+            <button
+              class="btn"
+              id="btn_tres_mauvais"
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title="51 à 75 &#181;g/m&#179;"
+            >
+              Très Mauvais
+            </button>
+            <button
+              class="btn"
+              id="btn_extr_mauvais"
+              data-bs-toggle="tooltip"
+              data-bs-placement="bottom"
+              data-bs-title=">75 &#181;g/m&#179;"
+            >
+              Extr. Mauvais
+            </button>
+          </div>
+
+        </div> <!-- end map-container -->
        
     </div>
 
@@ -229,6 +291,10 @@
     <script src="app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
-    
+    <script>
+      //Bootstrap variable for using tooltips
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    </script>
 </body>
 </html>

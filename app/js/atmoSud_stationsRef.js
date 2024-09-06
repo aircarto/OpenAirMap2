@@ -5,22 +5,28 @@ Récupération des données des stations de Référence
 DONC
 On charge d'abord toutes les stations puis on vient chercher la dernière donnée
 */
+var pas_de_temps_chart = "1h"
+var pas_de_temps_atmo=""
+var pas_de_temps_=""
+var historique_chart = "24h"
+var mesures_array = [];
 
 function load_atmoSud_stationsRef() {
     console.log("%cload_atmoSud_stationsRef", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
     const start = Date.now(); //actual timestamp to measure response time
+    // Current date
+    const today = new Date();
     atmo_ref_layer.clearLayers();
-    var pas_de_temps=getArrayFromLocalStorage(pas_de_temps_local) //attention revoie un objet !!
-    var pas_de_temps_atmo=""
-    switch (pas_de_temps[0]){
+    pas_de_temps_=getArrayFromLocalStorage(pas_de_temps_local) //attention revoie un objet !!
+    switch (pas_de_temps_[0]){
         case 'qh':
-            var pas_de_temps_atmo="quart-horaire"
+            pas_de_temps_atmo="quart-horaire"
             break;
         case 'h':
-            var pas_de_temps_atmo="horaire"
+            pas_de_temps_atmo="horaire"
             break;
         case 'd':
-            var pas_de_temps_atmo="journalière"
+            pas_de_temps_atmo="journalière"
             break;
     }
     //on récupère le type de mesure (+ conversion pm25 vers pm2.5)
@@ -42,9 +48,9 @@ function load_atmoSud_stationsRef() {
     console.log("Pas de temps Atmo: "+ pas_de_temps_atmo);
     console.log("Mesures : "+ mesures);
 
-    //Chargement des STATIONS
+    //1. Première request pour charger les identifiants et la localisation des STATIONS
     // on ne veut que les stations qui mesurent le polluant choisis
-    // on ne veut que les stations actives (TODO -> nécessite une MAJ de l'API)
+    // on ne veut que les stations actives (where date_fin_mesure est supérieur à la date d'aujourd'hui)
     let full_url_stations = `
         https://api.atmosud.org/observations/stations?
         format=json&
@@ -63,22 +69,26 @@ function load_atmoSud_stationsRef() {
             console.log(`Data gathered in %c${requestTimer} sec`, "color: red;");
             console.log(data);
             $.each(data.stations, function (key, item) {
-                //icone gris (par défault lorsque pas de donnée)
-                var icon_param = {
-                    iconUrl: 'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
-                    iconSize: [50, 50], // size of the icon
-                    iconAnchor: [5, 40], // point of the icon which will correspond to marker's location
-                    //popupAnchor: [30, -60] // point from which the popup should open relative to the iconAnchor
-                    className: item.id_station,
-                  }
-                var refStationsAtmoSud_icon = L.icon(icon_param);
-                L.marker([item['latitude'], item['longitude']], { icon: refStationsAtmoSud_icon })
-                .on('click', function () {
-                    console.log("Click on station: " + item.id_station)
-                })
-                .addTo(atmo_ref_layer);
-
-
+                var date_fin_Station = new Date(item.date_fin_mesure);
+                if (today < date_fin_Station) {
+                    //icone gris (par défault lorsque pas de donnée)
+                    var icon_param = {
+                        iconUrl: 'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
+                        iconSize: [50, 50], // size of the icon
+                        iconAnchor: [5, 40], // point of the icon which will correspond to marker's location
+                        //popupAnchor: [30, -60] // point from which the popup should open relative to the iconAnchor
+                        className: item.id_station,
+                    }
+                    var refStationsAtmoSud_icon = L.icon(icon_param);
+                    L.marker([item['latitude'], item['longitude']], { icon: refStationsAtmoSud_icon })
+                    .on('click', function () {
+                        console.log("Click on station: " + item.id_station)
+                        openSidePanel_stationRef(item.id_station, item.nom_station)
+                    })
+                    .addTo(atmo_ref_layer);
+            } else {
+                //console.log("Some station are off: " + item.id_station);
+            }
             })//end each
 
             //ajouter la layer sur la carte
@@ -97,7 +107,9 @@ function load_atmoSud_stationsRef() {
       ************************************************************************
       */
 
-     //Chargement des DERNIERE mesure
+     //2. Deuxime Call pour afficher la dernière mesure dispo pour chaque station (mesure/dernière)
+     // en fonction de la mesure sélectionnée et du pas de temps
+     // on adapte les icones en fonctions (couleurs) et on affiche la mesure sur l'icone
     let full_url_derniere = `
       https://api.atmosud.org/observations/stations/mesures/derniere?
       format=json&
@@ -132,7 +144,7 @@ function load_atmoSud_stationsRef() {
                     iconAnchor: [5, 50], // point of the icon which will correspond to marker's location
                     //popupAnchor: [30, -60] // point from which the popup should open relative to the iconAnchor
                   }
-                //pour les pm1 et les PM25 on change l'icone
+                //pour les pm1 et les PM25 on change l'icone (la couleurs)
                 if (mesures == "pm1" || mesures == "pm25") {
                     for (let key in seuils_PM1_PM25) {
                         let code = seuils_PM1_PM25[key].code
@@ -151,8 +163,8 @@ function load_atmoSud_stationsRef() {
                         let min = seuils_PM10[key].min
                         let max = seuils_PM10[key].max
                         //si la valeur est entre le max et le min
-                        if (item['valeur'] >= min & value['valeur'] <= max) {
-                            icon_param.iconUrl = 'img/microStationsAtmoSud/refStationAtmoSud_'+code+'.png';
+                        if (value['valeur'] >= min & value['valeur'] <= max) {
+                            icon_param.iconUrl = 'img/stationsRefAtmoSud/refStationAtmoSud_'+code+'.png';
                         }
                     }
                 }
@@ -190,8 +202,8 @@ function load_atmoSud_stationsRef() {
 
                 L.marker([value['lat'], value['lon']], { icon: text_param })
                 .on('click', function () {
-                        console.log("Click on device: " + value['id_station'])
-                        openSidePanel_stationRef(value)
+                        console.log("Click on station: " + (value['nom_station']) + " ("+ value['id_station'] + ")")
+                        openSidePanel_stationRef(value['id_station'], value['nom_station'], mesures)
                     })
                 .addTo(atmo_ref_layer);
 
@@ -208,3 +220,87 @@ function load_atmoSud_stationsRef() {
         });//end ajax
 
 }//end function load_atmoSud_stationsRef()
+
+
+/*
+Ouverture du Side panel
+    stationID -> FR1232
+    stationName -> AIX LES MILLES
+    pas_de_temps -> horaire, journalier
+    historique -> 24h
+    mesures_array -> PM10, PM25
+    mesure -> polluant à ajouter à mesure array
+*/
+
+function openSidePanel_stationRef(stationID, station_name, mesures){
+    console.log("openSidePanel_stationRef");
+
+     //il faut passer à la fonction un array pour mesures
+    // Clear the array by setting its length to 0
+    mesures_array.length = 0;
+    mesures_array.push(mesures)
+
+    //on lance la fonction pour récupérer les datas de mesures
+    retreive_historiqueData_stationRef(stationID, pas_de_temps_atmo, "24h", mesures_array );
+    
+    //card 1
+    card1_img.src="https://www.atmosud.org/sites/sud/files/styles/slider/public/medias/images/2022-04/station_longchamp_1.jpg?itok=y8Oi_LxY"
+    card1_title.innerHTML =  station_name;
+    card1_subtitle.innerHTML = "Station de référence AtmoSud";
+
+    //card 2
+    card2_text.innerHTML="Le dispositif de mesure d’AtmoSud est assuré par un réseau de plus de 110 stations permanentes et de stations provisoires, en fonction des besoins des territoires. Chaque station est équipée d’un ou plusieurs appareils de mesure, en fonction des problématiques locales de pollution. Chaque appareil (appelé analyseur) est spécifique à un polluant et il en mesure sa concentration 7 jours/7 et 24 heures/24. Les stations fixes sont implantées afin de mesurer la qualité de l’air dans différents contextes (trafic, urbain, industriel…) sur des territoires à enjeux pour les populations."
+    card2_link.innerHTML="AtmoSud.org"; //empty content from previous opening
+    card2_link.href = "https://atmosud.org";
+  
+    openSidePanel_generic()
+  } //end function openSidePanel_stationRef
+
+/*
+  RECUPERATION DES DONNEE HISTORIQUE D'UNE STATION
+*/
+
+function retreive_historiqueData_stationRef(stationId, pas_de_temps_atmo, historique, mesures_array, mesure, add_mesure){
+    const start = Date.now(); //actual timestamp to measure response time
+    console.log("⭐⭐⭐ Getting historical data ⭐⭐⭐");
+    console.log("Station id: " + stationId);
+    console.log("Pas de temps: " + pas_de_temps_atmo);
+    console.log("Historique: " + historique);
+    console.log("Mesure array->");
+    console.log(mesures_array);
+
+    //on doit convertir l'array de mesures en string pour l'url ([pm1, pm25, no2] -> pm1,pm25,pm10)
+    var mesures_string_comma = Object.values(mesures_array).join(',');
+
+
+    let full_url_mesures = `
+    https://api.atmosud.org/observations/stations/mesures?
+    format=json&
+    station_id=${stationId}&
+    nom_polluant=${mesures_string_comma}&
+    temporalite=${pas_de_temps_atmo}&
+    date_debut=2024-09-01&
+    date_fin=2024-09-05&
+    download=false
+      `.replace(/\s+/g, '')
+    
+    console.log(full_url_mesures);
+
+    $.ajax({
+        method: "GET",
+        url: full_url_mesures,
+        success: function (data) {
+            const end = Date.now();
+            const requestTimer = (end - start) / 1000;
+            console.log(`Data gathered in %c${requestTimer} sec`, "color: red;");
+            console.log(data);
+        }, //end ajax sucess
+        error: function(xhr, status, error){
+            console.error('Error:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+        } 
+      });//end ajax
+
+}
+
