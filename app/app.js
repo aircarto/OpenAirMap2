@@ -53,6 +53,27 @@ const mesures_local = 'mesures_local'
 const sources_local = 'sources_local'
 const pas_de_temps_local = 'pas_de_temps_local'
 
+//1.historique
+var btn_historique_1h = document.getElementById("btn_historique_1h");
+var btn_historique_3h = document.getElementById("btn_historique_3h");
+var btn_historique_24h = document.getElementById("btn_historique_24h");
+var btn_historique_1sem = document.getElementById("btn_historique_7d");
+var btn_historique_1m = document.getElementById("btn_historique_30d");
+var btn_historique_1a = document.getElementById("btn_historique_365d");
+//2.pas de temps
+var btn_pas_de_temps_2min = document.getElementById("btn_pas_de_temps_2min");
+var btn_pas_de_temps_qh = document.getElementById("btn_pas_de_temps_qh");
+var btn_pas_de_temps_h = document.getElementById("btn_pas_de_temps_h");
+var btn_pas_de_temps_d = document.getElementById("btn_pas_de_temps_d");
+//3. Mesures (ATTENTION: ici on peut choisir plusieurs polluants -> add_mesure = true)
+var btn_poluant_pm1 = document.getElementById("btn_poluant_pm1");
+var btn_poluant_pm25 = document.getElementById("btn_poluant_pm25");
+var btn_poluant_pm10 = document.getElementById("btn_poluant_pm10");
+
+ 
+
+ 
+
 /*
 Pour les dropdown:
   creation d'un bouton

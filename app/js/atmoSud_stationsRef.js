@@ -30,11 +30,12 @@ function load_atmoSud_stationsRef() {
             break;
     }
     //on récupère le type de mesure (+ conversion pm25 vers pm2.5)
-    var mesures=getArrayFromLocalStorage(mesures_local)
-    var mesures_atmo=mesures[0]
-    switch (mesures[0]){
+    var mesure=getArrayFromLocalStorage(mesures_local)
+    
+    var mesure_atmo=mesure[0]
+    switch (mesure[0]){
         case 'pm25':
-            var mesures_atmo="pm2.5"
+            var mesure_atmo="pm2.5"
             break;
     }
 
@@ -46,7 +47,7 @@ function load_atmoSud_stationsRef() {
 
     console.log("Pas de temps : "+ pas_de_temps);
     console.log("Pas de temps Atmo: "+ pas_de_temps_atmo);
-    console.log("Mesures : "+ mesures);
+    console.log("Mesure : "+ mesure);
 
     //1. Première request pour charger les identifiants et la localisation des STATIONS
     // on ne veut que les stations qui mesurent le polluant choisis
@@ -54,7 +55,7 @@ function load_atmoSud_stationsRef() {
     let full_url_stations = `
         https://api.atmosud.org/observations/stations?
         format=json&
-        nom_polluant=${mesures_atmo}&
+        nom_polluant=${mesure_atmo}&
         download=false
     `.replace(/\s+/g, '')
     
@@ -83,7 +84,7 @@ function load_atmoSud_stationsRef() {
                     L.marker([item['latitude'], item['longitude']], { icon: refStationsAtmoSud_icon })
                     .on('click', function () {
                         console.log("Click on station: " + item.id_station)
-                        openSidePanel_stationRef(item.id_station, item.nom_station)
+                        openSidePanel_stationRef(item.id_station, item.nom_station, mesure)
                     })
                     .addTo(atmo_ref_layer);
             } else {
@@ -113,7 +114,7 @@ function load_atmoSud_stationsRef() {
     let full_url_derniere = `
       https://api.atmosud.org/observations/stations/mesures/derniere?
       format=json&
-      nom_polluant=${mesures_atmo}&
+      nom_polluant=${mesure_atmo}&
       temporalite=${pas_de_temps_atmo}&
       download=false
         `.replace(/\s+/g, '')
@@ -145,7 +146,7 @@ function load_atmoSud_stationsRef() {
                     //popupAnchor: [30, -60] // point from which the popup should open relative to the iconAnchor
                   }
                 //pour les pm1 et les PM25 on change l'icone (la couleurs)
-                if (mesures == "pm1" || mesures == "pm25") {
+                if (mesure == "pm1" || mesure == "pm25") {
                     for (let key in seuils_PM1_PM25) {
                         let code = seuils_PM1_PM25[key].code
                         let min = seuils_PM1_PM25[key].min
@@ -157,7 +158,7 @@ function load_atmoSud_stationsRef() {
                     }
                 }
                 //pour les pm10
-                if (mesures == "pm10") {
+                if (mesure == "pm10") {
                     for (let key in seuils_PM10) {
                         let code = seuils_PM10[key].code
                         let min = seuils_PM10[key].min
@@ -203,7 +204,8 @@ function load_atmoSud_stationsRef() {
                 L.marker([value['lat'], value['lon']], { icon: text_param })
                 .on('click', function () {
                         console.log("Click on station: " + (value['nom_station']) + " ("+ value['id_station'] + ")")
-                        openSidePanel_stationRef(value['id_station'], value['nom_station'], mesures)
+                        localStorage.setItem("selected_station_ref_id", value['id_station'] )
+                        openSidePanel_stationRef(value['id_station'], value['nom_station'], mesure)
                     })
                 .addTo(atmo_ref_layer);
 
@@ -226,22 +228,25 @@ function load_atmoSud_stationsRef() {
 Ouverture du Side panel
     stationID -> FR1232
     stationName -> AIX LES MILLES
-    pas_de_temps -> horaire, journalier
+    pas_de_temps -> horaire, journalier, quart-horaire
     historique -> 24h
     mesures_array -> PM10, PM25
-    mesure -> polluant à ajouter à mesure array
+    mesures -> polluant à ajouter à mesure array
 */
 
-function openSidePanel_stationRef(stationID, station_name, mesures){
-    console.log("openSidePanel_stationRef");
+function openSidePanel_stationRef(stationID, station_name, mesure){
+    console.log("➡️ openSidePanel_stationRef");
+    console.log("Station ID: " + stationID);
+    console.log("Mesure: " + mesure);
 
-     //il faut passer à la fonction un array pour mesures
+    //il faut passer à la fonction un array pour mesures
     // Clear the array by setting its length to 0
     mesures_array.length = 0;
-    mesures_array.push(mesures)
+    mesures_array.push(mesure)
 
     //on lance la fonction pour récupérer les datas de mesures
-    retreive_historiqueData_stationRef(stationID, pas_de_temps_atmo, "24h", mesures_array );
+    //mesures_array est vide
+    retreive_historiqueData_stationRef(stationID, pas_de_temps_atmo, "24h", mesures_array, mesure, false);
     
     //card 1
     card1_img.src="https://www.atmosud.org/sites/sud/files/styles/slider/public/medias/images/2022-04/station_longchamp_1.jpg?itok=y8Oi_LxY"
@@ -252,6 +257,64 @@ function openSidePanel_stationRef(stationID, station_name, mesures){
     card2_text.innerHTML="Le dispositif de mesure d’AtmoSud est assuré par un réseau de plus de 110 stations permanentes et de stations provisoires, en fonction des besoins des territoires. Chaque station est équipée d’un ou plusieurs appareils de mesure, en fonction des problématiques locales de pollution. Chaque appareil (appelé analyseur) est spécifique à un polluant et il en mesure sa concentration 7 jours/7 et 24 heures/24. Les stations fixes sont implantées afin de mesurer la qualité de l’air dans différents contextes (trafic, urbain, industriel…) sur des territoires à enjeux pour les populations."
     card2_link.innerHTML="AtmoSud.org"; //empty content from previous opening
     card2_link.href = "https://atmosud.org";
+    
+    
+    //on ajoute la fonction onclick sur chaque bouton
+    //1.historique
+    btn_historique_1h.onclick = function() {
+        historique_chart = "1h";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+    btn_historique_3h.onclick = function() {
+        historique_chart = "3h";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+    btn_historique_24h.onclick = function() {
+        historique_chart = "24h";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+    btn_historique_1sem.onclick = function() {
+        historique_chart = "7d";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    }
+    btn_historique_1m.onclick = function() {
+        historique_chart = "30d";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+    btn_historique_1a.onclick = function() {
+        historique_chart = "365d";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+
+    //2.pas de temps
+    btn_pas_de_temps_2min.onclick = function() {
+        pas_de_temps_chart = "2m";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+    btn_pas_de_temps_qh.onclick = function() {
+        pas_de_temps_chart = "15m";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+    btn_pas_de_temps_h.onclick = function() {
+        pas_de_temps_chart = "1h";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+    btn_pas_de_temps_d.onclick = function() {
+        pas_de_temps_chart = "1d";
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart , mesures_array);
+    };
+
+    //3. Mesures (ATTENTION: ici on peut choisir plusieurs polluants -> add_mesure = true)
+    btn_poluant_pm1.onclick = function() {
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart, mesures_array, "pm1", true);
+    };
+    btn_poluant_pm25.onclick = function() {
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart, mesures_array, "pm25", true);
+    };
+    btn_poluant_pm10.onclick = function() {
+        retreive_historiqueData_stationRef(stationID, pas_de_temps_chart, historique_chart, mesures_array, "pm10", true);
+    };
+
   
     openSidePanel_generic()
   } //end function openSidePanel_stationRef
@@ -262,15 +325,57 @@ function openSidePanel_stationRef(stationID, station_name, mesures){
 
 function retreive_historiqueData_stationRef(stationId, pas_de_temps_atmo, historique, mesures_array, mesure, add_mesure){
     const start = Date.now(); //actual timestamp to measure response time
+    //il faut vider le div chartdiv_sensor (dans le cas ou canvasJS l'a utilisé juste avant)
+    document.getElementById("chartdiv_sensor").innerHTML = "";
+
     console.log("⭐⭐⭐ Getting historical data ⭐⭐⭐");
     console.log("Station id: " + stationId);
-    console.log("Pas de temps: " + pas_de_temps_atmo);
+    console.log("Pas de temps: " + pas_de_temps_atmo); //horaire, quart-horaire, journalière
     console.log("Historique: " + historique);
-    console.log("Mesure array->");
-    console.log(mesures_array);
+    console.log("Mesure: "  + mesure);
 
+     ////si add_mesure est true alors il faut ajouter le polluant à mesures_array
+     if (add_mesure) {
+        console.log("need to add mesure to array"); 
+        mesures_array.push(mesure)
+     }
+
+    console.log("Mesures array: "  + mesures_array );
+
+
+    //ATTENTION! Pour l'API d'AtmoSud il faut écrire pm2.5 et non pm25
     //on doit convertir l'array de mesures en string pour l'url ([pm1, pm25, no2] -> pm1,pm25,pm10)
-    var mesures_string_comma = Object.values(mesures_array).join(',');
+    // et on doit également remplacer pm25 par pm2.5
+    var mesures_string_comma = mesures_array[0]
+        .map(value => value === 'pm25' ? 'pm2.5' : value)
+        .join(',');
+
+     //il faut unchecked les boutons 
+     var inputs = document.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+     inputs.forEach(function(input) {
+         input.checked = false;
+     });
+
+     //attention pour le pas de temps des boutons il faut convertir ()
+    var pas_de_temps_btn;
+    if (pas_de_temps_atmo == "quart-horaire" || pas_de_temps == "qh") {pas_de_temps_btn = "qh"}
+    if (pas_de_temps_atmo == "horaire" || pas_de_temps == "h") {pas_de_temps_btn = "h"}
+    if (pas_de_temps_atmo == "journalière" || pas_de_temps == "d") {pas_de_temps_btn = "d"}
+
+    console.log("btn_pas_de_temps_"+pas_de_temps_btn)
+
+
+     //on checked le input qui a été sélectioné
+    var historique_button_checked = document.getElementById("btn_historique_"+historique);
+    historique_button_checked.checked = true;
+    var historique_button_checked = document.getElementById("btn_pas_de_temps_"+pas_de_temps_btn);
+    historique_button_checked.checked = true;
+    //attention à l'array pour les mesures!!
+    //on ajout le checked pour chaque polluant sélectionné
+    mesures_array.forEach(function(element) {
+        var historique_mesure_checked = document.getElementById("btn_poluant_"+element);
+        historique_mesure_checked.checked = true;
+    });
 
 
     let full_url_mesures = `
@@ -294,6 +399,97 @@ function retreive_historiqueData_stationRef(stationId, pas_de_temps_atmo, histor
             const requestTimer = (end - start) / 1000;
             console.log(`Data gathered in %c${requestTimer} sec`, "color: red;");
             console.log(data);
+
+            //création du root element de AMChart
+            //si le root élément a déjà été crée il faut le supprimer
+            if (amchart_root != undefined) {
+                console.log("DISPOSE AMChart root (already created)")
+                amchart_root.dispose();
+              }
+
+              //il faut crée des timeUnit AMCHART spécifique en fonction du pas de temps
+            var baseInterval_timeUnit_local;
+            var baseInterval_count;
+            if (pas_de_temps_atmo == "quart-horaire" || pas_de_temps == "qh") {baseInterval_timeUnit_local = "minute"; baseInterval_count=15}
+            if (pas_de_temps_atmo == "horaire" || pas_de_temps == "h") {baseInterval_timeUnit_local = "hour"; baseInterval_count=1}
+            if (pas_de_temps_atmo == "journalière" || pas_de_temps == "1d") {baseInterval_timeUnit_local = "day"; baseInterval_count=1}
+
+              am5.ready(function() {
+
+                //prepare the data
+                let data_PM1 = data.mesures.map(function (e) {
+                    return { value: e.valeur, date: new Date(e.date_debut).getTime() }
+                });
+               
+                // Create root element
+                amchart_root = am5.Root.new("chartdiv_sensor");
+
+                // Create chart
+         
+                var chart = amchart_root.container.children.push(am5xy.XYChart.new(amchart_root, {
+                    panX: false,
+                    panY: false,
+                    wheelX: "panX",
+                    wheelY: "zoomX",
+                    paddingLeft: 0
+                }));
+
+
+                // Add cursor
+                // sans le cursor le tooltip n'apparait pas...
+                var cursor = chart.set("cursor", am5xy.XYCursor.new(amchart_root, {
+                    behavior: "zoomX"
+                }));
+
+                cursor.lineY.set("visible", false);
+
+
+                //ajout de l'axe X (horizonzal -> datetime)
+                var xAxis = chart.xAxes.push(am5xy.DateAxis.new(amchart_root, {
+                    maxDeviation: 0.2,
+                    baseInterval: {
+                        timeUnit: baseInterval_timeUnit_local,  //il faut adapter en fonction du pas de temps! (valeur possible AMCHART: minute, hour, day, week, month, year)
+                        count: baseInterval_count
+                    },
+                    renderer: am5xy.AxisRendererX.new(amchart_root, {
+                        minorGridEnabled:true
+                    }),
+                    tooltip: am5.Tooltip.new(amchart_root, {})
+                 }));
+
+          
+                //ajout de l'axe Y (vertical -> data)
+                var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(amchart_root, {
+                    renderer: am5xy.AxisRendererY.new(amchart_root, {})
+                }));
+
+                //PM1
+                //ajout des données (series) en ligne simple (LineSeries) ou en lignes smoothed (SmoothedXLineSeries)
+                var series_PM1 = chart.series.push(am5xy.SmoothedXLineSeries.new(amchart_root, {
+                    name: "PM1",
+                    xAxis: xAxis,
+                    yAxis: yAxis,
+                    valueYField: "value",
+                    valueXField: "date",
+                    tooltip: am5.Tooltip.new(amchart_root, {
+                        labelText: "PM1: {valueY} µg/m³"
+                    })
+                }));
+
+                //on peut changer ici la taille du trait
+                series_PM1.strokes.template.setAll({
+                    strokeWidth: 2
+                });
+
+                series_PM1.data.setAll(data_PM1);        
+                series_PM1.appear(1000);
+
+
+                chart.appear(1000, 100);
+
+            }); //end am5 ready
+
+
         }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);

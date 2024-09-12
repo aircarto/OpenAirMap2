@@ -7,6 +7,7 @@ function loadNebuleAir() {
     nebuleair_layer.clearLayers();
     var pas_de_temps=getArrayFromLocalStorage(pas_de_temps_local)
     var mesures=getArrayFromLocalStorage(mesures_local)
+
     console.log("Pas de temps : "+ pas_de_temps);
     console.log("Mesures : "+ mesures);
     let mesure_StringA = mesures[0];
@@ -154,7 +155,7 @@ function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
     mesures_array.push(mesures)
 
     //on lance la fonction pour récupérer les datas de mesures
-    retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps, historique, mesures_array );
+    retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps, historique, mesures_array);
 
     card1_img.src="img/nebuleair/NebuleAir_photo.png"
     card1_title.innerHTML =  data.sensorId;
@@ -166,67 +167,52 @@ function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
     card2_link.href = "https://aircarto.fr";
 
     //on ajoute la fonction onclick sur chaque bouton
+    
     //1.historique
-    var btn_historique_1h = document.getElementById("btn_historique_1h");
-    var btn_historique_3h = document.getElementById("btn_historique_3h");
-    var btn_historique_24h = document.getElementById("btn_historique_24h");
-    var btn_historique_1sem = document.getElementById("btn_historique_7d");
-    var btn_historique_1m = document.getElementById("btn_historique_30d");
-    var btn_historique_1a = document.getElementById("btn_historique_365d");
-
     btn_historique_1h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '1h', mesures_array);
         historique_chart = "1h";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
     btn_historique_3h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '3h', mesures_array);
         historique_chart = "3h";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
     btn_historique_24h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '24h', mesures_array);
         historique_chart = "24h";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
     btn_historique_1sem.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '7d', mesures_array);
         historique_chart = "7d";
-    };
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
+    }
     btn_historique_1m.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '30d', mesures_array);
         historique_chart = "30d";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
     btn_historique_1a.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, '365d', mesures_array);
         historique_chart = "365d";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
 
-    //2.pas de temps
-    var btn_pas_de_temps_2min = document.getElementById("btn_pas_de_temps_2min");
-    var btn_pas_de_temps_qh = document.getElementById("btn_pas_de_temps_qh");
-    var btn_pas_de_temps_h = document.getElementById("btn_pas_de_temps_h");
-    var btn_pas_de_temps_d = document.getElementById("btn_pas_de_temps_d");
-    
+   //2.pas de temps
     btn_pas_de_temps_2min.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '2m', historique_chart, mesures_array);
         pas_de_temps_chart = "2m";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
     btn_pas_de_temps_qh.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '15m', historique_chart, mesures_array);
         pas_de_temps_chart = "15m";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
     btn_pas_de_temps_h.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '1h', historique_chart, mesures_array);
         pas_de_temps_chart = "1h";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
     btn_pas_de_temps_d.onclick = function() {
-        retreive_historiqueData_nebuleAir(data.sensorId, '1d', historique_chart, mesures_array);
         pas_de_temps_chart = "1d";
+        retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart , mesures_array);
     };
 
     //3. Mesures (ATTENTION: ici on peut choisir plusieurs polluants -> add_mesure = true)
-    var btn_poluant_pm1 = document.getElementById("btn_poluant_pm1");
-    var btn_poluant_pm25 = document.getElementById("btn_poluant_pm25");
-    var btn_poluant_pm10 = document.getElementById("btn_poluant_pm10");
-
     btn_poluant_pm1.onclick = function() {
         retreive_historiqueData_nebuleAir(data.sensorId, pas_de_temps_chart, historique_chart, mesures_array, "pm1", true);
     };
@@ -280,7 +266,7 @@ function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, m
     console.log("Retreive data for sensor: "  + sensorId );
     console.log("Pas de temps: "  + pas_de_temps );
     console.log("Historique: "  + historique );
-    console.log("Mesures: "  + mesures_array );
+    console.log("Mesures array: "  + mesures_array );
     console.log("Adding mesure: " + add_mesure)
 
     //il faut unchecked les boutons 
@@ -294,7 +280,7 @@ function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, m
     if (pas_de_temps == "2m" || pas_de_temps == "2min" ) {pas_de_temps_btn = "2min"}
     if (pas_de_temps == "15m" || pas_de_temps == "qh") {pas_de_temps_btn = "qh"}
     if (pas_de_temps == "1h" || pas_de_temps == "h") {pas_de_temps_btn = "h"}
-    if (pas_de_temps == "24h" || pas_de_temps == "1d") {pas_de_temps_btn = "d"}
+    if (pas_de_temps == "24h" || pas_de_temps == "d") {pas_de_temps_btn = "d"}
 
     console.log("btn_pas_de_temps_"+pas_de_temps_btn)
 
