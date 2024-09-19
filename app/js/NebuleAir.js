@@ -66,7 +66,6 @@ function loadNebuleAir() {
                             let min = seuils_PM10[key].min
                             let max = seuils_PM10[key].max
                             let value_rounded = Math.round(value[mesure_maj_pas_de_temps]);
-
                             //si la valeur est entre le max et le min
                             if (value_rounded >= min & value_rounded <= max) {
                                 icon_param.iconUrl = 'img/nebuleair/nebuleAir_'+code+'.png';

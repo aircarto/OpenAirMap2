@@ -17,7 +17,7 @@ function loadMobileAir() {
 
     let full_url_mobileair = `
     https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${capteur_ID}&
-    start=-6d&
+    start=-18d&
     end=now&
     GPSnull=false&
     format=JSON
@@ -188,7 +188,7 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
     let full_url_mobileair = `
     https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${sensorId}&
     sessionID=${sessionId}&
-    start=-6d&
+    start=-20d&
     end=now&
     GPSnull=false&
     format=JSON
@@ -205,8 +205,10 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
             const requestTimer = (end - start) / 1000;
             console.log(`Data gathered in %c${requestTimer} sec`, "color: red;");
             //on ne récupère que la data de la session
+            console.log(data);
             console.log("data flitered for sessionID:" + sessionId);
             const filteredData = data.filter(item => item.sessionId === sessionId);
+
             console.log(filteredData);
 
             
