@@ -6,6 +6,15 @@ Deuxième version de l'application web openairmap. Projet open source de visuali
 
 Faire apparaître sur la carte des points de mesure ou des points d'intéret lié à la qualité de l'air avec la possibilité pour l'utilisateur d'intéragir en cliquant sur les points pour avoir plus d'information ou comparer les données. L'application utilise pour cela des appels vers des API ouvertes afin de récupérer de la donnée en direct.
 
+## Historique
+
+Openairmap a initialement été développé pour les besoins des capteurs en développement Nebule Air pour l'accès à la donnée via une plateforme de surveillance collaborative.
+Le pas de temps de mesure le plus fin des Nebule Air a été choisi à 2 minutes pour répondre aux besoins des util
+
+## Contraintes de rigueur scientifique
+
+
+
 ## API
 
 Liste non exhaustive des API utilisées:
