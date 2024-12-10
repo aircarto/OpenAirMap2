@@ -13,138 +13,173 @@ function loadMobileAir() {
     let mesure_String =`${mesure_StringA}`;
     let mesure_majuscule = mesure_String.toUpperCase();
 
-    var capteur_ID = "002"
-
-    let full_url_mobileair = `
-    https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${capteur_ID}&
-    start=-18d&
-    end=now&
-    GPSnull=false&
-    format=JSON
-    `.replace(/\s+/g, '')
-
-    //Getting data from API
+    //on récupère la liste de tous les mobileAir disponibles
+    let full_url_mobileair_list = `https://api.aircarto.fr/capteurs/metadata?capteurType=MobileAir&format=JSON`
+    console.log("Get all MobileAir sensors");
+    
     $.ajax({
         method: "GET",
-        url: full_url_mobileair,
-        // data: ({timespan: timespanLower}),
+        url: full_url_mobileair_list,
         success: function (data) {
-            console.log(data);
-
-            //POLYLINE
-            //il faut une polyline par session
-            // Function to group data by sessionId
-            function groupBySessionId(arr) {
-                return arr.reduce((acc, item) => {
-                    if (!acc[item.sessionId]) {
-                        acc[item.sessionId] = [];
-                    }
-                    acc[item.sessionId].push([item.lat, item.lon]);
-                    return acc;
-                }, {});
-            }
-            // Group data
-            const groupedData = groupBySessionId(data);
-
-            // Create and add polylines for each sessionId
-            Object.keys(groupedData).forEach(sessionId => {
-                const polylineData = groupedData[sessionId];
-                const polyline = L.polyline(polylineData, {
-                    color: 'gray' // You can set different colors if you want
-                }).addTo(map);
+            //console.log(data);
+            //pour chaque capteur on récupère les tokens
+            $.each(data, function (key, value) {
+                console.log("Sensor token: " + value['sensorToken']);
+                //on recupère les données pour chaque capteur
+                getDataMobileAir(value['sensorToken'], mesures, mesure_majuscule);
             });
 
-            //POINTS (circle)
-            //pour chaque data on crée un point sur la carte
-            $.each(data, function (key, value) {
-                //création de ronds
-                var circle_param = {
-                    opacity : 0,
-                    fillOpacity: 1,
-                    radius: 8   
-                }
-                //en fonction du polluant (mesures) on adapte la couleur
-                    //pour les pm1 et les pm25
-                    if (mesures == "pm1" || mesures == "pm25") {
-                        for (let key in seuils_PM1_PM25) {
-                            let color_hex = seuils_PM1_PM25[key].color_hex
-                            let min = seuils_PM1_PM25[key].min
-                            let max = seuils_PM1_PM25[key].max
-                            let value_rounded = Math.round(value[mesure_majuscule]);
-                            //si la valeur est entre le max et le min
-                            if (value_rounded >= min & value_rounded <= max) {
-                                circle_param.color = color_hex;
-                                circle_param.fillColor = color_hex;
-                            }
-                        }
-                    }
-                    //pour les pm10
-                    if (mesures == "pm10") {
-                        for (let key in seuils_PM10) {
-                            let color_hex = seuils_PM10[key].color_hex
-                            let min = seuils_PM10[key].min
-                            let max = seuils_PM10[key].max
-                            let value_rounded = Math.round(value[mesure_majuscule]);
-
-                            //si la valeur est entre le max et le min
-                            if (value_rounded >= min & value_rounded <= max) {
-                                circle_param.color = color_hex;
-                                circle_param.fillColor = color_hex;
-
-                            }
-                        }
-                    }
-                
-                //création du tooltip (qui change en fonction du polluant)
-                var dateMesure= new Date(value['time']);
-                // Options for formatting the date in French
-                const options = {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    timeZone: 'Europe/Paris',
-                    timeZoneName: 'short'
-                };
-                const frenchDate = dateMesure.toLocaleDateString('fr-FR', options);
-
-                if (mesures == "pm1") { var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>PM1: ' + value['PM1'] + ' µg/m&sup3';}
-                if (mesures == "pm25") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>session ID: '+ value['sessionId']+'<br/>PM2.5: ' + value['PM25']+ ' µg/m&sup3';}
-                if (mesures == "pm10") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>session ID: '+ value['sessionId']+'<br/>PM10: ' + value['PM10']+ ' µg/m&sup3';}
-                
-                // Créer un objet pour stocker les marqueurs par ID
-                var circle = L.circle([value['lat'], value['lon']], circle_param)
-                .bindTooltip(mobileAirTooltip, {
-                    direction: 'center',
-                    offset: [0, -50]
-                })
-                .on('click', function () {
-                    console.log("Click on path from sensor: " + value['sensorId'])
-                    openSidePanel_mobileAir(value, pas_de_temps, "24h", mesures)
-                })
-                .addTo(mobileair_layer);
-                //changer le timestamp en unix
-                var unixTimestamp = new Date(value['time']).getTime();
-
-                // Stocker le marqueur dans l'objet markers avec son ID
-                circles[unixTimestamp] = circle;
-
-            }); //end each
-
-           
-        //ajouter la layer sur la carte
-        map.addLayer(mobileair_layer);
         }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);
             console.error('Status:', status);
             console.error('Response:', xhr.responseText);
-        } 
-      });//end ajax
+        }
+    });//end ajax
+
 }//end loadMobilAir function
+
+
+function getDataMobileAir(sensorToken, mesures, mesure_majuscule){
+    
+        let full_url_mobileair = `
+        https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${sensorToken}&
+        start=-8d&
+        end=now&
+        GPSnull=false&
+        format=JSON
+        `.replace(/\s+/g, '')
+
+        //Getting data from API
+        $.ajax({
+            method: "GET",
+            url: full_url_mobileair,
+            // data: ({timespan: timespanLower}),
+            success: function (data) {
+                if (data !== null && data !== undefined) {
+                    console.log("Data for sensor: " + sensorToken);
+                    console.log(data);
+
+                    //POLYLINE
+                    // il faut une polyline par session
+                    // Function to group data by sessionId
+                    function groupBySessionId(arr) {
+                        return arr.reduce((acc, item) => {
+                            if (!acc[item.sessionId]) {
+                                acc[item.sessionId] = [];
+                            }
+                            acc[item.sessionId].push([item.lat, item.lon]);
+                            return acc;
+                        }, {});
+                    }
+                    // Group data
+                    const groupedData = groupBySessionId(data);
+
+                    // Create and add polylines for each sessionId
+                    Object.keys(groupedData).forEach(sessionId => {
+                        const polylineData = groupedData[sessionId];
+                        const polyline = L.polyline(polylineData, {
+                            color: 'gray', // You can set different colors if you want
+                            opacity: 0.5
+                        }).addTo(map);
+                    });
+
+                    //POINTS (circle)
+                    //pour chaque data on crée un point sur la carte
+                    $.each(data, function (key, value) {
+                        //création de ronds
+                        var circle_param = {
+                            opacity : 0,
+                            fillOpacity: 1,
+                            radius: 8   
+                        }
+                        //en fonction du polluant (mesures) on adapte la couleur
+                            //pour les pm1 et les pm25
+                            if (mesures == "pm1" || mesures == "pm25") {
+                                for (let key in seuils_PM1_PM25) {
+                                    let color_hex = seuils_PM1_PM25[key].color_hex
+                                    let min = seuils_PM1_PM25[key].min
+                                    let max = seuils_PM1_PM25[key].max
+                                    let value_rounded = Math.round(value[mesure_majuscule]);
+                                    //si la valeur est entre le max et le min
+                                    if (value_rounded >= min & value_rounded <= max) {
+                                        circle_param.color = color_hex;
+                                        circle_param.fillColor = color_hex;
+                                    }
+                                }
+                            }
+                            //pour les pm10
+                            if (mesures == "pm10") {
+                                for (let key in seuils_PM10) {
+                                    let color_hex = seuils_PM10[key].color_hex
+                                    let min = seuils_PM10[key].min
+                                    let max = seuils_PM10[key].max
+                                    let value_rounded = Math.round(value[mesure_majuscule]);
+
+                                    //si la valeur est entre le max et le min
+                                    if (value_rounded >= min & value_rounded <= max) {
+                                        circle_param.color = color_hex;
+                                        circle_param.fillColor = color_hex;
+
+                                    }
+                                }
+                            }
+                        
+                        //création du tooltip (qui change en fonction du polluant)
+                        var dateMesure= new Date(value['time']);
+                        // Options for formatting the date in French
+                        const options = {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            timeZone: 'Europe/Paris',
+                            timeZoneName: 'short'
+                        };
+                        const frenchDate = dateMesure.toLocaleDateString('fr-FR', options);
+
+                        if (mesures == "pm1") { var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>PM1: ' + value['PM1'] + ' µg/m&sup3';}
+                        if (mesures == "pm25") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>session ID: '+ value['sessionId']+'<br/>PM2.5: ' + value['PM25']+ ' µg/m&sup3';}
+                        if (mesures == "pm10") {var mobileAirTooltip = '<b>MobileAir '+value['sensorId']+' (session n° '+ value['sessionId']+')</b><br/>'+frenchDate+'<br/>session ID: '+ value['sessionId']+'<br/>PM10: ' + value['PM10']+ ' µg/m&sup3';}
+                        
+                        // Créer un objet pour stocker les marqueurs par ID
+                        var circle = L.circleMarker([value['lat'], value['lon']], circle_param)
+                        .bindTooltip(mobileAirTooltip, {
+                            direction: 'center',
+                            offset: [0, -50]
+                        })
+                        .on('click', function () {
+                            console.log("Click on path from sensor: " + value['sensorId'])
+                            openSidePanel_mobileAir(value, pas_de_temps, "24h", mesures)
+                        })
+                        .addTo(mobileair_layer);
+                        //changer le timestamp en unix
+                        var unixTimestamp = new Date(value['time']).getTime();
+
+                        // Stocker le marqueur dans l'objet markers avec son ID
+                        circles[unixTimestamp] = circle;
+
+                    }); //end each
+
+                
+                //ajouter la layer sur la carte
+                map.addLayer(mobileair_layer);
+                } //end if data not null
+                 else {
+                    console.warn("No data received for sensor." + sensorToken);
+                }
+                }, //end ajax sucess
+            error: function(xhr, status, error){
+                console.error('Error:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+            } 
+        });//end ajax
+
+    } //end function getDataMobileAir
 
 function openSidePanel_mobileAir(data, pas_de_temps, historique, mesures){
     console.log("openSidePanel_mobileAir");
@@ -167,6 +202,7 @@ function openSidePanel_mobileAir(data, pas_de_temps, historique, mesures){
     //fonction semblable pour tous les types de capteurs
     openSidePanel_generic();
 } //end openSidePanel_mobileAir
+
 
 
 /*

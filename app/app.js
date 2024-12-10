@@ -363,8 +363,11 @@ function openSidePanel_generic(){
   sidePanel.classList.add('col-12','col-sm-6', 'col-lg-5'); 
   sidePanel.style.display = 'block';
   //map 
+  // sur smartphone -> disparait (col-0)
+  // sur ordi petit (sm) -> 6 colonnes
+  // sur grand écran (lg) -> 7 colonnes
   mapContainer.classList.remove('col-12'); 
-  mapContainer.classList.add('col-6', 'col-lg-7');
+  mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
   mapContainer.style.paddingLeft ='10px'; 
 }
 
