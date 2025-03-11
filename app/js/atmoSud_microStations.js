@@ -62,7 +62,8 @@ function load_atmoSud_microStations() {
     &aggregation=${pas_de_temps_atmo}
     &nb_dec=1
     `.replace(/\s+/g, '')
-
+    let selectedMarker = null;
+    let selectedText = null;
     $.ajax({
         method: "GET",
         url: full_url_derniere,
@@ -143,14 +144,37 @@ function load_atmoSud_microStations() {
                     iconAnchor: [x_position, y_position],
                     popupAnchor: [30, -60]
                 });
-            
+
+
                 let textMarker = L.marker([value['lat'], value['lon']], { icon: text_param })
                     .on('click', function () {
+                        // Si un marker est déjà sélectionné, on enlève l'animation
+                        if (selectedMarker && selectedMarker !== microStationMarker) {
+                            selectedMarker.setZIndexOffset(0);
+                            selectedMarker._icon.classList.remove('marker-selected');
+                        }
+
+                        if (selectedText && selectedText !== textMarker) {
+                            selectedText.setZIndexOffset(0);
+                            selectedText._icon.classList.remove('marker-selected');
+                        }
+
+                        // Appliquer l'animation uniquement au nouveau marker sélectionné
+                        microStationMarker.setZIndexOffset(1000);
+                        textMarker.setZIndexOffset(1000);
+                        microStationMarker._icon.classList.add('marker-selected');
+                        textMarker._icon.classList.add('marker-selected');
+
+                        // Mettre à jour le marker sélectionné
+                        selectedMarker = microStationMarker;
+                        selectedText = textMarker;
+
                         console.log("Click on device: " + value['id_site']);
-                        openSidePanel_microStation(value, pas_de_temps_atmo, "24h" ,mesures_atmo);
+                        openSidePanel_microStation(value, pas_de_temps_atmo, "24h", mesures_atmo);
                     })
                     .bindTooltip(microStation_Tooltip, { direction: 'center' })
                     .addTo(atmo_micro_layer);
+
             
                 // Effet hover : mise en avant du point et du texte
                 function highlightMarker() {
