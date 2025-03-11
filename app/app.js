@@ -478,6 +478,24 @@ L.tileLayer(
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   }
 ).addTo(map);
+// After map initialization
+const deviceInfo = L.control({ position: 'bottomright' });
+
+deviceInfo.onAdd = function () {
+    this._div = L.DomUtil.create('div', 'device-info');
+    this._div.innerHTML = `
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title" id="device-name"></h5>
+                <p class="card-text" id="device-details"></p>
+            </div>
+        </div>
+    `;
+    return this._div;
+};
+
+deviceInfo.addTo(map);
+
 
 //Location et Zoom par défaut récupéré dans config.js
 //si existe dans Local Storage alors prends les variables en local

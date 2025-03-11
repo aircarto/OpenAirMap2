@@ -114,7 +114,6 @@ function load_atmoSud_microStations() {
                 }
             
                 // Tooltip
-                var microStation_Tooltip = value['nom_site'];
                 var microStation_icon = L.icon(icon_param);
             
                 // Création du marqueur principal (point de mesure)
@@ -172,7 +171,6 @@ function load_atmoSud_microStations() {
                         console.log("Click on device: " + value['id_site']);
                         openSidePanel_microStation(value, pas_de_temps_atmo, "24h", mesures_atmo);
                     })
-                    .bindTooltip(microStation_Tooltip, { direction: 'center' })
                     .addTo(atmo_micro_layer);
 
             
@@ -180,15 +178,21 @@ function load_atmoSud_microStations() {
                 function highlightMarker() {
                     microStationMarker.setZIndexOffset(1000);
                     textMarker.setZIndexOffset(1000);
+                    
+                    // Show device info
+                    deviceInfo._div.querySelector('#device-name').textContent = value['nom_site'];
+                    deviceInfo._div.querySelector('#device-details').textContent = `Type: ${value['modele_capteur']}`;
+                    deviceInfo._div.style.display = 'block';
                 }
-            
+                
                 function resetMarker() {
                     microStationMarker.setZIndexOffset(0);
                     textMarker.setZIndexOffset(0);
+                    deviceInfo._div.style.display = 'none';
                 }
-            
+                
                 microStationMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
-                textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
+                textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);                
             });
             //end $each
             //ajouter la layer sur la carte

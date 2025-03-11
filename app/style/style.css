@@ -108,3 +108,13 @@ html, body {
         filter: brightness(100%) drop-shadow(0 0 5px rgba(0, 255, 255, 0.5)); /* Retour à la normale */
     }
   }
+  #device-info {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
