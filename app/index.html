@@ -76,7 +76,7 @@
               <!-- Mesure -->
               <li class="nav-item dropdown ms-2 mb-1">
                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                  Mesures
+                  <span class="selected-option">Choisir un polluant</span>
                 </a>
                 <ul class="dropdown-menu" id="dropdown_mesures">
                 </ul>
@@ -84,7 +84,7 @@
               <!-- Pas de temps -->
               <li class="nav-item dropdown ms-2 mb-1">
                 <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                  Pas de temps
+                  <span class="selected-option">Choisir un pas de temps</span>
                 </a>
                 <ul class="dropdown-menu" id="dropdown_pas_de_temps">
                 </ul>
@@ -143,6 +143,10 @@
                     
                       <input type="radio" class="btn-check" name="btn_poluant_pm10" id="btn_poluant_pm10" autocomplete="off">
                       <label class="btn btn-outline-primary" for="btn_poluant_pm10">PM10</label>
+
+                      <input type="radio" class="btn-check" name="btn_poluant_no2" id="btn_poluant_no2" autocomplete="off">
+                      <label class="btn btn-outline-primary" for="btn_poluant_no2">NO<sub>2</sub></label>
+
                     </div>
                   </h5>
                     <!-- CHART -->
@@ -155,6 +159,9 @@
                       
                       <input type="radio" class="btn-check" name="btn_historique_" id="btn_historique_" autocomplete="off" disabled>
                       <label class="btn btn-outline-primary" for="btn_historique_">Historique</label>
+
+
+
                     
                       <input type="radio" class="btn-check" name="btn_historique_1h" id="btn_historique_1h" autocomplete="off">
                       <label class="btn btn-outline-primary" for="btn_historique_1h">1h</label>
@@ -173,7 +180,6 @@
 
                       <input type="radio" class="btn-check" name="btn_historique_365d" id="btn_historique_365d" autocomplete="off">
                       <label class="btn btn-outline-primary" for="btn_historique_365d">1 ans</label>
-
                     </div>
 
                      <!-- Pas de temps -->
@@ -195,15 +201,31 @@
                       <label class="btn btn-outline-primary" for="btn_pas_de_temps_d">1j</label>
                     </div>
 
+                     <!-- Plage historique -->
+                    <form>
+                      <label for="start_date">Date de début :</label>
+                      <input class="btn btn-outline-primary" type="date" id="start_date" name="start_date" required>
+                      <label for="start_time">Heure de début :</label>
+                      <input class="btn btn-outline-primary" type="time" id="start_time" name="start_time" required>
+              
+                      <label for="end_date">Date de fin :</label>
+                      <input class="btn btn-outline-primary" type="date" id="end_date" name="end_date" required>
+                      <label for="end_time">Heure de fin :</label>
+                      <input class="btn btn-outline-primary" type="time" id="end_time" name="end_time" required>
+              
+                      <button class="btn btn-outline-primary" type="submit" id="apply_date_range">Appliquer</button>
+                    </form>
+                  
+                  
+                  
+                  
+                  
                   </div>
 
                   </div>
                 </div>
               </div>
             </div>
-             
-        
-
         </div>
         
         <!-- MAP  -->

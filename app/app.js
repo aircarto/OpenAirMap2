@@ -54,6 +54,11 @@ const sources_local = 'sources_local'
 const pas_de_temps_local = 'pas_de_temps_local'
 
 //1.historique
+var btn_historique_custom = document.getElementById("apply_date_range");
+var btn_historique_start_date = document.getElementById("start_date");
+var btn_historique_start_time = document.getElementById("start_time");
+var btn_historique_end_date = document.getElementById("end_date");
+var btn_historique_end_time = document.getElementById("end_time");
 var btn_historique_1h = document.getElementById("btn_historique_1h");
 var btn_historique_3h = document.getElementById("btn_historique_3h");
 var btn_historique_24h = document.getElementById("btn_historique_24h");
@@ -69,6 +74,7 @@ var btn_pas_de_temps_d = document.getElementById("btn_pas_de_temps_d");
 var btn_poluant_pm1 = document.getElementById("btn_poluant_pm1");
 var btn_poluant_pm25 = document.getElementById("btn_poluant_pm25");
 var btn_poluant_pm10 = document.getElementById("btn_poluant_pm10");
+var btn_poluant_no2 = document.getElementById("btn_poluant_no2");
 
  
 
@@ -130,8 +136,10 @@ function isEmptyObject(obj) {
 //MESURES dropdown list (attention seul un élément peut etre coché)
 for (let key in mesures) {
   if (mesures.hasOwnProperty(key)) {
+    console.log(getArrayFromLocalStorage(mesures_local)[0])
       let button = document.createElement('button');
       let name = mesures[key].name
+      console.log(name)
       let code = mesures[key].code
       let activated = mesures[key].activated
       button.innerHTML = name; 
@@ -167,6 +175,8 @@ for (let key in mesures) {
           //on ajoute le nouveau
           addItemToLocalStorageArray(mesures_local, code);
           button.classList.add("active");
+          //on change le nom du bouton
+          document.querySelector('#dropdown_mesures').closest('.dropdown').querySelector('.selected-option').textContent = name;
           //ICI ON PEUT FETCHER LES DATAS
           console.log("Changement du type de mesure: " + getArrayFromLocalStorage(mesures_local));
           //attention il faut éventuellement vider le cache
@@ -248,6 +258,7 @@ for (let key in pas_de_temps) {
        let check_array=getArrayFromLocalStorage(pas_de_temps_local);
        if(isValueInObject(check_array, code)){
          button.classList.add("active");
+
        }
 
        button.onclick= function (){
@@ -269,6 +280,10 @@ for (let key in pas_de_temps) {
           //on ajoute le nouveau
           addItemToLocalStorageArray(pas_de_temps_local, code);
           button.classList.add("active");
+          //on change le nom du bouton
+          document.querySelector('#dropdown_pas_de_temps').closest('.dropdown').querySelector('.selected-option').textContent = name;
+
+
           //ICI ON PEUT FETCHER LES DATAS
           console.log("Changement du pas de temps: " + getArrayFromLocalStorage(pas_de_temps_local));
           //attention il faut éventuellement vider le cache
@@ -408,26 +423,27 @@ function openSidePanel_signalair(data, nuisance_type){
      openSidePanel_generic() 
 }
 
-function openSidePanel_microStation(data){
-  console.log("openSidePanel_microStation");
-  card1_img.src="img/microStationsAtmoSud/microStation_photo.jpg"
-  card1_title.innerHTML = data.nom_site;
-  card1_subtitle.innerHTML = "Micro station AtmoSud";
+// function openSidePanel_microStation(data){
+//   console.log(data)
+//   console.log("openSidePanel_microStation");
+//   card1_img.src="img/microStationsAtmoSud/microStation_photo.jpg"
+//   card1_title.innerHTML = data.nom_site;
+//   card1_subtitle.innerHTML = "Micro station AtmoSud";
 
-  // Crée une nouvelle div pour les gauges
-  const newDiv_gauges = document.createElement('div');
-  newDiv_gauges.id = 'squaresContainer';
-  card1_text.innerHTML="";  //empty content from previous opening
-  card1_text.appendChild(newDiv_gauges);
-  createColorSquares();
-  // Crée une nouvelle div pour les courbes
-  const newDiv_chart = document.createElement('div');
-  newDiv_chart.id = 'chart';
-  card1_text.appendChild(newDiv_chart);
+//   // Crée une nouvelle div pour les gauges
+//   const newDiv_gauges = document.createElement('div');
+//   newDiv_gauges.id = 'squaresContainer';
+//   card1_text.innerHTML="";  //empty content from previous opening
+//   card1_text.appendChild(newDiv_gauges);
+//   createColorSquares();
+//   // Crée une nouvelle div pour les courbes
+//   const newDiv_chart = document.createElement('div');
+//   newDiv_chart.id = 'chart';
+//   card1_text.appendChild(newDiv_chart);
 
-  openSidePanel_generic()
+//   openSidePanel_generic()
 
-}
+// }
 
 
 //CLOSE SIDE PANEL
@@ -473,6 +489,18 @@ if ('Lat' in localStorage) {
 } else {
   map.setView(coordsCenter, zoomLevel);
 } 
+
+// on set l'affichage des boutons de choix de pas de temps et de mesures
+const storedTimeStep = getArrayFromLocalStorage('pas_de_temps_local')[0];
+const timeStepName = pas_de_temps[Object.keys(pas_de_temps).find(key => 
+  pas_de_temps[key].code === storedTimeStep
+)].name;
+document.querySelector('#dropdown_pas_de_temps').closest('.dropdown').querySelector('.selected-option').textContent = timeStepName;
+const storedMesure = getArrayFromLocalStorage('mesures_local')[0];
+const mesureName = mesures[Object.keys(mesures).find(key =>
+  mesures[key].code === storedMesure
+)].name;
+document.querySelector('#dropdown_mesures').closest('.dropdown').querySelector('.selected-option').textContent = mesureName;
 
 
 // Dès que l'on bouge la cart on enregistre LAT/LONG/ZOOM

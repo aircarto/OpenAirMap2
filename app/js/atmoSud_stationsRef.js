@@ -38,14 +38,13 @@ function load_atmoSud_stationsRef() {
             var mesure_atmo="pm2.5"
             break;
     }
-
     //ATTENTION pas de donnée dispo pour les Stations de Référence au pas de temps 2min
-    if (pas_de_temps[0] === '2min') {
-        console.warn("Pas de données pour le pas de temps " + pas_de_temps);
+    if (pas_de_temps_[0] === '2min') {
+        console.warn("Pas de données pour le pas de temps " + pas_de_temps_[0]);
         return;
     }
 
-    console.log("Pas de temps : "+ pas_de_temps);
+    console.log("Pas de temps : "+ pas_de_temps_);
     console.log("Pas de temps Atmo: "+ pas_de_temps_atmo);
     console.log("Mesure : "+ mesure);
 

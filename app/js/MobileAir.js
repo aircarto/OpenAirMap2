@@ -44,7 +44,7 @@ function getDataMobileAir(sensorToken, mesures, mesure_majuscule){
     
         let full_url_mobileair = `
         https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${sensorToken}&
-        start=-8d&
+        start=-18d&
         end=now&
         GPSnull=false&
         format=JSON
