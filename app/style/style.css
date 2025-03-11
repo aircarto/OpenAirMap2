@@ -92,10 +92,19 @@ html, body {
   }
 
   @keyframes glow {
-      0% { filter: brightness(100%) drop-shadow(0 0 0px #fff); }
-      50% { filter: brightness(150%) drop-shadow(0 0 5px #fff); }
-      100% { filter: brightness(100%) drop-shadow(0 0 0px #fff); }
+    0% {
+        filter: brightness(100%) drop-shadow(0 0 5px rgba(0, 255, 255, 0.5)); /* Bleu clair / Turquoise */
+    }
+    25% {
+        filter: brightness(120%) drop-shadow(0 0 15px rgba(0, 255, 255, 0.8)); /* Intensification légère du bleu */
+    }
+    50% {
+        filter: brightness(130%) drop-shadow(0 0 25px rgba(0, 255, 255, 1)); /* Un bleu plus fort */
+    }
+    75% {
+        filter: brightness(120%) drop-shadow(0 0 15px rgba(0, 255, 255, 0.8)); /* Décrue */
+    }
+    100% {
+        filter: brightness(100%) drop-shadow(0 0 5px rgba(0, 255, 255, 0.5)); /* Retour à la normale */
+    }
   }
-
-
-
