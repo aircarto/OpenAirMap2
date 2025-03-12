@@ -22,6 +22,10 @@ function loadNebuleAir() {
         mesure_maj_pas_de_temps = mesure_majuscule + "_"+ pas_de_temps_String
     }
 
+    // Track selected markers for click interaction
+    let selectedMarker = null;
+    let selectedText = null;
+
     $.ajax({
         method: "GET",
         url: "https://api.aircarto.fr/capteurs/metadata?capteurType=NebuleAir",
@@ -76,8 +80,8 @@ function loadNebuleAir() {
                 } 
                 //create icons
                 var nebuleAir_icon = L.icon(icon_param);
-                //create a marker from icon
-                L.marker([value['latitude'], value['longitude']], { icon: nebuleAir_icon })
+                //create a marker from icon and store reference
+                let nebuleAirMarker = L.marker([value['latitude'], value['longitude']], { icon: nebuleAir_icon })
                 .addTo(nebuleair_layer);
                 
                 
@@ -113,28 +117,62 @@ function loadNebuleAir() {
                     var nebuleAirTooltip = value['sensorId'];
                     var nebuleAirPopup = '<b>'+value['sensorId']+'<b>'
                     
-                    L.marker([value['latitude'], value['longitude']], { icon: text_param })
-                    .bindTooltip(nebuleAirTooltip, {
-                        direction: 'center',
-                        offset: [0, -50] })
-                    .bindPopup(nebuleAirPopup,{
-                        offset: [20, -30]
-                    })
+                    // Store reference to text marker
+                    let textMarker = L.marker([value['latitude'], value['longitude']], { icon: text_param })
                     .on('click', function () {
+                        // Si un marker est déjà sélectionné, on enlève l'animation
+                        if (selectedMarker && selectedMarker !== nebuleAirMarker) {
+                            selectedMarker.setZIndexOffset(0);
+                            selectedMarker._icon.classList.remove('marker-selected');
+                        }
+
+                        if (selectedText && selectedText !== textMarker) {
+                            selectedText.setZIndexOffset(0);
+                            selectedText._icon.classList.remove('marker-selected');
+                        }
+
+                        // Appliquer l'animation uniquement au nouveau marker sélectionné
+                        nebuleAirMarker.setZIndexOffset(1000);
+                        textMarker.setZIndexOffset(1000);
+                        nebuleAirMarker._icon.classList.add('marker-selected');
+                        textMarker._icon.classList.add('marker-selected');
+
+                        // Mettre à jour le marker sélectionné
+                        selectedMarker = nebuleAirMarker;
+                        selectedText = textMarker;
+
                         console.log("Click on device: " + value['sensorId'])
                         openSidePanel_nebuleAir(value, pas_de_temps, "24h", mesures)
                     })
                     .addTo(nebuleair_layer);
+                    
+                    // Add hover effect - highlight on hover
+                    function highlightMarker() {
+                        nebuleAirMarker.setZIndexOffset(1000);
+                        textMarker.setZIndexOffset(1000);
+                        
+                        // Show device info
+                        deviceInfo._div.querySelector('#device-name').textContent = value['sensorId'];
+                        deviceInfo._div.querySelector('#device-details').textContent = `Type: NebuleAir`;
+                        deviceInfo._div.style.display = 'block';
+                    }
+                    
+                    function resetMarker() {
+                        // Don't reset if this is the selected marker
+                        if (selectedMarker !== nebuleAirMarker) {
+                            nebuleAirMarker.setZIndexOffset(0);
+                            textMarker.setZIndexOffset(0);
+                        }
+                        deviceInfo._div.style.display = 'none';
+                    }
+                    
+                    // Apply hover effects to both markers
+                    nebuleAirMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
+                    textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
                 }
-
-
-                
-
             }); //end each
             //ajouter la layer sur la carte
             map.addLayer(nebuleair_layer);
-           
-               
         }, //end ajax sucess
         error: function(xhr, status, error){
             console.error('Error:', error);
@@ -143,6 +181,7 @@ function loadNebuleAir() {
         } 
       });//end ajax
 } //end function loadNebuleAir()
+
 
 //OUVERTURE DU SIDE PANEL
 function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){

@@ -650,6 +650,7 @@ deviceInfo.onAdd = function () {
             </div>
         </div>
     `;
+    deviceInfo._div.style.display = 'none';
     return this._div;
 };
 
