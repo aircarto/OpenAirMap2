@@ -183,12 +183,63 @@ function updateTimeDisplay() {
   
   horlogeButton.innerHTML = displayText;
 }
+// Function to automatically refresh data based on selected time step
+function setupAutoRefresh() {
+  // Clear any existing refresh interval
+  if (window.refreshInterval) {
+    clearInterval(window.refreshInterval);
+  }
+  
+  // Get the current time step from local storage
+  const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
+  
+  // Determine refresh interval in milliseconds based on time step
+  let refreshIntervalMs;
+  switch(selectedTimeStep) {
+    case 'instantane':
+    case '2min':
+      refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
+      break;
+    case 'qh':
+      refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
+      break;
+    case 'h':
+      refreshIntervalMs = 60 * 60 * 1000; // 1 hour
+      break;
+    case 'd':
+      refreshIntervalMs = 24 * 60 * 60 * 1000; // 1 day
+      break;
+    default:
+      refreshIntervalMs = 5 * 60 * 1000; // Default to 5 minutes
+  }
+  
+  console.log(`Auto-refresh set to ${refreshIntervalMs/1000} seconds based on '${selectedTimeStep}' time step`);
+  
+  // Set up the interval to refresh all active data sources
+  window.refreshInterval = setInterval(() => {
+    console.log("⏰ Auto-refreshing data based on time step");
+    // Get all active sources from local storage
+    const activeSources = getArrayFromLocalStorage(sources_local);
+    
+    // Refresh each active source
+    activeSources.forEach(source => {
+      clearLayer(source);
+      loadSource(source);
+    });
+    
+    // Update time display
+    updateTimeDisplay();
+  }, refreshIntervalMs);
+}
 
 // Initialize clock on page load
 document.addEventListener('DOMContentLoaded', function() {
   updateTimeDisplay();
   // Update clock every minute
   setInterval(updateTimeDisplay, 60000);
+
+  // Set up auto data refresh
+  setupAutoRefresh();
 });
 
 
@@ -374,6 +425,7 @@ for (let key in pas_de_temps) {
             loadSource(item);
           }
           updateTimeDisplay();
+          setupAutoRefresh();
         }
       }
 
