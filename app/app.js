@@ -463,7 +463,7 @@ function closeSidePanel(){
 let coordsCenter = config.coordsCenter;
 let zoomLevel = config.zoomLevel;
 
-var map = L.map("map", {
+let map = L.map("map", {
   //zoomControl: isMobile == true ? false : true,
   minZoom: config.minZoom,
   maxZoom: config.maxZoom,
@@ -478,6 +478,36 @@ L.tileLayer(
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   }
 ).addTo(map);
+
+
+// Event listener for the open/close button of the side panel
+document.getElementById('toggleSidePanel').addEventListener('click', function() {
+  const sidePanel = document.getElementById('side-panel');
+  const mapContainer = document.getElementById('map-container');
+  const icon = this.querySelector('i');
+  
+  if (sidePanel.style.display === 'none') {
+      // Opening side panel
+      sidePanel.classList.add('col-12','col-sm-6', 'col-lg-5');
+      sidePanel.style.display = 'block';
+      mapContainer.classList.remove('col-12');
+      mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
+      icon.classList.replace('bi-chevron-right', 'bi-chevron-left');
+  } else {
+      // Closing side panel
+      sidePanel.classList.remove('col-12','col-sm-6', 'col-lg-5');
+      sidePanel.style.display = 'none';
+      mapContainer.classList.remove('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
+      mapContainer.classList.add('col-12');
+      icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
+  }
+  
+  map.invalidateSize();
+});
+
+
+
+
 // After map initialization
 const deviceInfo = L.control({ position: 'bottomright' });
 
