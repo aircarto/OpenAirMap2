@@ -76,9 +76,36 @@ var btn_poluant_pm25 = document.getElementById("btn_poluant_pm25");
 var btn_poluant_pm10 = document.getElementById("btn_poluant_pm10");
 var btn_poluant_no2 = document.getElementById("btn_poluant_no2");
 
- 
+ // Selected markers tracking
+var globalSelectedMarker = null;
+var globalSelectedText = null;
 
- 
+// fonction permettant de mettre en forme les lieux
+function formatString(str) {
+  // First, replace underscores with spaces
+  let formattedStr = str.replace(/_/g, ' ');
+  
+  // Define consonants (French consonants)
+  const consonants = 'bcdfghjklmnpqrstvwxz';
+  
+  // Define uppercase vowels (including accented variants)
+  const uppercaseVowels = 'AEIOUYÀÁÂÄÆÈÉÊËÌÍÎÏÒÓÔÖŒÙÚÛÜÝ';
+  
+  // Add apostrophe between consonant and uppercase vowel
+  formattedStr = formattedStr.replace(
+    new RegExp(`([${consonants}${consonants.toUpperCase()}])([${uppercaseVowels}])`, 'g'), 
+    "$1'$2"
+  );
+  
+  // Add space before uppercase letter if there's not already a space or apostrophe
+  formattedStr = formattedStr.replace(/([^'\s-])([A-Z])/g, '$1 $2');
+  
+  // Handle special cases (like the original function did)
+  formattedStr.trim();
+  return formattedStr;
+}
+
+
 
 /*
 Pour les dropdown:

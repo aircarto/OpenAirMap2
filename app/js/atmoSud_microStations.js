@@ -35,16 +35,16 @@ function load_atmoSud_microStations() {
     }
     //on récupère le type de mesure (+ conversion pm25 vers pm2.5)
     var mesures=getArrayFromLocalStorage(mesures_local)
-    var mesures_atmo=mesures[0]
+    var mesures_atmo=mesures
     switch (mesures[0]){
         case 'pm25':
-            var mesures_atmo="pm2.5"
+            var mesures_atmo=["pm2.5"]
             break;
     }
 
     //ATTENTION pas de donnée dispo pour les micro-stations au pas de temps 2min ou journalier
     if (pas_de_temps[0] === 'd') {
-        console.warn("Pas de données pour le pas de temps " + pas_de_temps);
+        alert("Pas de données pour le pas de temps " + pas_de_temps);
         return;
     }
 
@@ -62,8 +62,7 @@ function load_atmoSud_microStations() {
     &aggregation=${pas_de_temps_atmo}
     &nb_dec=1
     `.replace(/\s+/g, '')
-    let selectedMarker = null;
-    let selectedText = null;
+
     $.ajax({
         method: "GET",
         url: full_url_derniere,
@@ -148,14 +147,14 @@ function load_atmoSud_microStations() {
                 let textMarker = L.marker([value['lat'], value['lon']], { icon: text_param })
                     .on('click', function () {
                         // Si un marker est déjà sélectionné, on enlève l'animation
-                        if (selectedMarker && selectedMarker !== microStationMarker) {
-                            selectedMarker.setZIndexOffset(0);
-                            selectedMarker._icon.classList.remove('marker-selected');
+                        if (globalSelectedMarker && globalSelectedMarker !== microStationMarker) {
+                            globalSelectedMarker.setZIndexOffset(0);
+                            globalSelectedMarker._icon.classList.remove('marker-selected');
                         }
 
-                        if (selectedText && selectedText !== textMarker) {
-                            selectedText.setZIndexOffset(0);
-                            selectedText._icon.classList.remove('marker-selected');
+                        if (globalSelectedText && globalSelectedText !== textMarker) {
+                            globalSelectedText.setZIndexOffset(0);
+                            globalSelectedText._icon.classList.remove('marker-selected');
                         }
 
                         // Appliquer l'animation uniquement au nouveau marker sélectionné
@@ -165,8 +164,8 @@ function load_atmoSud_microStations() {
                         textMarker._icon.classList.add('marker-selected');
 
                         // Mettre à jour le marker sélectionné
-                        selectedMarker = microStationMarker;
-                        selectedText = textMarker;
+                        globalSelectedMarker = microStationMarker;
+                        globalSelectedText = textMarker;
 
                         console.log("Click on device: " + value['id_site']);
                         openSidePanel_microStation(value, pas_de_temps_atmo, "24h", mesures_atmo);
@@ -180,7 +179,7 @@ function load_atmoSud_microStations() {
                     textMarker.setZIndexOffset(1000);
                     
                     // Show device info
-                    deviceInfo._div.querySelector('#device-name').textContent = value['nom_site'];
+                    deviceInfo._div.querySelector('#device-name').textContent = formatString(value['nom_site']);
                     deviceInfo._div.querySelector('#device-details').textContent = `Type: ${value['modele_capteur']}`;
                     deviceInfo._div.style.display = 'block';
                 }
@@ -208,21 +207,42 @@ function load_atmoSud_microStations() {
 }//end function load_atmoSud_microStations
 
 function openSidePanel_microStation(data, pas_de_temps_atmo, historique, mesures_atmo) {
+    // Gestion icone fermeture sidepanel
+    var closeButton = document.getElementById('toggleSidePanel').querySelector("i");
+    closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
+
+
+    
+
     historique_chart = historique;
     pas_de_temps_chart = pas_de_temps_atmo;
-    mesures_chart = mesures_atmo;
+    mesures_array.length = 0;
+    if (Array.isArray(mesures_atmo)) {
+        mesures_atmo.forEach(measure => mesures_array.push(measure));
+    } else {
+        // If it's a single value, push it directly
+        mesures_array.push(mesures_atmo);
+    }
+
+    //on réinitialise les boutons
     var historique_buttons = document.querySelectorAll('[id^="btn_historique_"]');
     var pas_de_temps_buttons = document.querySelectorAll('[id^="btn_pas_de_temps_"]');
+    var polluants_buttons = document.querySelectorAll('[id^="btn_poluant_"]');
 
     historique_buttons.forEach(btn => btn.checked = false);
     pas_de_temps_buttons.forEach(btn => btn.checked = false);
+    polluants_buttons.forEach(btn => btn.checked = false);
 
+    if (btn_poluant_no2.disabled){
+        btn_poluant_no2.disabled = false;
+    }
+    console.log("mesures atmo", mesures_atmo);
     //on met les boutons des filtres à jour
     btn_historique = document.getElementById("btn_historique_"+historique);
     btn_historique.checked = true;
     btn_pas_de_temps = document.getElementById("btn_pas_de_temps_"+pas_de_temps[pas_de_temps_atmo].code);
     btn_pas_de_temps.checked = true;
-    btn_mesure = document.getElementById("btn_poluant_"+mesures[mesures_atmo.toUpperCase()].code);
+    btn_mesure = document.getElementById("btn_poluant_"+mesures[mesures_atmo[0].toUpperCase()].code);
     btn_mesure.checked = true;
 
 
@@ -323,34 +343,7 @@ function openSidePanel_microStation(data, pas_de_temps_atmo, historique, mesures
         btn_pas_de_temps_h.checked = true;
         retreive_historiqueData_microStation(data.id_site, pas_de_temps_chart, historique_chart, mesures_array);
     };
-    btn_pas_de_temps_d.onclick = function() {
-        pas_de_temps_chart = "journalier";
-        btn_pas_de_temps_d.checked = false;
-        let modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Information</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Les données journalières ne sont pas encore disponibles pour les micro-stations.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        let bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-        // pas_de_temps_buttons.forEach(btn => btn.checked = false);
-        // btn_pas_de_temps_d.checked = true;
-        // retreive_historiqueData_microStation(data.id_site, pas_de_temps_chart, historique_chart, mesures_array);
-    };
+    btn_pas_de_temps_d.disabled = true;
 
     btn_poluant_pm1.onclick = function() {
         if (mesures_array.includes("pm1")) {
