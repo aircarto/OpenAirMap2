@@ -115,6 +115,83 @@ function removeItemFromLocalStorageArray(key, item) {
   }
 }
 
+// Function to update the time display based on selected time step
+function updateTimeDisplay() {
+  const now = new Date();
+  const horlogeButton = document.getElementById('button_horloge');
+  
+  // Get currently selected time step from localStorage
+  const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
+  
+  let displayText = '';
+  
+  switch(selectedTimeStep) {
+    case 'instantane':
+    case '2min':
+      // Display current time for 2min time step
+      displayText = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      break;
+      
+      case 'qh':
+        // Display last finished quarter hour
+        const currentMinutes = now.getMinutes();
+        const lastQuarterHour = new Date(now);
+        
+        // Find the last completed quarter hour
+        if (currentMinutes < 15) {
+          // If we're in the first quarter, go back to previous hour's last quarter
+          lastQuarterHour.setHours(lastQuarterHour.getHours() - 1, 45, 0, 0);
+        } else if (currentMinutes < 30) {
+          // Between 15-29 minutes, last quarter was 0-15
+          lastQuarterHour.setMinutes(0, 0, 0);
+        } else if (currentMinutes < 45) {
+          // Between 30-44 minutes, last quarter was 15-30
+          lastQuarterHour.setMinutes(15, 0, 0);
+        } else {
+          // Between 45-59 minutes, last quarter was 30-45
+          lastQuarterHour.setMinutes(30, 0, 0);
+        }
+        
+        const endOfLastQuarter = new Date(lastQuarterHour);
+        endOfLastQuarter.setMinutes(lastQuarterHour.getMinutes() + 15);
+        
+        displayText = `${lastQuarterHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${endOfLastQuarter.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+        break;
+      
+    case 'h':
+      // Display last finished hour
+      const lastHour = new Date(now);
+      lastHour.setHours(lastHour.getHours() - 1, 0, 0, 0);
+      const nextHour = new Date(lastHour);
+      nextHour.setHours(lastHour.getHours() + 1);
+      
+      displayText = `${lastHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${nextHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+      break;
+      
+      case 'd':
+        // Display just yesterday's date
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        // Format with just DD/MM
+        displayText = yesterday.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+        break;
+      
+    default:
+      displayText = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+  
+  horlogeButton.innerHTML = displayText;
+}
+
+// Initialize clock on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateTimeDisplay();
+  // Update clock every minute
+  setInterval(updateTimeDisplay, 60000);
+});
+
+
 //vérifier si un élément est dans un js object
 function isValueInObject(obj, value) {
   for (let key in obj) {
@@ -296,6 +373,7 @@ for (let key in pas_de_temps) {
             //get the new data
             loadSource(item);
           }
+          updateTimeDisplay();
         }
       }
 
@@ -423,28 +501,6 @@ function openSidePanel_signalair(data, nuisance_type){
      openSidePanel_generic() 
 }
 
-// function openSidePanel_microStation(data){
-//   console.log(data)
-//   console.log("openSidePanel_microStation");
-//   card1_img.src="img/microStationsAtmoSud/microStation_photo.jpg"
-//   card1_title.innerHTML = data.nom_site;
-//   card1_subtitle.innerHTML = "Micro station AtmoSud";
-
-//   // Crée une nouvelle div pour les gauges
-//   const newDiv_gauges = document.createElement('div');
-//   newDiv_gauges.id = 'squaresContainer';
-//   card1_text.innerHTML="";  //empty content from previous opening
-//   card1_text.appendChild(newDiv_gauges);
-//   createColorSquares();
-//   // Crée une nouvelle div pour les courbes
-//   const newDiv_chart = document.createElement('div');
-//   newDiv_chart.id = 'chart';
-//   card1_text.appendChild(newDiv_chart);
-
-//   openSidePanel_generic()
-
-// }
-
 
 //CLOSE SIDE PANEL
 function closeSidePanel(){
@@ -490,6 +546,7 @@ document.getElementById('toggleSidePanel').addEventListener('click', function() 
       // Opening side panel
       sidePanel.classList.add('col-12','col-sm-6', 'col-lg-5');
       sidePanel.style.display = 'block';
+      document.body.classList.add('side-panel-open');
       mapContainer.classList.remove('col-12');
       mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
       icon.classList.replace('bi-chevron-right', 'bi-chevron-left');
@@ -497,6 +554,7 @@ document.getElementById('toggleSidePanel').addEventListener('click', function() 
       // Closing side panel
       sidePanel.classList.remove('col-12','col-sm-6', 'col-lg-5');
       sidePanel.style.display = 'none';
+      document.body.classList.remove('side-panel-open');
       mapContainer.classList.remove('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
       mapContainer.classList.add('col-12');
       icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
@@ -504,6 +562,25 @@ document.getElementById('toggleSidePanel').addEventListener('click', function() 
   
   map.invalidateSize();
 });
+
+// Event listener for the mobile close button
+document.getElementById('closeSidePanelMobile').addEventListener('click', function() {
+  const sidePanel = document.getElementById('side-panel');
+  const mapContainer = document.getElementById('map-container');
+  const toggleButton = document.getElementById('toggleSidePanel');
+  const toggleIcon = toggleButton.querySelector('i');
+  
+  // Closing side panel
+  sidePanel.classList.remove('col-12','col-sm-6', 'col-lg-5');
+  sidePanel.style.display = 'none';
+  document.body.classList.remove('side-panel-open');
+  mapContainer.classList.remove('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
+  mapContainer.classList.add('col-12');
+  toggleIcon.classList.replace('bi-chevron-left', 'bi-chevron-right');
+  
+  map.invalidateSize();
+});
+
 
 
 

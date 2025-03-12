@@ -89,6 +89,8 @@
                 <ul class="dropdown-menu" id="dropdown_pas_de_temps">
                 </ul>
               </li>
+              <!-- Horloge -->
+               <button id="button_horloge" class="btn btn-secondary ms-2 mb-1"></button>
             </ul>
           </div>
 
@@ -101,7 +103,9 @@
         
       <!-- SIDE PANEL  -->
         <div class="vh-100 overflow-auto" id="side-panel" style="display: none; padding-left: 20px;">
-            
+            <button class="btn btn-outline-secondary d-sm-none" id="closeSidePanelMobile" style="position: absolute; top: 10px; right: 80px; z-index: 1200;">
+              <i class="bi bi-map"></i>
+            </button>
             <div class="row ms-1 me-2" style="margin-top: 50px; margin-bottom: 50px;">
 
               <!-- CARD 1 : PHOTO -->
@@ -231,8 +235,8 @@
         <div class="col-12" id="map-container">
             <button class="btn btn-outline-primary position-absolute" 
             id="toggleSidePanel" 
-            style="left: 10px; top: 50%; z-index: 1000;">
-              <i class="bi bi-chevron-left"></i>
+            style="left: 10px; top: 50%; z-index: 1100;">
+              <i class="bi bi-chevron-right"></i>
             </button>
           <div id="map"></div>
 
