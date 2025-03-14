@@ -79,8 +79,18 @@ function loadNebuleAir() {
                 //create icons
                 var nebuleAir_icon = L.icon(icon_param);
                 //create a marker from icon and store reference
-                let nebuleAirMarker = L.marker([value['latitude'], value['longitude']], { icon: nebuleAir_icon })
+                let nebuleAirMarker = L.marker([value['latitude'], value['longitude']], { 
+                    icon: nebuleAir_icon,
+                    // Add custom properties to identify this marker
+                    deviceId: value['sensorId']  // Store the device ID directly on the marker
+                })
                 .addTo(nebuleair_layer);
+
+                if (!window.deviceMarkers) window.deviceMarkers = {};
+                window.deviceMarkers[value['sensorId']] = {
+                    marker: nebuleAirMarker,
+                    data: value  // Store the full data object
+                };
                 
                 
                 //TEXTE
@@ -111,12 +121,13 @@ function loadNebuleAir() {
                       });
                     
                     //tooltip -> survol
-                    //Popup -> lorsque l'on clique
-                    var nebuleAirTooltip = value['sensorId'];
-                    var nebuleAirPopup = '<b>'+value['sensorId']+'<b>'
+
                     
                     // Store reference to text marker
-                    let textMarker = L.marker([value['latitude'], value['longitude']], { icon: text_param })
+                    let textMarker = L.marker([value['latitude'], value['longitude']], { 
+                        icon: text_param,
+                        deviceId: value['sensorId']  // Same device ID on text marker
+                    })
                     .on('click', function () {
                         // Si un marker est déjà sélectionné, on enlève l'animation
                         if (globalSelectedMarker && globalSelectedMarker !== nebuleAirMarker) {
@@ -138,6 +149,8 @@ function loadNebuleAir() {
                         // Mettre à jour le marker sélectionné
                         globalSelectedMarker = nebuleAirMarker;
                         globalSelectedText = textMarker;
+                        globalSelectedDeviceId = value['sensorId'];
+                        
 
                         console.log("Click on device: " + value['sensorId'])
                         openSidePanel_nebuleAir(value, pas_de_temps_String, "24h", mesures)

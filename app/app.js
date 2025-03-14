@@ -79,6 +79,7 @@ var btn_poluant_no2 = document.getElementById("btn_poluant_no2");
  // Selected markers tracking
 var globalSelectedMarker = null;
 var globalSelectedText = null;
+var globalSelectedDeviceId = null;
 
 // fonction permettant de mettre en forme les lieux
 function formatString(str) {
@@ -225,7 +226,7 @@ function setupAutoRefresh() {
   switch(selectedTimeStep) {
     case 'instantane':
     case '2min':
-      refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
+      refreshIntervalMs = 2 * 10 * 1000; // 20 seconds for testing (normally 2 minutes)
       break;
     case 'qh':
       refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
@@ -245,6 +246,26 @@ function setupAutoRefresh() {
   // Set up the interval to refresh all active data sources
   window.refreshInterval = setInterval(() => {
     console.log("⏰ Auto-refreshing data based on time step");
+    
+    // Store the currently selected device ID and panel state before refresh
+    const currentDeviceId = globalSelectedDeviceId;
+    const sidePanelOpen = document.getElementById('side-panel').style.display !== 'none';
+
+    console.log("Current selected device before refresh:", currentDeviceId);
+    console.log("Side panel open:", sidePanelOpen);
+    
+    // Store the current device data if available
+    if (currentDeviceId && window.deviceMarkers && window.deviceMarkers[currentDeviceId]) {
+      window.lastSelectedDeviceData = window.deviceMarkers[currentDeviceId].data;
+    }
+    
+    // Reset the device markers object
+    window.deviceMarkers = {};
+    
+    // Reset selected marker references but keep the device ID
+    globalSelectedMarker = null;
+    globalSelectedText = null;
+    
     // Get all active sources from local storage
     const activeSources = getArrayFromLocalStorage(sources_local);
     
@@ -256,8 +277,220 @@ function setupAutoRefresh() {
     
     // Update time display
     updateTimeDisplay();
+    
+    // If we had a selected device and the side panel was open, try to restore it
+    if (currentDeviceId && sidePanelOpen) {
+      console.log("Will attempt to restore selected device:", currentDeviceId);
+      // Use a delay to ensure layers have loaded
+      setTimeout(() => {
+        findAndHighlightMarker(currentDeviceId);
+      }, 2500); // 2.5 second delay to ensure layers are fully loaded
+    }
   }, refreshIntervalMs);
 }
+
+
+// Add this helper function to find and highlight a marker by device ID
+// Add this section to the findAndHighlightMarker function
+function findAndHighlightMarker(deviceId) {
+  console.log(`Attempting to re-highlight device: ${deviceId}`);
+  
+  // First, clear the global marker references to avoid conflicts
+  if (globalSelectedMarker) {
+      if (globalSelectedMarker._icon) {
+          globalSelectedMarker._icon.classList.remove('marker-selected');
+      }
+      globalSelectedMarker.setZIndexOffset(0);
+      globalSelectedMarker = null;
+  }
+  
+  if (globalSelectedText) {
+      if (globalSelectedText._icon) {
+          globalSelectedText._icon.classList.remove('marker-selected');
+      }
+      globalSelectedText.setZIndexOffset(0);
+      globalSelectedText = null;
+  }
+  
+  // Wait for layers to be fully loaded
+  setTimeout(() => {
+      let found = false;
+      console.log("Looking for marker with deviceId:", deviceId);
+      
+      // Convert deviceId to string if it's not already
+      const deviceIdStr = String(deviceId || "");
+      
+      // Try multiple lookup methods
+      
+      // Method 1: Check if the marker is in the nebuleair_layer
+      if (deviceIdStr.indexOf('nebuleair') >= 0) {
+          nebuleair_layer.eachLayer(function(layer) {
+              // Skip if this isn't a marker or doesn't have _icon
+              if (!layer._icon) return;
+              
+              // Try both options.deviceId and direct deviceId property
+              const layerDeviceId = (layer.options && layer.options.deviceId) || layer.deviceId;
+              
+              if (layerDeviceId == deviceId) {
+                  console.log("Found NebuleAir marker:", layer);
+                  
+                  // Find the corresponding text marker
+                  let textMarker = null;
+                  nebuleair_layer.eachLayer(function(textLayer) {
+                      if (!textLayer._icon) return;
+                      
+                      const textLayerDeviceId = (textLayer.options && textLayer.options.deviceId) || textLayer.deviceId;
+                      
+                      if (textLayerDeviceId == deviceId && textLayer !== layer) {
+                          textMarker = textLayer;
+                      }
+                  });
+                  
+                  // Apply highlighting
+                  layer.setZIndexOffset(1000);
+                  if (layer._icon) layer._icon.classList.add('marker-selected');
+                  globalSelectedMarker = layer;
+                  
+                  if (textMarker) {
+                      textMarker.setZIndexOffset(1000);
+                      if (textMarker._icon) textMarker._icon.classList.add('marker-selected');
+                      globalSelectedText = textMarker;
+                  }
+                  
+                  found = true;
+                  
+                  // Re-open side panel if needed
+                  if (document.getElementById('side-panel').style.display === 'none' && layer.deviceData) {
+                      openSidePanel_nebuleAir(
+                          layer.deviceData,
+                          getArrayFromLocalStorage(pas_de_temps_local)[0],
+                          "24h",
+                          getArrayFromLocalStorage(mesures_local)[0]
+                      );
+                  }
+                  
+                  return false; // Break the loop
+              }
+          });
+      } 
+      // Method 2: Check if the marker is in the atmo_micro_layer
+      else {
+          atmo_micro_layer.eachLayer(function(layer) {
+              // Skip if this isn't a marker or doesn't have _icon
+              if (!layer._icon) return;
+              
+              // Try both options.deviceId and direct deviceId property
+              const layerDeviceId = (layer.options && layer.options.deviceId) || layer.deviceId;
+              
+              if (layerDeviceId == deviceId) {
+                  console.log("Found AtmoSud marker:", layer);
+                  
+                  // Find the corresponding text marker
+                  let textMarker = null;
+                  atmo_micro_layer.eachLayer(function(textLayer) {
+                      if (!textLayer._icon) return;
+                      
+                      const textLayerDeviceId = (textLayer.options && textLayer.options.deviceId) || textLayer.deviceId;
+                      
+                      if (textLayerDeviceId == deviceId && textLayer !== layer) {
+                          textMarker = textLayer;
+                      }
+                  });
+                  
+                  // Apply highlighting
+                  layer.setZIndexOffset(1000);
+                  if (layer._icon) layer._icon.classList.add('marker-selected');
+                  globalSelectedMarker = layer;
+                  
+                  if (textMarker) {
+                      textMarker.setZIndexOffset(1000);
+                      if (textMarker._icon) textMarker._icon.classList.add('marker-selected');
+                      globalSelectedText = textMarker;
+                  }
+                  
+                  found = true;
+                  
+                  // Re-open side panel if needed
+                  if (document.getElementById('side-panel').style.display === 'none' && layer.deviceData) {
+                      // Get the current pas_de_temps and convert it for AtmoSud
+                      var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local)[0];
+                      var pas_de_temps_atmo = "";
+                      switch (pas_de_temps) {
+                          case '2min': pas_de_temps_atmo = "brute"; break;
+                          case 'qh': pas_de_temps_atmo = "quart-horaire"; break;
+                          case 'h': pas_de_temps_atmo = "horaire"; break;
+                          case 'd': pas_de_temps_atmo = "journalier"; break;
+                      }
+                      
+                      // Get the current mesures and convert for AtmoSud if needed
+                      var mesures = getArrayFromLocalStorage(mesures_local)[0];
+                      var mesures_atmo = mesures;
+                      if (mesures === 'pm25') {
+                          mesures_atmo = "pm2.5";
+                      }
+                      
+                      openSidePanel_microStation(
+                          layer.deviceData,
+                          pas_de_temps_atmo,
+                          "24h",
+                          mesures_atmo
+                      );
+                  }
+                  
+                  return false; // Break the loop
+              }
+          });
+      }
+      
+      // If not found using direct layer iteration, try alternative methods
+      if (!found) {
+          console.warn(`Could not find marker for device: ${deviceId} using layer iteration`);
+          
+          // Method 3: Try to use the stored device data
+          if (window.lastSelectedDeviceData) {
+              console.log("Reopening side panel with stored device data");
+              
+              if (deviceIdStr.indexOf('nebuleair') >= 0) {
+                  openSidePanel_nebuleAir(
+                      window.lastSelectedDeviceData,
+                      getArrayFromLocalStorage(pas_de_temps_local)[0],
+                      "24h",
+                      getArrayFromLocalStorage(mesures_local)[0]
+                  );
+              } else {
+                  // For AtmoSud microStations
+                  var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local)[0];
+                  var pas_de_temps_atmo = "";
+                  switch (pas_de_temps) {
+                      case '2min': pas_de_temps_atmo = "brute"; break;
+                      case 'qh': pas_de_temps_atmo = "quart-horaire"; break;
+                      case 'h': pas_de_temps_atmo = "horaire"; break;
+                      case 'd': pas_de_temps_atmo = "journalier"; break;
+                  }
+                  
+                  // Get the current mesures and convert for AtmoSud if needed
+                  var mesures = getArrayFromLocalStorage(mesures_local)[0];
+                  var mesures_atmo = mesures;
+                  if (mesures === 'pm25') {
+                      mesures_atmo = "pm2.5";
+                  }
+                  
+                  openSidePanel_microStation(
+                      window.lastSelectedDeviceData,
+                      pas_de_temps_atmo,
+                      "24h",
+                      mesures_atmo
+                  );
+              }
+          }
+      }
+  }, 3000); // Increased delay to ensure layers are fully loaded
+}
+
+
+
+
+
 
 // Initialize clock on page load
 document.addEventListener('DOMContentLoaded', function() {

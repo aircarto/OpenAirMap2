@@ -116,8 +116,21 @@ function load_atmoSud_microStations() {
                 var microStation_icon = L.icon(icon_param);
             
                 // Création du marqueur principal (point de mesure)
-                let microStationMarker = L.marker([value['lat'], value['lon']], { icon: microStation_icon })
-                    .addTo(atmo_micro_layer);
+                let microStationMarker = L.marker([value['lat'], value['lon']], { 
+                    icon: microStation_icon
+                })
+                .addTo(atmo_micro_layer);
+                
+                // Store device data with the marker
+                microStationMarker.deviceId = value['id_site'];
+                microStationMarker.deviceData = value;
+                
+                // Store a reference to this marker in a global object for easy access
+                if (!window.deviceMarkers) window.deviceMarkers = {};
+                window.deviceMarkers[value['id_site']] = {
+                    marker: microStationMarker,
+                    data: value
+                };
             
                 // TEXTE
                 let roundedvalue = Math.round(parseFloat(value['valeur_brute']));
@@ -143,35 +156,45 @@ function load_atmoSud_microStations() {
                     popupAnchor: [30, -60]
                 });
 
+                let textMarker = L.marker([value['lat'], value['lon']], { 
+                    icon: text_param
+                })
+                .on('click', function () {
+                    // Si un marker est déjà sélectionné, on enlève l'animation
+                    if (globalSelectedMarker && globalSelectedMarker !== microStationMarker) {
+                        globalSelectedMarker.setZIndexOffset(0);
+                        globalSelectedMarker._icon.classList.remove('marker-selected');
+                    }
 
-                let textMarker = L.marker([value['lat'], value['lon']], { icon: text_param })
-                    .on('click', function () {
-                        // Si un marker est déjà sélectionné, on enlève l'animation
-                        if (globalSelectedMarker && globalSelectedMarker !== microStationMarker) {
-                            globalSelectedMarker.setZIndexOffset(0);
-                            globalSelectedMarker._icon.classList.remove('marker-selected');
-                        }
+                    if (globalSelectedText && globalSelectedText !== textMarker) {
+                        globalSelectedText.setZIndexOffset(0);
+                        globalSelectedText._icon.classList.remove('marker-selected');
+                    }
 
-                        if (globalSelectedText && globalSelectedText !== textMarker) {
-                            globalSelectedText.setZIndexOffset(0);
-                            globalSelectedText._icon.classList.remove('marker-selected');
-                        }
+                    // Appliquer l'animation uniquement au nouveau marker sélectionné
+                    microStationMarker.setZIndexOffset(1000);
+                    textMarker.setZIndexOffset(1000);
+                    microStationMarker._icon.classList.add('marker-selected');
+                    textMarker._icon.classList.add('marker-selected');
 
-                        // Appliquer l'animation uniquement au nouveau marker sélectionné
-                        microStationMarker.setZIndexOffset(1000);
-                        textMarker.setZIndexOffset(1000);
-                        microStationMarker._icon.classList.add('marker-selected');
-                        textMarker._icon.classList.add('marker-selected');
+                    // Mettre à jour le marker sélectionné
+                    globalSelectedMarker = microStationMarker;
+                    globalSelectedText = textMarker;
+                    globalSelectedDeviceId = value['id_site'];  // Store the selected device ID
+                    window.lastSelectedDeviceData = value;  // Store the full device data
 
-                        // Mettre à jour le marker sélectionné
-                        globalSelectedMarker = microStationMarker;
-                        globalSelectedText = textMarker;
+                    console.log("Click on device: " + value['id_site']);
+                    openSidePanel_microStation(value, pas_de_temps_atmo, "24h", mesures_atmo);
+                })
+                .addTo(atmo_micro_layer);
+                
+                // Also store the text marker reference
+                textMarker.deviceId = value['id_site'];
+                textMarker.deviceData = value;
 
-                        console.log("Click on device: " + value['id_site']);
-                        openSidePanel_microStation(value, pas_de_temps_atmo, "24h", mesures_atmo);
-                    })
-                    .addTo(atmo_micro_layer);
-
+                if (window.deviceMarkers[value['id_site']]) {
+                    window.deviceMarkers[value['id_site']].textMarker = textMarker;
+                }
             
                 // Effet hover : mise en avant du point et du texte
                 function highlightMarker() {
@@ -185,8 +208,11 @@ function load_atmoSud_microStations() {
                 }
                 
                 function resetMarker() {
-                    microStationMarker.setZIndexOffset(0);
-                    textMarker.setZIndexOffset(0);
+                    // Don't reset if this is the selected marker
+                    if (globalSelectedMarker !== microStationMarker) {
+                        microStationMarker.setZIndexOffset(0);
+                        textMarker.setZIndexOffset(0);
+                    }
                     deviceInfo._div.style.display = 'none';
                 }
                 
@@ -203,8 +229,8 @@ function load_atmoSud_microStations() {
             console.error('Response:', xhr.responseText);
         } 
       });//end ajax
+}
 
-}//end function load_atmoSud_microStations
 
 function openSidePanel_microStation(data, pas_de_temps_atmo, historique, mesures_atmo) {
     // Gestion icone fermeture sidepanel
