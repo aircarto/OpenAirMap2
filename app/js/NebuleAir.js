@@ -231,9 +231,9 @@ function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures){
     btn_historique_custom.onclick = function (event){
         event.preventDefault();
         var startDate = btn_historique_start_date.value;
-        var startTime = btn_historique_start_time.value;
         var endDate = btn_historique_end_date.value;
-        var endTime = btn_historique_end_time.value;
+        var startTime = "00:00";
+        var endTime = "23:59";
         console.log({startDate:startDate, startTime:startTime, endDate:endDate, endTime:endTime});
         if (startDate && startTime && endDate && endTime) {
             historique_buttons.forEach(btn => btn.checked = false);
@@ -542,7 +542,7 @@ function retreive_historiqueData_nebuleAir(sensorId, pas_de_temps, historique, m
     var full_url;
     if (custom_start && custom_end) {
         // Use custom date range
-        full_url = `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=${custom_start}&stop=${custom_end}&freq=${api_pas_de_temps}`;
+        full_url = `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=${custom_start}&end=${custom_end}&freq=${api_pas_de_temps}`;
     } else {
         // Use relative time range
         full_url = `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${api_pas_de_temps}`;

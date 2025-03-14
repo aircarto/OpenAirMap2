@@ -205,19 +205,31 @@
                     </div>
 
                      <!-- Plage historique -->
-                    <form>
-                      <label for="start_date">Date de début :</label>
-                      <input class="btn btn-outline-primary" type="date" id="start_date" name="start_date" required>
-                      <label for="start_time">Heure de début :</label>
-                      <input class="btn btn-outline-primary" type="time" id="start_time" name="start_time" required>
-              
-                      <label for="end_date">Date de fin :</label>
-                      <input class="btn btn-outline-primary" type="date" id="end_date" name="end_date" required>
-                      <label for="end_time">Heure de fin :</label>
-                      <input class="btn btn-outline-primary" type="time" id="end_time" name="end_time" required>
-              
-                      <button class="btn btn-outline-primary" type="submit" id="apply_date_range">Appliquer</button>
-                    </form>
+                    <!-- Plage historique -->
+                    <div class="mt-2">
+                      <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#dateRangeForm" aria-expanded="false" aria-controls="dateRangeForm">
+                        <i class="bi bi-calendar-range"></i> Plage de dates personnalisée
+                      </button>
+                      
+                      <div class="collapse mt-2" id="dateRangeForm">
+                        <form>
+                          <div class="row g-2">
+                            <div class="col-md-6">
+                              <label for="start_date" class="form-label">Date de début :</label>
+                              <input class="form-control" type="date" id="start_date" name="start_date" required>
+                            </div>
+                            <div class="col-md-6">
+                              <label for="end_date" class="form-label">Date de fin :</label>
+                              <input class="form-control" type="date" id="end_date" name="end_date" required>
+                            </div>
+                            <div class="col-12 text-center">
+                              <button class="btn btn-primary" type="submit" id="apply_date_range">Appliquer</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+
                   
                   
                   
