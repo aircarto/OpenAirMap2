@@ -23,8 +23,6 @@ function loadNebuleAir() {
     }
 
     // Track selected markers for click interaction
-    let selectedMarker = null;
-    let selectedText = null;
 
     $.ajax({
         method: "GET",
@@ -121,14 +119,14 @@ function loadNebuleAir() {
                     let textMarker = L.marker([value['latitude'], value['longitude']], { icon: text_param })
                     .on('click', function () {
                         // Si un marker est déjà sélectionné, on enlève l'animation
-                        if (selectedMarker && selectedMarker !== nebuleAirMarker) {
-                            selectedMarker.setZIndexOffset(0);
-                            selectedMarker._icon.classList.remove('marker-selected');
+                        if (globalSelectedMarker && globalSelectedMarker !== nebuleAirMarker) {
+                            globalSelectedMarker.setZIndexOffset(0);
+                            globalSelectedMarker._icon.classList.remove('marker-selected');
                         }
 
-                        if (selectedText && selectedText !== textMarker) {
-                            selectedText.setZIndexOffset(0);
-                            selectedText._icon.classList.remove('marker-selected');
+                        if (globalSelectedText && globalSelectedText !== textMarker) {
+                            globalSelectedText.setZIndexOffset(0);
+                            globalSelectedText._icon.classList.remove('marker-selected');
                         }
 
                         // Appliquer l'animation uniquement au nouveau marker sélectionné
@@ -138,8 +136,8 @@ function loadNebuleAir() {
                         textMarker._icon.classList.add('marker-selected');
 
                         // Mettre à jour le marker sélectionné
-                        selectedMarker = nebuleAirMarker;
-                        selectedText = textMarker;
+                        globalSelectedMarker = nebuleAirMarker;
+                        globalSelectedText = textMarker;
 
                         console.log("Click on device: " + value['sensorId'])
                         openSidePanel_nebuleAir(value, pas_de_temps_String, "24h", mesures)
@@ -159,7 +157,7 @@ function loadNebuleAir() {
                     
                     function resetMarker() {
                         // Don't reset if this is the selected marker
-                        if (selectedMarker !== nebuleAirMarker) {
+                        if (globalSelectedMarker !== nebuleAirMarker) {
                             nebuleAirMarker.setZIndexOffset(0);
                             textMarker.setZIndexOffset(0);
                         }
