@@ -226,7 +226,7 @@ function setupAutoRefresh() {
   switch(selectedTimeStep) {
     case 'instantane':
     case '2min':
-      refreshIntervalMs = 2 * 10 * 1000; // 20 seconds for testing (normally 2 minutes)
+      refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
       break;
     case 'qh':
       refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
@@ -284,7 +284,7 @@ function setupAutoRefresh() {
       // Use a delay to ensure layers have loaded
       setTimeout(() => {
         findAndHighlightMarker(currentDeviceId);
-      }, 2500); // 2.5 second delay to ensure layers are fully loaded
+      }, 1000); // 1 second delay to ensure layers are fully loaded
     }
   }, refreshIntervalMs);
 }
@@ -484,7 +484,7 @@ function findAndHighlightMarker(deviceId) {
               }
           }
       }
-  }, 3000); // Increased delay to ensure layers are fully loaded
+  }, 1000); // Increased delay to ensure layers are fully loaded
 }
 
 
