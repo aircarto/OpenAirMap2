@@ -1,4 +1,4 @@
-console.log("OpenAirMap V2")
+console.log('OpenAirMap V2');
 
 //récupérer la date et l'heure (client side!)
 var now = new Date();
@@ -14,11 +14,11 @@ var date_YMD = year + '-' + month + '-' + day;
 var date_YDM = year + '-' + day + '-' + month;
 var formattedTime = hours + ':' + minutes + ':' + seconds;
 
-console.log("Date: " + date_YMD);
-console.log("Time: " + formattedTime);
+console.log('Date: ' + date_YMD);
+console.log('Time: ' + formattedTime);
 
 //Amcharts chart
-var amchart_root; 
+var amchart_root;
 
 //variable pour les layers leaflet
 var nebuleair_layer = new L.layerGroup();
@@ -30,7 +30,6 @@ var modelisationPMAtmoSud_layer = new L.layerGroup();
 var modelisationICAIRAtmoSud_layer = new L.layerGroup();
 var signalair_layer = new L.layerGroup();
 var mobileair_layer = new L.layerGroup();
-
 
 //variable pour le DOM
 var sidePanel = document.getElementById('side-panel');
@@ -49,64 +48,79 @@ var mapContainer = document.getElementById('map-container');
 var dropdown_mesures = document.getElementById('dropdown_mesures');
 var dropdown_sources = document.getElementById('dropdown_sources');
 var dropdown_pas_de_temps = document.getElementById('dropdown_pas_de_temps');
-const mesures_local = 'mesures_local'
-const sources_local = 'sources_local'
-const pas_de_temps_local = 'pas_de_temps_local'
+const mesures_local = 'mesures_local';
+const sources_local = 'sources_local';
+const pas_de_temps_local = 'pas_de_temps_local';
 
 //1.historique
-var btn_historique_custom = document.getElementById("apply_date_range");
-var btn_historique_start_date = document.getElementById("start_date");
-var btn_historique_start_time = document.getElementById("start_time");
-var btn_historique_end_date = document.getElementById("end_date");
-var btn_historique_end_time = document.getElementById("end_time");
-var btn_historique_1h = document.getElementById("btn_historique_1h");
-var btn_historique_3h = document.getElementById("btn_historique_3h");
-var btn_historique_24h = document.getElementById("btn_historique_24h");
-var btn_historique_1sem = document.getElementById("btn_historique_7d");
-var btn_historique_1m = document.getElementById("btn_historique_30d");
-var btn_historique_1a = document.getElementById("btn_historique_365d");
+var btn_historique_custom = document.getElementById('apply_date_range');
+var btn_historique_start_date = document.getElementById('start_date');
+var btn_historique_start_time = document.getElementById('start_time');
+var btn_historique_end_date = document.getElementById('end_date');
+var btn_historique_end_time = document.getElementById('end_time');
+var btn_historique_1h = document.getElementById('btn_historique_1h');
+var btn_historique_3h = document.getElementById('btn_historique_3h');
+var btn_historique_24h = document.getElementById('btn_historique_24h');
+var btn_historique_1sem = document.getElementById('btn_historique_7d');
+var btn_historique_1m = document.getElementById('btn_historique_30d');
+var btn_historique_1a = document.getElementById('btn_historique_365d');
 //2.pas de temps
-var btn_pas_de_temps_2min = document.getElementById("btn_pas_de_temps_2min");
-var btn_pas_de_temps_qh = document.getElementById("btn_pas_de_temps_qh");
-var btn_pas_de_temps_h = document.getElementById("btn_pas_de_temps_h");
-var btn_pas_de_temps_d = document.getElementById("btn_pas_de_temps_d");
+var btn_pas_de_temps_2min = document.getElementById('btn_pas_de_temps_2min');
+var btn_pas_de_temps_qh = document.getElementById('btn_pas_de_temps_qh');
+var btn_pas_de_temps_h = document.getElementById('btn_pas_de_temps_h');
+var btn_pas_de_temps_d = document.getElementById('btn_pas_de_temps_d');
 //3. Mesures (ATTENTION: ici on peut choisir plusieurs polluants -> add_mesure = true)
-var btn_poluant_pm1 = document.getElementById("btn_poluant_pm1");
-var btn_poluant_pm25 = document.getElementById("btn_poluant_pm25");
-var btn_poluant_pm10 = document.getElementById("btn_poluant_pm10");
-var btn_poluant_no2 = document.getElementById("btn_poluant_no2");
+var btn_poluant_pm1 = document.getElementById('btn_poluant_pm1');
+var btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
+var btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
+var btn_poluant_no2 = document.getElementById('btn_poluant_no2');
 
- // Selected markers tracking
+// Selected markers tracking
 var globalSelectedMarker = null;
 var globalSelectedText = null;
 var globalSelectedDeviceId = null;
 
 // fonction permettant de mettre en forme les lieux
 function formatString(str) {
-  // First, replace underscores with spaces
-  let formattedStr = str.replace(/_/g, ' ');
-  
-  // Define consonants (French consonants)
-  const consonants = 'bcdfghjklmnpqrstvwxz';
-  
-  // Define uppercase vowels (including accented variants)
-  const uppercaseVowels = 'AEIOUYÀÁÂÄÆÈÉÊËÌÍÎÏÒÓÔÖŒÙÚÛÜÝ';
-  
-  // Add apostrophe between consonant and uppercase vowel
-  formattedStr = formattedStr.replace(
-    new RegExp(`([${consonants}${consonants.toUpperCase()}])([${uppercaseVowels}])`, 'g'), 
-    "$1'$2"
-  );
-  
-  // Add space before uppercase letter if there's not already a space or apostrophe
-  formattedStr = formattedStr.replace(/([^'\s-])([A-Z])/g, '$1 $2');
-  
-  // Handle special cases (like the original function did)
-  formattedStr.trim();
-  return formattedStr;
+    // First, replace underscores with spaces
+    let formattedStr = str.replace(/_/g, ' ');
+
+    // Define consonants (French consonants)
+    const consonants = 'bcdfghjklmnpqrstvwxz';
+
+    // Define uppercase vowels (including accented variants)
+    const uppercaseVowels = 'AEIOUYÀÁÂÄÆÈÉÊËÌÍÎÏÒÓÔÖŒÙÚÛÜÝ';
+
+    // Add apostrophe between consonant and uppercase vowel
+    formattedStr = formattedStr.replace(
+        new RegExp(
+            `([${consonants}${consonants.toUpperCase()}])([${uppercaseVowels}])`,
+            'g'
+        ),
+        "$1'$2"
+    );
+
+    // Add space before uppercase letter if there's not already a space or apostrophe
+    formattedStr = formattedStr.replace(/([^'\s-])([A-Z])/g, '$1 $2');
+
+    // Handle special cases (like the original function did)
+    formattedStr.trim();
+    return formattedStr;
 }
 
-
+// Helper function to format pollutant names with proper subscripts
+function formatPollutantName(name) {
+    // Replace common pollutant notations with properly formatted versions
+    return name
+        .replace(/NO2/g, 'NO<sub>2</sub>')
+        .replace(/SO2/g, 'SO<sub>2</sub>')
+        .replace(/O3/g, 'O<sub>3</sub>')
+        .replace(/PM2.5/g, 'PM<sub>2.5</sub>')
+        .replace(/PM2,5/g, 'PM<sub>2,5</sub>')
+        .replace(/CO2/g, 'CO<sub>2</sub>')
+        .replace(/H2S/g, 'H<sub>2</sub>S')
+        .replace(/NH3/g, 'NH<sub>3</sub>');
+}
 
 /*
 Pour les dropdown:
@@ -117,692 +131,811 @@ Pour les dropdown:
 
 // Function to save array to local storage (erase and save)
 function saveArrayToLocalStorage(key, array) {
-  localStorage.setItem(key, JSON.stringify(array));
+    localStorage.setItem(key, JSON.stringify(array));
 }
 
- // Function to get array from local storage
+// Function to get array from local storage
 function getArrayFromLocalStorage(key) {
-  const storedArray = localStorage.getItem(key);
-  return storedArray ? JSON.parse(storedArray) : [];
+    const storedArray = localStorage.getItem(key);
+    return storedArray ? JSON.parse(storedArray) : [];
 }
 
-  // Function to add item to local storage array
+// Function to add item to local storage array
 function addItemToLocalStorageArray(key, item) {
-  const array = getArrayFromLocalStorage(key);
-  array.push(item);
-  saveArrayToLocalStorage(key, array);
+    const array = getArrayFromLocalStorage(key);
+    array.push(item);
+    saveArrayToLocalStorage(key, array);
 }
 
 // Function to remove item from local storage array
 function removeItemFromLocalStorageArray(key, item) {
-  const array = getArrayFromLocalStorage(key);
-  const index = array.indexOf(item);
-  if (index > -1) {
-      array.splice(index, 1);
-      saveArrayToLocalStorage(key, array);
-  }
+    const array = getArrayFromLocalStorage(key);
+    const index = array.indexOf(item);
+    if (index > -1) {
+        array.splice(index, 1);
+        saveArrayToLocalStorage(key, array);
+    }
 }
 
 // Function to update the time display based on selected time step
 function updateTimeDisplay() {
-  const now = new Date();
-  const horlogeButton = document.getElementById('button_horloge');
-  
-  // Get currently selected time step from localStorage
-  const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
-  
-  let displayText = '';
-  
-  switch(selectedTimeStep) {
-    case 'instantane':
-    case '2min':
-      // Display current time for 2min time step
-      displayText = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      break;
-      
-      case 'qh':
-        // Display last finished quarter hour
-        const currentMinutes = now.getMinutes();
-        const lastQuarterHour = new Date(now);
-        
-        // Find the last completed quarter hour
-        if (currentMinutes < 15) {
-          // If we're in the first quarter, go back to previous hour's last quarter
-          lastQuarterHour.setHours(lastQuarterHour.getHours() - 1, 45, 0, 0);
-        } else if (currentMinutes < 30) {
-          // Between 15-29 minutes, last quarter was 0-15
-          lastQuarterHour.setMinutes(0, 0, 0);
-        } else if (currentMinutes < 45) {
-          // Between 30-44 minutes, last quarter was 15-30
-          lastQuarterHour.setMinutes(15, 0, 0);
-        } else {
-          // Between 45-59 minutes, last quarter was 30-45
-          lastQuarterHour.setMinutes(30, 0, 0);
-        }
-        
-        const endOfLastQuarter = new Date(lastQuarterHour);
-        endOfLastQuarter.setMinutes(lastQuarterHour.getMinutes() + 15);
-        
-        displayText = `${lastQuarterHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${endOfLastQuarter.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
-        break;
-      
-    case 'h':
-      // Display last finished hour
-      const lastHour = new Date(now);
-      lastHour.setHours(lastHour.getHours() - 1, 0, 0, 0);
-      const nextHour = new Date(lastHour);
-      nextHour.setHours(lastHour.getHours() + 1);
-      
-      displayText = `${lastHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${nextHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
-      break;
-      
-      case 'd':
-        // Display just yesterday's date
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        // Format with just DD/MM
-        displayText = yesterday.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-        break;
-      
-    default:
-      displayText = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  }
-  
-  horlogeButton.innerHTML = displayText;
+    const now = new Date();
+    const horlogeButton = document.getElementById('button_horloge');
+
+    // Get currently selected time step from localStorage
+    const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
+
+    let displayText = '';
+
+    switch (selectedTimeStep) {
+        case 'instantane':
+        case '2min':
+            // Display current time for 2min time step
+            displayText = now.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+            break;
+
+        case 'qh':
+            // Display last finished quarter hour
+            const currentMinutes = now.getMinutes();
+            const lastQuarterHour = new Date(now);
+
+            // Find the last completed quarter hour
+            if (currentMinutes < 15) {
+                // If we're in the first quarter, go back to previous hour's last quarter
+                lastQuarterHour.setHours(
+                    lastQuarterHour.getHours() - 1,
+                    45,
+                    0,
+                    0
+                );
+            } else if (currentMinutes < 30) {
+                // Between 15-29 minutes, last quarter was 0-15
+                lastQuarterHour.setMinutes(0, 0, 0);
+            } else if (currentMinutes < 45) {
+                // Between 30-44 minutes, last quarter was 15-30
+                lastQuarterHour.setMinutes(15, 0, 0);
+            } else {
+                // Between 45-59 minutes, last quarter was 30-45
+                lastQuarterHour.setMinutes(30, 0, 0);
+            }
+
+            const endOfLastQuarter = new Date(lastQuarterHour);
+            endOfLastQuarter.setMinutes(lastQuarterHour.getMinutes() + 15);
+
+            displayText = `${lastQuarterHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${endOfLastQuarter.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+            break;
+
+        case 'h':
+            // Display last finished hour
+            const lastHour = new Date(now);
+            lastHour.setHours(lastHour.getHours() - 1, 0, 0, 0);
+            const nextHour = new Date(lastHour);
+            nextHour.setHours(lastHour.getHours() + 1);
+
+            displayText = `${lastHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${nextHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+            break;
+
+        case 'd':
+            // Display just yesterday's date
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            // Format with just DD/MM
+            displayText = yesterday.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+            });
+            break;
+
+        default:
+            displayText = now.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+    }
+
+    horlogeButton.innerHTML = displayText;
 }
 // Function to automatically refresh data based on selected time step
 function setupAutoRefresh() {
-  // Clear any existing refresh interval
-  if (window.refreshInterval) {
-    clearInterval(window.refreshInterval);
-  }
-  
-  // Get the current time step from local storage
-  const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
-  
-  // Determine refresh interval in milliseconds based on time step
-  let refreshIntervalMs;
-  switch(selectedTimeStep) {
-    case 'instantane':
-    case '2min':
-      refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
-      break;
-    case 'qh':
-      refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
-      break;
-    case 'h':
-      refreshIntervalMs = 60 * 60 * 1000; // 1 hour
-      break;
-    case 'd':
-      refreshIntervalMs = 24 * 60 * 60 * 1000; // 1 day
-      break;
-    default:
-      refreshIntervalMs = 5 * 60 * 1000; // Default to 5 minutes
-  }
-  
-  console.log(`Auto-refresh set to ${refreshIntervalMs/1000} seconds based on '${selectedTimeStep}' time step`);
-  
-  // Set up the interval to refresh all active data sources
-  window.refreshInterval = setInterval(() => {
-    console.log("⏰ Auto-refreshing data based on time step");
-    
-    // Store the currently selected device ID and panel state before refresh
-    const currentDeviceId = globalSelectedDeviceId;
-    const sidePanelOpen = document.getElementById('side-panel').style.display !== 'none';
+    // Clear any existing refresh interval
+    if (window.refreshInterval) {
+        clearInterval(window.refreshInterval);
+    }
 
-    console.log("Current selected device before refresh:", currentDeviceId);
-    console.log("Side panel open:", sidePanelOpen);
-    
-    // Store the current device data if available
-    if (currentDeviceId && window.deviceMarkers && window.deviceMarkers[currentDeviceId]) {
-      window.lastSelectedDeviceData = window.deviceMarkers[currentDeviceId].data;
+    // Get the current time step from local storage
+    const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
+
+    // Determine refresh interval in milliseconds based on time step
+    let refreshIntervalMs;
+    switch (selectedTimeStep) {
+        case 'instantane':
+        case '2min':
+            refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
+            break;
+        case 'qh':
+            refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
+            break;
+        case 'h':
+            refreshIntervalMs = 60 * 60 * 1000; // 1 hour
+            break;
+        case 'd':
+            refreshIntervalMs = 24 * 60 * 60 * 1000; // 1 day
+            break;
+        default:
+            refreshIntervalMs = 5 * 60 * 1000; // Default to 5 minutes
     }
-    
-    // Reset the device markers object
-    window.deviceMarkers = {};
-    
-    // Reset selected marker references but keep the device ID
-    globalSelectedMarker = null;
-    globalSelectedText = null;
-    
-    // Get all active sources from local storage
-    const activeSources = getArrayFromLocalStorage(sources_local);
-    
-    // Refresh each active source
-    activeSources.forEach(source => {
-      clearLayer(source);
-      loadSource(source);
-    });
-    
-    // Update time display
-    updateTimeDisplay();
-    
-    // If we had a selected device and the side panel was open, try to restore it
-    if (currentDeviceId && sidePanelOpen) {
-      console.log("Will attempt to restore selected device:", currentDeviceId);
-      // Use a delay to ensure layers have loaded
-      setTimeout(() => {
-        findAndHighlightMarker(currentDeviceId);
-      }, 1000); // 1 second delay to ensure layers are fully loaded
-    }
-  }, refreshIntervalMs);
+
+    console.log(
+        `Auto-refresh set to ${refreshIntervalMs / 1000} seconds based on '${selectedTimeStep}' time step`
+    );
+
+    // Set up the interval to refresh all active data sources
+    window.refreshInterval = setInterval(() => {
+        console.log('⏰ Auto-refreshing data based on time step');
+
+        // Store the currently selected device ID and panel state before refresh
+        const currentDeviceId = globalSelectedDeviceId;
+        const sidePanelOpen =
+            document.getElementById('side-panel').style.display !== 'none';
+
+        console.log('Current selected device before refresh:', currentDeviceId);
+        console.log('Side panel open:', sidePanelOpen);
+
+        // Store the current device data if available
+        if (
+            currentDeviceId &&
+            window.deviceMarkers &&
+            window.deviceMarkers[currentDeviceId]
+        ) {
+            window.lastSelectedDeviceData =
+                window.deviceMarkers[currentDeviceId].data;
+        }
+
+        // Reset the device markers object
+        window.deviceMarkers = {};
+
+        // Reset selected marker references but keep the device ID
+        globalSelectedMarker = null;
+        globalSelectedText = null;
+
+        // Get all active sources from local storage
+        const activeSources = getArrayFromLocalStorage(sources_local);
+
+        // Refresh each active source
+        activeSources.forEach((source) => {
+            clearLayer(source);
+            loadSource(source);
+        });
+
+        // Update time display
+        updateTimeDisplay();
+
+        // If we had a selected device and the side panel was open, try to restore it
+        if (currentDeviceId && sidePanelOpen) {
+            console.log(
+                'Will attempt to restore selected device:',
+                currentDeviceId
+            );
+            // Use a delay to ensure layers have loaded
+            setTimeout(() => {
+                findAndHighlightMarker(currentDeviceId);
+            }, 1000); // 1 second delay to ensure layers are fully loaded
+        }
+    }, refreshIntervalMs);
 }
-
 
 // Add this helper function to find and highlight a marker by device ID
 // Add this section to the findAndHighlightMarker function
 function findAndHighlightMarker(deviceId) {
-  console.log(`Attempting to re-highlight device: ${deviceId}`);
-  
-  // First, clear the global marker references to avoid conflicts
-  if (globalSelectedMarker) {
-      if (globalSelectedMarker._icon) {
-          globalSelectedMarker._icon.classList.remove('marker-selected');
-      }
-      globalSelectedMarker.setZIndexOffset(0);
-      globalSelectedMarker = null;
-  }
-  
-  if (globalSelectedText) {
-      if (globalSelectedText._icon) {
-          globalSelectedText._icon.classList.remove('marker-selected');
-      }
-      globalSelectedText.setZIndexOffset(0);
-      globalSelectedText = null;
-  }
-  
-  // Wait for layers to be fully loaded
-  setTimeout(() => {
-      let found = false;
-      console.log("Looking for marker with deviceId:", deviceId);
-      
-      // Convert deviceId to string if it's not already
-      const deviceIdStr = String(deviceId || "");
-      
-      // Try multiple lookup methods
-      
-      // Method 1: Check if the marker is in the nebuleair_layer
-      if (deviceIdStr.indexOf('nebuleair') >= 0) {
-          nebuleair_layer.eachLayer(function(layer) {
-              // Skip if this isn't a marker or doesn't have _icon
-              if (!layer._icon) return;
-              
-              // Try both options.deviceId and direct deviceId property
-              const layerDeviceId = (layer.options && layer.options.deviceId) || layer.deviceId;
-              
-              if (layerDeviceId == deviceId) {
-                  console.log("Found NebuleAir marker:", layer);
-                  
-                  // Find the corresponding text marker
-                  let textMarker = null;
-                  nebuleair_layer.eachLayer(function(textLayer) {
-                      if (!textLayer._icon) return;
-                      
-                      const textLayerDeviceId = (textLayer.options && textLayer.options.deviceId) || textLayer.deviceId;
-                      
-                      if (textLayerDeviceId == deviceId && textLayer !== layer) {
-                          textMarker = textLayer;
-                      }
-                  });
-                  
-                  // Apply highlighting
-                  layer.setZIndexOffset(1000);
-                  if (layer._icon) layer._icon.classList.add('marker-selected');
-                  globalSelectedMarker = layer;
-                  
-                  if (textMarker) {
-                      textMarker.setZIndexOffset(1000);
-                      if (textMarker._icon) textMarker._icon.classList.add('marker-selected');
-                      globalSelectedText = textMarker;
-                  }
-                  
-                  found = true;
-                  
-                  // Re-open side panel if needed
-                  if (document.getElementById('side-panel').style.display === 'none' && layer.deviceData) {
-                      openSidePanel_nebuleAir(
-                          layer.deviceData,
-                          getArrayFromLocalStorage(pas_de_temps_local)[0],
-                          "24h",
-                          getArrayFromLocalStorage(mesures_local)[0]
-                      );
-                  }
-                  
-                  return false; // Break the loop
-              }
-          });
-      } 
-      // Method 2: Check if the marker is in the atmo_micro_layer
-      else {
-          atmo_micro_layer.eachLayer(function(layer) {
-              // Skip if this isn't a marker or doesn't have _icon
-              if (!layer._icon) return;
-              
-              // Try both options.deviceId and direct deviceId property
-              const layerDeviceId = (layer.options && layer.options.deviceId) || layer.deviceId;
-              
-              if (layerDeviceId == deviceId) {
-                  console.log("Found AtmoSud marker:", layer);
-                  
-                  // Find the corresponding text marker
-                  let textMarker = null;
-                  atmo_micro_layer.eachLayer(function(textLayer) {
-                      if (!textLayer._icon) return;
-                      
-                      const textLayerDeviceId = (textLayer.options && textLayer.options.deviceId) || textLayer.deviceId;
-                      
-                      if (textLayerDeviceId == deviceId && textLayer !== layer) {
-                          textMarker = textLayer;
-                      }
-                  });
-                  
-                  // Apply highlighting
-                  layer.setZIndexOffset(1000);
-                  if (layer._icon) layer._icon.classList.add('marker-selected');
-                  globalSelectedMarker = layer;
-                  
-                  if (textMarker) {
-                      textMarker.setZIndexOffset(1000);
-                      if (textMarker._icon) textMarker._icon.classList.add('marker-selected');
-                      globalSelectedText = textMarker;
-                  }
-                  
-                  found = true;
-                  
-                  // Re-open side panel if needed
-                  if (document.getElementById('side-panel').style.display === 'none' && layer.deviceData) {
-                      // Get the current pas_de_temps and convert it for AtmoSud
-                      var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local)[0];
-                      var pas_de_temps_atmo = "";
-                      switch (pas_de_temps) {
-                          case '2min': pas_de_temps_atmo = "brute"; break;
-                          case 'qh': pas_de_temps_atmo = "quart-horaire"; break;
-                          case 'h': pas_de_temps_atmo = "horaire"; break;
-                          case 'd': pas_de_temps_atmo = "journalier"; break;
-                      }
-                      
-                      // Get the current mesures and convert for AtmoSud if needed
-                      var mesures = getArrayFromLocalStorage(mesures_local)[0];
-                      var mesures_atmo = mesures;
-                      if (mesures === 'pm25') {
-                          mesures_atmo = "pm2.5";
-                      }
-                      
-                      openSidePanel_microStation(
-                          layer.deviceData,
-                          pas_de_temps_atmo,
-                          "24h",
-                          mesures_atmo
-                      );
-                  }
-                  
-                  return false; // Break the loop
-              }
-          });
-      }
-      
-      // If not found using direct layer iteration, try alternative methods
-      if (!found) {
-          console.warn(`Could not find marker for device: ${deviceId} using layer iteration`);
-          
-          // Method 3: Try to use the stored device data
-          if (window.lastSelectedDeviceData) {
-              console.log("Reopening side panel with stored device data");
-              
-              if (deviceIdStr.indexOf('nebuleair') >= 0) {
-                  openSidePanel_nebuleAir(
-                      window.lastSelectedDeviceData,
-                      getArrayFromLocalStorage(pas_de_temps_local)[0],
-                      "24h",
-                      getArrayFromLocalStorage(mesures_local)[0]
-                  );
-              } else {
-                  // For AtmoSud microStations
-                  var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local)[0];
-                  var pas_de_temps_atmo = "";
-                  switch (pas_de_temps) {
-                      case '2min': pas_de_temps_atmo = "brute"; break;
-                      case 'qh': pas_de_temps_atmo = "quart-horaire"; break;
-                      case 'h': pas_de_temps_atmo = "horaire"; break;
-                      case 'd': pas_de_temps_atmo = "journalier"; break;
-                  }
-                  
-                  // Get the current mesures and convert for AtmoSud if needed
-                  var mesures = getArrayFromLocalStorage(mesures_local)[0];
-                  var mesures_atmo = mesures;
-                  if (mesures === 'pm25') {
-                      mesures_atmo = "pm2.5";
-                  }
-                  
-                  openSidePanel_microStation(
-                      window.lastSelectedDeviceData,
-                      pas_de_temps_atmo,
-                      "24h",
-                      mesures_atmo
-                  );
-              }
-          }
-      }
-  }, 1000); // Increased delay to ensure layers are fully loaded
+    console.log(`Attempting to re-highlight device: ${deviceId}`);
+
+    // First, clear the global marker references to avoid conflicts
+    if (globalSelectedMarker) {
+        if (globalSelectedMarker._icon) {
+            globalSelectedMarker._icon.classList.remove('marker-selected');
+        }
+        globalSelectedMarker.setZIndexOffset(0);
+        globalSelectedMarker = null;
+    }
+
+    if (globalSelectedText) {
+        if (globalSelectedText._icon) {
+            globalSelectedText._icon.classList.remove('marker-selected');
+        }
+        globalSelectedText.setZIndexOffset(0);
+        globalSelectedText = null;
+    }
+
+    // Wait for layers to be fully loaded
+    setTimeout(() => {
+        let found = false;
+        console.log('Looking for marker with deviceId:', deviceId);
+
+        // Convert deviceId to string if it's not already
+        const deviceIdStr = String(deviceId || '');
+
+        // Try multiple lookup methods
+
+        // Method 1: Check if the marker is in the nebuleair_layer
+        if (deviceIdStr.indexOf('nebuleair') >= 0) {
+            nebuleair_layer.eachLayer(function (layer) {
+                // Skip if this isn't a marker or doesn't have _icon
+                if (!layer._icon) return;
+
+                // Try both options.deviceId and direct deviceId property
+                const layerDeviceId =
+                    (layer.options && layer.options.deviceId) || layer.deviceId;
+
+                if (layerDeviceId == deviceId) {
+                    console.log('Found NebuleAir marker:', layer);
+
+                    // Find the corresponding text marker
+                    let textMarker = null;
+                    nebuleair_layer.eachLayer(function (textLayer) {
+                        if (!textLayer._icon) return;
+
+                        const textLayerDeviceId =
+                            (textLayer.options && textLayer.options.deviceId) ||
+                            textLayer.deviceId;
+
+                        if (
+                            textLayerDeviceId == deviceId &&
+                            textLayer !== layer
+                        ) {
+                            textMarker = textLayer;
+                        }
+                    });
+
+                    // Apply highlighting
+                    layer.setZIndexOffset(1000);
+                    if (layer._icon)
+                        layer._icon.classList.add('marker-selected');
+                    globalSelectedMarker = layer;
+
+                    if (textMarker) {
+                        textMarker.setZIndexOffset(1000);
+                        if (textMarker._icon)
+                            textMarker._icon.classList.add('marker-selected');
+                        globalSelectedText = textMarker;
+                    }
+
+                    found = true;
+
+                    // Re-open side panel if needed
+                    if (
+                        document.getElementById('side-panel').style.display ===
+                            'none' &&
+                        layer.deviceData
+                    ) {
+                        openSidePanel_nebuleAir(
+                            layer.deviceData,
+                            getArrayFromLocalStorage(pas_de_temps_local)[0],
+                            '24h',
+                            getArrayFromLocalStorage(mesures_local)[0]
+                        );
+                    }
+
+                    return false; // Break the loop
+                }
+            });
+        }
+        // Method 2: Check if the marker is in the atmo_micro_layer
+        else {
+            atmo_micro_layer.eachLayer(function (layer) {
+                // Skip if this isn't a marker or doesn't have _icon
+                if (!layer._icon) return;
+
+                // Try both options.deviceId and direct deviceId property
+                const layerDeviceId =
+                    (layer.options && layer.options.deviceId) || layer.deviceId;
+
+                if (layerDeviceId == deviceId) {
+                    console.log('Found AtmoSud marker:', layer);
+
+                    // Find the corresponding text marker
+                    let textMarker = null;
+                    atmo_micro_layer.eachLayer(function (textLayer) {
+                        if (!textLayer._icon) return;
+
+                        const textLayerDeviceId =
+                            (textLayer.options && textLayer.options.deviceId) ||
+                            textLayer.deviceId;
+
+                        if (
+                            textLayerDeviceId == deviceId &&
+                            textLayer !== layer
+                        ) {
+                            textMarker = textLayer;
+                        }
+                    });
+
+                    // Apply highlighting
+                    layer.setZIndexOffset(1000);
+                    if (layer._icon)
+                        layer._icon.classList.add('marker-selected');
+                    globalSelectedMarker = layer;
+
+                    if (textMarker) {
+                        textMarker.setZIndexOffset(1000);
+                        if (textMarker._icon)
+                            textMarker._icon.classList.add('marker-selected');
+                        globalSelectedText = textMarker;
+                    }
+
+                    found = true;
+
+                    // Re-open side panel if needed
+                    if (
+                        document.getElementById('side-panel').style.display ===
+                            'none' &&
+                        layer.deviceData
+                    ) {
+                        // Get the current pas_de_temps and convert it for AtmoSud
+                        var pas_de_temps =
+                            getArrayFromLocalStorage(pas_de_temps_local)[0];
+                        var pas_de_temps_atmo = '';
+                        switch (pas_de_temps) {
+                            case '2min':
+                                pas_de_temps_atmo = 'brute';
+                                break;
+                            case 'qh':
+                                pas_de_temps_atmo = 'quart-horaire';
+                                break;
+                            case 'h':
+                                pas_de_temps_atmo = 'horaire';
+                                break;
+                            case 'd':
+                                pas_de_temps_atmo = 'journalier';
+                                break;
+                        }
+
+                        // Get the current mesures and convert for AtmoSud if needed
+                        var mesures =
+                            getArrayFromLocalStorage(mesures_local)[0];
+                        var mesures_atmo = mesures;
+                        if (mesures === 'pm25') {
+                            mesures_atmo = 'pm2.5';
+                        }
+
+                        openSidePanel_microStation(
+                            layer.deviceData,
+                            pas_de_temps_atmo,
+                            '24h',
+                            mesures_atmo
+                        );
+                    }
+
+                    return false; // Break the loop
+                }
+            });
+        }
+
+        // If not found using direct layer iteration, try alternative methods
+        if (!found) {
+            console.warn(
+                `Could not find marker for device: ${deviceId} using layer iteration`
+            );
+
+            // Method 3: Try to use the stored device data
+            if (window.lastSelectedDeviceData) {
+                console.log('Reopening side panel with stored device data');
+
+                if (deviceIdStr.indexOf('nebuleair') >= 0) {
+                    openSidePanel_nebuleAir(
+                        window.lastSelectedDeviceData,
+                        getArrayFromLocalStorage(pas_de_temps_local)[0],
+                        '24h',
+                        getArrayFromLocalStorage(mesures_local)[0]
+                    );
+                } else {
+                    // For AtmoSud microStations
+                    var pas_de_temps =
+                        getArrayFromLocalStorage(pas_de_temps_local)[0];
+                    var pas_de_temps_atmo = '';
+                    switch (pas_de_temps) {
+                        case '2min':
+                            pas_de_temps_atmo = 'brute';
+                            break;
+                        case 'qh':
+                            pas_de_temps_atmo = 'quart-horaire';
+                            break;
+                        case 'h':
+                            pas_de_temps_atmo = 'horaire';
+                            break;
+                        case 'd':
+                            pas_de_temps_atmo = 'journalier';
+                            break;
+                    }
+
+                    // Get the current mesures and convert for AtmoSud if needed
+                    var mesures = getArrayFromLocalStorage(mesures_local)[0];
+                    var mesures_atmo = mesures;
+                    if (mesures === 'pm25') {
+                        mesures_atmo = 'pm2.5';
+                    }
+
+                    openSidePanel_microStation(
+                        window.lastSelectedDeviceData,
+                        pas_de_temps_atmo,
+                        '24h',
+                        mesures_atmo
+                    );
+                }
+            }
+        }
+    }, 1000); // Increased delay to ensure layers are fully loaded
 }
 
-
-
-
-
-
 // Initialize clock on page load
-document.addEventListener('DOMContentLoaded', function() {
-  updateTimeDisplay();
-  // Update clock every minute
-  setInterval(updateTimeDisplay, 60000);
+document.addEventListener('DOMContentLoaded', function () {
+    updateTimeDisplay();
+    // Update clock every minute
+    setInterval(updateTimeDisplay, 60000);
 
-  // Set up auto data refresh
-  setupAutoRefresh();
+    // Set up auto data refresh
+    setupAutoRefresh();
 });
-
 
 //vérifier si un élément est dans un js object
 function isValueInObject(obj, value) {
-  for (let key in obj) {
-      if (obj.hasOwnProperty(key)) {
-          if (obj[key] === value) {
-              //console.log(`Value "${value}" is present in the object.`);
-              return true;
-          }
-      }
-  }
-  //console.log(`Value "${value}" is not present in the object.`);
-  return false;
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            if (obj[key] === value) {
+                //console.log(`Value "${value}" is present in the object.`);
+                return true;
+            }
+        }
+    }
+    //console.log(`Value "${value}" is not present in the object.`);
+    return false;
 }
 
 function isEmptyObject(obj) {
-  return Object.keys(obj).length === 0;
+    return Object.keys(obj).length === 0;
 }
 
 //MESURES dropdown list (attention seul un élément peut etre coché)
 for (let key in mesures) {
-  if (mesures.hasOwnProperty(key)) {
-    console.log(getArrayFromLocalStorage(mesures_local)[0])
-      let button = document.createElement('button');
-      let name = mesures[key].name
-      console.log(name)
-      let code = mesures[key].code
-      let activated = mesures[key].activated
-      button.innerHTML = name; 
-      button.classList.add("dropdown-item");
-      //save inside local storage the initial config (if empty)
-      if(isEmptyObject(getArrayFromLocalStorage(mesures_local))){
-        if (activated) {
-          addItemToLocalStorageArray(mesures_local, code);
+    if (mesures.hasOwnProperty(key)) {
+        console.log(getArrayFromLocalStorage(mesures_local)[0]);
+        let button = document.createElement('button');
+        let name = mesures[key].name;
+        console.log(name);
+        let code = mesures[key].code;
+        let activated = mesures[key].activated;
+        button.innerHTML = name;
+        button.classList.add('dropdown-item');
+        //save inside local storage the initial config (if empty)
+        if (isEmptyObject(getArrayFromLocalStorage(mesures_local))) {
+            if (activated) {
+                addItemToLocalStorageArray(mesures_local, code);
+            }
         }
-      }
-      //on vérifie le local storage (object) pour voir si l'élément est déjà présent
-      let check_array=getArrayFromLocalStorage(mesures_local);
-      if(isValueInObject(check_array, code)){
-        button.classList.add("active");
-      }
-      //on ajoute la fonction pour le onclick
-      button.onclick= function (){
-        let check_array=getArrayFromLocalStorage(mesures_local);
-        if(isValueInObject(check_array, code)){
-          console.warn("on ne peut pas decocher")
-        } else {
-          //on elève les autres
-          localStorage.removeItem(mesures_local);
-          let listItems = document.querySelectorAll('#dropdown_mesures li');
-          listItems.forEach(li => {
-            // Find all button elements inside the current li element
-            let buttons = li.querySelectorAll('button');
-            // Iterate over each button element and remove the class
-            buttons.forEach(button => {
-                button.classList.remove('active');
-            });
-          });
-          //on ajoute le nouveau
-          addItemToLocalStorageArray(mesures_local, code);
-          button.classList.add("active");
-          //on change le nom du bouton
-          document.querySelector('#dropdown_mesures').closest('.dropdown').querySelector('.selected-option').textContent = name;
-          //ICI ON PEUT FETCHER LES DATAS
-          console.log("Changement du type de mesure: " + getArrayFromLocalStorage(mesures_local));
-          //attention il faut éventuellement vider le cache
-          //il faut aussi prendre en compte les source de données déjà ouverte
-          console.log("Necessite le renouvellement de: " + getArrayFromLocalStorage(sources_local))
-          //loop over the object (ex: ["nebuleair","signalair"])
-          for (let item of getArrayFromLocalStorage(sources_local)) {
-            //console.log(item);
-            clearLayer(code);
-            //get the new data
-            loadSource(item);
-          }
+        //on vérifie le local storage (object) pour voir si l'élément est déjà présent
+        let check_array = getArrayFromLocalStorage(mesures_local);
+        if (isValueInObject(check_array, code)) {
+            button.classList.add('active');
         }
-      }
-      let li = document.createElement('li'); 
-      li.appendChild(button); 
-      dropdown_mesures.appendChild(li); 
-  }
+        //on ajoute la fonction pour le onclick
+        button.onclick = function () {
+            let check_array = getArrayFromLocalStorage(mesures_local);
+            if (isValueInObject(check_array, code)) {
+                console.warn('on ne peut pas decocher');
+            } else {
+                //on elève les autres
+                localStorage.removeItem(mesures_local);
+                let listItems = document.querySelectorAll(
+                    '#dropdown_mesures li'
+                );
+                listItems.forEach((li) => {
+                    // Find all button elements inside the current li element
+                    let buttons = li.querySelectorAll('button');
+                    // Iterate over each button element and remove the class
+                    buttons.forEach((button) => {
+                        button.classList.remove('active');
+                    });
+                });
+                //on ajoute le nouveau
+                addItemToLocalStorageArray(mesures_local, code);
+                button.classList.add('active');
+                //on change le nom du bouton
+                document
+                    .querySelector('#dropdown_mesures')
+                    .closest('.dropdown')
+                    .querySelector('.selected-option').textContent = name;
+                //ICI ON PEUT FETCHER LES DATAS
+                console.log(
+                    'Changement du type de mesure: ' +
+                        getArrayFromLocalStorage(mesures_local)
+                );
+                //attention il faut éventuellement vider le cache
+                //il faut aussi prendre en compte les source de données déjà ouverte
+                console.log(
+                    'Necessite le renouvellement de: ' +
+                        getArrayFromLocalStorage(sources_local)
+                );
+                //loop over the object (ex: ["nebuleair","signalair"])
+                for (let item of getArrayFromLocalStorage(sources_local)) {
+                    //console.log(item);
+                    clearLayer(code);
+                    //get the new data
+                    loadSource(item);
+                }
+            }
+        };
+        let li = document.createElement('li');
+        li.appendChild(button);
+        dropdown_mesures.appendChild(li);
+    }
 }
 
 //SOURCE de donnée dropdown List
 for (let key in sources) {
-  if (sources.hasOwnProperty(key)) {
-      let button = document.createElement('button');
-      let name = sources[key].name
-      let code = sources[key].code
-      let activated = sources[key].activated
-      button.innerHTML = name; 
-      button.classList.add("dropdown-item");
-      //save inside local storage the initial config (if empty)
-      if(isEmptyObject(getArrayFromLocalStorage(sources_local))){
-        if (activated) {
-          addItemToLocalStorageArray(sources_local, code);
+    if (sources.hasOwnProperty(key)) {
+        let button = document.createElement('button');
+        let name = sources[key].name;
+        let code = sources[key].code;
+        let activated = sources[key].activated;
+        button.innerHTML = name;
+        button.classList.add('dropdown-item');
+        //save inside local storage the initial config (if empty)
+        if (isEmptyObject(getArrayFromLocalStorage(sources_local))) {
+            if (activated) {
+                addItemToLocalStorageArray(sources_local, code);
+            }
         }
-      }
-      //on vérifie le local storage (object) pour voir si l'élément est déja présent
-      let check_array=getArrayFromLocalStorage(sources_local);
-      if(isValueInObject(check_array, code)){
-        button.classList.add("active");
-      }
-      //on ajoute la fonction pour le onclick
-      button.onclick= function (){
-        let check_array=getArrayFromLocalStorage(sources_local);
-        //si l'élément est déjà coché
-        if(isValueInObject(check_array, code)){
-          button.classList.remove("active");
-          removeItemFromLocalStorageArray(sources_local, code);
-          //on elève la layer de la carte
-          clearLayer(code);
-        } else {
-          addItemToLocalStorageArray(sources_local, code);
-          button.classList.add("active");
-          //ICI ON PEUT FETCHER LES DATAS
-          loadSource(code);
+        //on vérifie le local storage (object) pour voir si l'élément est déja présent
+        let check_array = getArrayFromLocalStorage(sources_local);
+        if (isValueInObject(check_array, code)) {
+            button.classList.add('active');
         }
-      }
-      let li = document.createElement('li'); 
-      li.appendChild(button); 
-      dropdown_sources.appendChild(li); 
-  }
+        //on ajoute la fonction pour le onclick
+        button.onclick = function () {
+            let check_array = getArrayFromLocalStorage(sources_local);
+            //si l'élément est déjà coché
+            if (isValueInObject(check_array, code)) {
+                button.classList.remove('active');
+                removeItemFromLocalStorageArray(sources_local, code);
+                //on elève la layer de la carte
+                clearLayer(code);
+            } else {
+                addItemToLocalStorageArray(sources_local, code);
+                button.classList.add('active');
+                //ICI ON PEUT FETCHER LES DATAS
+                loadSource(code);
+            }
+        };
+        let li = document.createElement('li');
+        li.appendChild(button);
+        dropdown_sources.appendChild(li);
+    }
 }
 
 //Pas de temps dropdown List
 for (let key in pas_de_temps) {
-  if (pas_de_temps.hasOwnProperty(key)) {
-      let button = document.createElement('button');
-      let name = pas_de_temps[key].name
-      let code = pas_de_temps[key].code
-      let activated = pas_de_temps[key].activated
-      button.innerHTML = name; 
-      button.classList.add("dropdown-item");
-      //save inside local storage the initial config (if empty)
-      if(isEmptyObject(getArrayFromLocalStorage(pas_de_temps_local))){
-        if (activated) {
-          addItemToLocalStorageArray(pas_de_temps_local, code);
+    if (pas_de_temps.hasOwnProperty(key)) {
+        let button = document.createElement('button');
+        let name = pas_de_temps[key].name;
+        let code = pas_de_temps[key].code;
+        let activated = pas_de_temps[key].activated;
+        button.innerHTML = name;
+        button.classList.add('dropdown-item');
+        //save inside local storage the initial config (if empty)
+        if (isEmptyObject(getArrayFromLocalStorage(pas_de_temps_local))) {
+            if (activated) {
+                addItemToLocalStorageArray(pas_de_temps_local, code);
+            }
         }
-      }
-       //on vérifie le local storage (object) pour voir si l'élément est déjà présent
-       let check_array=getArrayFromLocalStorage(pas_de_temps_local);
-       if(isValueInObject(check_array, code)){
-         button.classList.add("active");
-
-       }
-
-       button.onclick= function (){
-        let check_array=getArrayFromLocalStorage(pas_de_temps_local);
-        if(isValueInObject(check_array, code)){
-          console.warn("on ne peut pas decocher")
-        } else {
-          //on elève les autres
-          localStorage.removeItem(pas_de_temps_local);
-          let listItems = document.querySelectorAll('#dropdown_pas_de_temps li');
-          listItems.forEach(li => {
-            // Find all button elements inside the current li element
-            let buttons = li.querySelectorAll('button');
-            // Iterate over each button element and remove the class
-            buttons.forEach(button => {
-                button.classList.remove('active');
-            });
-          });
-          //on ajoute le nouveau
-          addItemToLocalStorageArray(pas_de_temps_local, code);
-          button.classList.add("active");
-          //on change le nom du bouton
-          document.querySelector('#dropdown_pas_de_temps').closest('.dropdown').querySelector('.selected-option').textContent = name;
-
-
-          //ICI ON PEUT FETCHER LES DATAS
-          console.log("Changement du pas de temps: " + getArrayFromLocalStorage(pas_de_temps_local));
-          //attention il faut éventuellement vider le cache
-          //il faut aussi prendre en compte les source de données déjà ouverte
-          console.log("Necessite le renouvellement de: " + getArrayFromLocalStorage(sources_local))
-          //loop over the object (ex: ["nebuleair","signalair"])
-          for (let item of getArrayFromLocalStorage(sources_local)) {
-            //console.log(item);
-            clearLayer(code);
-            //get the new data
-            loadSource(item);
-          }
-          updateTimeDisplay();
-          setupAutoRefresh();
+        //on vérifie le local storage (object) pour voir si l'élément est déjà présent
+        let check_array = getArrayFromLocalStorage(pas_de_temps_local);
+        if (isValueInObject(check_array, code)) {
+            button.classList.add('active');
         }
-      }
 
-      let li = document.createElement('li'); 
-      li.appendChild(button); 
-      dropdown_pas_de_temps.appendChild(li); 
-  }
+        button.onclick = function () {
+            let check_array = getArrayFromLocalStorage(pas_de_temps_local);
+            if (isValueInObject(check_array, code)) {
+                console.warn('on ne peut pas decocher');
+            } else {
+                //on elève les autres
+                localStorage.removeItem(pas_de_temps_local);
+                let listItems = document.querySelectorAll(
+                    '#dropdown_pas_de_temps li'
+                );
+                listItems.forEach((li) => {
+                    // Find all button elements inside the current li element
+                    let buttons = li.querySelectorAll('button');
+                    // Iterate over each button element and remove the class
+                    buttons.forEach((button) => {
+                        button.classList.remove('active');
+                    });
+                });
+                //on ajoute le nouveau
+                addItemToLocalStorageArray(pas_de_temps_local, code);
+                button.classList.add('active');
+                //on change le nom du bouton
+                document
+                    .querySelector('#dropdown_pas_de_temps')
+                    .closest('.dropdown')
+                    .querySelector('.selected-option').textContent = name;
+
+                //ICI ON PEUT FETCHER LES DATAS
+                console.log(
+                    'Changement du pas de temps: ' +
+                        getArrayFromLocalStorage(pas_de_temps_local)
+                );
+                //attention il faut éventuellement vider le cache
+                //il faut aussi prendre en compte les source de données déjà ouverte
+                console.log(
+                    'Necessite le renouvellement de: ' +
+                        getArrayFromLocalStorage(sources_local)
+                );
+                //loop over the object (ex: ["nebuleair","signalair"])
+                for (let item of getArrayFromLocalStorage(sources_local)) {
+                    //console.log(item);
+                    clearLayer(code);
+                    //get the new data
+                    loadSource(item);
+                }
+                updateTimeDisplay();
+                setupAutoRefresh();
+            }
+        };
+
+        let li = document.createElement('li');
+        li.appendChild(button);
+        dropdown_pas_de_temps.appendChild(li);
+    }
 }
 
 //Chargement des sources depuis un bouton
-function loadSource(source){
-  console.log("Loading data for " + source) ;
-  switch(source){
-    case 'nebuleair':loadNebuleAir();break;
-    case 'sensor_commmunity':loadSensorCommunity();break;
-    case 'purpleair':loadSensorCommunity();break;
-    case 'atmo_micro':load_atmoSud_microStations();break;
-    case 'atmo_ref':load_atmoSud_stationsRef();break;
-    case 'mod_pm':loadModPM();break;
-    case 'icairh':loadicairh();break;
-    case 'vents':loadVents();break;
-    case 'signalair':loadSignalAir();break;
-    case 'mobileair':loadMobileAir();break;
-
-  }
+function loadSource(source) {
+    console.log('Loading data for ' + source);
+    switch (source) {
+        case 'nebuleair':
+            loadNebuleAir();
+            break;
+        case 'sensor_commmunity':
+            loadSensorCommunity();
+            break;
+        case 'purpleair':
+            loadSensorCommunity();
+            break;
+        case 'atmo_micro':
+            load_atmoSud_microStations();
+            break;
+        case 'atmo_ref':
+            load_atmoSud_stationsRef();
+            break;
+        case 'mod_pm':
+            loadModPM();
+            break;
+        case 'icairh':
+            loadicairh();
+            break;
+        case 'vents':
+            loadVents();
+            break;
+        case 'signalair':
+            loadSignalAir();
+            break;
+        case 'mobileair':
+            loadMobileAir();
+            break;
+    }
 }
 
 //Enlever les layers lorsque l'on change de pas de temps ou de source
-function clearLayer(source){
-  console.log("Clearing layer  for " + source) ;
-  switch(source){
-    case 'nebuleair': nebuleair_layer.clearLayers();break;
-    case 'sensor_commmunity': sensor_commmunity_layer.clearLayers();break;
-    case 'purpleair': purpleair_layer.clearLayers();break;
-    case 'atmo_micro': atmo_micro_layer.clearLayers();break;
-    case 'atmo_ref': atmo_ref_layer.clearLayers();break;
-    case 'mod_pm': modelisationPMAtmoSud_layer.clearLayers();break;
-    case 'icairh': modelisationICAIRAtmoSud_layer.clearLayers();break;
-    case 'vents': map.clearLayers();break;
-    case 'signalair': signalair_layer.clearLayers();break;
-    case 'mobileair': mobileair_layer.clearLayers();break;
-
-  }
+function clearLayer(source) {
+    console.log('Clearing layer  for ' + source);
+    switch (source) {
+        case 'nebuleair':
+            nebuleair_layer.clearLayers();
+            break;
+        case 'sensor_commmunity':
+            sensor_commmunity_layer.clearLayers();
+            break;
+        case 'purpleair':
+            purpleair_layer.clearLayers();
+            break;
+        case 'atmo_micro':
+            atmo_micro_layer.clearLayers();
+            break;
+        case 'atmo_ref':
+            atmo_ref_layer.clearLayers();
+            break;
+        case 'mod_pm':
+            modelisationPMAtmoSud_layer.clearLayers();
+            break;
+        case 'icairh':
+            modelisationICAIRAtmoSud_layer.clearLayers();
+            break;
+        case 'vents':
+            map.clearLayers();
+            break;
+        case 'signalair':
+            signalair_layer.clearLayers();
+            break;
+        case 'mobileair':
+            mobileair_layer.clearLayers();
+            break;
+    }
 }
-
 
 //chargement des sources depuis la mémoire locale (au démarrage de l'appli)
 for (let key in sources) {
-  let code = sources[key].code
-  //on vérifie le local storage (object) pour voir si l'élément est déjà présent
-  let check_array=getArrayFromLocalStorage(sources_local);
-  if(isValueInObject(check_array, code)){
-    loadSource(code);
-  }
+    let code = sources[key].code;
+    //on vérifie le local storage (object) pour voir si l'élément est déjà présent
+    let check_array = getArrayFromLocalStorage(sources_local);
+    if (isValueInObject(check_array, code)) {
+        loadSource(code);
+    }
 }
 
 //actualisation des sources toutes les minutes
-//TEST AVEC MOBILEAIR 
-function reload_layers(source){
-  console.log("⏰ Reloading layers");
-  clearLayer("mobileair");
-  //get the new data
-  loadSource("mobileair");
+//TEST AVEC MOBILEAIR
+function reload_layers(source) {
+    console.log('⏰ Reloading layers');
+    clearLayer('mobileair');
+    //get the new data
+    loadSource('mobileair');
 }
 
 setInterval(reload_layers, 9990000); //60000 -> 1min
-
 
 //OPEN SIDE PANEL
 /*
 Sur un grand écran on veut un side panel moins large (col-lg) 
 que sur un petit écran (col) sinon il est trop fin
 */
-function openSidePanel_generic(){
-  //console.log("openSidePane_generic");
-  //side panel
-  // sur smartphone -> toute la place (col-12)
-  // sur ordi petit (sm) -> 6 colonnes
-  // sur grand écran (lg) -> 5 colonnes
-  sidePanel.classList.add('col-12','col-sm-6', 'col-lg-5'); 
-  sidePanel.style.display = 'block';
-  //map 
-  // sur smartphone -> disparait (col-0)
-  // sur ordi petit (sm) -> 6 colonnes
-  // sur grand écran (lg) -> 7 colonnes
-  mapContainer.classList.remove('col-12'); 
-  mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
-  mapContainer.style.paddingLeft ='10px'; 
+function openSidePanel_generic() {
+    //console.log("openSidePane_generic");
+    //side panel
+    // sur smartphone -> toute la place (col-12)
+    // sur ordi petit (sm) -> 6 colonnes
+    // sur grand écran (lg) -> 5 colonnes
+    sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
+    sidePanel.style.display = 'block';
+    //map
+    // sur smartphone -> disparait (col-0)
+    // sur ordi petit (sm) -> 6 colonnes
+    // sur grand écran (lg) -> 7 colonnes
+    mapContainer.classList.remove('col-12');
+    mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
+    mapContainer.style.paddingLeft = '10px';
 }
 
-function openSidePanel_signalair(data, nuisance_type){
-  console.log("Opening side panel for SignalAir");
-  card1_img.src="img/signalair/logoSignalAir.png"
-  card1_title.innerHTML = "Nuisance: " + nuisance_type;
-  card1_text.innerHTML =  `
-    Ville:   ${data["city"]} </br>
+function openSidePanel_signalair(data, nuisance_type) {
+    console.log('Opening side panel for SignalAir');
+    card1_img.src = 'img/signalair/logoSignalAir.png';
+    card1_title.innerHTML = 'Nuisance: ' + nuisance_type;
+    card1_text.innerHTML = `
+    Ville:   ${data['city']} </br>
     <table class="table">
       <tbody>
         <tr>
           <td>Niveau de gêne</td>
-          <td>${data["niveau-de-gene"]}</td>
+          <td>${data['niveau-de-gene']}</td>
         </tr>
         <tr>
           <td>Symptômes déclarés</td>
-          <td>${data["si-oui-quels-symptomes"]}</td>
+          <td>${data['si-oui-quels-symptomes']}</td>
         </tr>
         <tr>
           <td>Origine de la nuisance</td>
-          <td>${data["origine-de-la-nuisance"]} ${data["description-de-lorigine-de-la-nuisance"]}</td>
+          <td>${data['origine-de-la-nuisance']} ${data['description-de-lorigine-de-la-nuisance']}</td>
         </tr>
         <tr>
           <td>Durée de la nuisance</td>
-          <td>${data["duree-de-la-nuisance"]}</td>
+          <td>${data['duree-de-la-nuisance']}</td>
         </tr>
         <tr>
         <td>Commentaires</td>
-        <td>${data["remarque-commentaire"]}</td>
+        <td>${data['remarque-commentaire']}</td>
       </tr>
       </tbody>
     </table>
@@ -810,92 +943,99 @@ function openSidePanel_signalair(data, nuisance_type){
 
      `;
 
-     openSidePanel_generic() 
+    openSidePanel_generic();
 }
-
 
 //CLOSE SIDE PANEL
-function closeSidePanel(){
-  console.log("Closing side panel");
-  sidePanel.classList.remove('col-2','col-sm-4','col-lg-3');
-  sidePanel.style.display = 'none';
-  mapContainer.classList.remove('col-8', 'col-lg-9'); 
-  mapContainer.classList.add('col-12'); 
-  mapContainer.style.paddingLeft ='30px'; 
+function closeSidePanel() {
+    console.log('Closing side panel');
+    sidePanel.classList.remove('col-2', 'col-sm-4', 'col-lg-3');
+    sidePanel.style.display = 'none';
+    mapContainer.classList.remove('col-8', 'col-lg-9');
+    mapContainer.classList.add('col-12');
+    mapContainer.style.paddingLeft = '30px';
 }
-
-
-
 
 //Leaflet Map obj creation
 let coordsCenter = config.coordsCenter;
 let zoomLevel = config.zoomLevel;
 
-let map = L.map("map", {
-  //zoomControl: isMobile == true ? false : true,
-  minZoom: config.minZoom,
-  maxZoom: config.maxZoom,
-  renderer: L.canvas(),
-  maxBounds: L.latLngBounds(config.boundNE, config.boundSW),
+let map = L.map('map', {
+    //zoomControl: isMobile == true ? false : true,
+    minZoom: config.minZoom,
+    maxZoom: config.maxZoom,
+    renderer: L.canvas(),
+    maxBounds: L.latLngBounds(config.boundNE, config.boundSW),
 });
 
-L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-  {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  }
-).addTo(map);
-
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+}).addTo(map);
 
 // Event listener for the open/close button of the side panel
-document.getElementById('toggleSidePanel').addEventListener('click', function() {
-  const sidePanel = document.getElementById('side-panel');
-  const mapContainer = document.getElementById('map-container');
-  const icon = this.querySelector('i');
-  
-  if (sidePanel.style.display === 'none') {
-      // Opening side panel
-      sidePanel.classList.add('col-12','col-sm-6', 'col-lg-5');
-      sidePanel.style.display = 'block';
-      document.body.classList.add('side-panel-open');
-      mapContainer.classList.remove('col-12');
-      mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
-      icon.classList.replace('bi-chevron-right', 'bi-chevron-left');
-  } else {
-      // Closing side panel
-      sidePanel.classList.remove('col-12','col-sm-6', 'col-lg-5');
-      sidePanel.style.display = 'none';
-      document.body.classList.remove('side-panel-open');
-      mapContainer.classList.remove('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
-      mapContainer.classList.add('col-12');
-      icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
-  }
-  
-  map.invalidateSize();
-});
+document
+    .getElementById('toggleSidePanel')
+    .addEventListener('click', function () {
+        const sidePanel = document.getElementById('side-panel');
+        const mapContainer = document.getElementById('map-container');
+        const icon = this.querySelector('i');
+
+        if (sidePanel.style.display === 'none') {
+            // Opening side panel
+            sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
+            sidePanel.style.display = 'block';
+            document.body.classList.add('side-panel-open');
+            mapContainer.classList.remove('col-12');
+            mapContainer.classList.add(
+                'd-none',
+                'd-sm-block',
+                'col-sm-6',
+                'col-lg-7'
+            );
+            icon.classList.replace('bi-chevron-right', 'bi-chevron-left');
+        } else {
+            // Closing side panel
+            sidePanel.classList.remove('col-12', 'col-sm-6', 'col-lg-5');
+            sidePanel.style.display = 'none';
+            document.body.classList.remove('side-panel-open');
+            mapContainer.classList.remove(
+                'd-none',
+                'd-sm-block',
+                'col-sm-6',
+                'col-lg-7'
+            );
+            mapContainer.classList.add('col-12');
+            icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
+        }
+
+        map.invalidateSize();
+    });
 
 // Event listener for the mobile close button
-document.getElementById('closeSidePanelMobile').addEventListener('click', function() {
-  const sidePanel = document.getElementById('side-panel');
-  const mapContainer = document.getElementById('map-container');
-  const toggleButton = document.getElementById('toggleSidePanel');
-  const toggleIcon = toggleButton.querySelector('i');
-  
-  // Closing side panel
-  sidePanel.classList.remove('col-12','col-sm-6', 'col-lg-5');
-  sidePanel.style.display = 'none';
-  document.body.classList.remove('side-panel-open');
-  mapContainer.classList.remove('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
-  mapContainer.classList.add('col-12');
-  toggleIcon.classList.replace('bi-chevron-left', 'bi-chevron-right');
-  
-  map.invalidateSize();
-});
+document
+    .getElementById('closeSidePanelMobile')
+    .addEventListener('click', function () {
+        const sidePanel = document.getElementById('side-panel');
+        const mapContainer = document.getElementById('map-container');
+        const toggleButton = document.getElementById('toggleSidePanel');
+        const toggleIcon = toggleButton.querySelector('i');
 
+        // Closing side panel
+        sidePanel.classList.remove('col-12', 'col-sm-6', 'col-lg-5');
+        sidePanel.style.display = 'none';
+        document.body.classList.remove('side-panel-open');
+        mapContainer.classList.remove(
+            'd-none',
+            'd-sm-block',
+            'col-sm-6',
+            'col-lg-7'
+        );
+        mapContainer.classList.add('col-12');
+        toggleIcon.classList.replace('bi-chevron-left', 'bi-chevron-right');
 
-
-
+        map.invalidateSize();
+    });
 
 // After map initialization
 const deviceInfo = L.control({ position: 'bottomright' });
@@ -916,43 +1056,51 @@ deviceInfo.onAdd = function () {
 
 deviceInfo.addTo(map);
 
-
 //Location et Zoom par défaut récupéré dans config.js
 //si existe dans Local Storage alors prends les variables en local
 if ('Lat' in localStorage) {
-  let coordsCenter_local_lat = localStorage.getItem('Lat');
-  let coordsCenter_local_long = localStorage.getItem('Long');
-  let zoomLevel_local = localStorage.getItem('Zoom');
-  map.setView([coordsCenter_local_lat, coordsCenter_local_long], zoomLevel_local);
+    let coordsCenter_local_lat = localStorage.getItem('Lat');
+    let coordsCenter_local_long = localStorage.getItem('Long');
+    let zoomLevel_local = localStorage.getItem('Zoom');
+    map.setView(
+        [coordsCenter_local_lat, coordsCenter_local_long],
+        zoomLevel_local
+    );
 } else {
-  map.setView(coordsCenter, zoomLevel);
-} 
+    map.setView(coordsCenter, zoomLevel);
+}
 
 // on set l'affichage des boutons de choix de pas de temps et de mesures
 const storedTimeStep = getArrayFromLocalStorage('pas_de_temps_local')[0];
-const timeStepName = pas_de_temps[Object.keys(pas_de_temps).find(key => 
-  pas_de_temps[key].code === storedTimeStep
-)].name;
-document.querySelector('#dropdown_pas_de_temps').closest('.dropdown').querySelector('.selected-option').textContent = timeStepName;
+const timeStepName =
+    pas_de_temps[
+        Object.keys(pas_de_temps).find(
+            (key) => pas_de_temps[key].code === storedTimeStep
+        )
+    ].name;
+document
+    .querySelector('#dropdown_pas_de_temps')
+    .closest('.dropdown')
+    .querySelector('.selected-option').textContent = timeStepName;
 const storedMesure = getArrayFromLocalStorage('mesures_local')[0];
-const mesureName = mesures[Object.keys(mesures).find(key =>
-  mesures[key].code === storedMesure
-)].name;
-document.querySelector('#dropdown_mesures').closest('.dropdown').querySelector('.selected-option').textContent = mesureName;
-
+const mesureName =
+    mesures[
+        Object.keys(mesures).find((key) => mesures[key].code === storedMesure)
+    ].name;
+document
+    .querySelector('#dropdown_mesures')
+    .closest('.dropdown')
+    .querySelector('.selected-option').textContent = mesureName;
 
 // Dès que l'on bouge la cart on enregistre LAT/LONG/ZOOM
-map.on('moveend', function() {
- // Get the map's center coordinates
- var center = map.getCenter();
- var currentZoom = map.getZoom();
- var lat = center.lat;
- var lng = center.lng;
- // Log the latitude and longitude to the console
- saveArrayToLocalStorage("Lat", lat);
- saveArrayToLocalStorage("Long", lng);
- saveArrayToLocalStorage("Zoom", currentZoom);
+map.on('moveend', function () {
+    // Get the map's center coordinates
+    var center = map.getCenter();
+    var currentZoom = map.getZoom();
+    var lat = center.lat;
+    var lng = center.lng;
+    // Log the latitude and longitude to the console
+    saveArrayToLocalStorage('Lat', lat);
+    saveArrayToLocalStorage('Long', lng);
+    saveArrayToLocalStorage('Zoom', currentZoom);
 });
-
-
-

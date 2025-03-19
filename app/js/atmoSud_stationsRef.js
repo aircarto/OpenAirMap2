@@ -181,14 +181,91 @@ function load_atmoSud_stationsRef() {
                             ].textMarker.setZIndexOffset(1000);
                         }
 
-                        // Show device info
-                        deviceInfo._div.querySelector(
-                            '#device-name'
-                        ).textContent = formatString(item.nom_station);
-                        deviceInfo._div.querySelector(
-                            '#device-details'
-                        ).textContent = `Type: Station de référence`;
+                        // Create a formatted list of pollutants
+                        let pollutantsHTML = '';
+                        if (item.variables) {
+                            pollutantsHTML =
+                                '<div class="mt-2"><strong>Polluants mesurés:</strong>';
+                            pollutantsHTML +=
+                                '<ul class="list-unstyled mb-0 ps-2">';
+
+                            // Process each pollutant
+                            Object.entries(item.variables).forEach(
+                                ([id, name]) => {
+                                    // Format pollutant name with subscripts
+                                    let formattedName =
+                                        formatPollutantName(name);
+
+                                    // Check if this pollutant is still being measured
+                                    let isActive = true;
+                                    let statusHTML = '';
+
+                                    if (
+                                        item.date_fin_mesure &&
+                                        item.date_fin_mesure[id]
+                                    ) {
+                                        const endDate = new Date(
+                                            item.date_fin_mesure[id]
+                                        );
+                                        const today = new Date();
+
+                                        if (endDate < today) {
+                                            isActive = false;
+                                            const formattedDate =
+                                                endDate.toLocaleDateString();
+                                            statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
+                                        }
+                                    }
+
+                                    // Add status indicator
+                                    const statusIndicator = isActive
+                                        ? '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>'
+                                        : '<i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i>';
+
+                                    pollutantsHTML += `<li>${statusIndicator}${formattedName}${statusHTML}</li>`;
+                                }
+                            );
+
+                            pollutantsHTML += '</ul></div>';
+                        }
+
+                        // Check overall station status
+                        let stationStatusHTML = '';
+                        if (item.en_service === false) {
+                            stationStatusHTML =
+                                '<div class="alert alert-warning py-1 mt-2 mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i>Station hors service</div>';
+                        } else {
+                            stationStatusHTML =
+                                '<div class="badge bg-success mt-2"><i class="bi bi-broadcast-pin me-1"></i>Station active</div>';
+                        }
+
+                        // Show device info with enhanced details
+                        deviceInfo._div.innerHTML = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <h5 class="card-title mb-1" id="device-name">${item.nom_station}</h5>
+                                    <p class="card-text text-muted mb-2" id="device-details">Type: Station de référence</p>
+                                    ${pollutantsHTML}
+                                    ${stationStatusHTML}
+                                </div>
+                            </div>
+                        `;
+
                         deviceInfo._div.style.display = 'block';
+                    }
+
+                    // Helper function to format pollutant names with proper subscripts
+                    function formatPollutantName(name) {
+                        // Replace common pollutant notations with properly formatted versions
+                        return name
+                            .replace(/NO2/g, 'NO<sub>2</sub>')
+                            .replace(/SO2/g, 'SO<sub>2</sub>')
+                            .replace(/O3/g, 'O<sub>3</sub>')
+                            .replace(/PM2.5/g, 'PM<sub>2.5</sub>')
+                            .replace(/PM2,5/g, 'PM<sub>2,5</sub>')
+                            .replace(/CO2/g, 'CO<sub>2</sub>')
+                            .replace(/H2S/g, 'H<sub>2</sub>S')
+                            .replace(/NH3/g, 'NH<sub>3</sub>');
                     }
 
                     function resetMarker() {
@@ -466,12 +543,100 @@ function load_atmoSud_stationsRef() {
                     stationMarker.setZIndexOffset(1000);
                     textMarker.setZIndexOffset(1000);
 
-                    // Show device info
-                    deviceInfo._div.querySelector('#device-name').textContent =
-                        formatString(value.nom_station);
-                    deviceInfo._div.querySelector(
-                        '#device-details'
-                    ).textContent = `Type: Station de référence`;
+                    // Get the full station data if available
+                    let stationData = null;
+                    if (
+                        window.stationMarkers &&
+                        window.stationMarkers[value.id_station] &&
+                        window.stationMarkers[value.id_station].data
+                    ) {
+                        stationData =
+                            window.stationMarkers[value.id_station].data;
+                    }
+
+                    // Create a formatted list of pollutants if we have the full station data
+                    let pollutantsHTML = '';
+                    if (stationData && stationData.variables) {
+                        pollutantsHTML =
+                            '<div class="mt-2"><strong>Polluants mesurés:</strong>';
+                        pollutantsHTML +=
+                            '<ul class="list-unstyled mb-0 ps-2">';
+
+                        // Process each pollutant
+                        Object.entries(stationData.variables).forEach(
+                            ([id, name]) => {
+                                // Format pollutant name with subscripts
+                                let formattedName = formatPollutantName(name);
+
+                                // Check if this pollutant is still being measured
+                                let isActive = true;
+                                let statusHTML = '';
+
+                                if (
+                                    stationData.date_fin_mesure &&
+                                    stationData.date_fin_mesure[id]
+                                ) {
+                                    const endDate = new Date(
+                                        stationData.date_fin_mesure[id]
+                                    );
+                                    const today = new Date();
+
+                                    if (endDate < today) {
+                                        isActive = false;
+                                        const formattedDate =
+                                            endDate.toLocaleDateString();
+                                        statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
+                                    }
+                                }
+
+                                // Add status indicator
+                                const statusIndicator = isActive
+                                    ? '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>'
+                                    : '<i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i>';
+
+                                pollutantsHTML += `<li>${statusIndicator}${formattedName}${statusHTML}</li>`;
+                            }
+                        );
+
+                        pollutantsHTML += '</ul></div>';
+                    } else {
+                        // If we don't have the full data, just show the current pollutant
+                        const currentPollutant = formatPollutantName(
+                            value.label_polluant || ''
+                        );
+                        pollutantsHTML = `
+                            <div class="mt-2">
+                                <strong>Mesure actuelle:</strong>
+                                <div class="ps-2">
+                                    <i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>
+                                    ${currentPollutant}: <strong>${Math.round(value.valeur)} µg/m³</strong>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Check overall station status
+                    let stationStatusHTML = '';
+                    if (stationData && stationData.en_service === false) {
+                        stationStatusHTML =
+                            '<div class="alert alert-warning py-1 mt-2 mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i>Station hors service</div>';
+                    } else {
+                        stationStatusHTML =
+                            '<div class="badge bg-success mt-2"><i class="bi bi-broadcast-pin me-1"></i>Station active</div>';
+                    }
+
+                    // Show device info with enhanced details
+                    deviceInfo._div.innerHTML = `
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-3">
+                                <h5 class="card-title mb-1" id="device-name">${value.nom_station}</h5>
+                                <p class="card-text text-muted mb-2" id="device-details">Type: Station de référence</p>
+                                ${pollutantsHTML}
+                                ${stationStatusHTML}
+                            </div>
+                        </div>
+                    `;
+
                     deviceInfo._div.style.display = 'block';
                 }
 
