@@ -864,6 +864,12 @@ function openSidePanel_stationRef(stationID, station_name, mesure) {
         historique_chart = '365d';
         historique_buttons.forEach((btn) => (btn.checked = false));
         btn_historique_1a.checked = true;
+        // Si Historique 1 an, on désactive les boutons pas de temps 15m et 1h et on set pas de temps à journalier
+        btn_pas_de_temps_h.disabled = true;
+        btn_pas_de_temps_qh.disabled = true;
+
+        pas_de_temps_chart = 'journalière';
+
         retreive_historiqueData_stationRef(
             stationID,
             pas_de_temps_chart,
@@ -872,31 +878,6 @@ function openSidePanel_stationRef(stationID, station_name, mesure) {
         );
     };
 
-    // Pas de temps Button handlers setup
-    // btn_pas_de_temps_2min.onclick = function () {
-    //     pas_de_temps_chart = 'brute';
-    //     pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
-    //     btn_pas_de_temps_2min.checked = true;
-
-    //     if (using_custom_date_range) {
-    //         retreive_historiqueData_stationRef(
-    //             globalSelectedStationId,
-    //             pas_de_temps_chart,
-    //             null,
-    //             mesures_array,
-    //             false,
-    //             custom_start_date,
-    //             custom_end_date
-    //         );
-    //     } else {
-    //         retreive_historiqueData_stationRef(
-    //             stationID,
-    //             pas_de_temps_chart,
-    //             historique_chart,
-    //             mesures_array
-    //         );
-    //     }
-    // };
     btn_pas_de_temps_2min.disabled = true;
 
     btn_pas_de_temps_qh.onclick = function () {
@@ -1150,7 +1131,16 @@ function retreive_historiqueData_stationRef(
     });
 
     const start = Date.now();
-    document.getElementById('chartdiv_sensor').innerHTML = '';
+
+    // Clear the chart div and add a Bootstrap spinner
+    const chartDiv = document.getElementById('chartdiv_sensor');
+    chartDiv.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="ms-2">Chargement des données...</span>
+        </div>`;
 
     // Determine start and end dates
     let start_date, end_date;
@@ -1227,14 +1217,18 @@ function retreive_historiqueData_stationRef(
             );
             console.log(data);
 
+            // Remove the spinner by clearing the chart div
+            chartDiv.innerHTML = '';
+
             if (amchart_root != undefined) {
                 amchart_root.dispose();
             }
 
             // No data case
             if (!data.mesures || data.mesures.length === 0) {
-                document.getElementById('chartdiv_sensor').innerHTML =
-                    `<div class="alert alert-warning">
+                chartDiv.innerHTML = `
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
                         <strong>Aucune donnée!</strong> Pas de données disponibles pour cette période.
                     </div>`;
                 return;
@@ -1264,6 +1258,7 @@ function retreive_historiqueData_stationRef(
                 data.mesures.forEach((item) => {
                     // Determine the variable name (polluant)
                     let variable;
+                    // Use more specific matching to avoid PM1 matching PM10
                     if (
                         item.label_polluant &&
                         (item.label_polluant.includes('PM1 ') ||
@@ -1347,8 +1342,6 @@ function retreive_historiqueData_stationRef(
                             timeUnit: baseInterval_timeUnit_local,
                             count: baseInterval_count,
                         },
-                        min: new Date(start_date).getTime(),
-                        max: new Date(end_date + 'T23:59:59').getTime(),
                         renderer: am5xy.AxisRendererX.new(amchart_root, {
                             minorGridEnabled: true,
                         }),
@@ -1407,9 +1400,10 @@ function retreive_historiqueData_stationRef(
             console.error('Status:', status);
             console.error('Response:', xhr.responseText);
 
-            // Display error message to user
-            document.getElementById('chartdiv_sensor').innerHTML =
-                `<div class="alert alert-danger">
+            // Remove spinner and display error message with Bootstrap styling
+            chartDiv.innerHTML = `
+                <div class="alert alert-danger mt-3">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
                     <strong>Erreur!</strong> Impossible de récupérer les données pour cette station.
                     <br>Détails: ${error}
                 </div>`;
