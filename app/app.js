@@ -113,10 +113,9 @@ function formatPollutantName(name) {
     // Replace common pollutant notations with properly formatted versions
     return name
         .replace(/NO2/g, 'NO<sub>2</sub>')
+        .replace(/NOx/g, 'NO<sub>x</sub>')
         .replace(/SO2/g, 'SO<sub>2</sub>')
         .replace(/O3/g, 'O<sub>3</sub>')
-        .replace(/PM2.5/g, 'PM<sub>2.5</sub>')
-        .replace(/PM2,5/g, 'PM<sub>2,5</sub>')
         .replace(/CO2/g, 'CO<sub>2</sub>')
         .replace(/H2S/g, 'H<sub>2</sub>S')
         .replace(/NH3/g, 'NH<sub>3</sub>');
