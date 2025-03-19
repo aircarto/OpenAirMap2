@@ -1259,43 +1259,17 @@ function retreive_historiqueData_stationRef(
                     // Determine the variable name (polluant)
                     let variable;
                     // Use more specific matching to avoid PM1 matching PM10
-                    if (
-                        item.label_polluant &&
-                        (item.label_polluant.includes('PM1 ') ||
-                            item.label_polluant === 'PM1' ||
-                            item.label_polluant.endsWith('PM1'))
-                    ) {
-                        variable = 'pm1';
-                    } else if (
-                        item.label_polluant &&
-                        (item.label_polluant.includes('PM2.5') ||
-                            item.label_polluant.includes('PM2,5'))
-                    ) {
-                        variable = 'pm2.5';
-                    } else if (
-                        item.label_polluant &&
-                        item.label_polluant.includes('PM10')
-                    ) {
-                        variable = 'pm10';
-                    } else if (
-                        item.label_polluant &&
-                        (item.label_polluant.includes("Dioxyde d'azote") ||
-                            item.label_polluant.includes('NO2'))
-                    ) {
+                    // Use a fallback identification method based on pollutant ID
+                    if (item.polluant_id === '03') {
                         variable = 'no2';
+                    } else if (item.polluant_id === '68') {
+                        variable = 'pm1';
+                    } else if (item.polluant_id === '39') {
+                        variable = 'pm2.5';
+                    } else if (item.polluant_id === '24') {
+                        variable = 'pm10';
                     } else {
-                        // Use a fallback identification method based on pollutant ID
-                        if (item.polluant_id === '03') {
-                            variable = 'no2';
-                        } else if (item.polluant_id === '68') {
-                            variable = 'pm1';
-                        } else if (item.polluant_id === '39') {
-                            variable = 'pm2.5';
-                        } else if (item.polluant_id === '24') {
-                            variable = 'pm10';
-                        } else {
-                            variable = item.polluant_id || 'unknown';
-                        }
+                        variable = item.polluant_id || 'unknown';
                     }
 
                     if (!seriesData[variable]) {
@@ -1356,6 +1330,7 @@ function retreive_historiqueData_stationRef(
                 );
 
                 // Create a series for each variable in the data
+                // Create a series for each variable in the data
                 Object.keys(seriesData).forEach((variable) => {
                     // Skip empty series
                     if (seriesData[variable].length === 0) return;
@@ -1363,15 +1338,24 @@ function retreive_historiqueData_stationRef(
                     // Sort data points by date
                     seriesData[variable].sort((a, b) => a.date - b.date);
 
+                    // Format the display name with subscript for NO2
+                    let displayName = variable.toUpperCase();
+                    if (variable === 'no2') {
+                        displayName = 'NO₂'; // Using Unicode subscript character instead of HTML
+                    }
+
                     let series = chart.series.push(
                         am5xy.SmoothedXLineSeries.new(amchart_root, {
-                            name: variable.toUpperCase(),
+                            name: displayName,
                             xAxis: xAxis,
                             yAxis: yAxis,
                             valueYField: 'value',
                             valueXField: 'date',
                             tooltip: am5.Tooltip.new(amchart_root, {
-                                labelText: `${variable.toUpperCase()}: {valueY} µg/m³`,
+                                labelText:
+                                    variable === 'no2'
+                                        ? `NO₂: {valueY} µg/m³`
+                                        : `${displayName}: {valueY} µg/m³`,
                             }),
                         })
                     );
