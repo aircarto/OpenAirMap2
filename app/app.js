@@ -108,8 +108,14 @@ function formatString(str) {
     return formattedStr;
 }
 
-// Helper function to format pollutant names with proper subscripts
+// Fonction pour formater les noms du polluants
 function formatPollutantName(name) {
+    // Check if name is a string
+    if (!name || typeof name !== 'string') {
+        console.warn('formatPollutantName received non-string value:', name);
+        return String(name || '');
+    }
+
     // Replace common pollutant notations with properly formatted versions
     return name
         .replace(/NO2/g, 'NO<sub>2</sub>')

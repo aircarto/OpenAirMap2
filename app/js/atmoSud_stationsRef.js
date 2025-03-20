@@ -11,6 +11,650 @@ var pas_de_temps_ = '';
 var historique_chart = '7d';
 var mesures_array = [];
 
+// function load_atmoSud_stationsRef() {
+//     console.log(
+//         '%cload_atmoSud_stationsRef',
+//         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
+//     );
+//     const start = Date.now(); //actual timestamp to measure response time
+//     // Current date
+//     const today = new Date();
+//     atmo_ref_layer.clearLayers();
+//     pas_de_temps_ = getArrayFromLocalStorage(pas_de_temps_local); //attention revoie un objet !!
+//     switch (pas_de_temps_[0]) {
+//         case '2min':
+//             pas_de_temps_atmo = 'brute';
+//             break;
+//         case 'qh':
+//             pas_de_temps_atmo = 'quart-horaire';
+//             break;
+//         case 'h':
+//             pas_de_temps_atmo = 'horaire';
+//             break;
+//         case 'd':
+//             pas_de_temps_atmo = 'journalière';
+//             break;
+//     }
+//     //on récupère le type de mesure (+ conversion pm25 vers pm2.5)
+//     var mesure = getArrayFromLocalStorage(mesures_local);
+
+//     var mesure_atmo = mesure[0];
+//     switch (mesure[0]) {
+//         case 'pm25':
+//             var mesure_atmo = 'pm2.5';
+//             break;
+//     }
+//     //ATTENTION pas de donnée dispo pour les Stations de Référence au pas de temps 2min
+//     if (pas_de_temps_[0] === '2min') {
+//         console.warn('Pas de données pour le pas de temps ' + pas_de_temps_[0]);
+//         return;
+//     }
+
+//     console.log('Pas de temps : ' + pas_de_temps_);
+//     console.log('Pas de temps Atmo: ' + pas_de_temps_atmo);
+//     console.log('Mesure : ' + mesure);
+
+//     //1. Première request pour charger les identifiants et la localisation des STATIONS
+//     // on ne veut que les stations qui mesurent le polluant choisis
+//     // on ne veut que les stations actives (where date_fin_mesure est supérieur à la date d'aujourd'hui)
+//     let full_url_stations = `
+//         https://api.atmosud.org/observations/stations?
+//         format=json&
+//         nom_polluant=${mesure_atmo}&
+//         download=false&
+//         metadata=true
+//     `.replace(/\s+/g, '');
+
+//     $.ajax({
+//         method: 'GET',
+//         url: full_url_stations,
+//         success: function (data) {
+//             console.log('API stations:');
+//             const end = Date.now();
+//             const requestTimer = (end - start) / 1000;
+//             console.log(
+//                 `Data gathered in %c${requestTimer} sec`,
+//                 'color: red;'
+//             );
+//             console.log('full_url_stations', full_url_stations);
+//             console.log(data);
+
+//             // Objet global pour suivre quel capteur/station est ouvert
+//             if (!window.stationMarkers) window.stationMarkers = {};
+
+//             $.each(data.stations, function (key, item) {
+//                 var date_fin_Station = new Date(item.date_fin_mesure);
+//                 if (today < date_fin_Station || item.date_fin_mesure === null) {
+//                     //icone gris (par défault lorsque pas de donnée)
+//                     var icon_param = {
+//                         iconUrl:
+//                             'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
+//                         iconSize: [50, 50], // size of the icon
+//                         iconAnchor: [5, 40], // point of the icon which will correspond to marker's location
+//                         popupAnchor: [0, -10],
+//                         tooltipAnchor: [-50, -10],
+//                         className: item.id_station,
+//                     };
+//                     var refStationsAtmoSud_icon = L.icon(icon_param);
+
+//                     // Création du marker clickable
+//                     let stationMarker = L.marker(
+//                         [item['latitude'], item['longitude']],
+//                         {
+//                             icon: refStationsAtmoSud_icon,
+//                         }
+//                     )
+//                         .on('click', function () {
+//                             // Gestion des markers précédemment sélectionnés
+//                             if (
+//                                 globalSelectedMarker &&
+//                                 globalSelectedMarker !== stationMarker
+//                             ) {
+//                                 globalSelectedMarker.setZIndexOffset(0);
+//                                 globalSelectedMarker._icon.classList.remove(
+//                                     'marker-selected'
+//                                 );
+//                             }
+
+//                             if (
+//                                 globalSelectedText &&
+//                                 window.stationMarkers[item.id_station]
+//                                     .textMarker
+//                             ) {
+//                                 globalSelectedText.setZIndexOffset(0);
+//                                 globalSelectedText._icon.classList.remove(
+//                                     'marker-selected'
+//                                 );
+//                             }
+
+//                             // On active l'animation seulement au marker ouvert
+//                             if (
+//                                 window.stationMarkers[item.id_station]
+//                                     .textMarker
+//                             ) {
+//                                 window.stationMarkers[
+//                                     item.id_station
+//                                 ].textMarker.setZIndexOffset(1000);
+//                                 window.stationMarkers[
+//                                     item.id_station
+//                                 ].textMarker._icon.classList.add(
+//                                     'marker-selected'
+//                                 );
+//                             }
+//                             stationMarker._icon.classList.add(
+//                                 'marker-selected'
+//                             );
+
+//                             // On met à jour les variables marker globales
+//                             globalSelectedMarker = stationMarker;
+//                             globalSelectedText =
+//                                 window.stationMarkers[item.id_station]
+//                                     .textMarker;
+//                             globalSelectedStationId = item.id_station;
+//                             window.lastSelectedStationData = item;
+
+//                             console.log('Click on station: ' + item.id_station);
+//                             openSidePanel_stationRef(
+//                                 item.id_station,
+//                                 item.nom_station,
+//                                 mesure
+//                             );
+//                         })
+//                         .addTo(atmo_ref_layer);
+
+//                     // On store les données de la station dans le marker
+//                     stationMarker.stationId = item.id_station;
+//                     stationMarker.stationData = item;
+
+//                     // Store la référence du marker dans l'objet global
+//                     window.stationMarkers[item.id_station] = {
+//                         marker: stationMarker,
+//                         data: item,
+//                     };
+
+//                     // Effect hover: Animation du marker selectionné
+//                     function hoverMarker() {
+//                         stationMarker.setZIndexOffset(1000);
+//                         if (window.stationMarkers[item.id_station].textMarker) {
+//                             window.stationMarkers[
+//                                 item.id_station
+//                             ].textMarker.setZIndexOffset(1000);
+//                         }
+
+//                         // Creation de la liste des polluants mesurés
+//                         let pollutantsHTML = '';
+//                         if (item.variables) {
+//                             pollutantsHTML =
+//                                 '<div class="mt-2"><strong>Polluants mesurés:</strong>';
+//                             pollutantsHTML +=
+//                                 '<ul class="list-unstyled mb-0 ps-2">';
+
+//                             // Process polluant
+//                             Object.entries(item.variables || {}).forEach(
+//                                 ([id, pollutantData]) => {
+//                                     // Safely handle missing or malformed data
+//                                     if (!pollutantData) {
+//                                         return; // Skip this iteration if pollutantData is null or undefined
+//                                     }
+
+//                                     // On formate le nom du polluant - safely handle non-string labels
+//                                     let formattedName = '';
+//                                     if (
+//                                         pollutantData.label &&
+//                                         typeof pollutantData.label === 'string'
+//                                     ) {
+//                                         formattedName = formatPollutantName(
+//                                             pollutantData.label
+//                                         );
+//                                     } else {
+//                                         // Fallback if label is not a string or is missing
+//                                         formattedName = `Polluant ${id}`;
+//                                     }
+
+//                                     // Check if this pollutant is still being measured
+//                                     // Default to false if en_service is undefined
+//                                     let isActive = Boolean(
+//                                         pollutantData.en_service
+//                                     );
+//                                     let statusHTML = '';
+
+//                                     // If not active, show when it was stopped
+//                                     if (!isActive && pollutantData.date_fin) {
+//                                         try {
+//                                             const endDate = new Date(
+//                                                 pollutantData.date_fin
+//                                             );
+//                                             // Check if date is valid before formatting
+//                                             if (!isNaN(endDate.getTime())) {
+//                                                 const formattedDate =
+//                                                     endDate.toLocaleDateString();
+//                                                 statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
+//                                             } else {
+//                                                 statusHTML = `<span class="badge bg-secondary ms-2">Date d'arrêt inconnue</span>`;
+//                                             }
+//                                         } catch (e) {
+//                                             console.warn(
+//                                                 'Error formatting date:',
+//                                                 e
+//                                             );
+//                                             statusHTML = `<span class="badge bg-secondary ms-2">Date d'arrêt inconnue</span>`;
+//                                         }
+//                                     }
+
+//                                     // Add status indicator
+//                                     const statusIndicator = isActive
+//                                         ? '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>'
+//                                         : '<i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i>';
+
+//                                     // Add the pollutant to the HTML
+//                                     pollutantsHTML += `<li>${statusIndicator}${formattedName}${statusHTML}</li>`;
+//                                 }
+//                             );
+
+//                             pollutantsHTML += '</ul></div>';
+//                         }
+
+//                         // Check overall station status
+//                         let stationStatusHTML = '';
+//                         if (item.en_service === false) {
+//                             stationStatusHTML =
+//                                 '<div class="alert alert-warning py-1 mt-2 mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i>Station hors service</div>';
+//                         } else {
+//                             stationStatusHTML =
+//                                 '<div class="badge bg-success mt-2"><i class="bi bi-broadcast-pin me-1"></i>Station active</div>';
+//                         }
+
+//                         // Show device info with enhanced details
+//                         deviceInfo._div.innerHTML = `
+//                             <div class="card border-0 shadow-sm">
+//                                 <div class="card-body p-3">
+//                                     <h5 class="card-title mb-1" id="device-name">${item.nom_station}</h5>
+//                                     <p class="card-text text-muted mb-2" id="device-details">Type: Station de référence</p>
+//                                     ${pollutantsHTML}
+//                                     ${stationStatusHTML}
+//                                 </div>
+//                             </div>
+//                         `;
+
+//                         deviceInfo._div.style.display = 'block';
+//                     }
+
+//                     function resetMarker() {
+//                         // Don't reset if this is the selected marker
+//                         if (globalSelectedMarker !== stationMarker) {
+//                             stationMarker.setZIndexOffset(0);
+//                             if (
+//                                 window.stationMarkers[item.id_station]
+//                                     .textMarker
+//                             ) {
+//                                 window.stationMarkers[
+//                                     item.id_station
+//                                 ].textMarker.setZIndexOffset(0);
+//                             }
+//                         }
+//                         deviceInfo._div.style.display = 'none';
+//                     }
+
+//                     stationMarker
+//                         .on('mouseover', hoverMarker)
+//                         .on('mouseout', resetMarker);
+//                 }
+//             }); //end each
+
+//             //ajouter la layer sur la carte
+//             map.addLayer(atmo_ref_layer);
+//         }, //end ajax sucess
+//         error: function (xhr, status, error) {
+//             console.error('Error:', error);
+//             console.error('Status:', status);
+//             console.error('Response:', xhr.responseText);
+//         },
+//     }); //end ajax
+
+//     /*
+//      *************************************************************************
+//      ************************************************************************
+//      */
+
+//     //2. Deuxime Call pour afficher la dernière mesure dispo pour chaque station (mesure/dernière)
+//     // en fonction de la mesure sélectionnée et du pas de temps
+//     // on adapte les icones en fonctions (couleurs) et on affiche la mesure sur l'icone
+//     let full_url_derniere = `
+//       https://api.atmosud.org/observations/stations/mesures/derniere?
+//       format=json&
+//       nom_polluant=${mesure_atmo}&
+//       temporalite=${pas_de_temps_atmo}&
+//       download=false
+//         `.replace(/\s+/g, '');
+
+//     $.ajax({
+//         method: 'GET',
+//         url: full_url_derniere,
+//         success: function (data) {
+//             console.log('API dernière:');
+//             const end = Date.now();
+//             const requestTimer = (end - start) / 1000;
+//             console.log(
+//                 `Data gathered in %c${requestTimer} sec`,
+//                 'color: red;'
+//             );
+//             console.log('full url derniere: ' + full_url_derniere);
+//             console.log(data);
+
+//             $.each(data.mesures, function (key, value) {
+//                 // Remove any existing markers for this station to avoid duplicates
+//                 atmo_ref_layer.eachLayer(function (layer) {
+//                     if (
+//                         layer._icon &&
+//                         layer._icon.className.includes(value.id_station) &&
+//                         value.valeur != null
+//                     ) {
+//                         console.log('Removed doublons');
+//                         atmo_ref_layer.removeLayer(layer);
+//                     }
+//                 });
+
+//                 //on récupère la valeur mesurée
+//                 var valeur_polluant = value['valeur'];
+//                 var icon_param = {
+//                     iconUrl:
+//                         'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
+//                     iconSize: [50, 50], // size of the icon
+//                     iconAnchor: [5, 50], // point of the icon which will correspond to marker's location
+//                     popupAnchor: [0, -10],
+//                     tooltipAnchor: [-50, -10],
+//                     className: value.id_station,
+//                 };
+
+//                 let colorCode = getColorCodeForValue(
+//                     valeur_polluant,
+//                     mesure_atmo
+//                 );
+
+//                 // Set the icon URL based on the color code
+//                 if (colorCode !== 'default') {
+//                     icon_param.iconUrl =
+//                         'img/stationsRefAtmoSud/refStationAtmoSud_' +
+//                         colorCode +
+//                         '.png';
+//                 }
+
+//                 //création des icones
+//                 var refStationsAtmoSud_icon = L.icon(icon_param);
+
+//                 // Create the main marker
+//                 let stationMarker = L.marker([value['lat'], value['lon']], {
+//                     icon: refStationsAtmoSud_icon,
+//                 })
+//                     .on('click', function () {
+//                         // If a marker is already selected, remove the animation
+//                         if (
+//                             globalSelectedMarker &&
+//                             globalSelectedMarker !== stationMarker
+//                         ) {
+//                             globalSelectedMarker.setZIndexOffset(0);
+//                             globalSelectedMarker._icon.classList.remove(
+//                                 'marker-selected'
+//                             );
+//                         }
+
+//                         if (
+//                             globalSelectedText &&
+//                             globalSelectedText !== textMarker
+//                         ) {
+//                             globalSelectedText.setZIndexOffset(0);
+//                             globalSelectedText._icon.classList.remove(
+//                                 'marker-selected'
+//                             );
+//                         }
+
+//                         // Apply animation only to the newly selected marker
+//                         stationMarker.setZIndexOffset(1000);
+//                         textMarker.setZIndexOffset(1000);
+//                         stationMarker._icon.classList.add('marker-selected');
+//                         textMarker._icon.classList.add('marker-selected');
+
+//                         // Update the selected marker
+//                         globalSelectedMarker = stationMarker;
+//                         globalSelectedText = textMarker;
+//                         globalSelectedStationId = value.id_station;
+//                         window.lastSelectedStationData = value;
+
+//                         console.log('Click on station: ' + value.id_station);
+//                         openSidePanel_stationRef(
+//                             value.id_station,
+//                             value.nom_station,
+//                             mesure
+//                         );
+//                     })
+//                     .addTo(atmo_ref_layer);
+
+//                 // Store station data with the marker
+//                 stationMarker.stationId = value.id_station;
+//                 stationMarker.stationData = value;
+
+//                 // Store a reference to this marker in the global object
+//                 if (!window.stationMarkers) window.stationMarkers = {};
+//                 window.stationMarkers[value.id_station] = {
+//                     marker: stationMarker,
+//                     data: value,
+//                 };
+
+//                 // TEXTE pour affichage de la mesure
+//                 //textSize (if number under 10)
+//                 var textSize = 32;
+//                 var x_position = -12;
+//                 var y_position = 48;
+//                 //smaller text size if number is greater than 9
+//                 if (valeur_polluant >= 10) {
+//                     textSize = 25;
+//                     x_position = -5;
+//                     y_position = 43;
+//                 }
+
+//                 if (valeur_polluant >= 100) {
+//                     textSize = 20;
+//                     x_position = -4;
+//                     y_position = 26;
+//                 }
+
+//                 var text_param = L.divIcon({
+//                     className: 'my-div-icon',
+//                     html:
+//                         '<div id="textDiv" style="font-size: ' +
+//                         textSize +
+//                         'px;">' +
+//                         Math.round(valeur_polluant) +
+//                         '</div>',
+//                     iconAnchor: [x_position, y_position],
+//                     popupAnchor: [30, -60], // point from which the popup should open relative to the iconAnchor
+//                 });
+
+//                 let textMarker = L.marker([value['lat'], value['lon']], {
+//                     icon: text_param,
+//                 })
+//                     .on('click', function () {
+//                         // If a marker is already selected, remove the animation
+//                         if (
+//                             globalSelectedMarker &&
+//                             globalSelectedMarker !== stationMarker
+//                         ) {
+//                             globalSelectedMarker.setZIndexOffset(0);
+//                             globalSelectedMarker._icon.classList.remove(
+//                                 'marker-selected'
+//                             );
+//                         }
+
+//                         if (
+//                             globalSelectedText &&
+//                             globalSelectedText !== textMarker
+//                         ) {
+//                             globalSelectedText.setZIndexOffset(0);
+//                             globalSelectedText._icon.classList.remove(
+//                                 'marker-selected'
+//                             );
+//                         }
+
+//                         // Apply animation only to the newly selected marker
+//                         stationMarker.setZIndexOffset(1000);
+//                         textMarker.setZIndexOffset(1000);
+//                         stationMarker._icon.classList.add('marker-selected');
+//                         textMarker._icon.classList.add('marker-selected');
+
+//                         // Update the selected marker
+//                         globalSelectedMarker = stationMarker;
+//                         globalSelectedText = textMarker;
+//                         globalSelectedStationId = value.id_station;
+//                         window.lastSelectedStationData = value;
+
+//                         console.log('Click on station: ' + value.id_station);
+//                         openSidePanel_stationRef(
+//                             value.id_station,
+//                             value.nom_station,
+//                             mesure
+//                         );
+//                     })
+//                     .addTo(atmo_ref_layer);
+
+//                 // Also store the text marker reference
+//                 textMarker.stationId = value.id_station;
+//                 textMarker.stationData = value;
+
+//                 if (window.stationMarkers[value.id_station]) {
+//                     window.stationMarkers[value.id_station].textMarker =
+//                         textMarker;
+//                 }
+
+//                 // Effect hover: highlight the point and text
+//                 function hoverMarker() {
+//                     stationMarker.setZIndexOffset(1000);
+//                     textMarker.setZIndexOffset(1000);
+
+//                     // Get the full station data if available
+//                     let stationData = null;
+//                     if (
+//                         window.stationMarkers &&
+//                         window.stationMarkers[value.id_station] &&
+//                         window.stationMarkers[value.id_station].data
+//                     ) {
+//                         stationData =
+//                             window.stationMarkers[value.id_station].data;
+//                     }
+
+//                     // Create a formatted list of pollutants if we have the full station data
+//                     let pollutantsHTML = '';
+//                     if (stationData && stationData.variables) {
+//                         pollutantsHTML =
+//                             '<div class="mt-2"><strong>Polluants mesurés:</strong>';
+//                         pollutantsHTML +=
+//                             '<ul class="list-unstyled mb-0 ps-2">';
+
+//                         // Process each pollutant
+//                         Object.entries(stationData.variables).forEach(
+//                             ([id, name]) => {
+//                                 // Format pollutant name with subscripts
+//                                 let formattedName = formatPollutantName(name);
+
+//                                 // Check if this pollutant is still being measured
+//                                 let isActive = true;
+//                                 let statusHTML = '';
+
+//                                 if (
+//                                     stationData.date_fin_mesure &&
+//                                     stationData.date_fin_mesure[id]
+//                                 ) {
+//                                     const endDate = new Date(
+//                                         stationData.date_fin_mesure[id]
+//                                     );
+//                                     const today = new Date();
+
+//                                     if (endDate < today) {
+//                                         isActive = false;
+//                                         const formattedDate =
+//                                             endDate.toLocaleDateString();
+//                                         statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
+//                                     }
+//                                 }
+
+//                                 // Add status indicator
+//                                 const statusIndicator = isActive
+//                                     ? '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>'
+//                                     : '<i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i>';
+
+//                                 pollutantsHTML += `<li>${statusIndicator}${formattedName}${statusHTML}</li>`;
+//                             }
+//                         );
+
+//                         pollutantsHTML += '</ul></div>';
+//                     } else {
+//                         // If we don't have the full data, just show the current pollutant
+//                         const currentPollutant = formatPollutantName(
+//                             value.label_polluant || ''
+//                         );
+//                         pollutantsHTML = `
+//                             <div class="mt-2">
+//                                 <strong>Mesure actuelle:</strong>
+//                                 <div class="ps-2">
+//                                     <i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>
+//                                     ${currentPollutant}: <strong>${Math.round(value.valeur)} µg/m³</strong>
+//                                 </div>
+//                             </div>
+//                         `;
+//                     }
+
+//                     // Check overall station status
+//                     let stationStatusHTML = '';
+//                     if (stationData && stationData.en_service === false) {
+//                         stationStatusHTML =
+//                             '<div class="alert alert-warning py-1 mt-2 mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i>Station hors service</div>';
+//                     } else {
+//                         stationStatusHTML =
+//                             '<div class="badge bg-success mt-2"><i class="bi bi-broadcast-pin me-1"></i>Station active</div>';
+//                     }
+
+//                     // Show device info with enhanced details
+//                     deviceInfo._div.innerHTML = `
+//                         <div class="card border-0 shadow-sm">
+//                             <div class="card-body p-3">
+//                                 <h5 class="card-title mb-1" id="device-name">${value.nom_station}</h5>
+//                                 <p class="card-text text-muted mb-2" id="device-details">Type: Station de référence</p>
+//                                 ${pollutantsHTML}
+//                                 ${stationStatusHTML}
+//                             </div>
+//                         </div>
+//                     `;
+
+//                     deviceInfo._div.style.display = 'block';
+//                 }
+
+//                 function resetMarker() {
+//                     // Don't reset if this is the selected marker
+//                     if (globalSelectedMarker !== stationMarker) {
+//                         stationMarker.setZIndexOffset(0);
+//                         textMarker.setZIndexOffset(0);
+//                     }
+//                     deviceInfo._div.style.display = 'none';
+//                 }
+
+//                 stationMarker
+//                     .on('mouseover', hoverMarker)
+//                     .on('mouseout', resetMarker);
+//                 textMarker
+//                     .on('mouseover', hoverMarker)
+//                     .on('mouseout', resetMarker);
+//             }); //end each
+
+//             //ajouter la layer sur la carte
+//             map.addLayer(atmo_ref_layer);
+//         }, //end ajax sucess
+//         error: function (xhr, status, error) {
+//             console.error('Error:', error);
+//             console.error('Status:', status);
+//             console.error('Response:', xhr.responseText);
+//         },
+//     }); //end ajax
+// } //end function load_atmoSud_stationsRef()
+
 function load_atmoSud_stationsRef() {
     console.log(
         '%cload_atmoSud_stationsRef',
@@ -54,20 +698,27 @@ function load_atmoSud_stationsRef() {
     console.log('Pas de temps Atmo: ' + pas_de_temps_atmo);
     console.log('Mesure : ' + mesure);
 
-    //1. Première request pour charger les identifiants et la localisation des STATIONS
-    // on ne veut que les stations qui mesurent le polluant choisis
-    // on ne veut que les stations actives (where date_fin_mesure est supérieur à la date d'aujourd'hui)
+    // Initialize the global object to track stations
+    if (!window.stationMarkers) window.stationMarkers = {};
+
+    // First API call to get station metadata
     let full_url_stations = `
         https://api.atmosud.org/observations/stations?
         format=json&
         nom_polluant=${mesure_atmo}&
-        download=false
+        download=false&
+        metadata=true
     `.replace(/\s+/g, '');
 
-    $.ajax({
-        method: 'GET',
-        url: full_url_stations,
-        success: function (data) {
+    // Using Fetch API instead of jQuery AJAX
+    fetch(full_url_stations)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
             console.log('API stations:');
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
@@ -78,234 +729,42 @@ function load_atmoSud_stationsRef() {
             console.log('full_url_stations', full_url_stations);
             console.log(data);
 
-            // Create a global object to store all station markers
-            if (!window.stationMarkers) window.stationMarkers = {};
-
-            $.each(data.stations, function (key, item) {
+            // Process station data and create default markers
+            data.stations.forEach((item) => {
                 var date_fin_Station = new Date(item.date_fin_mesure);
                 if (today < date_fin_Station || item.date_fin_mesure === null) {
-                    //icone gris (par défault lorsque pas de donnée)
-                    var icon_param = {
-                        iconUrl:
-                            'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
-                        iconSize: [50, 50], // size of the icon
-                        iconAnchor: [5, 40], // point of the icon which will correspond to marker's location
-                        popupAnchor: [0, -10],
-                        tooltipAnchor: [-50, -10],
-                        className: item.id_station,
-                    };
-                    var refStationsAtmoSud_icon = L.icon(icon_param);
-
-                    // Create the main marker
-                    let stationMarker = L.marker(
-                        [item['latitude'], item['longitude']],
-                        {
-                            icon: refStationsAtmoSud_icon,
-                        }
-                    )
-                        .on('click', function () {
-                            // If a marker is already selected, remove the animation
-                            if (
-                                globalSelectedMarker &&
-                                globalSelectedMarker !== stationMarker
-                            ) {
-                                globalSelectedMarker.setZIndexOffset(0);
-                                globalSelectedMarker._icon.classList.remove(
-                                    'marker-selected'
-                                );
-                            }
-
-                            if (
-                                globalSelectedText &&
-                                window.stationMarkers[item.id_station]
-                                    .textMarker
-                            ) {
-                                globalSelectedText.setZIndexOffset(0);
-                                globalSelectedText._icon.classList.remove(
-                                    'marker-selected'
-                                );
-                            }
-
-                            // Apply animation only to the newly selected marker
-                            stationMarker.setZIndexOffset(1000);
-                            if (
-                                window.stationMarkers[item.id_station]
-                                    .textMarker
-                            ) {
-                                window.stationMarkers[
-                                    item.id_station
-                                ].textMarker.setZIndexOffset(1000);
-                                window.stationMarkers[
-                                    item.id_station
-                                ].textMarker._icon.classList.add(
-                                    'marker-selected'
-                                );
-                            }
-                            stationMarker._icon.classList.add(
-                                'marker-selected'
-                            );
-
-                            // Update the selected marker
-                            globalSelectedMarker = stationMarker;
-                            globalSelectedText =
-                                window.stationMarkers[item.id_station]
-                                    .textMarker;
-                            globalSelectedStationId = item.id_station;
-                            window.lastSelectedStationData = item;
-
-                            console.log('Click on station: ' + item.id_station);
-                            openSidePanel_stationRef(
-                                item.id_station,
-                                item.nom_station,
-                                mesure
-                            );
-                        })
-                        .addTo(atmo_ref_layer);
-
-                    // Store station data with the marker
-                    stationMarker.stationId = item.id_station;
-                    stationMarker.stationData = item;
-
-                    // Store a reference to this marker in the global object
+                    // Store station data in the global object, but don't create markers yet
                     window.stationMarkers[item.id_station] = {
-                        marker: stationMarker,
                         data: item,
+                        hasValue: false, // Flag to track if this station has measurement data
                     };
-
-                    // Effect hover: highlight the point and text
-                    function highlightMarker() {
-                        stationMarker.setZIndexOffset(1000);
-                        if (window.stationMarkers[item.id_station].textMarker) {
-                            window.stationMarkers[
-                                item.id_station
-                            ].textMarker.setZIndexOffset(1000);
-                        }
-
-                        // Create a formatted list of pollutants
-                        let pollutantsHTML = '';
-                        if (item.variables) {
-                            pollutantsHTML =
-                                '<div class="mt-2"><strong>Polluants mesurés:</strong>';
-                            pollutantsHTML +=
-                                '<ul class="list-unstyled mb-0 ps-2">';
-
-                            // Process each pollutant
-                            Object.entries(item.variables).forEach(
-                                ([id, name]) => {
-                                    // Format pollutant name with subscripts
-                                    let formattedName =
-                                        formatPollutantName(name);
-
-                                    // Check if this pollutant is still being measured
-                                    let isActive = true;
-                                    let statusHTML = '';
-
-                                    if (
-                                        item.date_fin_mesure &&
-                                        item.date_fin_mesure[id]
-                                    ) {
-                                        const endDate = new Date(
-                                            item.date_fin_mesure[id]
-                                        );
-                                        const today = new Date();
-
-                                        if (endDate < today) {
-                                            isActive = false;
-                                            const formattedDate =
-                                                endDate.toLocaleDateString();
-                                            statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
-                                        }
-                                    }
-
-                                    // Add status indicator
-                                    const statusIndicator = isActive
-                                        ? '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>'
-                                        : '<i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i>';
-
-                                    pollutantsHTML += `<li>${statusIndicator}${formattedName}${statusHTML}</li>`;
-                                }
-                            );
-
-                            pollutantsHTML += '</ul></div>';
-                        }
-
-                        // Check overall station status
-                        let stationStatusHTML = '';
-                        if (item.en_service === false) {
-                            stationStatusHTML =
-                                '<div class="alert alert-warning py-1 mt-2 mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i>Station hors service</div>';
-                        } else {
-                            stationStatusHTML =
-                                '<div class="badge bg-success mt-2"><i class="bi bi-broadcast-pin me-1"></i>Station active</div>';
-                        }
-
-                        // Show device info with enhanced details
-                        deviceInfo._div.innerHTML = `
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body p-3">
-                                    <h5 class="card-title mb-1" id="device-name">${item.nom_station}</h5>
-                                    <p class="card-text text-muted mb-2" id="device-details">Type: Station de référence</p>
-                                    ${pollutantsHTML}
-                                    ${stationStatusHTML}
-                                </div>
-                            </div>
-                        `;
-
-                        deviceInfo._div.style.display = 'block';
-                    }
-
-                    function resetMarker() {
-                        // Don't reset if this is the selected marker
-                        if (globalSelectedMarker !== stationMarker) {
-                            stationMarker.setZIndexOffset(0);
-                            if (
-                                window.stationMarkers[item.id_station]
-                                    .textMarker
-                            ) {
-                                window.stationMarkers[
-                                    item.id_station
-                                ].textMarker.setZIndexOffset(0);
-                            }
-                        }
-                        deviceInfo._div.style.display = 'none';
-                    }
-
-                    stationMarker
-                        .on('mouseover', highlightMarker)
-                        .on('mouseout', resetMarker);
                 }
-            }); //end each
+            });
 
-            //ajouter la layer sur la carte
-            map.addLayer(atmo_ref_layer);
-        }, //end ajax sucess
-        error: function (xhr, status, error) {
-            console.error('Error:', error);
-            console.error('Status:', status);
-            console.error('Response:', xhr.responseText);
-        },
-    }); //end ajax
+            // Now make the second API call to get the latest measurements
+            let full_url_derniere = `
+              https://api.atmosud.org/observations/stations/mesures/derniere?
+              format=json&
+              nom_polluant=${mesure_atmo}&
+              temporalite=${pas_de_temps_atmo}&
+              download=false
+            `.replace(/\s+/g, '');
 
-    /*
-     *************************************************************************
-     ************************************************************************
-     */
+            return fetch(full_url_derniere).then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json().then((data) => {
+                    // Return both the data and the URL
+                    return { data, url: full_url_derniere };
+                });
+            });
+        })
+        .then((result) => {
+            // Now we have both the data and the URL
+            const data = result.data;
+            const full_url_derniere = result.url;
 
-    //2. Deuxime Call pour afficher la dernière mesure dispo pour chaque station (mesure/dernière)
-    // en fonction de la mesure sélectionnée et du pas de temps
-    // on adapte les icones en fonctions (couleurs) et on affiche la mesure sur l'icone
-    let full_url_derniere = `
-      https://api.atmosud.org/observations/stations/mesures/derniere?
-      format=json&
-      nom_polluant=${mesure_atmo}&
-      temporalite=${pas_de_temps_atmo}&
-      download=false
-        `.replace(/\s+/g, '');
-
-    $.ajax({
-        method: 'GET',
-        url: full_url_derniere,
-        success: function (data) {
             console.log('API dernière:');
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
@@ -316,38 +775,36 @@ function load_atmoSud_stationsRef() {
             console.log('full url derniere: ' + full_url_derniere);
             console.log(data);
 
-            $.each(data.mesures, function (key, value) {
-                // Remove any existing markers for this station to avoid duplicates
-                atmo_ref_layer.eachLayer(function (layer) {
-                    if (
-                        layer._icon &&
-                        layer._icon.className.includes(value.id_station) &&
-                        value.valeur != null
-                    ) {
-                        console.log('Removed doublons');
-                        atmo_ref_layer.removeLayer(layer);
-                    }
-                });
+            // Process measurement data and create colored markers
+            data.mesures.forEach((value) => {
+                // Get the station data
+                const stationData =
+                    window.stationMarkers[value.id_station]?.data;
+                if (!stationData) return; // Skip if no station data found
 
-                //on récupère la valeur mesurée
+                // Create colored marker based on measurement value
                 var valeur_polluant = value['valeur'];
+                console.log('####################');
+                console.log('valeur mesurée: ' + valeur_polluant);
+                console.log(mesure);
+
                 var icon_param = {
                     iconUrl:
                         'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
-                    iconSize: [50, 50], // size of the icon
-                    iconAnchor: [5, 50], // point of the icon which will correspond to marker's location
+                    iconSize: [50, 50],
+                    iconAnchor: [5, 50],
                     popupAnchor: [0, -10],
                     tooltipAnchor: [-50, -10],
                     className: value.id_station,
                 };
 
+                // Get color code based on value
                 let colorCode = getColorCodeForValue(
                     valeur_polluant,
-                    mesure_atmo
+                    mesure[0]
                 );
-                console.log(mesure[0]);
+                console.log('colorCode: ' + colorCode);
 
-                // Set the icon URL based on the color code
                 if (colorCode !== 'default') {
                     icon_param.iconUrl =
                         'img/stationsRefAtmoSud/refStationAtmoSud_' +
@@ -355,15 +812,12 @@ function load_atmoSud_stationsRef() {
                         '.png';
                 }
 
-                //création des icones
-                var refStationsAtmoSud_icon = L.icon(icon_param);
-
                 // Create the main marker
                 let stationMarker = L.marker([value['lat'], value['lon']], {
-                    icon: refStationsAtmoSud_icon,
+                    icon: L.icon(icon_param),
                 })
                     .on('click', function () {
-                        // If a marker is already selected, remove the animation
+                        // Handle marker selection (existing click handler code)
                         if (
                             globalSelectedMarker &&
                             globalSelectedMarker !== stationMarker
@@ -384,13 +838,11 @@ function load_atmoSud_stationsRef() {
                             );
                         }
 
-                        // Apply animation only to the newly selected marker
                         stationMarker.setZIndexOffset(1000);
                         textMarker.setZIndexOffset(1000);
                         stationMarker._icon.classList.add('marker-selected');
                         textMarker._icon.classList.add('marker-selected');
 
-                        // Update the selected marker
                         globalSelectedMarker = stationMarker;
                         globalSelectedText = textMarker;
                         globalSelectedStationId = value.id_station;
@@ -405,29 +857,15 @@ function load_atmoSud_stationsRef() {
                     })
                     .addTo(atmo_ref_layer);
 
-                // Store station data with the marker
-                stationMarker.stationId = value.id_station;
-                stationMarker.stationData = value;
-
-                // Store a reference to this marker in the global object
-                if (!window.stationMarkers) window.stationMarkers = {};
-                window.stationMarkers[value.id_station] = {
-                    marker: stationMarker,
-                    data: value,
-                };
-
-                // TEXTE pour affichage de la mesure
-                //textSize (if number under 10)
+                // Create text marker for the value
                 var textSize = 32;
                 var x_position = -12;
                 var y_position = 48;
-                //smaller text size if number is greater than 9
                 if (valeur_polluant >= 10) {
                     textSize = 25;
                     x_position = -5;
                     y_position = 43;
                 }
-
                 if (valeur_polluant >= 100) {
                     textSize = 20;
                     x_position = -4;
@@ -443,14 +881,14 @@ function load_atmoSud_stationsRef() {
                         Math.round(valeur_polluant) +
                         '</div>',
                     iconAnchor: [x_position, y_position],
-                    popupAnchor: [30, -60], // point from which the popup should open relative to the iconAnchor
+                    popupAnchor: [30, -60],
                 });
 
                 let textMarker = L.marker([value['lat'], value['lon']], {
                     icon: text_param,
                 })
                     .on('click', function () {
-                        // If a marker is already selected, remove the animation
+                        // Same click handler as the main marker
                         if (
                             globalSelectedMarker &&
                             globalSelectedMarker !== stationMarker
@@ -471,13 +909,11 @@ function load_atmoSud_stationsRef() {
                             );
                         }
 
-                        // Apply animation only to the newly selected marker
                         stationMarker.setZIndexOffset(1000);
                         textMarker.setZIndexOffset(1000);
                         stationMarker._icon.classList.add('marker-selected');
                         textMarker._icon.classList.add('marker-selected');
 
-                        // Update the selected marker
                         globalSelectedMarker = stationMarker;
                         globalSelectedText = textMarker;
                         globalSelectedStationId = value.id_station;
@@ -492,63 +928,76 @@ function load_atmoSud_stationsRef() {
                     })
                     .addTo(atmo_ref_layer);
 
-                // Also store the text marker reference
-                textMarker.stationId = value.id_station;
-                textMarker.stationData = value;
+                // Store references to both markers
+                window.stationMarkers[value.id_station] = {
+                    marker: stationMarker,
+                    textMarker: textMarker,
+                    data: stationData,
+                    hasValue: true,
+                };
 
-                if (window.stationMarkers[value.id_station]) {
-                    window.stationMarkers[value.id_station].textMarker =
-                        textMarker;
-                }
-
-                // Effect hover: highlight the point and text
-                function highlightMarker() {
+                // Set up hover effects
+                function hoverMarker() {
                     stationMarker.setZIndexOffset(1000);
                     textMarker.setZIndexOffset(1000);
 
-                    // Get the full station data if available
-                    let stationData = null;
-                    if (
-                        window.stationMarkers &&
-                        window.stationMarkers[value.id_station] &&
-                        window.stationMarkers[value.id_station].data
-                    ) {
-                        stationData =
-                            window.stationMarkers[value.id_station].data;
-                    }
-
-                    // Create a formatted list of pollutants if we have the full station data
+                    // Create a formatted list of pollutants
                     let pollutantsHTML = '';
-                    if (stationData && stationData.variables) {
+                    if (stationData.variables) {
                         pollutantsHTML =
                             '<div class="mt-2"><strong>Polluants mesurés:</strong>';
                         pollutantsHTML +=
                             '<ul class="list-unstyled mb-0 ps-2">';
 
                         // Process each pollutant
-                        Object.entries(stationData.variables).forEach(
-                            ([id, name]) => {
-                                // Format pollutant name with subscripts
-                                let formattedName = formatPollutantName(name);
+                        Object.entries(stationData.variables || {}).forEach(
+                            ([id, pollutantData]) => {
+                                // Safely handle missing or malformed data
+                                if (!pollutantData) {
+                                    return; // Skip this iteration if pollutantData is null or undefined
+                                }
+
+                                // On formate le nom du polluant - safely handle non-string labels
+                                let formattedName = '';
+                                if (
+                                    pollutantData.label &&
+                                    typeof pollutantData.label === 'string'
+                                ) {
+                                    formattedName = formatPollutantName(
+                                        pollutantData.label
+                                    );
+                                } else {
+                                    // Fallback if label is not a string or is missing
+                                    formattedName = `Polluant ${id}`;
+                                }
 
                                 // Check if this pollutant is still being measured
-                                let isActive = true;
+                                // Default to false if en_service is undefined
+                                let isActive = Boolean(
+                                    pollutantData.en_service
+                                );
                                 let statusHTML = '';
 
-                                if (
-                                    stationData.date_fin_mesure &&
-                                    stationData.date_fin_mesure[id]
-                                ) {
-                                    const endDate = new Date(
-                                        stationData.date_fin_mesure[id]
-                                    );
-                                    const today = new Date();
-
-                                    if (endDate < today) {
-                                        isActive = false;
-                                        const formattedDate =
-                                            endDate.toLocaleDateString();
-                                        statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
+                                // If not active, show when it was stopped
+                                if (!isActive && pollutantData.date_fin) {
+                                    try {
+                                        const endDate = new Date(
+                                            pollutantData.date_fin
+                                        );
+                                        // Check if date is valid before formatting
+                                        if (!isNaN(endDate.getTime())) {
+                                            const formattedDate =
+                                                endDate.toLocaleDateString();
+                                            statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
+                                        } else {
+                                            statusHTML = `<span class="badge bg-secondary ms-2">Date d'arrêt inconnue</span>`;
+                                        }
+                                    } catch (e) {
+                                        console.warn(
+                                            'Error formatting date:',
+                                            e
+                                        );
+                                        statusHTML = `<span class="badge bg-secondary ms-2">Date d'arrêt inconnue</span>`;
                                     }
                                 }
 
@@ -557,30 +1006,17 @@ function load_atmoSud_stationsRef() {
                                     ? '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>'
                                     : '<i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i>';
 
+                                // Add the pollutant to the HTML
                                 pollutantsHTML += `<li>${statusIndicator}${formattedName}${statusHTML}</li>`;
                             }
                         );
 
                         pollutantsHTML += '</ul></div>';
-                    } else {
-                        // If we don't have the full data, just show the current pollutant
-                        const currentPollutant = formatPollutantName(
-                            value.label_polluant || ''
-                        );
-                        pollutantsHTML = `
-                            <div class="mt-2">
-                                <strong>Mesure actuelle:</strong>
-                                <div class="ps-2">
-                                    <i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>
-                                    ${currentPollutant}: <strong>${Math.round(value.valeur)} µg/m³</strong>
-                                </div>
-                            </div>
-                        `;
                     }
 
                     // Check overall station status
                     let stationStatusHTML = '';
-                    if (stationData && stationData.en_service === false) {
+                    if (stationData.en_service === false) {
                         stationStatusHTML =
                             '<div class="alert alert-warning py-1 mt-2 mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i>Station hors service</div>';
                     } else {
@@ -592,7 +1028,7 @@ function load_atmoSud_stationsRef() {
                     deviceInfo._div.innerHTML = `
                         <div class="card border-0 shadow-sm">
                             <div class="card-body p-3">
-                                <h5 class="card-title mb-1" id="device-name">${value.nom_station}</h5>
+                                <h5 class="card-title mb-1" id="device-name">${stationData.nom_station}</h5>
                                 <p class="card-text text-muted mb-2" id="device-details">Type: Station de référence</p>
                                 ${pollutantsHTML}
                                 ${stationStatusHTML}
@@ -613,23 +1049,298 @@ function load_atmoSud_stationsRef() {
                 }
 
                 stationMarker
-                    .on('mouseover', highlightMarker)
+                    .on('mouseover', hoverMarker)
                     .on('mouseout', resetMarker);
                 textMarker
-                    .on('mouseover', highlightMarker)
+                    .on('mouseover', hoverMarker)
                     .on('mouseout', resetMarker);
-            }); //end each
+            });
 
-            //ajouter la layer sur la carte
+            // Now create default markers for stations without measurement data
+            Object.entries(window.stationMarkers).forEach(
+                ([stationId, stationObj]) => {
+                    if (!stationObj.hasValue) {
+                        const item = stationObj.data;
+
+                        // Create default gray marker
+                        var icon_param = {
+                            iconUrl:
+                                'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
+                            iconSize: [50, 50],
+                            iconAnchor: [5, 40],
+                            popupAnchor: [0, -10],
+                            tooltipAnchor: [-50, -10],
+                            className: item.id_station,
+                        };
+
+                        let stationMarker = L.marker(
+                            [item.latitude, item.longitude],
+                            {
+                                icon: L.icon(icon_param),
+                            }
+                        )
+                            .on('click', function () {
+                                // Handle click (simplified version)
+                                if (
+                                    globalSelectedMarker &&
+                                    globalSelectedMarker !== stationMarker
+                                ) {
+                                    globalSelectedMarker.setZIndexOffset(0);
+                                    globalSelectedMarker._icon.classList.remove(
+                                        'marker-selected'
+                                    );
+                                }
+
+                                if (globalSelectedText) {
+                                    globalSelectedText.setZIndexOffset(0);
+                                    globalSelectedText._icon.classList.remove(
+                                        'marker-selected'
+                                    );
+                                }
+
+                                stationMarker.setZIndexOffset(1000);
+                                stationMarker._icon.classList.add(
+                                    'marker-selected'
+                                );
+
+                                globalSelectedMarker = stationMarker;
+                                globalSelectedText = null;
+                                globalSelectedStationId = item.id_station;
+                                window.lastSelectedStationData = item;
+
+                                console.log(
+                                    'Click on station: ' + item.id_station
+                                );
+                                openSidePanel_stationRef(
+                                    item.id_station,
+                                    item.nom_station,
+                                    mesure
+                                );
+                            })
+                            .addTo(atmo_ref_layer);
+
+                        // Store the marker reference
+                        window.stationMarkers[stationId].marker = stationMarker;
+
+                        // Set up hover effects
+                        function hoverMarker() {
+                            stationMarker.setZIndexOffset(1000);
+
+                            // Create a formatted list of pollutants
+                            let pollutantsHTML = '';
+                            if (item.variables) {
+                                pollutantsHTML =
+                                    '<div class="mt-2"><strong>Polluants mesurés:</strong>';
+                                pollutantsHTML +=
+                                    '<ul class="list-unstyled mb-0 ps-2">';
+
+                                // Process each pollutant
+                                Object.entries(item.variables || {}).forEach(
+                                    ([id, pollutantData]) => {
+                                        // Safely handle missing or malformed data
+                                        if (!pollutantData) {
+                                            return; // Skip this iteration if pollutantData is null or undefined
+                                        }
+
+                                        // On formate le nom du polluant - safely handle non-string labels
+                                        let formattedName = '';
+                                        if (
+                                            pollutantData.label &&
+                                            typeof pollutantData.label ===
+                                                'string'
+                                        ) {
+                                            formattedName = formatPollutantName(
+                                                pollutantData.label
+                                            );
+                                        } else {
+                                            // Fallback if label is not a string or is missing
+                                            formattedName = `Polluant ${id}`;
+                                        }
+
+                                        // Check if this pollutant is still being measured
+                                        // Default to false if en_service is undefined
+                                        let isActive = Boolean(
+                                            pollutantData.en_service
+                                        );
+                                        let statusHTML = '';
+
+                                        // If not active, show when it was stopped
+                                        if (
+                                            !isActive &&
+                                            pollutantData.date_fin
+                                        ) {
+                                            try {
+                                                const endDate = new Date(
+                                                    pollutantData.date_fin
+                                                );
+                                                // Check if date is valid before formatting
+                                                if (!isNaN(endDate.getTime())) {
+                                                    const formattedDate =
+                                                        endDate.toLocaleDateString();
+                                                    statusHTML = `<span class="badge bg-secondary ms-2">Arrêté le ${formattedDate}</span>`;
+                                                } else {
+                                                    statusHTML = `<span class="badge bg-secondary ms-2">Date d'arrêt inconnue</span>`;
+                                                }
+                                            } catch (e) {
+                                                console.warn(
+                                                    'Error formatting date:',
+                                                    e
+                                                );
+                                                statusHTML = `<span class="badge bg-secondary ms-2">Date d'arrêt inconnue</span>`;
+                                            }
+                                        }
+
+                                        // Add status indicator
+                                        const statusIndicator = isActive
+                                            ? '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>'
+                                            : '<i class="bi bi-circle-fill text-secondary me-1" style="font-size: 0.6rem;"></i>';
+
+                                        pollutantsHTML += `<li>${statusIndicator}${formattedName}${statusHTML}</li>`;
+                                    }
+                                );
+
+                                pollutantsHTML += '</ul></div>';
+                            }
+
+                            // Check overall station status
+                            let stationStatusHTML = '';
+                            if (item.en_service === false) {
+                                stationStatusHTML =
+                                    '<div class="alert alert-warning py-1 mt-2 mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i>Station hors service</div>';
+                            } else {
+                                stationStatusHTML =
+                                    '<div class="badge bg-success mt-2"><i class="bi bi-broadcast-pin me-1"></i>Station active</div>';
+                            }
+
+                            // Show device info with enhanced details
+                            deviceInfo._div.innerHTML = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <h5 class="card-title mb-1" id="device-name">${item.nom_station}</h5>
+                                    <p class="card-text text-muted mb-2" id="device-details">Type: Station de référence</p>
+                                    ${pollutantsHTML}
+                                    ${stationStatusHTML}
+                                </div>
+                            </div>
+                        `;
+
+                            deviceInfo._div.style.display = 'block';
+                        }
+
+                        function resetMarker() {
+                            if (globalSelectedMarker !== stationMarker) {
+                                stationMarker.setZIndexOffset(0);
+                            }
+                            deviceInfo._div.style.display = 'none';
+                        }
+
+                        stationMarker
+                            .on('mouseover', hoverMarker)
+                            .on('mouseout', resetMarker);
+                    }
+                }
+            );
+
+            // Add the layer to the map
             map.addLayer(atmo_ref_layer);
-        }, //end ajax sucess
-        error: function (xhr, status, error) {
-            console.error('Error:', error);
-            console.error('Status:', status);
-            console.error('Response:', xhr.responseText);
-        },
-    }); //end ajax
-} //end function load_atmoSud_stationsRef()
+        })
+        .catch((error) => {
+            console.error('Error fetching data:', error);
+
+            // If there's an error, try to create default markers from any data we have
+            if (
+                window.stationMarkers &&
+                Object.keys(window.stationMarkers).length > 0
+            ) {
+                createDefaultMarkers();
+            }
+        });
+
+    // Function to create default markers if needed
+    function createDefaultMarkers() {
+        Object.entries(window.stationMarkers).forEach(
+            ([stationId, stationObj]) => {
+                if (!stationObj.hasValue && stationObj.data) {
+                    const item = stationObj.data;
+
+                    // Create default gray marker
+                    var icon_param = {
+                        iconUrl:
+                            'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
+                        iconSize: [50, 50],
+                        iconAnchor: [5, 40],
+                        popupAnchor: [0, -10],
+                        tooltipAnchor: [-50, -10],
+                        className: item.id_station,
+                    };
+
+                    let stationMarker = L.marker(
+                        [item.latitude, item.longitude],
+                        {
+                            icon: L.icon(icon_param),
+                        }
+                    )
+                        .on('click', function () {
+                            // Handle click
+                            if (
+                                globalSelectedMarker &&
+                                globalSelectedMarker !== stationMarker
+                            ) {
+                                globalSelectedMarker.setZIndexOffset(0);
+                                globalSelectedMarker._icon.classList.remove(
+                                    'marker-selected'
+                                );
+                            }
+
+                            stationMarker.setZIndexOffset(1000);
+                            stationMarker._icon.classList.add(
+                                'marker-selected'
+                            );
+
+                            globalSelectedMarker = stationMarker;
+                            globalSelectedText = null;
+                            globalSelectedStationId = item.id_station;
+                            window.lastSelectedStationData = item;
+
+                            openSidePanel_stationRef(
+                                item.id_station,
+                                item.nom_station,
+                                mesure
+                            );
+                        })
+                        .addTo(atmo_ref_layer);
+
+                    // Store the marker reference
+                    window.stationMarkers[stationId].marker = stationMarker;
+
+                    // Set up hover effects (simplified)
+                    stationMarker
+                        .on('mouseover', function () {
+                            stationMarker.setZIndexOffset(1000);
+                            deviceInfo._div.innerHTML = `
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-3">
+                                <h5 class="card-title mb-1">${item.nom_station}</h5>
+                                <p class="card-text text-muted">Type: Station de référence</p>
+                                <div class="badge bg-secondary">Pas de données récentes</div>
+                            </div>
+                        </div>
+                    `;
+                            deviceInfo._div.style.display = 'block';
+                        })
+                        .on('mouseout', function () {
+                            if (globalSelectedMarker !== stationMarker) {
+                                stationMarker.setZIndexOffset(0);
+                            }
+                            deviceInfo._div.style.display = 'none';
+                        });
+                }
+            }
+        );
+
+        map.addLayer(atmo_ref_layer);
+    }
+}
 
 /*
 Ouverture du Side panel
