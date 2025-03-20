@@ -569,6 +569,103 @@ function findAndHighlightMarker(deviceId) {
     }, 1000); // Increased delay to ensure layers are fully loaded
 }
 
+// Function to update threshold buttons based on selected pollutant
+function updateThresholdButtons() {
+    // Get currently selected pollutant
+    const selectedPollutant = getArrayFromLocalStorage(mesures_local)[0];
+
+    // Determine which threshold set to use
+    const thresholds = getThresholdsForPollutant(selectedPollutant);
+
+    // Update each button's tooltip with the appropriate range
+    document
+        .getElementById('btn_bon')
+        .setAttribute(
+            'data-bs-title',
+            `${thresholds.bon.min} à ${thresholds.bon.max} µg/m³`
+        );
+
+    document
+        .getElementById('btn_moyen')
+        .setAttribute(
+            'data-bs-title',
+            `${thresholds.moyen.min} à ${thresholds.moyen.max} µg/m³`
+        );
+
+    document
+        .getElementById('btn_degrade')
+        .setAttribute(
+            'data-bs-title',
+            `${thresholds.degrade.min} à ${thresholds.degrade.max} µg/m³`
+        );
+
+    document
+        .getElementById('btn_mauvais')
+        .setAttribute(
+            'data-bs-title',
+            `${thresholds.mauvais.min} à ${thresholds.mauvais.max} µg/m³`
+        );
+
+    document
+        .getElementById('btn_tres_mauvais')
+        .setAttribute(
+            'data-bs-title',
+            `${thresholds.tres_mauvais.min} à ${thresholds.tres_mauvais.max} µg/m³`
+        );
+
+    document
+        .getElementById('btn_extr_mauvais')
+        .setAttribute('data-bs-title', `>${thresholds.extr_mauvais.min} µg/m³`);
+
+    // Reinitialize tooltips to update them
+    const tooltipTriggerList = document.querySelectorAll(
+        '[data-bs-toggle="tooltip"]'
+    );
+    [...tooltipTriggerList].map((tooltipTriggerEl) => {
+        // Dispose any existing tooltip
+        const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+        if (tooltip) {
+            tooltip.dispose();
+        }
+        // Create new tooltip
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+// Helper function to get the appropriate threshold set for a pollutant
+function getThresholdsForPollutant(pollutant) {
+    if (pollutant === 'pm10') {
+        return seuils_PM10;
+    } else if (pollutant === 'no2') {
+        return seuils_NO2_24h;
+    } else {
+        // Default for PM1 and PM2.5
+        return seuils_PM1_PM25;
+    }
+}
+
+function getColorCodeForValue(value, pollutant) {
+    const thresholds = getThresholdsForPollutant(pollutant);
+
+    let colorCode = 'default'; // Default color code
+
+    // Round the value to ensure consistent comparison
+    const roundedValue = Math.round(parseFloat(value));
+
+    // Check each threshold range
+    for (let key in thresholds) {
+        const min = thresholds[key].min;
+        const max = thresholds[key].max;
+
+        if (roundedValue >= min && roundedValue <= max) {
+            colorCode = thresholds[key].code;
+            break; // Exit the loop once we find the matching range
+        }
+    }
+
+    return colorCode;
+}
+
 // Initialize clock on page load
 document.addEventListener('DOMContentLoaded', function () {
     updateTimeDisplay();
@@ -577,6 +674,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Set up auto data refresh
     setupAutoRefresh();
+
+    // Initialize threshold buttons based on selected pollutant
+    updateThresholdButtons();
 });
 
 //vérifier si un élément est dans un js object
@@ -645,7 +745,11 @@ for (let key in mesures) {
                 document
                     .querySelector('#dropdown_mesures')
                     .closest('.dropdown')
-                    .querySelector('.selected-option').textContent = name;
+                    .querySelector('.selected-option').innerHTML = name;
+
+                // On met à jour les seuils
+                updateThresholdButtons();
+
                 //ICI ON PEUT FETCHER LES DATAS
                 console.log(
                     'Changement du type de mesure: ' +
@@ -760,7 +864,7 @@ for (let key in pas_de_temps) {
                 document
                     .querySelector('#dropdown_pas_de_temps')
                     .closest('.dropdown')
-                    .querySelector('.selected-option').textContent = name;
+                    .querySelector('.selected-option').innerHTML = name;
 
                 //ICI ON PEUT FETCHER LES DATAS
                 console.log(
@@ -1080,7 +1184,7 @@ const timeStepName =
 document
     .querySelector('#dropdown_pas_de_temps')
     .closest('.dropdown')
-    .querySelector('.selected-option').textContent = timeStepName;
+    .querySelector('.selected-option').innerHTML = timeStepName;
 const storedMesure = getArrayFromLocalStorage('mesures_local')[0];
 const mesureName =
     mesures[
@@ -1089,7 +1193,7 @@ const mesureName =
 document
     .querySelector('#dropdown_mesures')
     .closest('.dropdown')
-    .querySelector('.selected-option').textContent = mesureName;
+    .querySelector('.selected-option').innerHTML = mesureName;
 
 // Dès que l'on bouge la cart on enregistre LAT/LONG/ZOOM
 map.on('moveend', function () {

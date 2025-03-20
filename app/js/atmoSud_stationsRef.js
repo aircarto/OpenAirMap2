@@ -330,7 +330,7 @@ function load_atmoSud_stationsRef() {
                 });
 
                 //on récupère la valeur mesurée
-                var valeur_polluant = Math.round(value['valeur']);
+                var valeur_polluant = value['valeur'];
                 var icon_param = {
                     iconUrl:
                         'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
@@ -341,41 +341,18 @@ function load_atmoSud_stationsRef() {
                     className: value.id_station,
                 };
 
-                //pour les pm1 et les PM25 on change l'icone (la couleurs)
-                if (mesure == 'pm1' || mesure == 'pm25') {
-                    for (let key in seuils_PM1_PM25) {
-                        let code = seuils_PM1_PM25[key].code;
-                        let min = seuils_PM1_PM25[key].min;
-                        let max = seuils_PM1_PM25[key].max;
-                        //si la valeur est entre le max et le min
-                        if (
-                            (value['valeur'] >= min) &
-                            (value['valeur'] <= max)
-                        ) {
-                            icon_param.iconUrl =
-                                'img/stationsRefAtmoSud/refStationAtmoSud_' +
-                                code +
-                                '.png';
-                        }
-                    }
-                }
-                //pour les pm10
-                if (mesure == 'pm10') {
-                    for (let key in seuils_PM10) {
-                        let code = seuils_PM10[key].code;
-                        let min = seuils_PM10[key].min;
-                        let max = seuils_PM10[key].max;
-                        //si la valeur est entre le max et le min
-                        if (
-                            (value['valeur'] >= min) &
-                            (value['valeur'] <= max)
-                        ) {
-                            icon_param.iconUrl =
-                                'img/stationsRefAtmoSud/refStationAtmoSud_' +
-                                code +
-                                '.png';
-                        }
-                    }
+                let colorCode = getColorCodeForValue(
+                    valeur_polluant,
+                    mesure_atmo
+                );
+                console.log(mesure[0]);
+
+                // Set the icon URL based on the color code
+                if (colorCode !== 'default') {
+                    icon_param.iconUrl =
+                        'img/stationsRefAtmoSud/refStationAtmoSud_' +
+                        colorCode +
+                        '.png';
                 }
 
                 //création des icones
@@ -463,7 +440,7 @@ function load_atmoSud_stationsRef() {
                         '<div id="textDiv" style="font-size: ' +
                         textSize +
                         'px;">' +
-                        valeur_polluant +
+                        Math.round(valeur_polluant) +
                         '</div>',
                     iconAnchor: [x_position, y_position],
                     popupAnchor: [30, -60], // point from which the popup should open relative to the iconAnchor
