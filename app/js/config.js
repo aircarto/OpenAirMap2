@@ -1,4 +1,4 @@
-let config = {
+const config = {
     coordsCenter: [43.29490421, 5.37188392], //loc par défaut pour la carte
     zoomLevel: 9, //zoom por défaut
     minZoom: 1,
@@ -11,7 +11,7 @@ let config = {
     boundNE: [90, 180],
 };
 
-let mesures = {
+const mesures = {
     PM1: { name: 'PM1', code: 'pm1', activated: true },
     'PM2.5': { name: 'PM2.5', code: 'pm25', activated: false },
     PM10: { name: 'PM10', code: 'pm10', activated: false },
@@ -20,7 +20,7 @@ let mesures = {
     SO2: { name: 'SO<sub>2</sub>', code: 'so2', activated: false },
 };
 
-let sources = {
+const sources = {
     nebuleair: {
         name: 'Capteurs NebuleAir',
         code: 'nebuleair',
@@ -61,14 +61,14 @@ let sources = {
     signalair: { name: "Signal'Air", code: 'signalair', activated: false },
 };
 
-let pas_de_temps = {
+const pas_de_temps = {
     brute: { name: '2 minutes', code: '2min', activated: true },
     'quart-horaire': { name: 'Quart-horaire', code: 'qh', activated: false },
     horaire: { name: 'Horaire', code: 'h', activated: false },
     journalier: { name: 'Journalier', code: 'd', activated: false },
 };
 
-let seuils_PM1_PM25 = {
+const seuils_PM1_PM25 = {
     bon: { code: 'bon', color_hex: '#79c5cc', min: 0, max: 10 },
     moyen: { code: 'moyen', color_hex: '#64bca6', min: 11, max: 20 },
     degrade: { code: 'degrade', color_hex: '#ebe95f', min: 21, max: 25 },
@@ -87,7 +87,7 @@ let seuils_PM1_PM25 = {
     },
 };
 
-let seuils_PM10 = {
+const seuils_PM10 = {
     bon: { code: 'bon', color_hex: '#79c5cc', min: 0, max: 20 },
     moyen: { code: 'moyen', color_hex: '#64bca6', min: 21, max: 40 },
     degrade: { code: 'degrade', color_hex: '#ebe95f', min: 41, max: 50 },
@@ -105,7 +105,7 @@ let seuils_PM10 = {
         max: 99999,
     },
 };
-let seuils_NO2_24h = {
+const seuils_NO2_24h = {
     bon: { code: 'bon', color_hex: '#79c5cc', min: 0, max: 20 },
     moyen: { code: 'moyen', color_hex: '#64bca6', min: 21, max: 50 },
     degrade: { code: 'degrade', color_hex: '#ebe95f', min: 51, max: 70 },

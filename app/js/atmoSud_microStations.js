@@ -11,15 +11,269 @@ valeur_ref      valeur corrigée si existe sinon valeur brute
 
 */
 
+// function load_atmoSud_microStations() {
+//     console.log(
+//         '%cload_atmoSud_microStations',
+//         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
+//     );
+//     const start = Date.now();
+//     atmo_micro_layer.clearLayers();
+
+//     //need to switch pas de temps: d->journalier h->horaire qh -> quart horaire
+//     var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local); //attention revoie un objet !!
+//     var pas_de_temps_atmo = '';
+//     switch (pas_de_temps[0]) {
+//         case '2min':
+//             var pas_de_temps_atmo = 'brute';
+//             break;
+//         case 'qh':
+//             var pas_de_temps_atmo = 'quart-horaire';
+//             break;
+//         case 'h':
+//             var pas_de_temps_atmo = 'horaire';
+//             break;
+//         case 'd':
+//             var pas_de_temps_atmo = 'journalier';
+//             break;
+//     }
+//     //on récupère le type de mesure (+ conversion pm25 vers pm2.5)
+//     var mesures = getArrayFromLocalStorage(mesures_local);
+//     var mesures_atmo = mesures;
+//     switch (mesures[0]) {
+//         case 'pm25':
+//             var mesures_atmo = ['pm2.5'];
+//             break;
+//     }
+
+//     //ATTENTION pas de donnée dispo pour les micro-stations au pas de temps 2min ou journalier
+//     if (pas_de_temps[0] === 'd') {
+//         alert('Pas de données pour le pas de temps ' + pas_de_temps);
+//         return;
+//     }
+
+//     console.log('Pas de temps : ' + pas_de_temps);
+//     console.log('Pas de temps Atmo: ' + pas_de_temps_atmo);
+//     console.log('Mesures : ' + mesures);
+
+//     let full_url_derniere = `
+//     https://api.atmosud.org/observations/capteurs/mesures/dernieres?
+//     format=json
+//     &download=false
+//     &valeur_brute=true
+//     &type_capteur=true
+//     &variable=${mesures_atmo}
+//     &aggregation=${pas_de_temps_atmo}
+//     &nb_dec=1
+//     `.replace(/\s+/g, '');
+
+//     $.ajax({
+//         method: 'GET',
+//         url: full_url_derniere,
+//         // data: ({timespan: timespanLower}),
+//         success: function (data) {
+//             console.log(full_url_derniere);
+//             console.log(data);
+//             const end = Date.now();
+//             const requestTimer = (end - start) / 1000;
+//             console.log(
+//                 `Data gathered in %c${requestTimer} sec`,
+//                 'color: red;'
+//             );
+//             let filteredData = data;
+//             if (pas_de_temps[0] === '2min') {
+//                 filteredData = data.filter(
+//                     (item) => item.modele_capteur === 'NebuleAir'
+//                 );
+//                 console.log(filteredData);
+//                 console.warn(
+//                     'Uniquement micro-stations NebuleAir pour le pas de temps ' +
+//                         pas_de_temps
+//                 );
+//             }
+//             $.each(filteredData, function (key, value) {
+//                 // ICONE
+//                 var icon_param = {
+//                     iconUrl:
+//                         'img/microStationsAtmoSud/microStationAtmoSud_default.png',
+//                     iconSize: [50, 50],
+//                     iconAnchor: [5, 40],
+//                     popupAnchor: [0, -10],
+//                     tooltipAnchor: [-50, -10],
+//                 };
+
+//                 // Use the helper functions from app.js instead of duplicating the logic
+//                 let valueToCheck = value['valeur_brute'];
+//                 let colorCode = getColorCodeForValue(valueToCheck, mesures[0]);
+
+//                 // Set the icon URL based on the color code
+//                 if (colorCode !== 'default') {
+//                     icon_param.iconUrl =
+//                         'img/microStationsAtmoSud/microStationAtmoSud_' +
+//                         colorCode +
+//                         '.png';
+//                 }
+
+//                 // Tooltip
+//                 var microStation_icon = L.icon(icon_param);
+
+//                 // Création du marqueur principal (point de mesure)
+//                 let microStationMarker = L.marker(
+//                     [value['lat'], value['lon']],
+//                     {
+//                         icon: microStation_icon,
+//                     }
+//                 ).addTo(atmo_micro_layer);
+
+//                 // Store device data with the marker
+//                 microStationMarker.deviceId = value['id_site'];
+//                 microStationMarker.deviceData = value;
+
+//                 // Store a reference to this marker in a global object for easy access
+//                 if (!window.deviceMarkers) window.deviceMarkers = {};
+//                 window.deviceMarkers[value['id_site']] = {
+//                     marker: microStationMarker,
+//                     data: value,
+//                 };
+
+//                 // TEXTE
+//                 let roundedvalue = Math.round(
+//                     parseFloat(value['valeur_brute'])
+//                 );
+//                 var textSize = 32;
+//                 var x_position = -10;
+//                 var y_position = 41;
+
+//                 if (roundedvalue >= 10) {
+//                     textSize = 25;
+//                     x_position = -5;
+//                     y_position = 32;
+//                 }
+//                 if (roundedvalue >= 100) {
+//                     textSize = 20;
+//                     x_position = -4;
+//                     y_position = 26;
+//                 }
+
+//                 var text_param = L.divIcon({
+//                     className: 'my-div-icon',
+//                     html:
+//                         '<div id="textDiv" style="font-size: ' +
+//                         textSize +
+//                         'px;">' +
+//                         roundedvalue +
+//                         '</div>',
+//                     iconAnchor: [x_position, y_position],
+//                     popupAnchor: [30, -60],
+//                 });
+
+//                 let textMarker = L.marker([value['lat'], value['lon']], {
+//                     icon: text_param,
+//                 })
+//                     .on('click', function () {
+//                         // Si un marker est déjà sélectionné, on enlève l'animation
+//                         if (
+//                             globalSelectedMarker &&
+//                             globalSelectedMarker !== microStationMarker
+//                         ) {
+//                             globalSelectedMarker.setZIndexOffset(0);
+//                             globalSelectedMarker._icon.classList.remove(
+//                                 'marker-selected'
+//                             );
+//                         }
+
+//                         if (
+//                             globalSelectedText &&
+//                             globalSelectedText !== textMarker
+//                         ) {
+//                             globalSelectedText.setZIndexOffset(0);
+//                             globalSelectedText._icon.classList.remove(
+//                                 'marker-selected'
+//                             );
+//                         }
+
+//                         // Appliquer l'animation uniquement au nouveau marker sélectionné
+//                         microStationMarker.setZIndexOffset(1000);
+//                         textMarker.setZIndexOffset(1000);
+//                         microStationMarker._icon.classList.add(
+//                             'marker-selected'
+//                         );
+//                         textMarker._icon.classList.add('marker-selected');
+
+//                         // Mettre à jour le marker sélectionné
+//                         globalSelectedMarker = microStationMarker;
+//                         globalSelectedText = textMarker;
+//                         globalSelectedDeviceId = value['id_site']; // Store the selected device ID
+//                         window.lastSelectedDeviceData = value; // Store the full device data
+
+//                         console.log('Click on device: ' + value['id_site']);
+//                         openSidePanel_microStation(
+//                             value,
+//                             pas_de_temps_atmo,
+//                             '24h',
+//                             mesures_atmo
+//                         );
+//                     })
+//                     .addTo(atmo_micro_layer);
+
+//                 // Also store the text marker reference
+//                 textMarker.deviceId = value['id_site'];
+//                 textMarker.deviceData = value;
+
+//                 if (window.deviceMarkers[value['id_site']]) {
+//                     window.deviceMarkers[value['id_site']].textMarker =
+//                         textMarker;
+//                 }
+
+//                 // Effet hover : mise en avant du point et du texte
+//                 function highlightMarker() {
+//                     microStationMarker.setZIndexOffset(1000);
+//                     textMarker.setZIndexOffset(1000);
+
+//                     // Show device info
+//                     deviceInfo._div.querySelector('#device-name').textContent =
+//                         formatString(value['nom_site']);
+//                     deviceInfo._div.querySelector(
+//                         '#device-details'
+//                     ).textContent = `Type: ${value['modele_capteur']}`;
+//                     deviceInfo._div.style.display = 'block';
+//                 }
+
+//                 function resetMarker() {
+//                     // Don't reset if this is the selected marker
+//                     if (globalSelectedMarker !== microStationMarker) {
+//                         microStationMarker.setZIndexOffset(0);
+//                         textMarker.setZIndexOffset(0);
+//                     }
+//                     deviceInfo._div.style.display = 'none';
+//                 }
+
+//                 microStationMarker
+//                     .on('mouseover', highlightMarker)
+//                     .on('mouseout', resetMarker);
+//                 textMarker
+//                     .on('mouseover', highlightMarker)
+//                     .on('mouseout', resetMarker);
+//             });
+//             //end $each
+//             //ajouter la layer sur la carte
+//             map.addLayer(atmo_micro_layer);
+//         }, //end ajax sucess
+//         error: function (xhr, status, error) {
+//             console.error('Error:', error);
+//             console.error('Status:', status);
+//             console.error('Response:', xhr.responseText);
+//         },
+//     }); //end ajax
+// }
 function load_atmoSud_microStations() {
     console.log(
         '%cload_atmoSud_microStations',
         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
     );
     const start = Date.now();
-    //need to switch pas de temps: d->journalier h->horaire qh -> quart horaire
+
     atmo_micro_layer.clearLayers();
-    var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local); //attention revoie un objet !!
+    var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local);
     var pas_de_temps_atmo = '';
     switch (pas_de_temps[0]) {
         case '2min':
@@ -35,16 +289,16 @@ function load_atmoSud_microStations() {
             var pas_de_temps_atmo = 'journalier';
             break;
     }
-    //on récupère le type de mesure (+ conversion pm25 vers pm2.5)
-    var mesures = getArrayFromLocalStorage(mesures_local);
-    var mesures_atmo = mesures;
-    switch (mesures[0]) {
-        case 'pm25':
-            var mesures_atmo = ['pm2.5'];
-            break;
-    }
 
-    //ATTENTION pas de donnée dispo pour les micro-stations au pas de temps 2min ou journalier
+    // On récupère le type de mesure sélectionné par l'utilisateur pour l'affichage
+    var mesures = getArrayFromLocalStorage(mesures_local);
+    var selectedMeasure = mesures[0];
+    var selectedMeasureAtmo =
+        selectedMeasure === 'pm25' ? 'pm2.5' : selectedMeasure;
+
+    // Mais on va demander tous les polluants disponibles
+    var allPollutants = ['pm1', 'pm2.5', 'pm10', 'no2'];
+
     if (pas_de_temps[0] === 'd') {
         alert('Pas de données pour le pas de temps ' + pas_de_temps);
         return;
@@ -52,7 +306,8 @@ function load_atmoSud_microStations() {
 
     console.log('Pas de temps : ' + pas_de_temps);
     console.log('Pas de temps Atmo: ' + pas_de_temps_atmo);
-    console.log('Mesures : ' + mesures);
+    console.log('Mesure sélectionnée : ' + selectedMeasure);
+    console.log('Tous les polluants demandés : ' + allPollutants);
 
     let full_url_derniere = `
     https://api.atmosud.org/observations/capteurs/mesures/dernieres?
@@ -60,7 +315,7 @@ function load_atmoSud_microStations() {
     &download=false
     &valeur_brute=true
     &type_capteur=true
-    &variable=${mesures_atmo}
+    &variable=${allPollutants.join(',')}
     &aggregation=${pas_de_temps_atmo}
     &nb_dec=1
     `.replace(/\s+/g, '');
@@ -68,7 +323,6 @@ function load_atmoSud_microStations() {
     $.ajax({
         method: 'GET',
         url: full_url_derniere,
-        // data: ({timespan: timespanLower}),
         success: function (data) {
             console.log(full_url_derniere);
             console.log(data);
@@ -78,18 +332,55 @@ function load_atmoSud_microStations() {
                 `Data gathered in %c${requestTimer} sec`,
                 'color: red;'
             );
-            let filteredData = data;
-            if (pas_de_temps[0] === '2min') {
-                filteredData = data.filter(
-                    (item) => item.modele_capteur === 'NebuleAir'
+
+            // Organiser les données par site et par polluant
+            let siteData = {};
+            data.forEach((item) => {
+                if (!siteData[item.id_site]) {
+                    siteData[item.id_site] = {
+                        site_info: {
+                            id_site: item.id_site,
+                            nom_site: item.nom_site,
+                            lat: item.lat,
+                            lon: item.lon,
+                            modele_capteur: item.modele_capteur,
+                        },
+                        pollutants: {},
+                    };
+                }
+                siteData[item.id_site].pollutants[item.variable] = item;
+            });
+
+            console.log('Données organisées par site:', siteData);
+
+            // Filtrer les sites qui ont le polluant sélectionné
+            let filteredSites = Object.values(siteData).filter((site) => {
+                return Object.keys(site.pollutants).some(
+                    (key) =>
+                        key.toLowerCase() === selectedMeasureAtmo.toLowerCase()
                 );
-                console.log(filteredData);
+            });
+
+            if (pas_de_temps[0] === '2min') {
+                filteredSites = filteredSites.filter(
+                    (site) => site.site_info.modele_capteur === 'NebuleAir'
+                );
                 console.warn(
                     'Uniquement micro-stations NebuleAir pour le pas de temps ' +
                         pas_de_temps
                 );
             }
-            $.each(filteredData, function (key, value) {
+
+            console.log(
+                'Sites filtrés pour le polluant ' + selectedMeasureAtmo + ':',
+                filteredSites
+            );
+
+            // Créer les marqueurs pour chaque site
+            filteredSites.forEach((site) => {
+                // Adapter pour gérer la casse des polluants
+                let value = site.pollutants[selectedMeasureAtmo.toUpperCase()];
+
                 // ICONE
                 var icon_param = {
                     iconUrl:
@@ -100,13 +391,12 @@ function load_atmoSud_microStations() {
                     tooltipAnchor: [-50, -10],
                 };
 
-                // Changement d'icône selon la mesure et la valeur brute
-                console.log('##################################');
-                console.log(mesures);
-
                 // Use the helper functions from app.js instead of duplicating the logic
                 let valueToCheck = value['valeur_brute'];
-                let colorCode = getColorCodeForValue(valueToCheck, mesures[0]);
+                let colorCode = getColorCodeForValue(
+                    valueToCheck,
+                    selectedMeasure
+                );
 
                 // Set the icon URL based on the color code
                 if (colorCode !== 'default') {
@@ -116,31 +406,29 @@ function load_atmoSud_microStations() {
                         '.png';
                 }
 
-                console.log(
-                    icon_param.iconUrl,
-                    Math.round(parseFloat(valueToCheck))
-                );
-
                 // Tooltip
                 var microStation_icon = L.icon(icon_param);
 
                 // Création du marqueur principal (point de mesure)
                 let microStationMarker = L.marker(
-                    [value['lat'], value['lon']],
+                    [site.site_info.lat, site.site_info.lon],
                     {
                         icon: microStation_icon,
                     }
                 ).addTo(atmo_micro_layer);
 
                 // Store device data with the marker
-                microStationMarker.deviceId = value['id_site'];
-                microStationMarker.deviceData = value;
+                microStationMarker.deviceId = site.site_info.id_site;
+                microStationMarker.deviceData = site;
+                microStationMarker.allPollutantsData = site.pollutants;
 
                 // Store a reference to this marker in a global object for easy access
                 if (!window.deviceMarkers) window.deviceMarkers = {};
-                window.deviceMarkers[value['id_site']] = {
+                window.deviceMarkers[site.site_info.id_site] = {
                     marker: microStationMarker,
                     data: value,
+                    allPollutantsData: site.pollutants,
+                    site_info: site.site_info,
                 };
 
                 // TEXTE
@@ -174,9 +462,12 @@ function load_atmoSud_microStations() {
                     popupAnchor: [30, -60],
                 });
 
-                let textMarker = L.marker([value['lat'], value['lon']], {
-                    icon: text_param,
-                })
+                let textMarker = L.marker(
+                    [site.site_info.lat, site.site_info.lon],
+                    {
+                        icon: text_param,
+                    }
+                )
                     .on('click', function () {
                         // Si un marker est déjà sélectionné, on enlève l'animation
                         if (
@@ -210,39 +501,116 @@ function load_atmoSud_microStations() {
                         // Mettre à jour le marker sélectionné
                         globalSelectedMarker = microStationMarker;
                         globalSelectedText = textMarker;
-                        globalSelectedDeviceId = value['id_site']; // Store the selected device ID
-                        window.lastSelectedDeviceData = value; // Store the full device data
+                        globalSelectedDeviceId = site.site_info.id_site;
+                        window.lastSelectedDeviceData = site;
 
-                        console.log('Click on device: ' + value['id_site']);
+                        console.log(
+                            'Click on device: ' + site.site_info.id_site
+                        );
                         openSidePanel_microStation(
-                            value,
+                            site,
                             pas_de_temps_atmo,
                             '24h',
-                            mesures_atmo
+                            [selectedMeasureAtmo] // Utiliser la version en majuscules
                         );
                     })
                     .addTo(atmo_micro_layer);
 
                 // Also store the text marker reference
-                textMarker.deviceId = value['id_site'];
-                textMarker.deviceData = value;
+                textMarker.deviceId = site.site_info.id_site;
+                textMarker.deviceData = site;
 
-                if (window.deviceMarkers[value['id_site']]) {
-                    window.deviceMarkers[value['id_site']].textMarker =
+                if (window.deviceMarkers[site.site_info.id_site]) {
+                    window.deviceMarkers[site.site_info.id_site].textMarker =
                         textMarker;
                 }
 
                 // Effet hover : mise en avant du point et du texte
+                // Dans atmoSud_microStations.js
                 function highlightMarker() {
                     microStationMarker.setZIndexOffset(1000);
                     textMarker.setZIndexOffset(1000);
 
-                    // Show device info
-                    deviceInfo._div.querySelector('#device-name').textContent =
-                        formatString(value['nom_site']);
-                    deviceInfo._div.querySelector(
-                        '#device-details'
-                    ).textContent = `Type: ${value['modele_capteur']}`;
+                    // Récupérer les polluants disponibles
+                    let pollutantsHTML = '';
+                    let availablePollutants = [];
+
+                    // Déterminer les polluants disponibles selon la structure des données
+                    if (site.pollutants) {
+                        availablePollutants = Object.keys(site.pollutants);
+                    } else if (site.allPollutantsData) {
+                        availablePollutants = Object.keys(
+                            site.allPollutantsData
+                        );
+                    } else if (
+                        window.deviceMarkers &&
+                        window.deviceMarkers[site.site_info.id_site] &&
+                        window.deviceMarkers[site.site_info.id_site]
+                            .allPollutantsData
+                    ) {
+                        availablePollutants = Object.keys(
+                            window.deviceMarkers[site.site_info.id_site]
+                                .allPollutantsData
+                        );
+                    }
+
+                    // Générer le HTML pour les polluants
+                    if (availablePollutants.length > 0) {
+                        pollutantsHTML =
+                            '<div class="mt-2"><strong>Polluants mesurés:</strong>';
+                        pollutantsHTML +=
+                            '<ul class="list-unstyled mb-0 ps-2">';
+
+                        availablePollutants.forEach((pollutant) => {
+                            let formattedName = '';
+
+                            // Formater le nom du polluant
+                            switch (pollutant.toLowerCase()) {
+                                case 'pm1':
+                                    formattedName = 'PM1';
+                                    break;
+                                case 'pm2.5':
+                                    formattedName = 'PM2.5';
+                                    break;
+                                case 'pm10':
+                                    formattedName = 'PM10';
+                                    break;
+                                case 'no2':
+                                    formattedName = 'NO₂';
+                                    break;
+                                default:
+                                    formattedName = pollutant.toUpperCase();
+                            }
+
+                            let statusIndicator =
+                                '<i class="bi bi-circle-fill text-success me-1" style="font-size: 0.6rem;"></i>';
+                            pollutantsHTML += `<li>${statusIndicator}${formattedName}</li>`;
+                        });
+
+                        pollutantsHTML += '</ul></div>';
+                    }
+
+                    // Déterminer le nom et le modèle à afficher selon la structure des données
+                    const nomSite = site.site_info
+                        ? site.site_info.nom_site
+                        : site.nom_site;
+                    const modeleCapteur = site.site_info
+                        ? site.site_info.modele_capteur
+                        : site.modele_capteur;
+
+                    // Construction et affichage de la carte d'information
+                    deviceInfo._div.innerHTML = `
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-3">
+                                <h5 class="card-title mb-1">${formatString(nomSite)}</h5>
+                                <p class="card-text text-muted mb-2">Type: ${modeleCapteur}</p>
+                                ${pollutantsHTML}
+                                <div class="badge bg-success mt-2"><i class="bi bi-broadcast-pin me-1"></i>Capteur actif</div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Afficher l'info-bulle
                     deviceInfo._div.style.display = 'block';
                 }
 
@@ -262,18 +630,17 @@ function load_atmoSud_microStations() {
                     .on('mouseover', highlightMarker)
                     .on('mouseout', resetMarker);
             });
-            //end $each
+
             //ajouter la layer sur la carte
             map.addLayer(atmo_micro_layer);
-        }, //end ajax sucess
+        },
         error: function (xhr, status, error) {
             console.error('Error:', error);
             console.error('Status:', status);
             console.error('Response:', xhr.responseText);
         },
-    }); //end ajax
+    });
 }
-
 function openSidePanel_microStation(
     data,
     pas_de_temps_atmo,
@@ -289,10 +656,11 @@ function openSidePanel_microStation(
     historique_chart = historique;
     pas_de_temps_chart = pas_de_temps_atmo;
     mesures_array.length = 0;
+    // Si mesures_atmo est un tableau, ajouter chaque élément au tableau mesures_array
     if (Array.isArray(mesures_atmo)) {
         mesures_atmo.forEach((measure) => mesures_array.push(measure));
     } else {
-        // If it's a single value, push it directly
+        // Si mesures_atmo n'est pas un tableau, ajouter la valeur à mesures_array
         mesures_array.push(mesures_atmo);
     }
 
@@ -309,37 +677,155 @@ function openSidePanel_microStation(
     pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
     polluants_buttons.forEach((btn) => (btn.checked = false));
 
-    if (btn_poluant_no2.disabled) {
+    // Activer/désactiver les boutons de polluants en fonction de ce que l'appareil peut mesurer
+
+    // Désactiver tous les boutons de polluants par défaut
+    btn_poluant_pm1.disabled = true;
+    btn_poluant_pm25.disabled = true;
+    btn_poluant_pm10.disabled = true;
+    btn_poluant_no2.disabled = true;
+
+    // Récupérer les polluants disponibles pour cette station
+    let availablePollutants = [];
+
+    // Vérifier si nous avons la nouvelle structure de données ou l'ancienne
+    if (data.pollutants) {
+        // Nouvelle structure
+        availablePollutants = Object.keys(data.pollutants);
+    } else if (data.allPollutantsData) {
+        // Structure intermédiaire (stockée dans le marker)
+        availablePollutants = Object.keys(data.allPollutantsData);
+    } else if (
+        window.deviceMarkers &&
+        window.deviceMarkers[data.id_site] &&
+        window.deviceMarkers[data.id_site].allPollutantsData
+    ) {
+        // Récupérer depuis l'objet global deviceMarkers
+        availablePollutants = Object.keys(
+            window.deviceMarkers[data.id_site].allPollutantsData
+        );
+    } else {
+        // Ancienne structure - on n'a qu'un seul polluant
+        // Convertir pm25 en pm2.5 si nécessaire
+        const pollutant =
+            data.variable === 'PM25'
+                ? 'pm2.5'
+                : data.variable
+                  ? data.variable.toLowerCase()
+                  : '';
+        if (pollutant) {
+            availablePollutants = [pollutant];
+        }
+    }
+
+    console.log(
+        'Polluants disponibles pour cet appareil:',
+        availablePollutants
+    );
+
+    // Activer les boutons pour les polluants disponibles
+    if (
+        availablePollutants.includes('pm1') ||
+        availablePollutants.includes('PM1')
+    ) {
+        btn_poluant_pm1.disabled = false;
+    }
+    if (
+        availablePollutants.includes('pm2.5') ||
+        availablePollutants.includes('PM2.5')
+    ) {
+        btn_poluant_pm25.disabled = false;
+    }
+    if (
+        availablePollutants.includes('pm10') ||
+        availablePollutants.includes('PM10')
+    ) {
+        btn_poluant_pm10.disabled = false;
+    }
+    if (
+        availablePollutants.includes('no2') ||
+        availablePollutants.includes('NO2')
+    ) {
         btn_poluant_no2.disabled = false;
     }
+
     console.log('mesures atmo', mesures_atmo);
     //on met les boutons des filtres à jour
-    btn_historique = document.getElementById('btn_historique_' + historique);
+    const btn_historique = document.getElementById(
+        'btn_historique_' + historique
+    );
     btn_historique.checked = true;
     btn_pas_de_temps = document.getElementById(
         'btn_pas_de_temps_' + pas_de_temps[pas_de_temps_atmo].code
     );
     btn_pas_de_temps.checked = true;
-    btn_mesure = document.getElementById(
-        'btn_poluant_' + mesures[mesures_atmo[0].toUpperCase()].code
-    );
-    btn_mesure.checked = true;
+
+    // Sélectionner le bouton du polluant actif
+    let activeMeasure = '';
+    if (Array.isArray(mesures_atmo)) {
+        activeMeasure = mesures_atmo[0];
+    } else {
+        activeMeasure = mesures_atmo;
+    }
+
+    // Convertir pm25 en pm2.5 si nécessaire
+    if (activeMeasure === 'pm25') {
+        activeMeasure = 'pm2.5';
+    }
+
+    console.log('Polluant actif:', activeMeasure);
+
+    if (activeMeasure === 'pm1' && !btn_poluant_pm1.disabled) {
+        btn_poluant_pm1.checked = true;
+        mesures_array = ['pm1'];
+    } else if (
+        (activeMeasure === 'pm2.5' || activeMeasure === 'pm25') &&
+        !btn_poluant_pm25.disabled
+    ) {
+        btn_poluant_pm25.checked = true;
+        mesures_array = ['pm2.5'];
+    } else if (activeMeasure === 'pm10' && !btn_poluant_pm10.disabled) {
+        btn_poluant_pm10.checked = true;
+        mesures_array = ['pm10'];
+    } else if (activeMeasure === 'no2' && !btn_poluant_no2.disabled) {
+        btn_poluant_no2.checked = true;
+        mesures_array = ['no2'];
+    } else {
+        // Si le polluant actif n'est pas disponible, sélectionner le premier disponible
+        if (!btn_poluant_pm25.disabled) {
+            btn_poluant_pm25.checked = true;
+            mesures_array = ['pm2.5'];
+        } else if (!btn_poluant_pm10.disabled) {
+            btn_poluant_pm10.checked = true;
+            mesures_array = ['pm10'];
+        } else if (!btn_poluant_pm1.disabled) {
+            btn_poluant_pm1.checked = true;
+            mesures_array = ['pm1'];
+        } else if (!btn_poluant_no2.disabled) {
+            btn_poluant_no2.checked = true;
+            mesures_array = ['no2'];
+        }
+    }
 
     console.log('openSidePanel_microStation');
+    console.log('mesures_array après sélection:', mesures_array);
 
-    mesures_array.length = 0;
-    mesures_array.push(mesures_atmo);
+    // Déterminer l'ID du site à utiliser
+    const siteId = data.site_info ? data.site_info.id_site : data.id_site;
 
+    // Utiliser l'ID du site pour récupérer les données historiques
     retreive_historiqueData_microStation(
-        data.id_site,
+        siteId,
         pas_de_temps_atmo,
         historique,
         mesures_array
     );
 
+    // Mettre à jour les informations de la carte
     card1_img.src = 'img/microStationsAtmoSud/microStationAtmoSud_default.png';
-    card1_title.innerHTML = data.nom_site;
-    card1_subtitle.innerHTML = 'Micro-station AtmoSud';
+    card1_title.innerHTML = data.site_info.nom_site;
+    card1_subtitle.innerHTML =
+        'Micro-station AtmoSud - ' + data.site_info.modele_capteur;
     card1_text.innerHTML = '';
 
     card2_text.innerHTML =
@@ -376,7 +862,7 @@ function openSidePanel_microStation(
                 endDateTime
             );
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 null,
                 mesures_array,
@@ -396,7 +882,7 @@ function openSidePanel_microStation(
         historique_buttons.forEach((btn) => (btn.checked = false));
         btn_historique_1h.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -407,7 +893,7 @@ function openSidePanel_microStation(
         historique_buttons.forEach((btn) => (btn.checked = false));
         btn_historique_3h.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -418,7 +904,7 @@ function openSidePanel_microStation(
         historique_buttons.forEach((btn) => (btn.checked = false));
         btn_historique_24h.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -429,7 +915,7 @@ function openSidePanel_microStation(
         historique_buttons.forEach((btn) => (btn.checked = false));
         btn_historique_1sem.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -440,7 +926,7 @@ function openSidePanel_microStation(
         historique_buttons.forEach((btn) => (btn.checked = false));
         btn_historique_1m.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -451,7 +937,7 @@ function openSidePanel_microStation(
         historique_buttons.forEach((btn) => (btn.checked = false));
         btn_historique_1a.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -464,7 +950,7 @@ function openSidePanel_microStation(
         pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
         btn_pas_de_temps_2min.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -475,7 +961,7 @@ function openSidePanel_microStation(
         pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
         btn_pas_de_temps_qh.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -486,7 +972,7 @@ function openSidePanel_microStation(
         pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
         btn_pas_de_temps_h.checked = true;
         retreive_historiqueData_microStation(
-            data.id_site,
+            data.site_info.id_site,
             pas_de_temps_chart,
             historique_chart,
             mesures_array
@@ -507,15 +993,15 @@ function openSidePanel_microStation(
         // check if custom histoical date or nah before retreive_historiqueData_microStation
         if (btn_historique_custom.checked) {
             var startDate = btn_historique_start_date.value;
-            var startTime = btn_historique_start_time.value;
+            var startTime = '00:00';
             var endDate = btn_historique_end_date.value;
-            var endTime = btn_historique_end_time.value;
+            var endTime = '23:59';
             let startDateTime = new Date(
                 `${startDate}T${startTime}`
             ).toISOString();
             let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 null,
                 mesures_array,
@@ -525,7 +1011,7 @@ function openSidePanel_microStation(
             );
         } else {
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 historique_chart,
                 mesures_array
@@ -543,15 +1029,15 @@ function openSidePanel_microStation(
         }
         if (btn_historique_custom.checked) {
             var startDate = btn_historique_start_date.value;
-            var startTime = btn_historique_start_time.value;
+            var startTime = '00:00';
             var endDate = btn_historique_end_date.value;
-            var endTime = btn_historique_end_time.value;
+            var endTime = '23:59';
             let startDateTime = new Date(
                 `${startDate}T${startTime}`
             ).toISOString();
             let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 null,
                 mesures_array,
@@ -561,7 +1047,7 @@ function openSidePanel_microStation(
             );
         } else {
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 historique_chart,
                 mesures_array
@@ -579,15 +1065,15 @@ function openSidePanel_microStation(
         }
         if (btn_historique_custom.checked) {
             var startDate = btn_historique_start_date.value;
-            var startTime = btn_historique_start_time.value;
+            var startTime = '00:00';
             var endDate = btn_historique_end_date.value;
-            var endTime = btn_historique_end_time.value;
+            var endTime = '23:59';
             let startDateTime = new Date(
                 `${startDate}T${startTime}`
             ).toISOString();
             let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 null,
                 mesures_array,
@@ -597,7 +1083,7 @@ function openSidePanel_microStation(
             );
         } else {
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 historique_chart,
                 mesures_array
@@ -615,15 +1101,15 @@ function openSidePanel_microStation(
         }
         if (btn_historique_custom.checked) {
             var startDate = btn_historique_start_date.value;
-            var startTime = btn_historique_start_time.value;
+            var startTime = '00:00';
             var endDate = btn_historique_end_date.value;
-            var endTime = btn_historique_end_time.value;
+            var endTime = '23:59';
             let startDateTime = new Date(
                 `${startDate}T${startTime}`
             ).toISOString();
             let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 null,
                 mesures_array,
@@ -633,7 +1119,7 @@ function openSidePanel_microStation(
             );
         } else {
             retreive_historiqueData_microStation(
-                data.id_site,
+                data.site_info.id_site,
                 pas_de_temps_chart,
                 historique_chart,
                 mesures_array
@@ -714,7 +1200,7 @@ function retreive_historiqueData_microStation(
         &download=false
         &nb_dec=0
         &valeur_brute=true
-        &variable=${mesures_array.join(',')}
+        &variable=${mesures_array}
         &aggregation=${pas_de_temps}
         &type_capteur=true`.replace(/\s+/g, '');
     console.log(full_url);
@@ -838,7 +1324,7 @@ function retreive_historiqueData_microStation(
                     );
 
                     series.strokes.template.setAll({
-                        strokeWidth: 2,
+                        strokeWidth: 1,
                     });
 
                     series.data.setAll(seriesData[variable]);
@@ -846,6 +1332,12 @@ function retreive_historiqueData_microStation(
                 });
 
                 chart.appear(1000, 100);
+            });
+            // Activer l'exportation avec plusieurs formats
+            let exporting = am5plugins_exporting.Exporting.new(amchart_root, {
+                menu: am5plugins_exporting.ExportingMenu.new(amchart_root, {}),
+                filePrefix: 'historique_data', // Nom du fichier téléchargé
+                dataSource: data, // Utilisation des données récupérées pour l'export
             });
         },
         error: function (xhr, status, error) {

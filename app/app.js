@@ -82,16 +82,16 @@ var globalSelectedDeviceId = null;
 
 // fonction permettant de mettre en forme les lieux
 function formatString(str) {
-    // First, replace underscores with spaces
+    // On remplace les underscores par des espaces
     let formattedStr = str.replace(/_/g, ' ');
 
-    // Define consonants (French consonants)
+    // les consonnes
     const consonants = 'bcdfghjklmnpqrstvwxz';
 
-    // Define uppercase vowels (including accented variants)
+    // les voyelles en majuscules
     const uppercaseVowels = 'AEIOUYÀÁÂÄÆÈÉÊËÌÍÎÏÒÓÔÖŒÙÚÛÜÝ';
 
-    // Add apostrophe between consonant and uppercase vowel
+    // Ajout d'une apostrophe entre une consonne et une voyelle en majuscule
     formattedStr = formattedStr.replace(
         new RegExp(
             `([${consonants}${consonants.toUpperCase()}])([${uppercaseVowels}])`,
@@ -100,23 +100,20 @@ function formatString(str) {
         "$1'$2"
     );
 
-    // Add space before uppercase letter if there's not already a space or apostrophe
+    // Ajout d'une apostrophe entre une consonne et une voyelle en minuscule si pas d'apostrophe précédemment ajoutée
     formattedStr = formattedStr.replace(/([^'\s-])([A-Z])/g, '$1 $2');
 
-    // Handle special cases (like the original function did)
     formattedStr.trim();
     return formattedStr;
 }
 
 // Fonction pour formater les noms du polluants
 function formatPollutantName(name) {
-    // Check if name is a string
     if (!name || typeof name !== 'string') {
         console.warn('formatPollutantName received non-string value:', name);
         return String(name || '');
     }
 
-    // Replace common pollutant notations with properly formatted versions
     return name
         .replace(/NO2/g, 'NO<sub>2</sub>')
         .replace(/NOx/g, 'NO<sub>x</sub>')
@@ -162,12 +159,12 @@ function removeItemFromLocalStorageArray(key, item) {
     }
 }
 
-// Function to update the time display based on selected time step
+// Fonction pour mettre à jour l'affichage de l'heure en fonction du pas de temps sélectionné
 function updateTimeDisplay() {
     const now = new Date();
     const horlogeButton = document.getElementById('button_horloge');
 
-    // Get currently selected time step from localStorage
+    // Récupère le pas de temps actuellement sélectionné depuis le localStorage
     const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
 
     let displayText = '';
@@ -175,7 +172,7 @@ function updateTimeDisplay() {
     switch (selectedTimeStep) {
         case 'instantane':
         case '2min':
-            // Display current time for 2min time step
+            // Affiche l'heure actuelle pour le pas de temps de 2 minutes
             displayText = now.toLocaleTimeString('fr-FR', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -183,13 +180,13 @@ function updateTimeDisplay() {
             break;
 
         case 'qh':
-            // Display last finished quarter hour
+            // Affiche le dernier quart d'heure terminé
             const currentMinutes = now.getMinutes();
             const lastQuarterHour = new Date(now);
 
-            // Find the last completed quarter hour
+            // Trouve le dernier quart d'heure complet
             if (currentMinutes < 15) {
-                // If we're in the first quarter, go back to previous hour's last quarter
+                // Si on est dans le premier quart, retourne au dernier quart de l'heure précédente
                 lastQuarterHour.setHours(
                     lastQuarterHour.getHours() - 1,
                     45,
@@ -197,13 +194,13 @@ function updateTimeDisplay() {
                     0
                 );
             } else if (currentMinutes < 30) {
-                // Between 15-29 minutes, last quarter was 0-15
+                // Entre 15-29 minutes, le dernier quart était 0-15
                 lastQuarterHour.setMinutes(0, 0, 0);
             } else if (currentMinutes < 45) {
-                // Between 30-44 minutes, last quarter was 15-30
+                // Entre 30-44 minutes, le dernier quart était 15-30
                 lastQuarterHour.setMinutes(15, 0, 0);
             } else {
-                // Between 45-59 minutes, last quarter was 30-45
+                // Entre 45-59 minutes, le dernier quart était 30-45
                 lastQuarterHour.setMinutes(30, 0, 0);
             }
 
@@ -214,7 +211,7 @@ function updateTimeDisplay() {
             break;
 
         case 'h':
-            // Display last finished hour
+            // Affiche la dernière heure complète
             const lastHour = new Date(now);
             lastHour.setHours(lastHour.getHours() - 1, 0, 0, 0);
             const nextHour = new Date(lastHour);
@@ -224,11 +221,11 @@ function updateTimeDisplay() {
             break;
 
         case 'd':
-            // Display just yesterday's date
+            // Affiche uniquement la date d'hier
             const yesterday = new Date(now);
             yesterday.setDate(yesterday.getDate() - 1);
 
-            // Format with just DD/MM
+            // Formate avec juste JJ/MM
             displayText = yesterday.toLocaleDateString('fr-FR', {
                 day: '2-digit',
                 month: '2-digit',
@@ -244,17 +241,17 @@ function updateTimeDisplay() {
 
     horlogeButton.innerHTML = displayText;
 }
-// Function to automatically refresh data based on selected time step
+// Fonction pour actualiser automatiquement les données en fonction du pas de temps sélectionné
 function setupAutoRefresh() {
-    // Clear any existing refresh interval
+    // Efface tout intervalle de rafraîchissement existant
     if (window.refreshInterval) {
         clearInterval(window.refreshInterval);
     }
 
-    // Get the current time step from local storage
+    // Récupère le pas de temps actuel depuis le localStorage
     const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
 
-    // Determine refresh interval in milliseconds based on time step
+    // Détermine l'intervalle de rafraîchissement en millisecondes selon le pas de temps
     let refreshIntervalMs;
     switch (selectedTimeStep) {
         case 'instantane':
@@ -265,32 +262,37 @@ function setupAutoRefresh() {
             refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
             break;
         case 'h':
-            refreshIntervalMs = 60 * 60 * 1000; // 1 hour
+            refreshIntervalMs = 60 * 60 * 1000; // 1 heure
             break;
         case 'd':
-            refreshIntervalMs = 24 * 60 * 60 * 1000; // 1 day
+            refreshIntervalMs = 24 * 60 * 60 * 1000; // 1 jour
             break;
         default:
-            refreshIntervalMs = 5 * 60 * 1000; // Default to 5 minutes
+            refreshIntervalMs = 5 * 60 * 1000; // Par défaut 5 minutes
     }
 
     console.log(
-        `Auto-refresh set to ${refreshIntervalMs / 1000} seconds based on '${selectedTimeStep}' time step`
+        `Rafraîchissement automatique réglé sur ${refreshIntervalMs / 1000} secondes basé sur le pas de temps '${selectedTimeStep}'`
     );
 
-    // Set up the interval to refresh all active data sources
+    // Configure l'intervalle pour rafraîchir toutes les sources de données actives
     window.refreshInterval = setInterval(() => {
-        console.log('⏰ Auto-refreshing data based on time step');
+        console.log(
+            '⏰ Rafraîchissement automatique des données selon le pas de temps'
+        );
 
-        // Store the currently selected device ID and panel state before refresh
+        // Stocke l'ID de l'appareil actuellement sélectionné et l'état du panneau avant le rafraîchissement
         const currentDeviceId = globalSelectedDeviceId;
         const sidePanelOpen =
             document.getElementById('side-panel').style.display !== 'none';
 
-        console.log('Current selected device before refresh:', currentDeviceId);
-        console.log('Side panel open:', sidePanelOpen);
+        console.log(
+            'Appareil sélectionné avant rafraîchissement:',
+            currentDeviceId
+        );
+        console.log('Panneau latéral ouvert:', sidePanelOpen);
 
-        // Store the current device data if available
+        // Stocke les données actuelles de l'appareil si disponibles
         if (
             currentDeviceId &&
             window.deviceMarkers &&
@@ -300,45 +302,44 @@ function setupAutoRefresh() {
                 window.deviceMarkers[currentDeviceId].data;
         }
 
-        // Reset the device markers object
+        // Réinitialise l'objet des marqueurs d'appareils
         window.deviceMarkers = {};
 
-        // Reset selected marker references but keep the device ID
+        // Réinitialise les références des marqueurs sélectionnés mais garde l'ID de l'appareil
         globalSelectedMarker = null;
         globalSelectedText = null;
 
-        // Get all active sources from local storage
+        // Récupère toutes les sources actives depuis le localStorage
         const activeSources = getArrayFromLocalStorage(sources_local);
 
-        // Refresh each active source
+        // Rafraîchit chaque source active
         activeSources.forEach((source) => {
             clearLayer(source);
             loadSource(source);
         });
 
-        // Update time display
+        // Met à jour l'affichage de l'heure
         updateTimeDisplay();
 
-        // If we had a selected device and the side panel was open, try to restore it
+        // Si un appareil était sélectionné et le panneau latéral ouvert, essaie de le restaurer
         if (currentDeviceId && sidePanelOpen) {
             console.log(
-                'Will attempt to restore selected device:',
+                "Tentative de restauration de l'appareil sélectionné:",
                 currentDeviceId
             );
-            // Use a delay to ensure layers have loaded
+            // Utilise un délai pour s'assurer que les couches sont chargées
             setTimeout(() => {
                 findAndHighlightMarker(currentDeviceId);
-            }, 1000); // 1 second delay to ensure layers are fully loaded
+            }, 1000); // Délai de 1 seconde pour s'assurer que les couches sont complètement chargées
         }
     }, refreshIntervalMs);
 }
 
-// Add this helper function to find and highlight a marker by device ID
-// Add this section to the findAndHighlightMarker function
+// Fonction pour trouver et mettre en évidence un marqueur sur la carte
 function findAndHighlightMarker(deviceId) {
-    console.log(`Attempting to re-highlight device: ${deviceId}`);
+    console.log(`Tentative de remise en évidence de l'appareil: ${deviceId}`);
 
-    // First, clear the global marker references to avoid conflicts
+    // On efface d'abord les références globales des marqueurs pour éviter les conflits
     if (globalSelectedMarker) {
         if (globalSelectedMarker._icon) {
             globalSelectedMarker._icon.classList.remove('marker-selected');
@@ -355,30 +356,30 @@ function findAndHighlightMarker(deviceId) {
         globalSelectedText = null;
     }
 
-    // Wait for layers to be fully loaded
+    // On attend que les couches soient complètement chargées
     setTimeout(() => {
         let found = false;
-        console.log('Looking for marker with deviceId:', deviceId);
+        console.log('Recherche du marqueur avec deviceId:', deviceId);
 
-        // Convert deviceId to string if it's not already
+        // On convertit deviceId en chaîne de caractères si ce n'est pas déjà fait
         const deviceIdStr = String(deviceId || '');
 
-        // Try multiple lookup methods
+        // On essaie plusieurs méthodes de recherche
 
-        // Method 1: Check if the marker is in the nebuleair_layer
+        // Méthode 1: Vérifier si le marqueur est dans la couche nebuleair
         if (deviceIdStr.indexOf('nebuleair') >= 0) {
             nebuleair_layer.eachLayer(function (layer) {
-                // Skip if this isn't a marker or doesn't have _icon
+                // On ignore si ce n'est pas un marqueur ou s'il n'a pas d'icône
                 if (!layer._icon) return;
 
-                // Try both options.deviceId and direct deviceId property
+                // On essaie les deux options pour trouver l'ID de l'appareil
                 const layerDeviceId =
                     (layer.options && layer.options.deviceId) || layer.deviceId;
 
                 if (layerDeviceId == deviceId) {
-                    console.log('Found NebuleAir marker:', layer);
+                    console.log('Marqueur NebuleAir trouvé:', layer);
 
-                    // Find the corresponding text marker
+                    // On cherche le marqueur de texte correspondant
                     let textMarker = null;
                     nebuleair_layer.eachLayer(function (textLayer) {
                         if (!textLayer._icon) return;
@@ -395,7 +396,7 @@ function findAndHighlightMarker(deviceId) {
                         }
                     });
 
-                    // Apply highlighting
+                    // On applique la mise en évidence
                     layer.setZIndexOffset(1000);
                     if (layer._icon)
                         layer._icon.classList.add('marker-selected');
@@ -410,7 +411,7 @@ function findAndHighlightMarker(deviceId) {
 
                     found = true;
 
-                    // Re-open side panel if needed
+                    // On réouvre le panneau latéral si nécessaire
                     if (
                         document.getElementById('side-panel').style.display ===
                             'none' &&
@@ -424,24 +425,24 @@ function findAndHighlightMarker(deviceId) {
                         );
                     }
 
-                    return false; // Break the loop
+                    return false;
                 }
             });
         }
-        // Method 2: Check if the marker is in the atmo_micro_layer
+        // Méthode 2: Vérifier si le marqueur est dans la couche atmo_micro
         else {
             atmo_micro_layer.eachLayer(function (layer) {
-                // Skip if this isn't a marker or doesn't have _icon
+                // On ignore si ce n'est pas un marqueur ou s'il n'a pas d'icône
                 if (!layer._icon) return;
 
-                // Try both options.deviceId and direct deviceId property
+                // On essaie les deux options pour trouver l'ID de l'appareil
                 const layerDeviceId =
                     (layer.options && layer.options.deviceId) || layer.deviceId;
 
                 if (layerDeviceId == deviceId) {
-                    console.log('Found AtmoSud marker:', layer);
+                    console.log('Marqueur AtmoSud trouvé:', layer);
 
-                    // Find the corresponding text marker
+                    // On cherche le marqueur de texte correspondant
                     let textMarker = null;
                     atmo_micro_layer.eachLayer(function (textLayer) {
                         if (!textLayer._icon) return;
@@ -458,7 +459,7 @@ function findAndHighlightMarker(deviceId) {
                         }
                     });
 
-                    // Apply highlighting
+                    // On applique la mise en évidence
                     layer.setZIndexOffset(1000);
                     if (layer._icon)
                         layer._icon.classList.add('marker-selected');
@@ -473,13 +474,13 @@ function findAndHighlightMarker(deviceId) {
 
                     found = true;
 
-                    // Re-open side panel if needed
+                    // On réouvre le panneau latéral si nécessaire
                     if (
                         document.getElementById('side-panel').style.display ===
                             'none' &&
                         layer.deviceData
                     ) {
-                        // Get the current pas_de_temps and convert it for AtmoSud
+                        // On récupère le pas de temps actuel et on le convertit pour AtmoSud
                         var pas_de_temps =
                             getArrayFromLocalStorage(pas_de_temps_local)[0];
                         var pas_de_temps_atmo = '';
@@ -498,7 +499,7 @@ function findAndHighlightMarker(deviceId) {
                                 break;
                         }
 
-                        // Get the current mesures and convert for AtmoSud if needed
+                        // On récupère les mesures actuelles et on les convertit pour AtmoSud si nécessaire
                         var mesures =
                             getArrayFromLocalStorage(mesures_local)[0];
                         var mesures_atmo = mesures;
@@ -514,20 +515,22 @@ function findAndHighlightMarker(deviceId) {
                         );
                     }
 
-                    return false; // Break the loop
+                    return false;
                 }
             });
         }
 
-        // If not found using direct layer iteration, try alternative methods
+        // Si on n'a pas trouvé le marqueur, on essaie d'autres méthodes
         if (!found) {
             console.warn(
-                `Could not find marker for device: ${deviceId} using layer iteration`
+                `Impossible de trouver le marqueur pour l'appareil: ${deviceId}`
             );
 
-            // Method 3: Try to use the stored device data
+            // Méthode 3: On essaie d'utiliser les données stockées de l'appareil
             if (window.lastSelectedDeviceData) {
-                console.log('Reopening side panel with stored device data');
+                console.log(
+                    'Réouverture du panneau latéral avec les données stockées'
+                );
 
                 if (deviceIdStr.indexOf('nebuleair') >= 0) {
                     openSidePanel_nebuleAir(
@@ -537,7 +540,7 @@ function findAndHighlightMarker(deviceId) {
                         getArrayFromLocalStorage(mesures_local)[0]
                     );
                 } else {
-                    // For AtmoSud microStations
+                    // Pour les microStations AtmoSud
                     var pas_de_temps =
                         getArrayFromLocalStorage(pas_de_temps_local)[0];
                     var pas_de_temps_atmo = '';
@@ -556,7 +559,7 @@ function findAndHighlightMarker(deviceId) {
                             break;
                     }
 
-                    // Get the current mesures and convert for AtmoSud if needed
+                    // On récupère les mesures et on les convertit pour AtmoSud si nécessaire
                     var mesures = getArrayFromLocalStorage(mesures_local)[0];
                     var mesures_atmo = mesures;
                     if (mesures === 'pm25') {
@@ -572,18 +575,18 @@ function findAndHighlightMarker(deviceId) {
                 }
             }
         }
-    }, 1000); // Increased delay to ensure layers are fully loaded
+    }, 1000);
 }
 
-// Function to update threshold buttons based on selected pollutant
+// Fonction pour mettre à jour les boutons de seuil en fonction du polluant sélectionné
 function updateThresholdButtons() {
-    // Get currently selected pollutant
+    // On récupère le polluant actuellement sélectionné
     const selectedPollutant = getArrayFromLocalStorage(mesures_local)[0];
 
-    // Determine which threshold set to use
+    // On détermine quel ensemble de seuils utiliser
     const thresholds = getThresholdsForPollutant(selectedPollutant);
 
-    // Update each button's tooltip with the appropriate range
+    // On met à jour l'info-bulle de chaque bouton avec la plage appropriée
     document
         .getElementById('btn_bon')
         .setAttribute(
@@ -623,65 +626,66 @@ function updateThresholdButtons() {
         .getElementById('btn_extr_mauvais')
         .setAttribute('data-bs-title', `>${thresholds.extr_mauvais.min} µg/m³`);
 
-    // Reinitialize tooltips to update them
+    // On réinitialise les info-bulles pour les mettre à jour
     const tooltipTriggerList = document.querySelectorAll(
         '[data-bs-toggle="tooltip"]'
     );
     [...tooltipTriggerList].map((tooltipTriggerEl) => {
-        // Dispose any existing tooltip
+        // On supprime toute info-bulle existante
         const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
         if (tooltip) {
             tooltip.dispose();
         }
-        // Create new tooltip
+        // On crée une nouvelle info-bulle
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 }
 
-// Helper function to get the appropriate threshold set for a pollutant
+// Fonction auxiliaire pour obtenir l'ensemble de seuils approprié pour un polluant
 function getThresholdsForPollutant(pollutant) {
     if (pollutant === 'pm10') {
         return seuils_PM10;
     } else if (pollutant === 'no2') {
         return seuils_NO2_24h;
     } else {
-        // Default for PM1 and PM2.5
+        // Par défaut pour PM1 et PM2.5
         return seuils_PM1_PM25;
     }
 }
 
+// Fonction pour obtenir le code couleur en fonction de la valeur et du polluant
 function getColorCodeForValue(value, pollutant) {
     const thresholds = getThresholdsForPollutant(pollutant);
 
-    let colorCode = 'default'; // Default color code
+    let colorCode = 'default';
 
-    // Round the value to ensure consistent comparison
+    // On arrondit la valeur pour assurer une comparaison cohérente
     const roundedValue = Math.round(parseFloat(value));
 
-    // Check each threshold range
+    // On vérifie chaque plage de seuils
     for (let key in thresholds) {
         const min = thresholds[key].min;
         const max = thresholds[key].max;
 
         if (roundedValue >= min && roundedValue <= max) {
             colorCode = thresholds[key].code;
-            break; // Exit the loop once we find the matching range
+            break;
         }
     }
 
     return colorCode;
 }
 
-// Initialize clock on page load
+// On initialise l'horloge au chargement de la page
 document.addEventListener('DOMContentLoaded', function () {
     updateTimeDisplay();
-    // Update clock every minute
+    // On met à jour l'horloge toutes les minutes
     setInterval(updateTimeDisplay, 60000);
 
-    // Set up auto data refresh
+    // On configure le rafraîchissement automatique des données
     setupAutoRefresh();
 
-    // Initialize threshold buttons based on selected pollutant
+    // On initialise les boutons de seuil en fonction du polluant sélectionné
     updateThresholdButtons();
 });
 
@@ -704,74 +708,66 @@ function isEmptyObject(obj) {
 }
 
 //MESURES dropdown list (attention seul un élément peut etre coché)
+// Boucle pour créer les boutons de mesures dans le menu déroulant
 for (let key in mesures) {
     if (mesures.hasOwnProperty(key)) {
-        console.log(getArrayFromLocalStorage(mesures_local)[0]);
         let button = document.createElement('button');
         let name = mesures[key].name;
-        console.log(name);
         let code = mesures[key].code;
         let activated = mesures[key].activated;
         button.innerHTML = name;
         button.classList.add('dropdown-item');
-        //save inside local storage the initial config (if empty)
+        // Si le stockage local est vide, on sauvegarde la configuration initiale
         if (isEmptyObject(getArrayFromLocalStorage(mesures_local))) {
             if (activated) {
                 addItemToLocalStorageArray(mesures_local, code);
             }
         }
-        //on vérifie le local storage (object) pour voir si l'élément est déjà présent
+        // On vérifie si le code est déjà dans le stockage local
         let check_array = getArrayFromLocalStorage(mesures_local);
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
         }
-        //on ajoute la fonction pour le onclick
+        // Action quand on clique sur le bouton
         button.onclick = function () {
             let check_array = getArrayFromLocalStorage(mesures_local);
             if (isValueInObject(check_array, code)) {
                 console.warn('on ne peut pas decocher');
             } else {
-                //on elève les autres
+                // On supprime les autres sélections
                 localStorage.removeItem(mesures_local);
                 let listItems = document.querySelectorAll(
                     '#dropdown_mesures li'
                 );
                 listItems.forEach((li) => {
-                    // Find all button elements inside the current li element
                     let buttons = li.querySelectorAll('button');
-                    // Iterate over each button element and remove the class
                     buttons.forEach((button) => {
                         button.classList.remove('active');
                     });
                 });
-                //on ajoute le nouveau
+                // On active le nouveau choix
                 addItemToLocalStorageArray(mesures_local, code);
                 button.classList.add('active');
-                //on change le nom du bouton
+                // Mise à jour du texte du bouton principal
                 document
                     .querySelector('#dropdown_mesures')
                     .closest('.dropdown')
                     .querySelector('.selected-option').innerHTML = name;
 
-                // On met à jour les seuils
                 updateThresholdButtons();
 
-                //ICI ON PEUT FETCHER LES DATAS
+                // Rechargement des données
                 console.log(
                     'Changement du type de mesure: ' +
                         getArrayFromLocalStorage(mesures_local)
                 );
-                //attention il faut éventuellement vider le cache
-                //il faut aussi prendre en compte les source de données déjà ouverte
                 console.log(
                     'Necessite le renouvellement de: ' +
                         getArrayFromLocalStorage(sources_local)
                 );
-                //loop over the object (ex: ["nebuleair","signalair"])
+                // On met à jour chaque source active
                 for (let item of getArrayFromLocalStorage(sources_local)) {
-                    //console.log(item);
                     clearLayer(code);
-                    //get the new data
                     loadSource(item);
                 }
             }
@@ -782,7 +778,7 @@ for (let key in mesures) {
     }
 }
 
-//SOURCE de donnée dropdown List
+// Boucle pour créer les boutons des sources de données
 for (let key in sources) {
     if (sources.hasOwnProperty(key)) {
         let button = document.createElement('button');
@@ -791,30 +787,27 @@ for (let key in sources) {
         let activated = sources[key].activated;
         button.innerHTML = name;
         button.classList.add('dropdown-item');
-        //save inside local storage the initial config (if empty)
+        // Configuration initiale du stockage local
         if (isEmptyObject(getArrayFromLocalStorage(sources_local))) {
             if (activated) {
                 addItemToLocalStorageArray(sources_local, code);
             }
         }
-        //on vérifie le local storage (object) pour voir si l'élément est déja présent
+        // Vérification si la source est déjà active
         let check_array = getArrayFromLocalStorage(sources_local);
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
         }
-        //on ajoute la fonction pour le onclick
+        // Action lors du clic sur une source
         button.onclick = function () {
             let check_array = getArrayFromLocalStorage(sources_local);
-            //si l'élément est déjà coché
             if (isValueInObject(check_array, code)) {
                 button.classList.remove('active');
                 removeItemFromLocalStorageArray(sources_local, code);
-                //on elève la layer de la carte
                 clearLayer(code);
             } else {
                 addItemToLocalStorageArray(sources_local, code);
                 button.classList.add('active');
-                //ICI ON PEUT FETCHER LES DATAS
                 loadSource(code);
             }
         };
@@ -824,7 +817,7 @@ for (let key in sources) {
     }
 }
 
-//Pas de temps dropdown List
+// Boucle pour créer les boutons des pas de temps
 for (let key in pas_de_temps) {
     if (pas_de_temps.hasOwnProperty(key)) {
         let button = document.createElement('button');
@@ -833,13 +826,13 @@ for (let key in pas_de_temps) {
         let activated = pas_de_temps[key].activated;
         button.innerHTML = name;
         button.classList.add('dropdown-item');
-        //save inside local storage the initial config (if empty)
+        // Configuration initiale du stockage local
         if (isEmptyObject(getArrayFromLocalStorage(pas_de_temps_local))) {
             if (activated) {
                 addItemToLocalStorageArray(pas_de_temps_local, code);
             }
         }
-        //on vérifie le local storage (object) pour voir si l'élément est déjà présent
+        // Vérification si le pas de temps est déjà actif
         let check_array = getArrayFromLocalStorage(pas_de_temps_local);
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
@@ -850,44 +843,38 @@ for (let key in pas_de_temps) {
             if (isValueInObject(check_array, code)) {
                 console.warn('on ne peut pas decocher');
             } else {
-                //on elève les autres
+                // Suppression des autres sélections
                 localStorage.removeItem(pas_de_temps_local);
                 let listItems = document.querySelectorAll(
                     '#dropdown_pas_de_temps li'
                 );
                 listItems.forEach((li) => {
-                    // Find all button elements inside the current li element
                     let buttons = li.querySelectorAll('button');
-                    // Iterate over each button element and remove the class
                     buttons.forEach((button) => {
                         button.classList.remove('active');
                     });
                 });
-                //on ajoute le nouveau
+                // Activation du nouveau pas de temps
                 addItemToLocalStorageArray(pas_de_temps_local, code);
                 button.classList.add('active');
-                //on change le nom du bouton
+                // Mise à jour du texte du bouton principal
                 document
                     .querySelector('#dropdown_pas_de_temps')
                     .closest('.dropdown')
                     .querySelector('.selected-option').innerHTML = name;
 
-                //ICI ON PEUT FETCHER LES DATAS
+                // Mise à jour des données
                 console.log(
                     'Changement du pas de temps: ' +
                         getArrayFromLocalStorage(pas_de_temps_local)
                 );
-                //attention il faut éventuellement vider le cache
-                //il faut aussi prendre en compte les source de données déjà ouverte
                 console.log(
                     'Necessite le renouvellement de: ' +
                         getArrayFromLocalStorage(sources_local)
                 );
-                //loop over the object (ex: ["nebuleair","signalair"])
+                // Actualisation de chaque source active
                 for (let item of getArrayFromLocalStorage(sources_local)) {
-                    //console.log(item);
                     clearLayer(code);
-                    //get the new data
                     loadSource(item);
                 }
                 updateTimeDisplay();
@@ -900,7 +887,6 @@ for (let key in pas_de_temps) {
         dropdown_pas_de_temps.appendChild(li);
     }
 }
-
 //Chargement des sources depuis un bouton
 function loadSource(source) {
     console.log('Loading data for ' + source);
@@ -1082,7 +1068,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
 }).addTo(map);
 
-// Event listener for the open/close button of the side panel
+// Ajout d'un écouteur d'événement sur le bouton pour ouvrir/fermer le panneau latéral
 document
     .getElementById('toggleSidePanel')
     .addEventListener('click', function () {
@@ -1091,7 +1077,7 @@ document
         const icon = this.querySelector('i');
 
         if (sidePanel.style.display === 'none') {
-            // Opening side panel
+            // Ouverture du panneau latéral : on ajoute les classes nécessaires pour l'affichage
             sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
             sidePanel.style.display = 'block';
             document.body.classList.add('side-panel-open');
@@ -1104,7 +1090,7 @@ document
             );
             icon.classList.replace('bi-chevron-right', 'bi-chevron-left');
         } else {
-            // Closing side panel
+            // Fermeture du panneau latéral : on retire les classes et on cache le panneau
             sidePanel.classList.remove('col-12', 'col-sm-6', 'col-lg-5');
             sidePanel.style.display = 'none';
             document.body.classList.remove('side-panel-open');
@@ -1118,10 +1104,11 @@ document
             icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
         }
 
+        // On force la mise à jour de la taille de la carte
         map.invalidateSize();
     });
 
-// Event listener for the mobile close button
+// Ajout d'un écouteur d'événement sur le bouton de fermeture mobile
 document
     .getElementById('closeSidePanelMobile')
     .addEventListener('click', function () {
@@ -1130,7 +1117,7 @@ document
         const toggleButton = document.getElementById('toggleSidePanel');
         const toggleIcon = toggleButton.querySelector('i');
 
-        // Closing side panel
+        // Fermeture du panneau latéral sur mobile : même logique que la fermeture normale
         sidePanel.classList.remove('col-12', 'col-sm-6', 'col-lg-5');
         sidePanel.style.display = 'none';
         document.body.classList.remove('side-panel-open');
@@ -1143,23 +1130,17 @@ document
         mapContainer.classList.add('col-12');
         toggleIcon.classList.replace('bi-chevron-left', 'bi-chevron-right');
 
+        // On force la mise à jour de la taille de la carte
         map.invalidateSize();
     });
-
-// After map initialization
+// Initialisation du conteneur device-info
 const deviceInfo = L.control({ position: 'bottomright' });
 
 deviceInfo.onAdd = function () {
     this._div = L.DomUtil.create('div', 'device-info');
-    this._div.innerHTML = `
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title" id="device-name"></h5>
-                <p class="card-text" id="device-details"></p>
-            </div>
-        </div>
-    `;
-    deviceInfo._div.style.display = 'none';
+    // Structure minimale qui sera remplacée
+    this._div.innerHTML = '<div></div>';
+    this._div.style.display = 'none';
     return this._div;
 };
 
@@ -1208,7 +1189,6 @@ map.on('moveend', function () {
     var currentZoom = map.getZoom();
     var lat = center.lat;
     var lng = center.lng;
-    // Log the latitude and longitude to the console
     saveArrayToLocalStorage('Lat', lat);
     saveArrayToLocalStorage('Long', lng);
     saveArrayToLocalStorage('Zoom', currentZoom);
