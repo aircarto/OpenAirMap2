@@ -123,3 +123,9 @@ const seuils_NO2_24h = {
         max: 99999,
     },
 };
+const delaisApiAtmoSud = {
+    // '2min': 180,
+    qh: 180,
+    h: 180,
+    d: 86400000,
+};

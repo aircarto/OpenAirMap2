@@ -2090,6 +2090,17 @@ function retreive_historiqueData_stationRef(
                         x: am5.p50,
                     })
                 );
+                let exporting = am5plugins_exporting.Exporting.new(
+                    amchart_root,
+                    {
+                        menu: am5plugins_exporting.ExportingMenu.new(
+                            amchart_root,
+                            {}
+                        ),
+                        filePrefix: 'historique_data', // Nom du fichier téléchargé
+                        dataSource: data, // Utilisation des données récupérées pour l'export
+                    }
+                );
 
                 // Animation d'apparition du graphique avec une durée de 1000ms et un délai de 100ms
                 chart.appear(1000, 100);
