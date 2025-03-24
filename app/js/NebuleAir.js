@@ -947,6 +947,17 @@ function retreive_historiqueData_nebuleAir(
                     series_PM10.data.setAll(data_PM10);
                     series_PM10.appear(1000);
                 }
+                let exporting = am5plugins_exporting.Exporting.new(
+                    amchart_root,
+                    {
+                        menu: am5plugins_exporting.ExportingMenu.new(
+                            amchart_root,
+                            {}
+                        ),
+                        filePrefix: 'historique_data', // Nom du fichier téléchargé
+                        dataSource: data, // Utilisation des données récupérées pour l'export
+                    }
+                );
 
                 chart.appear(1000, 100);
             }); //end am5 ready
