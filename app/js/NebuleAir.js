@@ -1,12 +1,67 @@
+// Récupération des données des capteurs NebuleAir
+// Cette fonction charge les données des capteurs NebuleAir et les affiche sur la carte
+
+import {
+    getArrayFromLocalStorage,
+    pas_de_temps_local,
+    mesures_local,
+    getColorCodeForValue,
+    map,
+    deviceInfo,
+    openSidePanel_generic,
+    nebuleair_layer,
+    seuils_PM1_PM25,
+    seuils_PM10,
+} from '../app.js';
+
+// Variables locales au module
 var pas_de_temps_chart = '1h';
 var historique_chart = '24h';
 var mesures_array = [];
 
-function loadNebuleAir() {
-    console.log(
-        '%cloadNebuleAir',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
-    );
+// Déclaration des variables pour les boutons d'historique
+let btn_historique_custom;
+let btn_historique_start_date;
+let btn_historique_end_date;
+let btn_historique_1h;
+let btn_historique_3h;
+let btn_historique_24h;
+let btn_historique_7d;
+let btn_historique_30d;
+let btn_historique_365d;
+let btn_pas_de_temps_2min;
+let btn_pas_de_temps_qh;
+let btn_pas_de_temps_h;
+let btn_pas_de_temps_d;
+let btn_poluant_pm1;
+let btn_poluant_pm25;
+let btn_poluant_pm10;
+let btn_poluant_no2;
+
+// Initialisation des boutons au chargement du DOM
+document.addEventListener('DOMContentLoaded', function () {
+    btn_historique_custom = document.getElementById('apply_date_range');
+    btn_historique_start_date = document.getElementById('start_date');
+    btn_historique_end_date = document.getElementById('end_date');
+    btn_historique_1h = document.getElementById('btn_historique_1h');
+    btn_historique_3h = document.getElementById('btn_historique_3h');
+    btn_historique_24h = document.getElementById('btn_historique_24h');
+    btn_historique_7d = document.getElementById('btn_historique_7d');
+    btn_historique_30d = document.getElementById('btn_historique_30d');
+    btn_historique_365d = document.getElementById('btn_historique_365d');
+    btn_pas_de_temps_2min = document.getElementById('btn_pas_de_temps_2min');
+    btn_pas_de_temps_qh = document.getElementById('btn_pas_de_temps_qh');
+    btn_pas_de_temps_h = document.getElementById('btn_pas_de_temps_h');
+    btn_pas_de_temps_d = document.getElementById('btn_pas_de_temps_d');
+    btn_poluant_pm1 = document.getElementById('btn_poluant_pm1');
+    btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
+    btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
+    btn_poluant_no2 = document.getElementById('btn_poluant_no2');
+});
+
+// Fonction principale exportée
+export function loadNebuleAir() {
+    console.log('loadNebuleAir');
     nebuleair_layer.clearLayers();
     var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local);
     var mesures = getArrayFromLocalStorage(mesures_local);
@@ -212,13 +267,16 @@ function loadNebuleAir() {
                         textMarker.setZIndexOffset(1000);
 
                         // Show device info
-                        deviceInfo._div.querySelector(
-                            '#device-name'
-                        ).textContent = value['sensorId'];
-                        deviceInfo._div.querySelector(
-                            '#device-details'
-                        ).textContent = `Type: NebuleAir`;
-                        deviceInfo._div.style.display = 'block';
+                        const deviceName =
+                            deviceInfo._div.querySelector('#device-name');
+                        const deviceDetails =
+                            deviceInfo._div.querySelector('#device-details');
+
+                        if (deviceName && deviceDetails) {
+                            deviceName.textContent = value['sensorId'];
+                            deviceDetails.textContent = `Type: NebuleAir`;
+                            deviceInfo._div.style.display = 'block';
+                        }
                     }
 
                     function resetMarker() {
@@ -250,8 +308,13 @@ function loadNebuleAir() {
     }); //end ajax
 } //end function loadNebuleAir()
 
-//OUVERTURE DU SIDE PANEL
-function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures) {
+// Fonction pour ouvrir le panneau latéral
+export function openSidePanel_nebuleAir(
+    data,
+    pas_de_temps,
+    historique,
+    mesures
+) {
     console.log({
         data: data,
         pas_de_temps: pas_de_temps,
@@ -309,340 +372,358 @@ function openSidePanel_nebuleAir(data, pas_de_temps, historique, mesures) {
     card2_link.href = 'https://aircarto.fr';
 
     // Historique Button handlers setup
-    btn_historique_custom.onclick = function (event) {
-        event.preventDefault();
-        var startDate = btn_historique_start_date.value;
-        var endDate = btn_historique_end_date.value;
-        var startTime = '00:00';
-        var endTime = '23:59';
-        console.log({
-            startDate: startDate,
-            startTime: startTime,
-            endDate: endDate,
-            endTime: endTime,
+    if (btn_historique_custom) {
+        btn_historique_custom.addEventListener('click', function (event) {
+            event.preventDefault();
+            var startDate = btn_historique_start_date.value;
+            var endDate = btn_historique_end_date.value;
+            var startTime = '00:00';
+            var endTime = '23:59';
+            console.log({
+                startDate: startDate,
+                startTime: startTime,
+                endDate: endDate,
+                endTime: endTime,
+            });
+            if (startDate && startTime && endDate && endTime) {
+                historique_buttons.forEach((btn) => (btn.checked = false));
+                btn_historique_custom.checked = true;
+
+                let startDateTime = new Date(
+                    `${startDate}T${startTime}`
+                ).toISOString();
+                let endDateTime = new Date(
+                    `${endDate}T${endTime}`
+                ).toISOString();
+
+                console.log(
+                    'Date de début:',
+                    startDateTime,
+                    'Date de fin:',
+                    endDateTime
+                );
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    null,
+                    mesures_array,
+                    false,
+                    startDateTime,
+                    endDateTime
+                );
+            } else {
+                alert(
+                    'Veuillez sélectionner une date et une heure de début et de fin.'
+                );
+            }
         });
-        if (startDate && startTime && endDate && endTime) {
-            historique_buttons.forEach((btn) => (btn.checked = false));
-            btn_historique_custom.checked = true;
-
-            let startDateTime = new Date(
-                `${startDate}T${startTime}`
-            ).toISOString();
-            let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
-
-            console.log(
-                'Date de début:',
-                startDateTime,
-                'Date de fin:',
-                endDateTime
-            );
-            retreive_historiqueData_nebuleAir(
-                data.sensorId,
-                pas_de_temps_chart,
-                null,
-                mesures_array,
-                false,
-                startDateTime,
-                endDateTime
-            );
-        } else {
-            alert(
-                'Veuillez sélectionner une date et une heure de début et de fin.'
-            );
-        }
-    };
+    }
 
     //1.historique
-    btn_historique_1h.onclick = function () {
-        historique_chart = '1h';
-        historique_buttons.forEach((btn) => (btn.checked = false));
-        btn_historique_1h.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_historique_3h.onclick = function () {
-        historique_chart = '3h';
-        historique_buttons.forEach((btn) => (btn.checked = false));
-        btn_historique_3h.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_historique_24h.onclick = function () {
-        historique_chart = '24h';
-        historique_buttons.forEach((btn) => (btn.checked = false));
-        btn_historique_24h.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_historique_1sem.onclick = function () {
-        historique_chart = '7d';
-        historique_buttons.forEach((btn) => (btn.checked = false));
-        btn_historique_1sem.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_historique_1m.onclick = function () {
-        historique_chart = '30d';
-        historique_buttons.forEach((btn) => (btn.checked = false));
-        btn_historique_1m.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_historique_1a.onclick = function () {
-        historique_chart = '365d';
-        historique_buttons.forEach((btn) => (btn.checked = false));
-        btn_historique_1a.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
+    if (btn_historique_1h) {
+        btn_historique_1h.addEventListener('change', function () {
+            if (this.checked) {
+                historique_chart = '1h';
+                historique_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
+
+    if (btn_historique_3h) {
+        btn_historique_3h.addEventListener('change', function () {
+            if (this.checked) {
+                historique_chart = '3h';
+                historique_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
+
+    if (btn_historique_24h) {
+        btn_historique_24h.addEventListener('change', function () {
+            if (this.checked) {
+                historique_chart = '24h';
+                historique_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
+
+    if (btn_historique_7d) {
+        btn_historique_7d.addEventListener('change', function () {
+            if (this.checked) {
+                historique_chart = '7d';
+                historique_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
+
+    if (btn_historique_30d) {
+        btn_historique_30d.addEventListener('change', function () {
+            if (this.checked) {
+                historique_chart = '30d';
+                historique_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
+
+    if (btn_historique_365d) {
+        btn_historique_365d.addEventListener('change', function () {
+            if (this.checked) {
+                historique_chart = '365d';
+                historique_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
 
     //2.pas de temps
-    btn_pas_de_temps_2min.onclick = function () {
-        pas_de_temps_chart = '2m';
-        pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
-        btn_pas_de_temps_2min.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_pas_de_temps_qh.onclick = function () {
-        pas_de_temps_chart = '15m';
-        pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
-        btn_pas_de_temps_qh.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_pas_de_temps_h.onclick = function () {
-        pas_de_temps_chart = '1h';
-        pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
-        btn_pas_de_temps_h.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-    btn_pas_de_temps_d.onclick = function () {
-        pas_de_temps_chart = '1d';
-        pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
-        btn_pas_de_temps_d.checked = true;
-        retreive_historiqueData_nebuleAir(
-            data.sensorId,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-
-    //3. Mesures (ATTENTION: ici on peut choisir plusieurs polluants -> add_mesure = true)
-    btn_poluant_pm1.onclick = function () {
-        if (mesures_array.includes('pm1')) {
-            // Remove pm1 from array
-            mesures_array = mesures_array.filter((item) => item !== 'pm1');
-            btn_poluant_pm1.checked = false;
-        } else {
-            // Add pm1 to array
-            mesures_array.push('pm1');
-            btn_poluant_pm1.checked = true;
-        }
-
-        if (btn_historique_custom.checked) {
-            var startDate = btn_historique_start_date.value;
-            var startTime = btn_historique_start_time.value;
-            var endDate = btn_historique_end_date.value;
-            var endTime = btn_historique_end_time.value;
-            let startDateTime = new Date(
-                `${startDate}T${startTime}`
-            ).toISOString();
-            let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
-            retreive_historiqueData_nebuleAir(
-                data.sensorId,
-                pas_de_temps_chart,
-                null,
-                mesures_array,
-                true,
-                startDateTime,
-                endDateTime
-            );
-        } else {
-            retreive_historiqueData_nebuleAir(
-                data.sensorId,
-                pas_de_temps_chart,
-                historique_chart,
-                mesures_array,
-                true
-            );
-        }
-    };
-
-    btn_poluant_pm25.onclick = function () {
-        if (mesures_array.includes('pm25')) {
-            mesures_array = mesures_array.filter((item) => item !== 'pm25');
-            btn_poluant_pm25.checked = false;
-        } else {
-            mesures_array.push('pm25');
-            btn_poluant_pm25.checked = true;
-        }
-
-        if (btn_historique_custom.checked) {
-            var startDate = btn_historique_start_date.value;
-            var startTime = btn_historique_start_time.value;
-            var endDate = btn_historique_end_date.value;
-            var endTime = btn_historique_end_time.value;
-            let startDateTime = new Date(
-                `${startDate}T${startTime}`
-            ).toISOString();
-            let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
-            retreive_historiqueData_nebuleAir(
-                data.sensorId,
-                pas_de_temps_chart,
-                null,
-                mesures_array,
-                true,
-                startDateTime,
-                endDateTime
-            );
-        } else {
-            retreive_historiqueData_nebuleAir(
-                data.sensorId,
-                pas_de_temps_chart,
-                historique_chart,
-                mesures_array,
-                true
-            );
-        }
-    };
-
-    btn_poluant_pm10.onclick = function () {
-        if (mesures_array.includes('pm10')) {
-            mesures_array = mesures_array.filter((item) => item !== 'pm10');
-            btn_poluant_pm10.checked = false;
-        } else {
-            mesures_array.push('pm10');
-            btn_poluant_pm10.checked = true;
-        }
-
-        if (btn_historique_custom.checked) {
-            var startDate = btn_historique_start_date.value;
-            var startTime = btn_historique_start_time.value;
-            var endDate = btn_historique_end_date.value;
-            var endTime = btn_historique_end_time.value;
-            let startDateTime = new Date(
-                `${startDate}T${startTime}`
-            ).toISOString();
-            let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
-            retreive_historiqueData_nebuleAir(
-                data.sensorId,
-                pas_de_temps_chart,
-                null,
-                mesures_array,
-                true,
-                startDateTime,
-                endDateTime
-            );
-        } else {
-            retreive_historiqueData_nebuleAir(
-                data.sensorId,
-                pas_de_temps_chart,
-                historique_chart,
-                mesures_array,
-                true
-            );
-        }
-    };
-
-    btn_poluant_no2.disabled = true;
-
-    //adaptation des boutons en fonction de l'historique, du pas de temps et des mesures
-    var historique_button_checked = document.getElementById(
-        'btn_historique_' + historique
-    );
-    if (historique_button_checked) historique_button_checked.checked = true;
-
-    // Adaptation for pas_de_temps button
-    var pas_de_temps_btn;
-    if (pas_de_temps == '2m' || pas_de_temps == '2min') {
-        pas_de_temps_btn = '2min';
-    } else if (pas_de_temps == '15m' || pas_de_temps == 'qh') {
-        pas_de_temps_btn = 'qh';
-    } else if (pas_de_temps == '1h' || pas_de_temps == 'h') {
-        pas_de_temps_btn = 'h';
-    } else if (pas_de_temps == '1d' || pas_de_temps == 'd') {
-        pas_de_temps_btn = 'd';
-    } else {
-        pas_de_temps_btn = pas_de_temps;
+    if (btn_pas_de_temps_2min) {
+        btn_pas_de_temps_2min.addEventListener('change', function () {
+            if (this.checked) {
+                pas_de_temps_chart = '2m';
+                pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
     }
 
-    console.log(
-        'Checking pas de temps button: btn_pas_de_temps_' + pas_de_temps_btn
-    );
-    var btn_pas_de_temps = document.getElementById(
-        'btn_pas_de_temps_' + pas_de_temps_btn
-    );
-    if (btn_pas_de_temps) {
-        btn_pas_de_temps.checked = true;
-    } else {
-        console.warn(
-            'Could not find pas de temps button: btn_pas_de_temps_' +
-                pas_de_temps_btn
-        );
+    if (btn_pas_de_temps_qh) {
+        btn_pas_de_temps_qh.addEventListener('change', function () {
+            if (this.checked) {
+                pas_de_temps_chart = '15m';
+                pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
     }
 
-    // Check the appropriate measure button(s)
-    mesures_array.forEach(function (element) {
-        var measure_button = document.getElementById('btn_poluant_' + element);
-        if (measure_button) measure_button.checked = true;
-    });
+    if (btn_pas_de_temps_h) {
+        btn_pas_de_temps_h.addEventListener('change', function () {
+            if (this.checked) {
+                pas_de_temps_chart = '1h';
+                pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
+
+    if (btn_pas_de_temps_d) {
+        btn_pas_de_temps_d.addEventListener('change', function () {
+            if (this.checked) {
+                pas_de_temps_chart = '1d';
+                pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
+                this.checked = true;
+                retreive_historiqueData_nebuleAir(
+                    data.sensorId,
+                    pas_de_temps_chart,
+                    historique_chart,
+                    mesures_array
+                );
+            }
+        });
+    }
+
+    //3. Mesures
+    if (btn_poluant_pm1) {
+        btn_poluant_pm1.addEventListener('change', function () {
+            if (this.checked) {
+                if (mesures_array.includes('pm1')) {
+                    mesures_array = mesures_array.filter(
+                        (item) => item !== 'pm1'
+                    );
+                    this.checked = false;
+                } else {
+                    mesures_array.push('pm1');
+                    this.checked = true;
+                }
+
+                if (btn_historique_custom && btn_historique_custom.checked) {
+                    var startDate = btn_historique_start_date.value;
+                    var endDate = btn_historique_end_date.value;
+                    let startDateTime = new Date(
+                        `${startDate}T00:00`
+                    ).toISOString();
+                    let endDateTime = new Date(
+                        `${endDate}T23:59`
+                    ).toISOString();
+                    retreive_historiqueData_nebuleAir(
+                        data.sensorId,
+                        pas_de_temps_chart,
+                        null,
+                        mesures_array,
+                        true,
+                        startDateTime,
+                        endDateTime
+                    );
+                } else {
+                    retreive_historiqueData_nebuleAir(
+                        data.sensorId,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array,
+                        true
+                    );
+                }
+            }
+        });
+    }
+
+    if (btn_poluant_pm25) {
+        btn_poluant_pm25.addEventListener('change', function () {
+            if (this.checked) {
+                if (mesures_array.includes('pm25')) {
+                    mesures_array = mesures_array.filter(
+                        (item) => item !== 'pm25'
+                    );
+                    this.checked = false;
+                } else {
+                    mesures_array.push('pm25');
+                    this.checked = true;
+                }
+
+                if (btn_historique_custom && btn_historique_custom.checked) {
+                    var startDate = btn_historique_start_date.value;
+                    var endDate = btn_historique_end_date.value;
+                    let startDateTime = new Date(
+                        `${startDate}T00:00`
+                    ).toISOString();
+                    let endDateTime = new Date(
+                        `${endDate}T23:59`
+                    ).toISOString();
+                    retreive_historiqueData_nebuleAir(
+                        data.sensorId,
+                        pas_de_temps_chart,
+                        null,
+                        mesures_array,
+                        true,
+                        startDateTime,
+                        endDateTime
+                    );
+                } else {
+                    retreive_historiqueData_nebuleAir(
+                        data.sensorId,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array,
+                        true
+                    );
+                }
+            }
+        });
+    }
+
+    if (btn_poluant_pm10) {
+        btn_poluant_pm10.addEventListener('change', function () {
+            if (this.checked) {
+                if (mesures_array.includes('pm10')) {
+                    mesures_array = mesures_array.filter(
+                        (item) => item !== 'pm10'
+                    );
+                    this.checked = false;
+                } else {
+                    mesures_array.push('pm10');
+                    this.checked = true;
+                }
+
+                if (btn_historique_custom && btn_historique_custom.checked) {
+                    var startDate = btn_historique_start_date.value;
+                    var endDate = btn_historique_end_date.value;
+                    let startDateTime = new Date(
+                        `${startDate}T00:00`
+                    ).toISOString();
+                    let endDateTime = new Date(
+                        `${endDate}T23:59`
+                    ).toISOString();
+                    retreive_historiqueData_nebuleAir(
+                        data.sensorId,
+                        pas_de_temps_chart,
+                        null,
+                        mesures_array,
+                        true,
+                        startDateTime,
+                        endDateTime
+                    );
+                } else {
+                    retreive_historiqueData_nebuleAir(
+                        data.sensorId,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array,
+                        true
+                    );
+                }
+            }
+        });
+    }
+
+    if (btn_poluant_no2) {
+        btn_poluant_no2.disabled = true;
+    }
 
     //fonction semblable pour tous les types de capteurs
     openSidePanel_generic();
 }
 
-/*
-RECUPERATION DES DONNEE D'UN CAPTEUR -> CHART
-    mesures_array est un array (ex: [PM1, PM2.5])
-    mesure est le polluant qu'il faut ajouter à mesure_array (si add_mesure est true)
-*/
-
-/*
-RECUPERATION DES DONNEE D'UN CAPTEUR -> CHART
-    mesures_array est un array (ex: [PM1, PM2.5])
-    mesure est le polluant qu'il faut ajouter à mesure_array (si add_mesure est true)
-*/
-
-function retreive_historiqueData_nebuleAir(
+// Fonction pour récupérer les données historiques
+export function retreive_historiqueData_nebuleAir(
     sensorId,
     pas_de_temps,
     historique,
@@ -969,3 +1050,6 @@ function retreive_historiqueData_nebuleAir(
         },
     }); //end ajax
 } //end retreive data
+
+// Exporter les variables qui pourraient être nécessaires ailleurs
+export { pas_de_temps_chart, historique_chart, mesures_array };

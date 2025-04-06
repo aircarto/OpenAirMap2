@@ -1,3 +1,21 @@
+// Import des modules
+import { config } from './js/config.js';
+import {
+    loadNebuleAir,
+    openSidePanel_nebuleAir,
+    retreive_historiqueData_nebuleAir,
+} from './js/NebuleAir.js';
+import {
+    load_atmoSud_microStations,
+    openSidePanel_microStation,
+    retreive_historiqueData_microStation,
+} from './js/atmoSud_microStations.js';
+import {
+    load_atmoSud_stationsRef,
+    openSidePanel_stationRef,
+    retreive_historiqueData_stationRef,
+} from './js/atmoSud_stationsRef.js';
+
 console.log('OpenAirMap V2');
 
 //récupérer la date et l'heure (client side!)
@@ -17,71 +35,168 @@ var formattedTime = hours + ':' + minutes + ':' + seconds;
 console.log('Date: ' + date_YMD);
 console.log('Time: ' + formattedTime);
 
-//Amcharts chart
-var amchart_root;
+// Initialisation de la carte Leaflet
+export const map = L.map('map', {
+    center: config.coordsCenter,
+    zoom: config.zoomLevel,
+    minZoom: config.minZoom,
+    maxZoom: config.maxZoom,
+    renderer: L.canvas(),
+    maxBounds: L.latLngBounds(
+        L.latLng(config.boundSW[0], config.boundSW[1]),
+        L.latLng(config.boundNE[0], config.boundNE[1])
+    ),
+    maxBoundsViscosity: 1.0,
+});
+
+// Ajout de la couche de tuiles OpenStreetMap
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+}).addTo(map);
+
+// Variables globales pour les marqueurs et l'interface
+window.globalSelectedMarker = null;
+window.globalSelectedText = null;
+window.globalSelectedDeviceId = null;
+export const deviceInfo = L.control({ position: 'bottomright' });
 
 //variable pour les layers leaflet
-var nebuleair_layer = new L.layerGroup();
-var sensor_commmunity_layer = new L.layerGroup();
-var purpleair_layer = new L.layerGroup();
-var atmo_micro_layer = new L.layerGroup();
-var atmo_ref_layer = new L.layerGroup();
-var modelisationPMAtmoSud_layer = new L.layerGroup();
-var modelisationICAIRAtmoSud_layer = new L.layerGroup();
-var signalair_layer = new L.layerGroup();
-var mobileair_layer = new L.layerGroup();
+export const nebuleair_layer = new L.layerGroup().addTo(map);
+export const sensor_commmunity_layer = new L.layerGroup().addTo(map);
+export const purpleair_layer = new L.layerGroup().addTo(map);
+export const atmo_micro_layer = new L.layerGroup().addTo(map);
+export const atmo_ref_layer = new L.layerGroup().addTo(map);
+export const modelisationPMAtmoSud_layer = new L.layerGroup().addTo(map);
+export const modelisationICAIRAtmoSud_layer = new L.layerGroup().addTo(map);
+export const signalair_layer = new L.layerGroup().addTo(map);
+export const mobileair_layer = new L.layerGroup().addTo(map);
+
+// Configuration des seuils pour les différents polluants
+export const seuils_PM1_PM25 = {
+    bon: { code: 'bon', min: 0, max: 10 },
+    moyen: { code: 'moyen', min: 11, max: 20 },
+    degrade: { code: 'degrade', min: 21, max: 25 },
+    mauvais: { code: 'mauvais', min: 26, max: 50 },
+    tres_mauvais: { code: 'tres_mauvais', min: 51, max: 75 },
+    extr_mauvais: { code: 'extr_mauvais', min: 76, max: 999 },
+};
+
+export const seuils_PM10 = {
+    bon: { code: 'bon', min: 0, max: 20 },
+    moyen: { code: 'moyen', min: 21, max: 40 },
+    degrade: { code: 'degrade', min: 41, max: 50 },
+    mauvais: { code: 'mauvais', min: 51, max: 100 },
+    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 },
+    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 999 },
+};
+
+export const seuils_NO2_24h = {
+    bon: { code: 'bon', min: 0, max: 40 },
+    moyen: { code: 'moyen', min: 41, max: 90 },
+    degrade: { code: 'degrade', min: 91, max: 120 },
+    mauvais: { code: 'mauvais', min: 121, max: 230 },
+    tres_mauvais: { code: 'tres_mauvais', min: 231, max: 340 },
+    extr_mauvais: { code: 'extr_mauvais', min: 341, max: 999 },
+};
+
+// Configuration des mesures disponibles
+window.mesures = {
+    pm1: { name: 'PM1', code: 'pm1', activated: true },
+    pm25: { name: 'PM2.5', code: 'pm25', activated: false },
+    pm10: { name: 'PM10', code: 'pm10', activated: false },
+    no2: { name: 'NO2', code: 'no2', activated: false },
+};
+
+// Configuration des sources de données
+window.sources = {
+    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true },
+    sensor_community: {
+        name: 'Sensor.Community',
+        code: 'sensor_commmunity',
+        activated: false,
+    },
+    purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false },
+    atmo_micro: {
+        name: 'AtmoSud µStations',
+        code: 'atmo_micro',
+        activated: false,
+    },
+    atmo_ref: {
+        name: 'AtmoSud Stations Ref',
+        code: 'atmo_ref',
+        activated: false,
+    },
+    mod_pm: { name: 'Modélisation PM', code: 'mod_pm', activated: false },
+    icairh: { name: "ICAIR'H", code: 'icairh', activated: false },
+    signalair: { name: 'SignalAir', code: 'signalair', activated: false },
+    mobileair: { name: 'MobileAir', code: 'mobileair', activated: false },
+};
+
+// Configuration des pas de temps
+window.pas_de_temps = {
+    instantane: { name: 'Instantané', code: 'instantane', activated: false },
+    deux_min: { name: '2 minutes', code: '2min', activated: true },
+    quart_heure: { name: '15 minutes', code: 'qh', activated: false },
+    heure: { name: 'Heure', code: 'h', activated: false },
+    jour: { name: 'Jour', code: 'd', activated: false },
+};
+
+//Amcharts chart
+window.amchart_root = null;
 
 //variable pour le DOM
-var sidePanel = document.getElementById('side-panel');
-var card1 = document.getElementById('card1');
-var card1_body = document.getElementById('card1_body');
-var card1_img = document.getElementById('card1_img');
-var card1_title = document.getElementById('card1_title');
-var card1_text = document.getElementById('card1_text');
-var card1_button = document.getElementById('card1_button');
-var card2 = document.getElementById('card2');
-var card2_title = document.getElementById('card2_title');
-var card2_text = document.getElementById('card2_text');
-var card2_button = document.getElementById('card2_button');
+export var sidePanel = document.getElementById('side-panel');
+export var card1 = document.getElementById('card1');
+export var card1_body = document.getElementById('card1_body');
+export var card1_img = document.getElementById('card1_img');
+export var card1_title = document.getElementById('card1_title');
+export var card1_text = document.getElementById('card1_text');
+export var card1_button = document.getElementById('card1_button');
+export var card2 = document.getElementById('card2');
+export var card2_title = document.getElementById('card2_title');
+export var card2_text = document.getElementById('card2_text');
+export var card2_button = document.getElementById('card2_button');
 
-var mapContainer = document.getElementById('map-container');
-var dropdown_mesures = document.getElementById('dropdown_mesures');
-var dropdown_sources = document.getElementById('dropdown_sources');
-var dropdown_pas_de_temps = document.getElementById('dropdown_pas_de_temps');
-const mesures_local = 'mesures_local';
-const sources_local = 'sources_local';
-const pas_de_temps_local = 'pas_de_temps_local';
+export var mapContainer = document.getElementById('map-container');
+export var dropdown_mesures = document.getElementById('dropdown_mesures');
+export var dropdown_sources = document.getElementById('dropdown_sources');
+export var dropdown_pas_de_temps = document.getElementById(
+    'dropdown_pas_de_temps'
+);
 
-//1.historique
-var btn_historique_custom = document.getElementById('apply_date_range');
-var btn_historique_start_date = document.getElementById('start_date');
-var btn_historique_start_time = document.getElementById('start_time');
-var btn_historique_end_date = document.getElementById('end_date');
-var btn_historique_end_time = document.getElementById('end_time');
-var btn_historique_1h = document.getElementById('btn_historique_1h');
-var btn_historique_3h = document.getElementById('btn_historique_3h');
-var btn_historique_24h = document.getElementById('btn_historique_24h');
-var btn_historique_1sem = document.getElementById('btn_historique_7d');
-var btn_historique_1m = document.getElementById('btn_historique_30d');
-var btn_historique_1a = document.getElementById('btn_historique_365d');
-//2.pas de temps
-var btn_pas_de_temps_2min = document.getElementById('btn_pas_de_temps_2min');
-var btn_pas_de_temps_qh = document.getElementById('btn_pas_de_temps_qh');
-var btn_pas_de_temps_h = document.getElementById('btn_pas_de_temps_h');
-var btn_pas_de_temps_d = document.getElementById('btn_pas_de_temps_d');
-//3. Mesures (ATTENTION: ici on peut choisir plusieurs polluants -> add_mesure = true)
-var btn_poluant_pm1 = document.getElementById('btn_poluant_pm1');
-var btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
-var btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
-var btn_poluant_no2 = document.getElementById('btn_poluant_no2');
+// Export des constantes de stockage local
+export const mesures_local = 'mesures_local';
+export const sources_local = 'sources_local';
+export const pas_de_temps_local = 'pas_de_temps_local';
 
-// Selected markers tracking
-var globalSelectedMarker = null;
-var globalSelectedText = null;
-var globalSelectedDeviceId = null;
+// Export des fonctions de stockage local
+export function saveArrayToLocalStorage(key, array) {
+    localStorage.setItem(key, JSON.stringify(array));
+}
+
+export function getArrayFromLocalStorage(key) {
+    const storedArray = localStorage.getItem(key);
+    return storedArray ? JSON.parse(storedArray) : [];
+}
+
+export function addItemToLocalStorageArray(key, item) {
+    const array = getArrayFromLocalStorage(key);
+    array.push(item);
+    saveArrayToLocalStorage(key, array);
+}
+
+export function removeItemFromLocalStorageArray(key, item) {
+    const array = getArrayFromLocalStorage(key);
+    const index = array.indexOf(item);
+    if (index > -1) {
+        array.splice(index, 1);
+        saveArrayToLocalStorage(key, array);
+    }
+}
 
 // fonction permettant de mettre en forme les lieux
-function formatString(str) {
+export function formatString(str) {
     // On remplace les underscores par des espaces
     let formattedStr = str.replace(/_/g, ' ');
 
@@ -108,7 +223,7 @@ function formatString(str) {
 }
 
 // Fonction pour formater les noms du polluants
-function formatPollutantName(name) {
+export function formatPollutantName(name) {
     if (!name || typeof name !== 'string') {
         console.warn('formatPollutantName received non-string value:', name);
         return String(name || '');
@@ -122,41 +237,6 @@ function formatPollutantName(name) {
         .replace(/CO2/g, 'CO<sub>2</sub>')
         .replace(/H2S/g, 'H<sub>2</sub>S')
         .replace(/NH3/g, 'NH<sub>3</sub>');
-}
-
-/*
-Pour les dropdown:
-  creation d'un bouton
-  avec un nom issu de config.js
-  un classe de "dropdown-item"
-*/
-
-// Function to save array to local storage (erase and save)
-function saveArrayToLocalStorage(key, array) {
-    localStorage.setItem(key, JSON.stringify(array));
-}
-
-// Function to get array from local storage
-function getArrayFromLocalStorage(key) {
-    const storedArray = localStorage.getItem(key);
-    return storedArray ? JSON.parse(storedArray) : [];
-}
-
-// Function to add item to local storage array
-function addItemToLocalStorageArray(key, item) {
-    const array = getArrayFromLocalStorage(key);
-    array.push(item);
-    saveArrayToLocalStorage(key, array);
-}
-
-// Function to remove item from local storage array
-function removeItemFromLocalStorageArray(key, item) {
-    const array = getArrayFromLocalStorage(key);
-    const index = array.indexOf(item);
-    if (index > -1) {
-        array.splice(index, 1);
-        saveArrayToLocalStorage(key, array);
-    }
 }
 
 // Fonction pour mettre à jour l'affichage de l'heure en fonction du pas de temps sélectionné
@@ -311,6 +391,7 @@ function setupAutoRefresh() {
 
         // Récupère toutes les sources actives depuis le localStorage
         const activeSources = getArrayFromLocalStorage(sources_local);
+        console.log('Sources actives à rafraîchir:', activeSources);
 
         // Rafraîchit chaque source active
         activeSources.forEach((source) => {
@@ -320,6 +401,9 @@ function setupAutoRefresh() {
 
         // Met à jour l'affichage de l'heure
         updateTimeDisplay();
+
+        // Met à jour l'affichage des boutons
+        updateButtonDisplay();
 
         // Si un appareil était sélectionné et le panneau latéral ouvert, essaie de le restaurer
         if (currentDeviceId && sidePanelOpen) {
@@ -642,7 +726,7 @@ function updateThresholdButtons() {
 }
 
 // Fonction auxiliaire pour obtenir l'ensemble de seuils approprié pour un polluant
-function getThresholdsForPollutant(pollutant) {
+export function getThresholdsForPollutant(pollutant) {
     if (pollutant === 'pm10') {
         return seuils_PM10;
     } else if (pollutant === 'no2') {
@@ -654,7 +738,7 @@ function getThresholdsForPollutant(pollutant) {
 }
 
 // Fonction pour obtenir le code couleur en fonction de la valeur et du polluant
-function getColorCodeForValue(value, pollutant) {
+export function getColorCodeForValue(value, pollutant) {
     const thresholds = getThresholdsForPollutant(pollutant);
 
     let colorCode = 'default';
@@ -676,6 +760,97 @@ function getColorCodeForValue(value, pollutant) {
     return colorCode;
 }
 
+// Fonction pour charger les sources initiales
+function loadInitialSources() {
+    const activeSources = getArrayFromLocalStorage(sources_local);
+    console.log('Sources actives au démarrage:', activeSources);
+
+    // Mettre à jour l'affichage des boutons avant de charger les sources
+    updateButtonDisplay();
+
+    // Charger chaque source active
+    activeSources.forEach((source) => {
+        // Ajouter la classe active au bouton correspondant
+        const sourceKey = Object.keys(sources).find(
+            (key) => sources[key].code === source
+        );
+        if (sourceKey) {
+            const button = Array.from(
+                document.querySelectorAll('#dropdown_sources button')
+            ).find((btn) => btn.textContent.trim() === sources[sourceKey].name);
+            if (button) {
+                button.classList.add('active');
+            }
+        }
+
+        loadSource(source);
+    });
+
+    // Mettre à jour l'affichage des boutons après le chargement des sources
+    setTimeout(() => {
+        updateButtonDisplay();
+    }, 1000); // Attendre un peu pour s'assurer que le chargement est terminé
+}
+
+// Fonction pour mettre à jour l'affichage des boutons
+function updateButtonDisplay() {
+    // Mise à jour du bouton des mesures
+    const selectedMesure = getArrayFromLocalStorage(mesures_local)[0];
+    const mesureName =
+        mesures[
+            Object.keys(mesures).find(
+                (key) => mesures[key].code === selectedMesure
+            )
+        ].name;
+    document
+        .querySelector('#dropdown_mesures')
+        .closest('.dropdown')
+        .querySelector('.selected-option').innerHTML = mesureName;
+
+    // Mise à jour du bouton des pas de temps
+    const selectedTimeStep = getArrayFromLocalStorage(pas_de_temps_local)[0];
+    const timeStepName =
+        pas_de_temps[
+            Object.keys(pas_de_temps).find(
+                (key) => pas_de_temps[key].code === selectedTimeStep
+            )
+        ].name;
+    document
+        .querySelector('#dropdown_pas_de_temps')
+        .closest('.dropdown')
+        .querySelector('.selected-option').innerHTML = timeStepName;
+
+    // Mise à jour des classes active des boutons de mesures
+    document.querySelectorAll('#dropdown_mesures button').forEach((button) => {
+        button.classList.remove('active');
+        if (button.textContent === mesureName) {
+            button.classList.add('active');
+        }
+    });
+
+    // Mise à jour des classes active des boutons de pas de temps
+    document
+        .querySelectorAll('#dropdown_pas_de_temps button')
+        .forEach((button) => {
+            button.classList.remove('active');
+            if (button.textContent === timeStepName) {
+                button.classList.add('active');
+            }
+        });
+
+    // Mise à jour des classes active des boutons de sources
+    const activeSources = getArrayFromLocalStorage(sources_local);
+    document.querySelectorAll('#dropdown_sources button').forEach((button) => {
+        button.classList.remove('active');
+        const buttonCode = Object.keys(sources).find(
+            (key) => sources[key].name === button.textContent.trim()
+        );
+        if (buttonCode && activeSources.includes(sources[buttonCode].code)) {
+            button.classList.add('active');
+        }
+    });
+}
+
 // On initialise l'horloge au chargement de la page
 document.addEventListener('DOMContentLoaded', function () {
     updateTimeDisplay();
@@ -687,6 +862,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // On initialise les boutons de seuil en fonction du polluant sélectionné
     updateThresholdButtons();
+
+    // Mise à jour de l'affichage des boutons
+    updateButtonDisplay();
+
+    // Réinitialiser le localStorage
+    resetLocalStorage();
+
+    // Chargement des sources initiales
+    loadInitialSources();
 });
 
 //vérifier si un élément est dans un js object
@@ -767,7 +951,7 @@ for (let key in mesures) {
                 );
                 // On met à jour chaque source active
                 for (let item of getArrayFromLocalStorage(sources_local)) {
-                    clearLayer(code);
+                    clearLayer(item);
                     loadSource(item);
                 }
             }
@@ -802,14 +986,19 @@ for (let key in sources) {
         button.onclick = function () {
             let check_array = getArrayFromLocalStorage(sources_local);
             if (isValueInObject(check_array, code)) {
+                // Désactiver la source
                 button.classList.remove('active');
                 removeItemFromLocalStorageArray(sources_local, code);
                 clearLayer(code);
             } else {
-                addItemToLocalStorageArray(sources_local, code);
+                // Activer la source
                 button.classList.add('active');
+                addItemToLocalStorageArray(sources_local, code);
                 loadSource(code);
             }
+
+            // Mettre à jour l'affichage des boutons après chaque changement
+            updateButtonDisplay();
         };
         let li = document.createElement('li');
         li.appendChild(button);
@@ -874,7 +1063,7 @@ for (let key in pas_de_temps) {
                 );
                 // Actualisation de chaque source active
                 for (let item of getArrayFromLocalStorage(sources_local)) {
-                    clearLayer(code);
+                    clearLayer(item);
                     loadSource(item);
                 }
                 updateTimeDisplay();
@@ -922,6 +1111,11 @@ function loadSource(source) {
             loadMobileAir();
             break;
     }
+
+    // Mettre à jour l'affichage des boutons après le chargement d'une source
+    setTimeout(() => {
+        updateButtonDisplay();
+    }, 500); // Attendre un peu pour s'assurer que le chargement est terminé
 }
 
 //Enlever les layers lorsque l'on change de pas de temps ou de source
@@ -987,7 +1181,7 @@ setInterval(reload_layers, 9990000); //60000 -> 1min
 Sur un grand écran on veut un side panel moins large (col-lg) 
 que sur un petit écran (col) sinon il est trop fin
 */
-function openSidePanel_generic() {
+export function openSidePanel_generic() {
     //console.log("openSidePane_generic");
     //side panel
     // sur smartphone -> toute la place (col-12)
@@ -1004,7 +1198,7 @@ function openSidePanel_generic() {
     mapContainer.style.paddingLeft = '10px';
 }
 
-function openSidePanel_signalair(data, nuisance_type) {
+export function openSidePanel_signalair(data, nuisance_type) {
     console.log('Opening side panel for SignalAir');
     card1_img.src = 'img/signalair/logoSignalAir.png';
     card1_title.innerHTML = 'Nuisance: ' + nuisance_type;
@@ -1035,14 +1229,13 @@ function openSidePanel_signalair(data, nuisance_type) {
       </tbody>
     </table>
     <a href="https://www.signalair.eu/fr/" target="_blank" class="btn btn-primary" id="card1_button">Faire un signalement</a>
-
      `;
 
     openSidePanel_generic();
 }
 
 //CLOSE SIDE PANEL
-function closeSidePanel() {
+export function closeSidePanel() {
     console.log('Closing side panel');
     sidePanel.classList.remove('col-2', 'col-sm-4', 'col-lg-3');
     sidePanel.style.display = 'none';
@@ -1051,22 +1244,50 @@ function closeSidePanel() {
     mapContainer.style.paddingLeft = '30px';
 }
 
-//Leaflet Map obj creation
-let coordsCenter = config.coordsCenter;
-let zoomLevel = config.zoomLevel;
+// Initialisation du conteneur device-info
+deviceInfo.onAdd = function () {
+    this._div = L.DomUtil.create('div', 'device-info');
+    this._div.innerHTML = `
+        <div id="device-name"></div>
+        <div id="device-details"></div>
+    `;
+    this._div.style.display = 'none';
+    return this._div;
+};
 
-let map = L.map('map', {
-    //zoomControl: isMobile == true ? false : true,
-    minZoom: config.minZoom,
-    maxZoom: config.maxZoom,
-    renderer: L.canvas(),
-    maxBounds: L.latLngBounds(config.boundNE, config.boundSW),
+deviceInfo.addTo(map);
+
+//Location et Zoom par défaut récupéré dans config.js
+//si existe dans Local Storage alors prends les variables en local
+if ('Lat' in localStorage) {
+    let coordsCenter_local_lat = localStorage.getItem('Lat');
+    let coordsCenter_local_long = localStorage.getItem('Long');
+    let zoomLevel_local = localStorage.getItem('Zoom');
+    map.setView(
+        [coordsCenter_local_lat, coordsCenter_local_long],
+        zoomLevel_local
+    );
+} else {
+    map.setView(config.coordsCenter, config.zoomLevel);
+}
+
+// Dès que l'on bouge la cart on enregistre LAT/LONG/ZOOM
+map.on('moveend', function () {
+    // Get the map's center coordinates
+    var center = map.getCenter();
+    var currentZoom = map.getZoom();
+    var lat = center.lat;
+    var lng = center.lng;
+    saveArrayToLocalStorage('Lat', lat);
+    saveArrayToLocalStorage('Long', lng);
+    saveArrayToLocalStorage('Zoom', currentZoom);
 });
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-}).addTo(map);
+// Exporter les variables globales pour qu'elles soient accessibles aux modules
+window.amchart_root = amchart_root;
+window.sidePanel = sidePanel;
+window.card1 = card1;
+window.card1_body = card1_body;
 
 // Ajout d'un écouteur d'événement sur le bouton pour ouvrir/fermer le panneau latéral
 document
@@ -1133,63 +1354,15 @@ document
         // On force la mise à jour de la taille de la carte
         map.invalidateSize();
     });
-// Initialisation du conteneur device-info
-const deviceInfo = L.control({ position: 'bottomright' });
 
-deviceInfo.onAdd = function () {
-    this._div = L.DomUtil.create('div', 'device-info');
-    // Structure minimale qui sera remplacée
-    this._div.innerHTML = '<div></div>';
-    this._div.style.display = 'none';
-    return this._div;
-};
+// Fonction pour réinitialiser le localStorage
+function resetLocalStorage() {
+    localStorage.removeItem(sources_local);
+    localStorage.removeItem(mesures_local);
+    localStorage.removeItem(pas_de_temps_local);
 
-deviceInfo.addTo(map);
-
-//Location et Zoom par défaut récupéré dans config.js
-//si existe dans Local Storage alors prends les variables en local
-if ('Lat' in localStorage) {
-    let coordsCenter_local_lat = localStorage.getItem('Lat');
-    let coordsCenter_local_long = localStorage.getItem('Long');
-    let zoomLevel_local = localStorage.getItem('Zoom');
-    map.setView(
-        [coordsCenter_local_lat, coordsCenter_local_long],
-        zoomLevel_local
-    );
-} else {
-    map.setView(coordsCenter, zoomLevel);
+    // Réinitialiser avec les valeurs par défaut
+    saveArrayToLocalStorage(sources_local, ['nebuleair']);
+    saveArrayToLocalStorage(mesures_local, ['pm1']);
+    saveArrayToLocalStorage(pas_de_temps_local, ['2min']);
 }
-
-// on set l'affichage des boutons de choix de pas de temps et de mesures
-const storedTimeStep = getArrayFromLocalStorage('pas_de_temps_local')[0];
-const timeStepName =
-    pas_de_temps[
-        Object.keys(pas_de_temps).find(
-            (key) => pas_de_temps[key].code === storedTimeStep
-        )
-    ].name;
-document
-    .querySelector('#dropdown_pas_de_temps')
-    .closest('.dropdown')
-    .querySelector('.selected-option').innerHTML = timeStepName;
-const storedMesure = getArrayFromLocalStorage('mesures_local')[0];
-const mesureName =
-    mesures[
-        Object.keys(mesures).find((key) => mesures[key].code === storedMesure)
-    ].name;
-document
-    .querySelector('#dropdown_mesures')
-    .closest('.dropdown')
-    .querySelector('.selected-option').innerHTML = mesureName;
-
-// Dès que l'on bouge la cart on enregistre LAT/LONG/ZOOM
-map.on('moveend', function () {
-    // Get the map's center coordinates
-    var center = map.getCenter();
-    var currentZoom = map.getZoom();
-    var lat = center.lat;
-    var lng = center.lng;
-    saveArrayToLocalStorage('Lat', lat);
-    saveArrayToLocalStorage('Long', lng);
-    saveArrayToLocalStorage('Zoom', currentZoom);
-});

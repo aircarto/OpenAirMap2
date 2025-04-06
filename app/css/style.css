@@ -1,0 +1,42 @@
+#button_horloge {
+    cursor: default;
+    min-width: 100px;
+    text-align: center;
+    font-weight: 500;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: #6c757d;
+    color: #495057;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#button_horloge:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: #6c757d;
+    color: #212529;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+#button_horloge:active {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Style pour le conteneur du bouton horloge */
+#button_horloge_container {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 25px;
+    padding: 5px 15px;
+    margin: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    vertical-align: middle;
+    line-height: 1.5;
+    cursor: default;
+}
+
+/* Animation subtile pour le conteneur au survol */
+#button_horloge_container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease;
+}

@@ -24,13 +24,6 @@
         ></script>
 
         <!-- JS FILES -->
-        <script src="js/color_line.js" ;></script>
-        <script src="js/config.js"></script>
-        <script src="js/NebuleAir.js"></script>
-        <script src="js/SignalAir.js"></script>
-        <script src="js/atmoSud_microStations.js"></script>
-        <script src="js/atmoSud_stationsRef.js"></script>
-        <script src="js/MobileAir.js"></script>
         <!-- AM CHARTS -->
         <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
         <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
@@ -153,10 +146,12 @@
                                 ></ul>
                             </li>
                             <!-- Horloge -->
-                            <button
-                                id="button_horloge"
-                                class="btn btn-secondary ms-2 mb-1"
-                            ></button>
+                            <li class="nav-item ms-2 mb-1">
+                                <span
+                                    id="button_horloge"
+                                    class="btn btn-outline-secondary"
+                                ></span>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -628,7 +623,7 @@
         </div>
 
         <!-- JAVASCRIPT -->
-        <script src="app.js"></script>
+        <script type="module" src="app.js"></script>
         <script
             src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
             integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"

@@ -1,14 +1,15 @@
-const config = {
-    coordsCenter: [43.29490421, 5.37188392], //loc par défaut pour la carte
-    zoomLevel: 9, //zoom por défaut
-    minZoom: 1,
-    maxZoom: 18, //zoom max -> en dessus le fond de carte devient blanc (plus de données visuelle)
+// Configuration de la carte
+export const config = {
+    coordsCenter: [43.296482, 5.36978],
+    zoomLevel: 10,
+    minZoom: 8,
+    maxZoom: 18,
     compoundUpper: 'PM25', //polluant affiché par défaut
     timespanLower: 60, //pas de temps de base 2min, 15min, 60min ou journéé (??)
     timeLength: 24, // historique
     display: 'atmosudmicro, nebuleair', //source des données par défaut
-    boundSW: [-90, -180], //bloquer la carte sur une zone
-    boundNE: [90, 180],
+    boundSW: [42.5, 3.5],
+    boundNE: [44.5, 7.5],
 };
 
 const mesures = {
