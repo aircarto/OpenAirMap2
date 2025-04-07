@@ -36,6 +36,46 @@ var pas_de_temps_chart = '1h';
 var historique_chart = '24h';
 var mesures_array = [];
 
+// Déclaration des variables pour les boutons d'historique
+let btn_historique_custom;
+let btn_historique_start_date;
+let btn_historique_end_date;
+let btn_historique_1h;
+let btn_historique_3h;
+let btn_historique_24h;
+let btn_historique_7d;
+let btn_historique_30d;
+let btn_historique_365d;
+let btn_pas_de_temps_2min;
+let btn_pas_de_temps_qh;
+let btn_pas_de_temps_h;
+let btn_pas_de_temps_d;
+let btn_poluant_pm1;
+let btn_poluant_pm25;
+let btn_poluant_pm10;
+let btn_poluant_no2;
+
+// Initialisation des boutons au chargement du DOM
+document.addEventListener('DOMContentLoaded', function () {
+    btn_historique_custom = document.getElementById('apply_date_range');
+    btn_historique_start_date = document.getElementById('start_date');
+    btn_historique_end_date = document.getElementById('end_date');
+    btn_historique_1h = document.getElementById('btn_historique_1h');
+    btn_historique_3h = document.getElementById('btn_historique_3h');
+    btn_historique_24h = document.getElementById('btn_historique_24h');
+    btn_historique_7d = document.getElementById('btn_historique_7d');
+    btn_historique_30d = document.getElementById('btn_historique_30d');
+    btn_historique_365d = document.getElementById('btn_historique_365d');
+    btn_pas_de_temps_2min = document.getElementById('btn_pas_de_temps_2min');
+    btn_pas_de_temps_qh = document.getElementById('btn_pas_de_temps_qh');
+    btn_pas_de_temps_h = document.getElementById('btn_pas_de_temps_h');
+    btn_pas_de_temps_d = document.getElementById('btn_pas_de_temps_d');
+    btn_poluant_pm1 = document.getElementById('btn_poluant_pm1');
+    btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
+    btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
+    btn_poluant_no2 = document.getElementById('btn_poluant_no2');
+});
+
 // Fonction principale exportée
 export function load_atmoSud_microStations() {
     console.log(
@@ -81,8 +121,9 @@ export function load_atmoSud_microStations() {
     console.log('Pas de temps Atmo: ' + pas_de_temps_atmo);
     console.log('Mesures : ' + mesures);
 
+    // Construire l'URL de l'API selon l'exemple fourni
     let full_url_derniere = `
-    https://api.atmosud.org/observations/capteurs/mesures/dernieres?
+    https://api.atmosud.org/observations/capteurs/mesures?
     format=json
     &download=false
     &valeur_brute=true
@@ -302,8 +343,8 @@ export function load_atmoSud_microStations() {
                         console.log('Click on device: ' + value['id_site']);
                         openSidePanel_microStation(
                             value,
-                            pas_de_temps_atmo,
                             '24h',
+                            pas_de_temps_atmo,
                             mesures_atmo
                         );
                     })
@@ -389,14 +430,14 @@ export function resetMarker() {
     // ... existing code ...
 }
 
-// Fonction pour ouvrir le panneau latéral
+// Fonction pour ouvrir le panneau latéral avec les informations du capteur
 export function openSidePanel_microStation(
     data,
-    pas_de_temps_atmo,
     historique,
+    pas_de_temps_atmo,
     mesures_atmo
 ) {
-    console.log('openSidePanel_microStation');
+    console.log('openSidePanel_microStation', data);
 
     try {
         // Vérifier si les données sont valides
@@ -407,6 +448,48 @@ export function openSidePanel_microStation(
         // Mettre à jour les variables locales
         historique_chart = historique;
         pas_de_temps_chart = pas_de_temps_atmo;
+
+        // Reset all button states
+        var historique_buttons = document.querySelectorAll(
+            '[id^="btn_historique_"]'
+        );
+        var pas_de_temps_buttons = document.querySelectorAll(
+            '[id^="btn_pas_de_temps_"]'
+        );
+
+        historique_buttons.forEach((btn) => (btn.checked = false));
+        pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
+
+        // Sélectionner le bouton d'historique par défaut (24h)
+        if (btn_historique_24h) {
+            btn_historique_24h.checked = true;
+        }
+
+        // Sélectionner le bouton de pas de temps par défaut (horaire)
+        if (btn_pas_de_temps_h) {
+            btn_pas_de_temps_h.checked = true;
+        }
+
+        //il faut passer à la fonction un array pour mesures
+        // Clear the array by setting its length to 0
+        mesures_array.length = 0;
+        if (Array.isArray(mesures_atmo)) {
+            mesures_atmo.forEach((measure) => mesures_array.push(measure));
+        } else {
+            // If it's a single value, push it directly
+            mesures_array.push(mesures_atmo);
+        }
+
+        // Sélectionner les boutons de polluants en fonction des mesures
+        if (mesures_array.includes('pm1') && btn_poluant_pm1) {
+            btn_poluant_pm1.checked = true;
+        }
+        if (mesures_array.includes('pm2.5') && btn_poluant_pm25) {
+            btn_poluant_pm25.checked = true;
+        }
+        if (mesures_array.includes('pm10') && btn_poluant_pm10) {
+            btn_poluant_pm10.checked = true;
+        }
 
         // Mettre à jour le contenu du panneau latéral
         card1_img.src =
@@ -438,80 +521,527 @@ export function openSidePanel_microStation(
         // Ouvrir le panneau latéral
         openSidePanel_generic();
 
-        // Vérifier si le capteur est toujours disponible dans l'API
-        // Nous allons d'abord faire une requête pour vérifier si le capteur existe
-        let check_url = `
-        https://api.atmosud.org/observations/capteurs/mesures/dernieres?
-        format=json
-        &download=false
-        &valeur_brute=true
-        &type_capteur=true
-        &variable=${mesures_atmo}
-        &aggregation=${pas_de_temps_atmo}
-        &nb_dec=1
-        &id_site=${data.id_site}
-        `.replace(/\s+/g, '');
+        // Récupérer directement les données historiques sans vérification préalable
+        retreive_historiqueData_microStation(
+            data.id_site,
+            pas_de_temps_atmo,
+            historique,
+            mesures_array
+        );
 
-        console.log('Vérification de la disponibilité du capteur:', check_url);
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_historique_custom) {
+            const newBtnHistoriqueCustom =
+                btn_historique_custom.cloneNode(true);
+            btn_historique_custom.parentNode.replaceChild(
+                newBtnHistoriqueCustom,
+                btn_historique_custom
+            );
+            btn_historique_custom = newBtnHistoriqueCustom;
+        }
 
-        $.ajax({
-            method: 'GET',
-            url: check_url,
-            timeout: 10000, // Timeout après 10 secondes
-            success: function (checkData) {
-                console.log('Données de vérification reçues:', checkData);
+        // Historique Button handlers setup
+        if (btn_historique_custom) {
+            btn_historique_custom.addEventListener('click', function (event) {
+                event.preventDefault();
+                var startDate = btn_historique_start_date.value;
+                var endDate = btn_historique_end_date.value;
+                var startTime = '00:00';
+                var endTime = '23:59';
+                console.log({
+                    startDate: startDate,
+                    startTime: startTime,
+                    endDate: endDate,
+                    endTime: endTime,
+                });
+                if (startDate && startTime && endDate && endTime) {
+                    historique_buttons.forEach((btn) => (btn.checked = false));
+                    btn_historique_custom.checked = true;
 
-                // Vérifier si le capteur est toujours disponible
-                if (!checkData || checkData.length === 0) {
-                    console.warn(
-                        `Le capteur ${data.id_site} n'est plus disponible dans l'API`
+                    let startDateTime = new Date(
+                        `${startDate}T${startTime}`
+                    ).toISOString();
+                    let endDateTime = new Date(
+                        `${endDate}T${endTime}`
+                    ).toISOString();
+
+                    console.log(
+                        'Date de début:',
+                        startDateTime,
+                        'Date de fin:',
+                        endDateTime
                     );
-                    updateChartWithError(
-                        `Le capteur ${data.id_site} n'est plus disponible dans l'API AtmoSud. Il est possible qu'il ait été retiré ou que son ID ait changé.`
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        null,
+                        mesures_array,
+                        false,
+                        startDateTime,
+                        endDateTime
                     );
-                    return;
+                } else {
+                    alert(
+                        'Veuillez sélectionner une date et une heure de début et de fin.'
+                    );
                 }
+            });
+        }
 
-                // Le capteur est disponible, récupérer les données historiques
-                retreive_historiqueData_microStation(
-                    data.id_site,
-                    pas_de_temps_atmo,
-                    historique,
-                    mesures_atmo
-                );
-            },
-            error: function (xhr, status, error) {
-                console.error(
-                    'Erreur lors de la vérification du capteur:',
-                    error
-                );
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_historique_1h) {
+            const newBtnHistorique1h = btn_historique_1h.cloneNode(true);
+            btn_historique_1h.parentNode.replaceChild(
+                newBtnHistorique1h,
+                btn_historique_1h
+            );
+            btn_historique_1h = newBtnHistorique1h;
+        }
 
-                // En cas d'erreur, on essaie quand même de récupérer les données historiques
-                // car il est possible que le capteur existe mais que la requête de vérification ait échoué
-                retreive_historiqueData_microStation(
-                    data.id_site,
-                    pas_de_temps_atmo,
-                    historique,
-                    mesures_atmo
-                );
-            },
-        });
+        //1.historique
+        if (btn_historique_1h) {
+            btn_historique_1h.addEventListener('change', function () {
+                if (this.checked) {
+                    historique_chart = '1h';
+                    historique_buttons.forEach((btn) => (btn.checked = false));
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_historique_3h) {
+            const newBtnHistorique3h = btn_historique_3h.cloneNode(true);
+            btn_historique_3h.parentNode.replaceChild(
+                newBtnHistorique3h,
+                btn_historique_3h
+            );
+            btn_historique_3h = newBtnHistorique3h;
+        }
+
+        if (btn_historique_3h) {
+            btn_historique_3h.addEventListener('change', function () {
+                if (this.checked) {
+                    historique_chart = '3h';
+                    historique_buttons.forEach((btn) => (btn.checked = false));
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_historique_24h) {
+            const newBtnHistorique24h = btn_historique_24h.cloneNode(true);
+            btn_historique_24h.parentNode.replaceChild(
+                newBtnHistorique24h,
+                btn_historique_24h
+            );
+            btn_historique_24h = newBtnHistorique24h;
+        }
+
+        if (btn_historique_24h) {
+            btn_historique_24h.addEventListener('change', function () {
+                if (this.checked) {
+                    historique_chart = '24h';
+                    historique_buttons.forEach((btn) => (btn.checked = false));
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_historique_7d) {
+            const newBtnHistorique7d = btn_historique_7d.cloneNode(true);
+            btn_historique_7d.parentNode.replaceChild(
+                newBtnHistorique7d,
+                btn_historique_7d
+            );
+            btn_historique_7d = newBtnHistorique7d;
+        }
+
+        if (btn_historique_7d) {
+            btn_historique_7d.addEventListener('change', function () {
+                if (this.checked) {
+                    historique_chart = '7d';
+                    historique_buttons.forEach((btn) => (btn.checked = false));
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_historique_30d) {
+            const newBtnHistorique30d = btn_historique_30d.cloneNode(true);
+            btn_historique_30d.parentNode.replaceChild(
+                newBtnHistorique30d,
+                btn_historique_30d
+            );
+            btn_historique_30d = newBtnHistorique30d;
+        }
+
+        if (btn_historique_30d) {
+            btn_historique_30d.addEventListener('change', function () {
+                if (this.checked) {
+                    historique_chart = '30d';
+                    historique_buttons.forEach((btn) => (btn.checked = false));
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_historique_365d) {
+            const newBtnHistorique365d = btn_historique_365d.cloneNode(true);
+            btn_historique_365d.parentNode.replaceChild(
+                newBtnHistorique365d,
+                btn_historique_365d
+            );
+            btn_historique_365d = newBtnHistorique365d;
+        }
+
+        if (btn_historique_365d) {
+            btn_historique_365d.addEventListener('change', function () {
+                if (this.checked) {
+                    historique_chart = '365d';
+                    historique_buttons.forEach((btn) => (btn.checked = false));
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_pas_de_temps_2min) {
+            const newBtnPasDeTemps2min = btn_pas_de_temps_2min.cloneNode(true);
+            btn_pas_de_temps_2min.parentNode.replaceChild(
+                newBtnPasDeTemps2min,
+                btn_pas_de_temps_2min
+            );
+            btn_pas_de_temps_2min = newBtnPasDeTemps2min;
+        }
+
+        //2.pas de temps
+        if (btn_pas_de_temps_2min) {
+            btn_pas_de_temps_2min.addEventListener('change', function () {
+                if (this.checked) {
+                    pas_de_temps_chart = 'brute';
+                    pas_de_temps_buttons.forEach(
+                        (btn) => (btn.checked = false)
+                    );
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_pas_de_temps_qh) {
+            const newBtnPasDeTempsQh = btn_pas_de_temps_qh.cloneNode(true);
+            btn_pas_de_temps_qh.parentNode.replaceChild(
+                newBtnPasDeTempsQh,
+                btn_pas_de_temps_qh
+            );
+            btn_pas_de_temps_qh = newBtnPasDeTempsQh;
+        }
+
+        if (btn_pas_de_temps_qh) {
+            btn_pas_de_temps_qh.addEventListener('change', function () {
+                if (this.checked) {
+                    pas_de_temps_chart = 'quart-horaire';
+                    pas_de_temps_buttons.forEach(
+                        (btn) => (btn.checked = false)
+                    );
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_pas_de_temps_h) {
+            const newBtnPasDeTempsH = btn_pas_de_temps_h.cloneNode(true);
+            btn_pas_de_temps_h.parentNode.replaceChild(
+                newBtnPasDeTempsH,
+                btn_pas_de_temps_h
+            );
+            btn_pas_de_temps_h = newBtnPasDeTempsH;
+        }
+
+        if (btn_pas_de_temps_h) {
+            btn_pas_de_temps_h.addEventListener('change', function () {
+                if (this.checked) {
+                    pas_de_temps_chart = 'horaire';
+                    pas_de_temps_buttons.forEach(
+                        (btn) => (btn.checked = false)
+                    );
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_pas_de_temps_d) {
+            const newBtnPasDeTempsD = btn_pas_de_temps_d.cloneNode(true);
+            btn_pas_de_temps_d.parentNode.replaceChild(
+                newBtnPasDeTempsD,
+                btn_pas_de_temps_d
+            );
+            btn_pas_de_temps_d = newBtnPasDeTempsD;
+        }
+
+        if (btn_pas_de_temps_d) {
+            btn_pas_de_temps_d.addEventListener('change', function () {
+                if (this.checked) {
+                    pas_de_temps_chart = 'journalier';
+                    pas_de_temps_buttons.forEach(
+                        (btn) => (btn.checked = false)
+                    );
+                    this.checked = true;
+                    retreive_historiqueData_microStation(
+                        data.id_site,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_poluant_pm1) {
+            const newBtnPoluantPm1 = btn_poluant_pm1.cloneNode(true);
+            btn_poluant_pm1.parentNode.replaceChild(
+                newBtnPoluantPm1,
+                btn_poluant_pm1
+            );
+            btn_poluant_pm1 = newBtnPoluantPm1;
+        }
+
+        //3. Mesures
+        if (btn_poluant_pm1) {
+            btn_poluant_pm1.addEventListener('change', function () {
+                if (this.checked) {
+                    if (mesures_array.includes('pm1')) {
+                        mesures_array = mesures_array.filter(
+                            (item) => item !== 'pm1'
+                        );
+                        this.checked = false;
+                    } else {
+                        mesures_array.push('pm1');
+                        this.checked = true;
+                    }
+
+                    if (
+                        btn_historique_custom &&
+                        btn_historique_custom.checked
+                    ) {
+                        var startDate = btn_historique_start_date.value;
+                        var endDate = btn_historique_end_date.value;
+                        let startDateTime = new Date(
+                            `${startDate}T00:00`
+                        ).toISOString();
+                        let endDateTime = new Date(
+                            `${endDate}T23:59`
+                        ).toISOString();
+                        retreive_historiqueData_microStation(
+                            data.id_site,
+                            pas_de_temps_chart,
+                            null,
+                            mesures_array,
+                            true,
+                            startDateTime,
+                            endDateTime
+                        );
+                    } else {
+                        retreive_historiqueData_microStation(
+                            data.id_site,
+                            pas_de_temps_chart,
+                            historique_chart,
+                            mesures_array,
+                            true
+                        );
+                    }
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_poluant_pm25) {
+            const newBtnPoluantPm25 = btn_poluant_pm25.cloneNode(true);
+            btn_poluant_pm25.parentNode.replaceChild(
+                newBtnPoluantPm25,
+                btn_poluant_pm25
+            );
+            btn_poluant_pm25 = newBtnPoluantPm25;
+        }
+
+        if (btn_poluant_pm25) {
+            btn_poluant_pm25.addEventListener('change', function () {
+                if (this.checked) {
+                    if (mesures_array.includes('pm2.5')) {
+                        mesures_array = mesures_array.filter(
+                            (item) => item !== 'pm2.5'
+                        );
+                        this.checked = false;
+                    } else {
+                        mesures_array.push('pm2.5');
+                        this.checked = true;
+                    }
+
+                    if (
+                        btn_historique_custom &&
+                        btn_historique_custom.checked
+                    ) {
+                        var startDate = btn_historique_start_date.value;
+                        var endDate = btn_historique_end_date.value;
+                        let startDateTime = new Date(
+                            `${startDate}T00:00`
+                        ).toISOString();
+                        let endDateTime = new Date(
+                            `${endDate}T23:59`
+                        ).toISOString();
+                        retreive_historiqueData_microStation(
+                            data.id_site,
+                            pas_de_temps_chart,
+                            null,
+                            mesures_array,
+                            true,
+                            startDateTime,
+                            endDateTime
+                        );
+                    } else {
+                        retreive_historiqueData_microStation(
+                            data.id_site,
+                            pas_de_temps_chart,
+                            historique_chart,
+                            mesures_array,
+                            true
+                        );
+                    }
+                }
+            });
+        }
+
+        // Supprimer les anciens gestionnaires d'événements pour éviter les doublons
+        if (btn_poluant_pm10) {
+            const newBtnPoluantPm10 = btn_poluant_pm10.cloneNode(true);
+            btn_poluant_pm10.parentNode.replaceChild(
+                newBtnPoluantPm10,
+                btn_poluant_pm10
+            );
+            btn_poluant_pm10 = newBtnPoluantPm10;
+        }
+
+        if (btn_poluant_pm10) {
+            btn_poluant_pm10.addEventListener('change', function () {
+                if (this.checked) {
+                    if (mesures_array.includes('pm10')) {
+                        mesures_array = mesures_array.filter(
+                            (item) => item !== 'pm10'
+                        );
+                        this.checked = false;
+                    } else {
+                        mesures_array.push('pm10');
+                        this.checked = true;
+                    }
+
+                    if (
+                        btn_historique_custom &&
+                        btn_historique_custom.checked
+                    ) {
+                        var startDate = btn_historique_start_date.value;
+                        var endDate = btn_historique_end_date.value;
+                        let startDateTime = new Date(
+                            `${startDate}T00:00`
+                        ).toISOString();
+                        let endDateTime = new Date(
+                            `${endDate}T23:59`
+                        ).toISOString();
+                        retreive_historiqueData_microStation(
+                            data.id_site,
+                            pas_de_temps_chart,
+                            null,
+                            mesures_array,
+                            true,
+                            startDateTime,
+                            endDateTime
+                        );
+                    } else {
+                        retreive_historiqueData_microStation(
+                            data.id_site,
+                            pas_de_temps_chart,
+                            historique_chart,
+                            mesures_array,
+                            true
+                        );
+                    }
+                }
+            });
+        }
+
+        if (btn_poluant_no2) {
+            btn_poluant_no2.disabled = true;
+        }
     } catch (error) {
         console.error("Erreur lors de l'ouverture du panneau latéral:", error);
-
-        // Afficher un message d'erreur dans le panneau latéral
-        card1_title.innerHTML = 'Erreur';
         card1_text.innerHTML = `
             <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">Erreur lors du chargement des données</h4>
+                <h5>Erreur</h5>
+                <p>Une erreur est survenue lors de l'affichage des informations du capteur.</p>
                 <p>${error.message}</p>
-                <hr>
-                <p class="mb-0">Veuillez réessayer plus tard ou contacter l'administrateur.</p>
             </div>
         `;
-
-        // Ouvrir le panneau latéral même en cas d'erreur
-        openSidePanel_generic();
     }
 }
 
@@ -525,7 +1055,15 @@ export function retreive_historiqueData_microStation(
     custom_start = null,
     custom_end = null
 ) {
-    console.log('retreive_historiqueData_microStation');
+    console.log('retreive_historiqueData_microStation', {
+        sensorId,
+        pas_de_temps,
+        historique,
+        mesures_array,
+        add_mesure,
+        custom_start,
+        custom_end,
+    });
 
     // Vérifier si les paramètres sont valides
     if (!sensorId) {
@@ -578,20 +1116,11 @@ export function retreive_historiqueData_microStation(
             startDate = startDate.toISOString();
         }
 
-        // Vérifier d'abord si le capteur est toujours disponible dans l'API
-        let check_url = `
-        https://api.atmosud.org/observations/capteurs/mesures/dernieres?
-        format=json
-        &download=false
-        &valeur_brute=true
-        &type_capteur=true
-        &variable=${mesures_array}
-        &aggregation=${pas_de_temps}
-        &nb_dec=1
-        &id_site=${sensorId}
-        `.replace(/\s+/g, '');
-
-        console.log('Vérification de la disponibilité du capteur:', check_url);
+        console.log('Période de données:', {
+            startDate,
+            endDate,
+            historique,
+        });
 
         // Afficher un indicateur de chargement
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -600,130 +1129,88 @@ export function retreive_historiqueData_microStation(
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Chargement...</span>
                 </div>
-                <p class="mt-2">Vérification de la disponibilité du capteur...</p>
+                <p class="mt-2">Chargement des données historiques...</p>
             `;
         }
 
-        // Faire la requête AJAX pour vérifier la disponibilité
+        // Convertir le tableau de mesures en chaîne de caractères
+        const mesuresString = Array.isArray(mesures_array)
+            ? mesures_array.join(',')
+            : mesures_array;
+
+        // Construire l'URL de l'API
+        let full_url_historique = `
+        https://api.atmosud.org/observations/capteurs/mesures?
+        format=json
+        &download=false
+        &valeur_brute=true
+        &type_capteur=true
+        &variable=${mesuresString}
+        &aggregation=${pas_de_temps}
+        &debut=${startDate}
+        &fin=${endDate}
+        &id_site=${sensorId}
+        &nb_dec=1
+        `.replace(/\s+/g, '');
+
+        console.log('URL historique:', full_url_historique);
+
+        // Faire la requête AJAX
         $.ajax({
             method: 'GET',
-            url: check_url,
-            timeout: 10000, // Timeout après 10 secondes
-            success: function (checkData) {
-                console.log('Données de vérification reçues:', checkData);
+            url: full_url_historique,
+            timeout: 30000, // Timeout après 30 secondes
+            success: function (data) {
+                console.log('Données historiques reçues:', data);
 
-                // Vérifier si le capteur est toujours disponible
-                if (!checkData || checkData.length === 0) {
-                    console.warn(
-                        `Le capteur ${sensorId} n'est plus disponible dans l'API`
-                    );
+                // Vérifier si les données sont valides
+                if (!data || data.length === 0) {
+                    console.warn('Aucune donnée historique disponible');
                     updateChartWithError(
-                        `Le capteur ${sensorId} n'est plus disponible dans l'API AtmoSud. Il est possible qu'il ait été retiré ou que son ID ait changé.`
+                        'Aucune donnée historique disponible pour cette période'
                     );
                     return;
                 }
 
-                // Le capteur est disponible, récupérer les données historiques
-                fetchHistoricalData();
+                // Traiter les données et mettre à jour le graphique
+                updateChartWithData(data);
             },
             error: function (xhr, status, error) {
                 console.error(
-                    'Erreur lors de la vérification du capteur:',
+                    'Erreur lors de la récupération des données historiques:',
                     error
                 );
+                console.error('Status:', status);
+                console.error('Réponse:', xhr.responseText);
 
-                // En cas d'erreur, on essaie quand même de récupérer les données historiques
-                // car il est possible que le capteur existe mais que la requête de vérification ait échoué
-                fetchHistoricalData();
+                let errorMessage = 'Erreur lors de la récupération des données';
+
+                if (status === 'timeout') {
+                    errorMessage =
+                        'La requête a pris trop de temps. Veuillez réessayer.';
+                } else if (xhr.status === 404) {
+                    errorMessage = `Le capteur avec l'ID ${sensorId} n'est pas trouvé ou n'est plus disponible sur l'API AtmoSud.`;
+                    console.warn(
+                        `Capteur ${sensorId} non trouvé sur l'API AtmoSud`
+                    );
+
+                    // Ajouter un message plus détaillé dans le panneau latéral
+                    card1_text.innerHTML += `
+                        <div class="alert alert-warning mt-3" role="alert">
+                            <h5>Capteur non disponible</h5>
+                            <p>Le capteur avec l'ID ${sensorId} n'est pas trouvé ou n'est plus disponible sur l'API AtmoSud.</p>
+                            <p>Il est possible que ce capteur ait été retiré ou que son ID ait changé.</p>
+                            <p>Veuillez essayer de recharger la page pour obtenir les données les plus récentes.</p>
+                        </div>
+                    `;
+                } else if (xhr.status === 500) {
+                    errorMessage =
+                        'Erreur serveur. Veuillez réessayer plus tard.';
+                }
+
+                updateChartWithError(errorMessage);
             },
         });
-
-        // Fonction pour récupérer les données historiques
-        function fetchHistoricalData() {
-            // Mettre à jour l'indicateur de chargement
-            if (loadingIndicator) {
-                loadingIndicator.innerHTML = `
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Chargement...</span>
-                    </div>
-                    <p class="mt-2">Chargement des données historiques...</p>
-                `;
-            }
-
-            // Construire l'URL de l'API
-            let full_url_historique = `
-            https://api.atmosud.org/observations/capteurs/mesures/historique?
-            format=json
-            &download=false
-            &valeur_brute=true
-            &type_capteur=true
-            &variable=${mesures_array}
-            &aggregation=${pas_de_temps}
-            &date_debut=${startDate}
-            &date_fin=${endDate}
-            &id_site=${sensorId}
-            `.replace(/\s+/g, '');
-
-            console.log('URL historique:', full_url_historique);
-
-            // Faire la requête AJAX
-            $.ajax({
-                method: 'GET',
-                url: full_url_historique,
-                timeout: 30000, // Timeout après 30 secondes
-                success: function (data) {
-                    console.log('Données historiques reçues:', data);
-
-                    // Vérifier si les données sont valides
-                    if (!data || data.length === 0) {
-                        console.warn('Aucune donnée historique disponible');
-                        updateChartWithError(
-                            'Aucune donnée historique disponible pour cette période'
-                        );
-                        return;
-                    }
-
-                    // Traiter les données et mettre à jour le graphique
-                    updateChartWithData(data);
-                },
-                error: function (xhr, status, error) {
-                    console.error(
-                        'Erreur lors de la récupération des données historiques:',
-                        error
-                    );
-                    console.error('Status:', status);
-                    console.error('Réponse:', xhr.responseText);
-
-                    let errorMessage =
-                        'Erreur lors de la récupération des données';
-
-                    if (status === 'timeout') {
-                        errorMessage =
-                            'La requête a pris trop de temps. Veuillez réessayer.';
-                    } else if (xhr.status === 404) {
-                        errorMessage = `Le capteur avec l'ID ${sensorId} n'est pas trouvé ou n'est plus disponible sur l'API AtmoSud.`;
-                        console.warn(
-                            `Capteur ${sensorId} non trouvé sur l'API AtmoSud`
-                        );
-
-                        // Ajouter un message plus détaillé dans le panneau latéral
-                        card1_text.innerHTML += `
-                            <div class="alert alert-warning mt-3" role="alert">
-                                <h5>Capteur non disponible</h5>
-                                <p>Le capteur avec l'ID ${sensorId} n'est pas trouvé ou n'est plus disponible sur l'API AtmoSud.</p>
-                                <p>Il est possible que ce capteur ait été retiré ou que son ID ait changé.</p>
-                                <p>Veuillez essayer de recharger la page pour obtenir les données les plus récentes.</p>
-                            </div>
-                        `;
-                    } else if (xhr.status === 500) {
-                        errorMessage =
-                            'Erreur serveur. Veuillez réessayer plus tard.';
-                    }
-
-                    updateChartWithError(errorMessage);
-                },
-            });
-        }
     } catch (error) {
         console.error(
             'Erreur lors de la récupération des données historiques:',
@@ -754,112 +1241,244 @@ function updateChartWithData(data) {
         // Préparer les données pour le graphique
         const chartData = data.map((item) => {
             return {
-                date: new Date(item.time),
+                date: new Date(item.time).getTime(), // Convertir en timestamp pour amCharts
                 value: parseFloat(item.valeur_brute) || 0,
             };
         });
 
-        // Créer le contenu HTML pour le graphique
-        let chartHtml = `
+        // Ajouter un titre et le nombre de points de données
+        card1_text.innerHTML += `
             <div class="mt-3">
                 <h5>Données historiques</h5>
                 <p>${data.length} points de données disponibles</p>
-                <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                    <canvas id="microStationChart"></canvas>
-                </div>
             </div>
         `;
 
-        // Ajouter le contenu HTML au panneau latéral
-        card1_text.innerHTML += chartHtml;
-
-        // Créer le graphique avec Chart.js
-        const ctx = document
-            .getElementById('microStationChart')
-            .getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartData.map((item) => item.date.toLocaleTimeString()),
-                datasets: [
-                    {
-                        label: 'Valeur (µg/m³)',
-                        data: chartData.map((item) => item.value),
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1,
-                        fill: false,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Heure',
+        // Vérifier si Chart.js est disponible
+        if (typeof Chart !== 'undefined') {
+            // Créer le graphique avec Chart.js
+            const ctx = document
+                .getElementById('chartdiv_sensor')
+                .getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map((item) =>
+                        new Date(item.date).toLocaleTimeString()
+                    ),
+                    datasets: [
+                        {
+                            label: 'Valeur (µg/m³)',
+                            data: chartData.map((item) => item.value),
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1,
+                            fill: false,
                         },
-                    },
-                    y: {
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Valeur (µg/m³)',
-                        },
-                        beginAtZero: true,
-                    },
+                    ],
                 },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return `Valeur: ${context.parsed.y} µg/m³`;
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Heure',
+                            },
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Valeur (µg/m³)',
+                            },
+                            beginAtZero: true,
+                        },
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `Valeur: ${context.parsed.y} µg/m³`;
+                                },
                             },
                         },
                     },
                 },
-            },
-        });
+            });
+        } else {
+            // Utiliser amcharts par défaut
+            console.log("Utilisation d'amcharts pour le graphique");
 
-        // Ajouter un tableau de données sous le graphique
-        let tableHtml = `
-            <div class="mt-3">
-                <h5>Tableau des données</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Heure</th>
-                                <th>Valeur (µg/m³)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
+            try {
+                // Vérifier si amcharts 5 est disponible
+                if (window.am5) {
+                    // Nettoyer le conteneur existant
+                    const chartContainer =
+                        document.getElementById('chartdiv_sensor');
+                    chartContainer.innerHTML = '';
 
-        // Ajouter les lignes du tableau
-        data.forEach((item) => {
-            const date = new Date(item.time);
-            tableHtml += `
-                <tr>
-                    <td>${date.toLocaleDateString()}</td>
-                    <td>${date.toLocaleTimeString()}</td>
-                    <td>${parseFloat(item.valeur_brute).toFixed(1)}</td>
-                </tr>
-            `;
-        });
+                    // Déterminer l'intervalle de temps pour l'axe X
+                    let baseInterval_timeUnit = 'minute';
+                    let baseInterval_count = 1;
 
-        tableHtml += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
+                    // Ajuster l'intervalle en fonction de la période couverte
+                    const timeRange =
+                        chartData.length > 0
+                            ? chartData[chartData.length - 1].date -
+                              chartData[0].date
+                            : 0;
 
-        // Ajouter le tableau au panneau latéral
-        card1_text.innerHTML += tableHtml;
+                    if (timeRange > 7 * 24 * 60 * 60 * 1000) {
+                        // Plus d'une semaine
+                        baseInterval_timeUnit = 'day';
+                        baseInterval_count = 1;
+                    } else if (timeRange > 24 * 60 * 60 * 1000) {
+                        // Plus d'un jour
+                        baseInterval_timeUnit = 'hour';
+                        baseInterval_count = 1;
+                    } else if (timeRange > 60 * 60 * 1000) {
+                        // Plus d'une heure
+                        baseInterval_timeUnit = 'minute';
+                        baseInterval_count = 15;
+                    }
+
+                    // Créer le graphique avec amcharts 5
+                    am5.ready(function () {
+                        // Créer l'élément racine
+                        const root = am5.Root.new('chartdiv_sensor');
+
+                        // Créer le graphique
+                        const chart = root.container.children.push(
+                            am5xy.XYChart.new(root, {
+                                panX: false,
+                                panY: false,
+                                wheelX: 'panX',
+                                wheelY: 'zoomX',
+                                paddingLeft: 0,
+                            })
+                        );
+
+                        // Ajouter un curseur
+                        const cursor = chart.set(
+                            'cursor',
+                            am5xy.XYCursor.new(root, {
+                                behavior: 'zoomX',
+                            })
+                        );
+
+                        cursor.lineY.set('visible', false);
+
+                        // Créer l'axe X (temps)
+                        const xAxis = chart.xAxes.push(
+                            am5xy.DateAxis.new(root, {
+                                maxDeviation: 0.2,
+                                baseInterval: {
+                                    timeUnit: baseInterval_timeUnit,
+                                    count: baseInterval_count,
+                                },
+                                renderer: am5xy.AxisRendererX.new(root, {
+                                    minorGridEnabled: true,
+                                }),
+                                tooltip: am5.Tooltip.new(root, {}),
+                            })
+                        );
+
+                        // Créer l'axe Y (valeur)
+                        const yAxis = chart.yAxes.push(
+                            am5xy.ValueAxis.new(root, {
+                                renderer: am5xy.AxisRendererY.new(root, {}),
+                            })
+                        );
+
+                        // Ajouter les données
+                        const series = chart.series.push(
+                            am5xy.SmoothedXLineSeries.new(root, {
+                                name: 'Valeur (µg/m³)',
+                                xAxis: xAxis,
+                                yAxis: yAxis,
+                                valueYField: 'value',
+                                valueXField: 'date',
+                                tooltip: am5.Tooltip.new(root, {
+                                    labelText: 'Valeur: {valueY} µg/m³',
+                                }),
+                            })
+                        );
+
+                        // Définir l'épaisseur de la ligne
+                        series.strokes.template.setAll({
+                            strokeWidth: 2,
+                        });
+
+                        // Définir les données
+                        series.data.setAll(chartData);
+
+                        // Faire apparaître la série avec une animation
+                        series.appear(1000);
+
+                        // Ajouter une légende
+                        const legend = chart.children.push(
+                            am5.Legend.new(root, {
+                                centerX: am5.percent(50),
+                                x: am5.percent(50),
+                                layout: root.horizontalLayout,
+                            })
+                        );
+
+                        legend.data.push(series);
+
+                        // Ajouter un bouton pour exporter les données
+                        const exportButton = root.container.children.push(
+                            am5.Button.new(root, {
+                                labelText: 'Exporter',
+                                x: am5.percent(100),
+                                centerX: am5.percent(100),
+                                paddingRight: 10,
+                                layout: root.horizontalLayout,
+                            })
+                        );
+
+                        exportButton.events.on('click', function () {
+                            am5.exporting.export('csv', {
+                                data: chartData,
+                                fields: ['date', 'value'],
+                            });
+                        });
+
+                        // Faire apparaître le graphique avec une animation
+                        chart.appear(1000, 100);
+
+                        // Stocker la référence au graphique pour pouvoir le détruire plus tard
+                        window.amchart_root = root;
+
+                        // Forcer la mise à jour de la taille du conteneur
+                        root.resize();
+
+                        // Ajouter un événement de redimensionnement pour s'assurer que le graphique s'adapte
+                        window.addEventListener('resize', function () {
+                            if (window.amchart_root) {
+                                window.amchart_root.resize();
+                            }
+                        });
+                    });
+                } else {
+                    throw new Error("amcharts 5 n'est pas disponible");
+                }
+            } catch (error) {
+                console.error(
+                    "Erreur lors de l'utilisation d'amcharts:",
+                    error
+                );
+                card1_text.innerHTML += `
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <h5>Attention</h5>
+                        <p>Impossible d'afficher le graphique car amcharts n'est pas correctement chargé.</p>
+                        <p>Erreur: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
     } catch (error) {
         console.error('Erreur lors de la mise à jour du graphique:', error);
         updateChartWithError(

@@ -25,7 +25,7 @@ const sources = {
     nebuleair: {
         name: 'Capteurs NebuleAir',
         code: 'nebuleair',
-        activated: true,
+        activated: false,
     },
     'sensor.community': {
         name: 'Capteurs Sensor.Community',
@@ -40,7 +40,7 @@ const sources = {
     microstation_atmosud: {
         name: 'Micro-stations AtmoSud',
         code: 'atmo_micro',
-        activated: false,
+        activated: true,
     },
     stationRef_atmosud: {
         name: 'Stations de référence AtmoSud',

@@ -110,7 +110,7 @@ window.mesures = {
 
 // Configuration des sources de données
 window.sources = {
-    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true },
+    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: false },
     sensor_community: {
         name: 'Sensor.Community',
         code: 'sensor_commmunity',
@@ -120,7 +120,7 @@ window.sources = {
     atmo_micro: {
         name: 'AtmoSud µStations',
         code: 'atmo_micro',
-        activated: false,
+        activated: true,
     },
     atmo_ref: {
         name: 'AtmoSud Stations Ref',
@@ -593,8 +593,8 @@ function findAndHighlightMarker(deviceId) {
 
                         openSidePanel_microStation(
                             layer.deviceData,
-                            pas_de_temps_atmo,
                             '24h',
+                            pas_de_temps_atmo,
                             mesures_atmo
                         );
                     }
@@ -652,8 +652,8 @@ function findAndHighlightMarker(deviceId) {
 
                     openSidePanel_microStation(
                         window.lastSelectedDeviceData,
-                        pas_de_temps_atmo,
                         '24h',
+                        pas_de_temps_atmo,
                         mesures_atmo
                     );
                 }
