@@ -10,11 +10,7 @@ import {
     openSidePanel_microStation,
     retreive_historiqueData_microStation,
 } from './js/atmoSud_microStations.js';
-import {
-    load_atmoSud_stationsRef,
-    openSidePanel_stationRef,
-    retreive_historiqueData_stationRef,
-} from './js/atmoSud_stationsRef.js';
+import { loadAtmoSudStationsRef } from './js/atmoSud_stationsRef.js';
 
 console.log('OpenAirMap V2');
 
@@ -42,11 +38,7 @@ export const map = L.map('map', {
     minZoom: config.minZoom,
     maxZoom: config.maxZoom,
     renderer: L.canvas(),
-    maxBounds: L.latLngBounds(
-        L.latLng(config.boundSW[0], config.boundSW[1]),
-        L.latLng(config.boundNE[0], config.boundNE[1])
-    ),
-    maxBoundsViscosity: 1.0,
+    // Suppression des limites de déplacement pour permettre un déplacement libre
 });
 
 // Ajout de la couche de tuiles OpenStreetMap
@@ -71,6 +63,9 @@ export const modelisationPMAtmoSud_layer = new L.layerGroup().addTo(map);
 export const modelisationICAIRAtmoSud_layer = new L.layerGroup().addTo(map);
 export const signalair_layer = new L.layerGroup().addTo(map);
 export const mobileair_layer = new L.layerGroup().addTo(map);
+
+// Rendre la couche atmo_ref_layer disponible globalement
+window.atmo_ref_layer = atmo_ref_layer;
 
 // Configuration des seuils pour les différents polluants
 export const seuils_PM1_PM25 = {
@@ -101,7 +96,7 @@ export const seuils_NO2_24h = {
 };
 
 // Configuration des mesures disponibles
-window.mesures = {
+export const mesures = {
     pm1: { name: 'PM1', code: 'pm1', activated: true },
     pm25: { name: 'PM2.5', code: 'pm25', activated: false },
     pm10: { name: 'PM10', code: 'pm10', activated: false },
@@ -109,7 +104,7 @@ window.mesures = {
 };
 
 // Configuration des sources de données
-window.sources = {
+export const sources = {
     nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: false },
     sensor_community: {
         name: 'Sensor.Community',
@@ -120,12 +115,12 @@ window.sources = {
     atmo_micro: {
         name: 'AtmoSud µStations',
         code: 'atmo_micro',
-        activated: true,
+        activated: false,
     },
     atmo_ref: {
         name: 'AtmoSud Stations Ref',
         code: 'atmo_ref',
-        activated: false,
+        activated: true,
     },
     mod_pm: { name: 'Modélisation PM', code: 'mod_pm', activated: false },
     icairh: { name: "ICAIR'H", code: 'icairh', activated: false },
@@ -134,7 +129,7 @@ window.sources = {
 };
 
 // Configuration des pas de temps
-window.pas_de_temps = {
+export const pas_de_temps = {
     instantane: { name: 'Instantané', code: 'instantane', activated: false },
     deux_min: { name: '2 minutes', code: '2min', activated: true },
     quart_heure: { name: '15 minutes', code: 'qh', activated: false },
@@ -1093,7 +1088,7 @@ function loadSource(source) {
             load_atmoSud_microStations();
             break;
         case 'atmo_ref':
-            load_atmoSud_stationsRef();
+            loadAtmoSudStationsRef();
             break;
         case 'mod_pm':
             loadModPM();
@@ -1135,7 +1130,20 @@ function clearLayer(source) {
             atmo_micro_layer.clearLayers();
             break;
         case 'atmo_ref':
+            console.log('Nettoyage de la couche atmo_ref_layer...');
             atmo_ref_layer.clearLayers();
+            // Réinitialiser la couche
+            if (!window.atmo_ref_layer) {
+                console.log('Création de la couche atmo_ref_layer...');
+                window.atmo_ref_layer = L.layerGroup();
+                console.log('Couche atmo_ref_layer créée');
+            }
+            // S'assurer que la couche est sur la carte
+            if (!map.hasLayer(window.atmo_ref_layer)) {
+                console.log('Ajout de la couche atmo_ref_layer à la carte...');
+                map.addLayer(window.atmo_ref_layer);
+                console.log('Couche atmo_ref_layer ajoutée à la carte');
+            }
             break;
         case 'mod_pm':
             modelisationPMAtmoSud_layer.clearLayers();
@@ -1362,7 +1370,7 @@ function resetLocalStorage() {
     localStorage.removeItem(pas_de_temps_local);
 
     // Réinitialiser avec les valeurs par défaut
-    saveArrayToLocalStorage(sources_local, ['nebuleair']);
+    saveArrayToLocalStorage(sources_local, ['atmo_ref']);
     saveArrayToLocalStorage(mesures_local, ['pm1']);
     saveArrayToLocalStorage(pas_de_temps_local, ['2min']);
 }
