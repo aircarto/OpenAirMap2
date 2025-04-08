@@ -16,12 +16,12 @@ valeur_ref      valeur corrigée si existe sinon valeur brute
 
 import {
     getArrayFromLocalStorage,
-    pas_de_temps_local,
-    mesures_local,
+    pasDeTempsLocal,
+    mesuresLocal,
     getColorCodeForValue,
     map,
     deviceInfo,
-    openSidePanel_generic,
+    openSidePanelGeneric,
     formatString,
     card1_img,
     card1_title,
@@ -79,16 +79,16 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // Fonction principale exportée
-export function load_atmoSud_microStations() {
+export function loadAtmoSudMicroStation() {
     console.log(
-        '%cload_atmoSud_microStations',
+        '%cloadAtmoSudMicroStation',
         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
     );
     const start = Date.now();
     atmo_micro_layer.clearLayers();
 
     //need to switch pas de temps: d->journalier h->horaire qh -> quart horaire
-    var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local); //attention revoie un objet !!
+    var pas_de_temps = getArrayFromLocalStorage(pasDeTempsLocal); //attention revoie un objet !!
     console.log('Pas de temps récupéré du localStorage:', pas_de_temps);
 
     var pas_de_temps_atmo = '';
@@ -115,7 +115,7 @@ export function load_atmoSud_microStations() {
     }
 
     //on récupère le type de mesure (+ conversion pm25 vers pm2.5)
-    var mesures = getArrayFromLocalStorage(mesures_local);
+    var mesures = getArrayFromLocalStorage(mesuresLocal);
     mesures_array = [...mesures]; // Copier les mesures du localStorage dans mesures_array
     var mesures_atmo = mesures;
     switch (mesures[0]) {
@@ -361,7 +361,7 @@ export function load_atmoSud_microStations() {
                         window.lastSelectedDeviceData = value; // Store the full device data
 
                         console.log('Click on device: ' + value['id_site']);
-                        openSidePanel_microStation(
+                        openSidePanelMicroStation(
                             value,
                             pas_de_temps_atmo,
                             historique_chart,
@@ -384,13 +384,52 @@ export function load_atmoSud_microStations() {
                     microStationMarker.setZIndexOffset(1000);
                     textMarker.setZIndexOffset(1000);
 
-                    // Show device info
-                    deviceInfo._div.querySelector('#device-name').textContent =
-                        formatString(value['nom_site']);
-                    deviceInfo._div.querySelector(
-                        '#device-details'
-                    ).textContent = `Type: ${value['modele_capteur']}`;
-                    deviceInfo._div.style.display = 'block';
+                    // Création d'un tooltip personnalisé avec Bootstrap
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'custom-tooltip';
+                    tooltip.innerHTML = `
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1">${value['nom_site']}</h6>
+                                <div class="d-flex flex-column">
+                                    <small class="text-muted mb-1">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        ${value['lat'].toFixed(6)}, ${value['lon'].toFixed(6)}
+                                    </small>
+                                    <small class="text-muted mb-1">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Dernière mise à jour: ${new Date(value['time']).toLocaleString()}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        ${value['modele_capteur']} - ${value['marque_capteur']}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Style du tooltip
+                    tooltip.style.cssText = `
+                        position: fixed;
+                        z-index: 10000;
+                        pointer-events: none;
+                        bottom: 20px;
+                        right: 20px;
+                        background-color: white;
+                        padding: 10px;
+                        border-radius: 5px;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                        transition: opacity 0.2s;
+                        opacity: 1;
+                    `;
+
+                    // Ajout du tooltip directement au body pour éviter les problèmes de z-index
+                    document.body.appendChild(tooltip);
+
+                    // Stockage de la référence du tooltip
+                    microStationMarker.tooltip = tooltip;
+                    textMarker.tooltip = tooltip;
                 }
 
                 function resetMarker() {
@@ -399,9 +438,16 @@ export function load_atmoSud_microStations() {
                         microStationMarker.setZIndexOffset(0);
                         textMarker.setZIndexOffset(0);
                     }
-                    deviceInfo._div.style.display = 'none';
+
+                    // Suppression du tooltip
+                    if (microStationMarker.tooltip) {
+                        microStationMarker.tooltip.remove();
+                        microStationMarker.tooltip = null;
+                        textMarker.tooltip = null;
+                    }
                 }
 
+                // Apply hover effects to both markers
                 microStationMarker
                     .on('mouseover', highlightMarker)
                     .on('mouseout', resetMarker);
@@ -441,7 +487,7 @@ export function load_atmoSud_microStations() {
 }
 
 // Fonction pour ouvrir le panneau latéral avec les informations du capteur
-export function openSidePanel_microStation(
+export function openSidePanelMicroStation(
     data,
     pas_de_temps_atmo,
     historique,
@@ -622,7 +668,7 @@ export function openSidePanel_microStation(
         }
     }
 
-    console.log('openSidePanel_microStation');
+    console.log('openSidePanelMicroStation');
     console.log('mesures_array après sélection:', mesures_array);
 
     // Déterminer l'ID du site à utiliser
@@ -960,7 +1006,7 @@ export function openSidePanel_microStation(
         }
     };
 
-    openSidePanel_generic();
+    openSidePanelGeneric();
 }
 
 // Fonction pour récupérer les données historiques

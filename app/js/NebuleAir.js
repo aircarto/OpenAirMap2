@@ -3,68 +3,68 @@
 
 import {
     getArrayFromLocalStorage,
-    pas_de_temps_local,
-    mesures_local,
+    pasDeTempsLocal,
+    mesuresLocal,
     getColorCodeForValue,
     map,
     deviceInfo,
-    openSidePanel_generic,
-    nebuleair_layer,
+    openSidePanelGeneric,
+    nebuleairLayer,
     seuils_PM1_PM25,
     seuils_PM10,
 } from '../app.js';
 
 // Variables locales au module
-var pas_de_temps_chart = '1h';
+var pasDeTempsChart = '1h';
 var historique_chart = '24h';
 var mesures_array = [];
 
 // Déclaration des variables pour les boutons d'historique
-let btn_historique_custom;
-let btn_historique_start_date;
-let btn_historique_end_date;
-let btn_historique_1h;
-let btn_historique_3h;
-let btn_historique_24h;
-let btn_historique_7d;
-let btn_historique_30d;
-let btn_historique_365d;
-let btn_pas_de_temps_2min;
-let btn_pas_de_temps_qh;
-let btn_pas_de_temps_h;
-let btn_pas_de_temps_d;
-let btn_poluant_pm1;
-let btn_poluant_pm25;
-let btn_poluant_pm10;
-let btn_poluant_no2;
+let btnHistoriqueCustom;
+let btnHistoriqueStartDate;
+let btnHistoriqueEndDate;
+let btnHistorique1h;
+let btnHistorique3h;
+let btnHistorique24h;
+let btnHistorique7d;
+let btnHistorique30d;
+let btnHistorique365d;
+let btnPasDeTemps2min;
+let btnPasDeTempsQh;
+let btnPasDeTempsH;
+let btnPasDeTempsD;
+let btnPoluantPm1;
+let btnPoluantPm25;
+let btnPoluantPm10;
+let btnPoluantNo2;
 
 // Initialisation des boutons au chargement du DOM
 document.addEventListener('DOMContentLoaded', function () {
-    btn_historique_custom = document.getElementById('apply_date_range');
-    btn_historique_start_date = document.getElementById('start_date');
-    btn_historique_end_date = document.getElementById('end_date');
-    btn_historique_1h = document.getElementById('btn_historique_1h');
-    btn_historique_3h = document.getElementById('btn_historique_3h');
-    btn_historique_24h = document.getElementById('btn_historique_24h');
-    btn_historique_7d = document.getElementById('btn_historique_7d');
-    btn_historique_30d = document.getElementById('btn_historique_30d');
-    btn_historique_365d = document.getElementById('btn_historique_365d');
-    btn_pas_de_temps_2min = document.getElementById('btn_pas_de_temps_2min');
-    btn_pas_de_temps_qh = document.getElementById('btn_pas_de_temps_qh');
-    btn_pas_de_temps_h = document.getElementById('btn_pas_de_temps_h');
-    btn_pas_de_temps_d = document.getElementById('btn_pas_de_temps_d');
-    btn_poluant_pm1 = document.getElementById('btn_poluant_pm1');
-    btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
-    btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
-    btn_poluant_no2 = document.getElementById('btn_poluant_no2');
+    btnHistoriqueCustom = document.getElementById('apply_date_range');
+    btnHistoriqueStartDate = document.getElementById('start_date');
+    btnHistoriqueEndDate = document.getElementById('end_date');
+    btnHistorique1h = document.getElementById('btn_historique_1h');
+    btnHistorique3h = document.getElementById('btn_historique_3h');
+    btnHistorique24h = document.getElementById('btn_historique_24h');
+    btnHistorique7d = document.getElementById('btn_historique_7d');
+    btnHistorique30d = document.getElementById('btn_historique_30d');
+    btnHistorique365d = document.getElementById('btn_historique_365d');
+    btnPasDeTemps2min = document.getElementById('btn_pas_de_temps_2min');
+    btnPasDeTempsQh = document.getElementById('btn_pas_de_temps_qh');
+    btnPasDeTempsH = document.getElementById('btn_pas_de_temps_h');
+    btnPasDeTempsD = document.getElementById('btn_pas_de_temps_d');
+    btnPoluantPm1 = document.getElementById('btn_poluant_pm1');
+    btnPoluantPm25 = document.getElementById('btn_poluant_pm25');
+    btnPoluantPm10 = document.getElementById('btn_poluant_pm10');
+    btnPoluantNo2 = document.getElementById('btn_poluant_no2');
 });
 
 // Fonction principale exportée
 export function loadNebuleAir() {
     console.log('loadNebuleAir');
-    nebuleair_layer.clearLayers();
-    var pas_de_temps = getArrayFromLocalStorage(pas_de_temps_local);
-    var mesures = getArrayFromLocalStorage(mesures_local);
+    nebuleairLayer.clearLayers();
+    var pas_de_temps = getArrayFromLocalStorage(pasDeTempsLocal);
+    var mesures = getArrayFromLocalStorage(mesuresLocal);
 
     console.log('Pas de temps : ' + pas_de_temps);
     console.log('Mesures : ' + mesures);
@@ -162,7 +162,7 @@ export function loadNebuleAir() {
                         // Add custom properties to identify this marker
                         deviceId: value['sensorId'], // Store the device ID directly on the marker
                     }
-                ).addTo(nebuleair_layer);
+                ).addTo(nebuleairLayer);
 
                 if (!window.deviceMarkers) window.deviceMarkers = {};
                 window.deviceMarkers[value['sensorId']] = {
@@ -203,8 +203,6 @@ export function loadNebuleAir() {
                             '</div>',
                         iconAnchor: [x_position, y_position],
                     });
-
-                    //tooltip -> survol
 
                     // Store reference to text marker
                     let textMarker = L.marker(
@@ -249,34 +247,66 @@ export function loadNebuleAir() {
                             globalSelectedText = textMarker;
                             globalSelectedDeviceId = value['sensorId'];
 
-                            console.log(
-                                'Click on device: ' + value['sensorId']
-                            );
-                            openSidePanel_nebuleAir(
+                            openSidePanelNebuleAir(
                                 value,
                                 pas_de_temps_String,
                                 '24h',
                                 mesures
                             );
                         })
-                        .addTo(nebuleair_layer);
+                        .addTo(nebuleairLayer);
 
                     // Add hover effect - highlight on hover
                     function highlightMarker() {
                         nebuleAirMarker.setZIndexOffset(1000);
                         textMarker.setZIndexOffset(1000);
 
-                        // Show device info
-                        const deviceName =
-                            deviceInfo._div.querySelector('#device-name');
-                        const deviceDetails =
-                            deviceInfo._div.querySelector('#device-details');
+                        // Création d'un tooltip personnalisé avec Bootstrap
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'custom-tooltip';
+                        tooltip.innerHTML = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-2">
+                                    <h6 class="card-title mb-1">${value['sensorId']}</h6>
+                                    <div class="d-flex flex-column">
+                                        <small class="text-muted mb-1">
+                                            <i class="bi bi-wifi ${value['connected'] ? 'text-success' : ''} me-1"></i>
+                                            ${value['connected'] ? 'Connecté' : 'Déconnecté'}
+                                        </small>
+                                        <small class="text-muted">
+                                            Polluants mesurés:
+                                            <ul class="list-unstyled ms-3 mb-0">
+                                                ${value.PM1 !== undefined ? '<li><span class="text-success">●</span> PM1</li>' : ''}
+                                                ${value.PM25 !== undefined ? '<li><span class="text-success">●</span> PM2.5</li>' : ''}
+                                                ${value.PM10 !== undefined ? '<li><span class="text-success">●</span> PM10</li>' : ''}
+                                            </ul>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
 
-                        if (deviceName && deviceDetails) {
-                            deviceName.textContent = value['sensorId'];
-                            deviceDetails.textContent = `Type: NebuleAir`;
-                            deviceInfo._div.style.display = 'block';
-                        }
+                        // Style du tooltip
+                        tooltip.style.cssText = `
+                            position: fixed;
+                            z-index: 10000;
+                            pointer-events: none;
+                            bottom: 20px;
+                            right: 20px;
+                            background-color: white;
+                            padding: 10px;
+                            border-radius: 5px;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                            transition: opacity 0.2s;
+                            opacity: 1;
+                        `;
+
+                        // Ajout du tooltip directement au body pour éviter les problèmes de z-index
+                        document.body.appendChild(tooltip);
+
+                        // Stockage de la référence du tooltip
+                        nebuleAirMarker.tooltip = tooltip;
+                        textMarker.tooltip = tooltip;
                     }
 
                     function resetMarker() {
@@ -285,7 +315,13 @@ export function loadNebuleAir() {
                             nebuleAirMarker.setZIndexOffset(0);
                             textMarker.setZIndexOffset(0);
                         }
-                        deviceInfo._div.style.display = 'none';
+
+                        // Suppression du tooltip
+                        if (nebuleAirMarker.tooltip) {
+                            nebuleAirMarker.tooltip.remove();
+                            nebuleAirMarker.tooltip = null;
+                            textMarker.tooltip = null;
+                        }
                     }
 
                     // Apply hover effects to both markers
@@ -298,7 +334,7 @@ export function loadNebuleAir() {
                 }
             }); //end each
             //ajouter la layer sur la carte
-            map.addLayer(nebuleair_layer);
+            map.addLayer(nebuleairLayer);
         }, //end ajax sucess
         error: function (xhr, status, error) {
             console.error('Error:', error);
@@ -309,7 +345,7 @@ export function loadNebuleAir() {
 } //end function loadNebuleAir()
 
 // Fonction pour ouvrir le panneau latéral
-export function openSidePanel_nebuleAir(
+export function openSidePanelNebuleAir(
     data,
     pas_de_temps,
     historique,
@@ -321,16 +357,18 @@ export function openSidePanel_nebuleAir(
         historique: historique,
         mesures: mesures,
     });
+    const pollButttons = document.getElementById('btn_polluants');
+    pollButttons.style.display = 'none';
     // Gestion icone fermeture sidepanel
     var closeButton = document
         .getElementById('toggleSidePanel')
         .querySelector('i');
     closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
 
-    console.log('openSidePanel_nebuleAir');
+    console.log('openSidePanelNebuleAir');
 
     historique_chart = historique;
-    pas_de_temps_chart = pas_de_temps;
+    pasDeTempsChart = pas_de_temps;
 
     // Reset all button states
     var historique_buttons = document.querySelectorAll(
@@ -353,11 +391,20 @@ export function openSidePanel_nebuleAir(
         mesures_array.push(mesures);
     }
 
+    // Définir l'historique par défaut en fonction du pas de temps
+    if (pas_de_temps === '2min' || pas_de_temps === '2m') {
+        historique_chart = '1h';
+    } else if (pas_de_temps === 'h') {
+        historique_chart = '7d';
+    } else if (pas_de_temps === 'd') {
+        historique_chart = '30d';
+    }
+
     //on lance la fonction pour récupérer les datas de mesures
     retreive_historiqueData_nebuleAir(
         data.sensorId,
         pas_de_temps,
-        historique,
+        historique_chart,
         mesures_array
     );
 
@@ -372,11 +419,11 @@ export function openSidePanel_nebuleAir(
     card2_link.href = 'https://aircarto.fr';
 
     // Historique Button handlers setup
-    if (btn_historique_custom) {
-        btn_historique_custom.addEventListener('click', function (event) {
+    if (btnHistoriqueCustom) {
+        btnHistoriqueCustom.addEventListener('click', function (event) {
             event.preventDefault();
-            var startDate = btn_historique_start_date.value;
-            var endDate = btn_historique_end_date.value;
+            var startDate = btnHistoriqueStartDate.value;
+            var endDate = btnHistoriqueEndDate.value;
             var startTime = '00:00';
             var endTime = '23:59';
             console.log({
@@ -387,7 +434,7 @@ export function openSidePanel_nebuleAir(
             });
             if (startDate && startTime && endDate && endTime) {
                 historique_buttons.forEach((btn) => (btn.checked = false));
-                btn_historique_custom.checked = true;
+                btnHistoriqueCustom.checked = true;
 
                 let startDateTime = new Date(
                     `${startDate}T${startTime}`
@@ -404,7 +451,7 @@ export function openSidePanel_nebuleAir(
                 );
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     null,
                     mesures_array,
                     false,
@@ -420,15 +467,15 @@ export function openSidePanel_nebuleAir(
     }
 
     //1.historique
-    if (btn_historique_1h) {
-        btn_historique_1h.addEventListener('change', function () {
+    if (btnHistorique1h) {
+        btnHistorique1h.addEventListener('change', function () {
             if (this.checked) {
                 historique_chart = '1h';
                 historique_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -436,15 +483,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_historique_3h) {
-        btn_historique_3h.addEventListener('change', function () {
+    if (btnHistorique3h) {
+        btnHistorique3h.addEventListener('change', function () {
             if (this.checked) {
                 historique_chart = '3h';
                 historique_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -452,15 +499,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_historique_24h) {
-        btn_historique_24h.addEventListener('change', function () {
+    if (btnHistorique24h) {
+        btnHistorique24h.addEventListener('change', function () {
             if (this.checked) {
                 historique_chart = '24h';
                 historique_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -468,15 +515,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_historique_7d) {
-        btn_historique_7d.addEventListener('change', function () {
+    if (btnHistorique7d) {
+        btnHistorique7d.addEventListener('change', function () {
             if (this.checked) {
                 historique_chart = '7d';
                 historique_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -484,15 +531,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_historique_30d) {
-        btn_historique_30d.addEventListener('change', function () {
+    if (btnHistorique30d) {
+        btnHistorique30d.addEventListener('change', function () {
             if (this.checked) {
                 historique_chart = '30d';
                 historique_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -500,15 +547,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_historique_365d) {
-        btn_historique_365d.addEventListener('change', function () {
+    if (btnHistorique365d) {
+        btnHistorique365d.addEventListener('change', function () {
             if (this.checked) {
                 historique_chart = '365d';
                 historique_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -517,15 +564,15 @@ export function openSidePanel_nebuleAir(
     }
 
     //2.pas de temps
-    if (btn_pas_de_temps_2min) {
-        btn_pas_de_temps_2min.addEventListener('change', function () {
+    if (btnPasDeTemps2min) {
+        btnPasDeTemps2min.addEventListener('change', function () {
             if (this.checked) {
-                pas_de_temps_chart = '2m';
+                pasDeTempsChart = '2m';
                 pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -533,15 +580,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_pas_de_temps_qh) {
-        btn_pas_de_temps_qh.addEventListener('change', function () {
+    if (btnPasDeTempsQh) {
+        btnPasDeTempsQh.addEventListener('change', function () {
             if (this.checked) {
-                pas_de_temps_chart = '15m';
+                pasDeTempsChart = '15m';
                 pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -549,15 +596,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_pas_de_temps_h) {
-        btn_pas_de_temps_h.addEventListener('change', function () {
+    if (btnPasDeTempsH) {
+        btnPasDeTempsH.addEventListener('change', function () {
             if (this.checked) {
-                pas_de_temps_chart = '1h';
+                pasDeTempsChart = '1h';
                 pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -565,15 +612,15 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_pas_de_temps_d) {
-        btn_pas_de_temps_d.addEventListener('change', function () {
+    if (btnPasDeTempsD) {
+        btnPasDeTempsD.addEventListener('change', function () {
             if (this.checked) {
-                pas_de_temps_chart = '1d';
+                pasDeTempsChart = '1d';
                 pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
                 this.checked = true;
                 retreive_historiqueData_nebuleAir(
                     data.sensorId,
-                    pas_de_temps_chart,
+                    pasDeTempsChart,
                     historique_chart,
                     mesures_array
                 );
@@ -582,8 +629,8 @@ export function openSidePanel_nebuleAir(
     }
 
     //3. Mesures
-    if (btn_poluant_pm1) {
-        btn_poluant_pm1.addEventListener('change', function () {
+    if (btnPoluantPm1) {
+        btnPoluantPm1.addEventListener('change', function () {
             if (this.checked) {
                 if (mesures_array.includes('pm1')) {
                     mesures_array = mesures_array.filter(
@@ -595,9 +642,9 @@ export function openSidePanel_nebuleAir(
                     this.checked = true;
                 }
 
-                if (btn_historique_custom && btn_historique_custom.checked) {
-                    var startDate = btn_historique_start_date.value;
-                    var endDate = btn_historique_end_date.value;
+                if (btnHistoriqueCustom && btnHistoriqueCustom.checked) {
+                    var startDate = btnHistoriqueStartDate.value;
+                    var endDate = btnHistoriqueEndDate.value;
                     let startDateTime = new Date(
                         `${startDate}T00:00`
                     ).toISOString();
@@ -606,7 +653,7 @@ export function openSidePanel_nebuleAir(
                     ).toISOString();
                     retreive_historiqueData_nebuleAir(
                         data.sensorId,
-                        pas_de_temps_chart,
+                        pasDeTempsChart,
                         null,
                         mesures_array,
                         true,
@@ -616,7 +663,7 @@ export function openSidePanel_nebuleAir(
                 } else {
                     retreive_historiqueData_nebuleAir(
                         data.sensorId,
-                        pas_de_temps_chart,
+                        pasDeTempsChart,
                         historique_chart,
                         mesures_array,
                         true
@@ -626,8 +673,8 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_poluant_pm25) {
-        btn_poluant_pm25.addEventListener('change', function () {
+    if (btnPoluantPm25) {
+        btnPoluantPm25.addEventListener('change', function () {
             if (this.checked) {
                 if (mesures_array.includes('pm25')) {
                     mesures_array = mesures_array.filter(
@@ -639,9 +686,9 @@ export function openSidePanel_nebuleAir(
                     this.checked = true;
                 }
 
-                if (btn_historique_custom && btn_historique_custom.checked) {
-                    var startDate = btn_historique_start_date.value;
-                    var endDate = btn_historique_end_date.value;
+                if (btnHistoriqueCustom && btnHistoriqueCustom.checked) {
+                    var startDate = btnHistoriqueStartDate.value;
+                    var endDate = btnHistoriqueEndDate.value;
                     let startDateTime = new Date(
                         `${startDate}T00:00`
                     ).toISOString();
@@ -650,7 +697,7 @@ export function openSidePanel_nebuleAir(
                     ).toISOString();
                     retreive_historiqueData_nebuleAir(
                         data.sensorId,
-                        pas_de_temps_chart,
+                        pasDeTempsChart,
                         null,
                         mesures_array,
                         true,
@@ -660,7 +707,7 @@ export function openSidePanel_nebuleAir(
                 } else {
                     retreive_historiqueData_nebuleAir(
                         data.sensorId,
-                        pas_de_temps_chart,
+                        pasDeTempsChart,
                         historique_chart,
                         mesures_array,
                         true
@@ -670,8 +717,8 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_poluant_pm10) {
-        btn_poluant_pm10.addEventListener('change', function () {
+    if (btnPoluantPm10) {
+        btnPoluantPm10.addEventListener('change', function () {
             if (this.checked) {
                 if (mesures_array.includes('pm10')) {
                     mesures_array = mesures_array.filter(
@@ -683,9 +730,9 @@ export function openSidePanel_nebuleAir(
                     this.checked = true;
                 }
 
-                if (btn_historique_custom && btn_historique_custom.checked) {
-                    var startDate = btn_historique_start_date.value;
-                    var endDate = btn_historique_end_date.value;
+                if (btnHistoriqueCustom && btnHistoriqueCustom.checked) {
+                    var startDate = btnHistoriqueStartDate.value;
+                    var endDate = btnHistoriqueEndDate.value;
                     let startDateTime = new Date(
                         `${startDate}T00:00`
                     ).toISOString();
@@ -694,7 +741,7 @@ export function openSidePanel_nebuleAir(
                     ).toISOString();
                     retreive_historiqueData_nebuleAir(
                         data.sensorId,
-                        pas_de_temps_chart,
+                        pasDeTempsChart,
                         null,
                         mesures_array,
                         true,
@@ -704,7 +751,7 @@ export function openSidePanel_nebuleAir(
                 } else {
                     retreive_historiqueData_nebuleAir(
                         data.sensorId,
-                        pas_de_temps_chart,
+                        pasDeTempsChart,
                         historique_chart,
                         mesures_array,
                         true
@@ -714,12 +761,12 @@ export function openSidePanel_nebuleAir(
         });
     }
 
-    if (btn_poluant_no2) {
-        btn_poluant_no2.disabled = true;
+    if (btnPoluantNo2) {
+        btnPoluantNo2.disabled = true;
     }
 
     //fonction semblable pour tous les types de capteurs
-    openSidePanel_generic();
+    openSidePanelGeneric();
 }
 
 // Fonction pour récupérer les données historiques
@@ -792,10 +839,10 @@ export function retreive_historiqueData_nebuleAir(
         );
         if (historique_button_checked) historique_button_checked.checked = true;
     } else if (custom_start && custom_end) {
-        var btn_historique_custom = document.getElementById(
-            'btn_historique_custom'
+        var btnHistoriqueCustom = document.getElementById(
+            'btnHistoriqueCustom'
         );
-        if (btn_historique_custom) btn_historique_custom.checked = true;
+        if (btnHistoriqueCustom) btnHistoriqueCustom.checked = true;
     }
 
     var pas_de_temps_button = document.getElementById(
@@ -901,22 +948,10 @@ export function retreive_historiqueData_nebuleAir(
             }
 
             am5.ready(function () {
-                //prepare the data
-                let data_PM1 = data.map(function (e) {
-                    return { value: e.PM1, date: new Date(e.time).getTime() };
-                });
-                let data_PM25 = data.map(function (e) {
-                    return { value: e.PM25, date: new Date(e.time).getTime() };
-                });
-                let data_PM10 = data.map(function (e) {
-                    return { value: e.PM10, date: new Date(e.time).getTime() };
-                });
-
-                // Create root element
+                // Création du root element
                 amchart_root = am5.Root.new('chartdiv_sensor');
 
-                // Create chart
-
+                // Création du graphique
                 var chart = amchart_root.container.children.push(
                     am5xy.XYChart.new(amchart_root, {
                         panX: false,
@@ -924,26 +959,29 @@ export function retreive_historiqueData_nebuleAir(
                         wheelX: 'panX',
                         wheelY: 'zoomX',
                         paddingLeft: 0,
+                        paddingBottom: 100, // Ajout d'espace pour la légende
+                        layout: am5.GridLayout.new(amchart_root, {
+                            maxColumns: 1,
+                            fixedWidthGrid: true,
+                        }),
                     })
                 );
 
-                // Add cursor
-                // sans le cursor le tooltip n'apparait pas...
+                // Ajout du curseur
                 var cursor = chart.set(
                     'cursor',
                     am5xy.XYCursor.new(amchart_root, {
                         behavior: 'zoomX',
                     })
                 );
-
                 cursor.lineY.set('visible', false);
 
-                //ajout de l'axe X (horizonzal -> datetime)
+                // Ajout de l'axe X
                 var xAxis = chart.xAxes.push(
                     am5xy.DateAxis.new(amchart_root, {
                         maxDeviation: 0.2,
                         baseInterval: {
-                            timeUnit: baseInterval_timeUnit_local, //il faut adapter en fonction du pas de temps! (valeur possible AMCHART: minute, hour, day, week, month, year)
+                            timeUnit: baseInterval_timeUnit_local,
                             count: baseInterval_count,
                         },
                         renderer: am5xy.AxisRendererX.new(amchart_root, {
@@ -953,93 +991,115 @@ export function retreive_historiqueData_nebuleAir(
                     })
                 );
 
-                //ajout de l'axe Y (vertical -> data)
+                // Ajout de l'axe Y
                 var yAxis = chart.yAxes.push(
                     am5xy.ValueAxis.new(amchart_root, {
                         renderer: am5xy.AxisRendererY.new(amchart_root, {}),
                     })
                 );
 
-                //PM1
-                //ajout des données (series) en ligne simple (LineSeries) ou en lignes smoothed (SmoothedXLineSeries)
-                if (mesures_array.includes('pm1')) {
-                    var series_PM1 = chart.series.push(
+                // Préparation des données pour chaque polluant
+                let seriesData = {};
+                let availablePollutants = [];
+
+                // Vérification des polluants disponibles dans les données
+                if (data.length > 0) {
+                    const firstDataPoint = data[0];
+                    if (firstDataPoint.PM1 !== undefined)
+                        availablePollutants.push('PM1');
+                    if (firstDataPoint.PM25 !== undefined)
+                        availablePollutants.push('PM2.5');
+                    if (firstDataPoint.PM10 !== undefined)
+                        availablePollutants.push('PM10');
+                }
+
+                // Création des séries pour tous les polluants disponibles
+                let allSeries = [];
+                availablePollutants.forEach((pollutant) => {
+                    // Convertir le nom du polluant pour la comparaison
+                    let polluantCompare = pollutant.toLowerCase();
+                    if (polluantCompare === 'pm2.5') {
+                        polluantCompare = 'pm25';
+                    }
+
+                    let dataPoints = data.map((e) => ({
+                        value: e[pollutant === 'PM2.5' ? 'PM25' : pollutant],
+                        date: new Date(e.time).getTime(),
+                    }));
+
+                    let series = chart.series.push(
                         am5xy.SmoothedXLineSeries.new(amchart_root, {
-                            name: 'PM1',
+                            name: pollutant,
                             xAxis: xAxis,
                             yAxis: yAxis,
                             valueYField: 'value',
                             valueXField: 'date',
                             tooltip: am5.Tooltip.new(amchart_root, {
-                                labelText: 'PM1: {valueY} µg/m³',
+                                labelText: `${pollutant}: {valueY} µg/m³`,
                             }),
+                            visible: mesures_array.includes(polluantCompare),
                         })
                     );
 
-                    //on peut changer ici la taille du trait
-                    series_PM1.strokes.template.setAll({
+                    series.strokes.template.setAll({
                         strokeWidth: 2,
                     });
 
-                    series_PM1.data.setAll(data_PM1);
-                    series_PM1.appear(1000);
-                }
+                    series.data.setAll(dataPoints);
+                    series.appear(1000);
 
-                //PM2.5
-                if (mesures_array.includes('pm25')) {
-                    var series_PM25 = chart.series.push(
-                        am5xy.SmoothedXLineSeries.new(amchart_root, {
-                            name: 'PM2.5',
-                            xAxis: xAxis,
-                            yAxis: yAxis,
-                            valueYField: 'value',
-                            valueXField: 'date',
-                            tooltip: am5.Tooltip.new(amchart_root, {
-                                labelText: 'PM2.5: {valueY} µg/m³',
-                            }),
-                        })
-                    );
-                    //on peut changer ici la taille du trait
-                    series_PM25.strokes.template.setAll({
-                        strokeWidth: 2,
+                    // Stocker la série pour une utilisation ultérieure
+                    allSeries.push({
+                        series: series,
+                        name: pollutant,
+                        compare: polluantCompare,
                     });
-                    series_PM25.data.setAll(data_PM25);
-                    series_PM25.appear(1000);
-                }
+                });
 
-                //PM10
-                if (mesures_array.includes('pm10')) {
-                    var series_PM10 = chart.series.push(
-                        am5xy.SmoothedXLineSeries.new(amchart_root, {
-                            name: 'PM10',
-                            xAxis: xAxis,
-                            yAxis: yAxis,
-                            valueYField: 'value',
-                            valueXField: 'date',
-                            tooltip: am5.Tooltip.new(amchart_root, {
-                                labelText: 'PM10: {valueY} µg/m³',
-                            }),
-                        })
-                    );
-                    //on peut changer ici la taille du trait
-                    series_PM10.strokes.template.setAll({
-                        strokeWidth: 2,
-                    });
-                    series_PM10.data.setAll(data_PM10);
-                    series_PM10.appear(1000);
-                }
-                let exporting = am5plugins_exporting.Exporting.new(
-                    amchart_root,
-                    {
-                        menu: am5plugins_exporting.ExportingMenu.new(
-                            amchart_root,
-                            {}
-                        ),
-                        filePrefix: 'historique_data', // Nom du fichier téléchargé
-                        dataSource: data, // Utilisation des données récupérées pour l'export
+                // Création de la légende
+                let legend = chart.children.push(
+                    am5.Legend.new(amchart_root, {
+                        centerX: am5.percent(50),
+                        x: am5.percent(50),
+                        y: am5.percent(95),
+                        layout: am5.GridLayout.new(amchart_root, {
+                            maxColumns: 2,
+                            fixedWidthGrid: true,
+                        }),
+                        paddingTop: 10,
+                        paddingBottom: 10,
+                        marginTop: 10,
+                        marginBottom: 10,
+                    })
+                );
+
+                // Configuration des interactions de la légende
+                legend.itemContainers.template.events.on(
+                    'click',
+                    function (ev) {
+                        const clickedSeries = ev.target.dataItem.dataContext;
+                        const seriesInfo = allSeries.find(
+                            (s) => s.series === clickedSeries
+                        );
+
+                        if (seriesInfo) {
+                            if (mesures_array.includes(seriesInfo.compare)) {
+                                seriesInfo.series.set('visible', false);
+                                mesures_array = mesures_array.filter(
+                                    (item) => item !== seriesInfo.compare
+                                );
+                            } else {
+                                seriesInfo.series.set('visible', true);
+                                mesures_array.push(seriesInfo.compare);
+                            }
+                        }
                     }
                 );
 
+                // Ajout de toutes les séries à la légende
+                legend.data.setAll(chart.series.values);
+
+                // Animation
                 chart.appear(1000, 100);
             }); //end am5 ready
         }, //end ajax sucess
@@ -1052,4 +1112,4 @@ export function retreive_historiqueData_nebuleAir(
 } //end retreive data
 
 // Exporter les variables qui pourraient être nécessaires ailleurs
-export { pas_de_temps_chart, historique_chart, mesures_array };
+export { pasDeTempsChart, historique_chart, mesures_array };
