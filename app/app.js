@@ -51,15 +51,15 @@ export const deviceInfo = L.control({ position: 'bottomright' });
 export const nebuleairLayer = new L.layerGroup().addTo(map);
 export const sensorCommmunityLayer = new L.layerGroup().addTo(map);
 export const purpleair_layer = new L.layerGroup().addTo(map);
-export const atmo_micro_layer = new L.layerGroup().addTo(map);
-export const atmo_ref_layer = new L.layerGroup().addTo(map);
+export const atmoMicroLayer = new L.layerGroup().addTo(map);
+export const atmoRefLayer = new L.layerGroup().addTo(map);
 export const modelisationPMAtmoSud_layer = new L.layerGroup().addTo(map);
 export const modelisationICAIRAtmoSud_layer = new L.layerGroup().addTo(map);
 export const signalair_layer = new L.layerGroup().addTo(map);
 export const mobileair_layer = new L.layerGroup().addTo(map);
 
-// Rendre la couche atmo_ref_layer disponible globalement
-window.atmo_ref_layer = atmo_ref_layer;
+// Rendre la couche atmoRefLayer disponible globalement
+window.atmoRefLayer = atmoRefLayer;
 
 // Configuration des seuils pour les différents polluants
 export const seuils_PM1_PM25 = {
@@ -99,7 +99,7 @@ export const mesures = {
 
 // Configuration des sources de données
 export const sources = {
-    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: false },
+    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true },
     sensor_community: {
         name: 'Sensor.Community',
         code: 'sensor_commmunity',
@@ -109,7 +109,7 @@ export const sources = {
     atmo_micro: {
         name: 'AtmoSud µStations',
         code: 'atmo_micro',
-        activated: false,
+        activated: true,
     },
     atmo_ref: {
         name: 'AtmoSud Stations Ref',
@@ -504,7 +504,7 @@ function findAndHighlightMarker(deviceId) {
         }
         // Méthode 2: Vérifier si le marqueur est dans la couche atmo_micro
         else {
-            atmo_micro_layer.eachLayer(function (layer) {
+            atmoMicroLayer.eachLayer(function (layer) {
                 // On ignore si ce n'est pas un marqueur ou s'il n'a pas d'icône
                 if (!layer._icon) return;
 
@@ -517,7 +517,7 @@ function findAndHighlightMarker(deviceId) {
 
                     // On cherche le marqueur de texte correspondant
                     let textMarker = null;
-                    atmo_micro_layer.eachLayer(function (textLayer) {
+                    atmoMicroLayer.eachLayer(function (textLayer) {
                         if (!textLayer._icon) return;
 
                         const textLayerDeviceId =
@@ -859,6 +859,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Chargement des sources initiales
     loadInitialSources();
+
+    // Initialisation du bouton d'agrandissement
+    const expandButton = document.getElementById('expandSidePanel');
+    const collapseButton = document.getElementById('collapseSidePanel');
+
+    if (expandButton && collapseButton) {
+        expandButton.addEventListener('click', function () {
+            const sidePanel = document.getElementById('side-panel');
+            const mapContainer = document.getElementById('map-container');
+
+            // Passage en plein écran
+            sidePanel.classList.add('expanded');
+            mapContainer.classList.add('map-collapsed');
+            sidePanel.style.display = 'block';
+            mapContainer.style.display = 'none';
+
+            // Masquer le bouton d'ouverture et afficher le bouton de fermeture
+            expandButton.style.display = 'none';
+            collapseButton.style.display = 'block';
+
+            // Forcer la mise à jour de la taille de la carte
+            if (map) {
+                map.invalidateSize();
+            }
+        });
+
+        collapseButton.addEventListener('click', function () {
+            const sidePanel = document.getElementById('side-panel');
+            const mapContainer = document.getElementById('map-container');
+
+            // Retour à la taille normale
+            sidePanel.classList.remove('expanded');
+            mapContainer.classList.remove('map-collapsed');
+            sidePanel.style.display = 'block';
+            mapContainer.style.display = 'block';
+
+            // Masquer le bouton de fermeture et afficher le bouton d'ouverture
+            collapseButton.style.display = 'none';
+            expandButton.style.display = 'block';
+
+            // Forcer la mise à jour de la taille de la carte
+            if (map) {
+                map.invalidateSize();
+            }
+        });
+    }
 });
 
 //vérifier si un élément est dans un js object
@@ -884,7 +930,7 @@ function isEmptyObject(obj) {
 for (let key in mesures) {
     if (mesures.hasOwnProperty(key)) {
         let button = document.createElement('button');
-        let name = mesures[key].name;
+        let name = formatPollutantName(mesures[key].name);
         let code = mesures[key].code;
         let activated = mesures[key].activated;
         button.innerHTML = name;
@@ -1114,28 +1160,28 @@ function clearLayer(source) {
             nebuleairLayer.clearLayers();
             break;
         case 'sensor_commmunity':
-            sensor_commmunity_layer.clearLayers();
+            sensorCommmunityLayer.clearLayers();
             break;
         case 'purpleair':
             purpleair_layer.clearLayers();
             break;
         case 'atmo_micro':
-            atmo_micro_layer.clearLayers();
+            atmoMicroLayer.clearLayers();
             break;
         case 'atmo_ref':
-            console.log('Nettoyage de la couche atmo_ref_layer...');
-            atmo_ref_layer.clearLayers();
+            console.log('Nettoyage de la couche atmoRefLayer...');
+            atmoRefLayer.clearLayers();
             // Réinitialiser la couche
-            if (!window.atmo_ref_layer) {
-                console.log('Création de la couche atmo_ref_layer...');
-                window.atmo_ref_layer = L.layerGroup();
-                console.log('Couche atmo_ref_layer créée');
+            if (!window.atmoRefLayer) {
+                console.log('Création de la couche atmoRefLayer...');
+                window.atmoRefLayer = L.layerGroup();
+                console.log('Couche atmoRefLayer créée');
             }
             // S'assurer que la couche est sur la carte
-            if (!map.hasLayer(window.atmo_ref_layer)) {
-                console.log('Ajout de la couche atmo_ref_layer à la carte...');
-                map.addLayer(window.atmo_ref_layer);
-                console.log('Couche atmo_ref_layer ajoutée à la carte');
+            if (!map.hasLayer(window.atmoRefLayer)) {
+                console.log('Ajout de la couche atmoRefLayer à la carte...');
+                map.addLayer(window.atmoRefLayer);
+                console.log('Couche atmoRefLayer ajoutée à la carte');
             }
             break;
         case 'mod_pm':
@@ -1358,12 +1404,26 @@ document
 
 // Fonction pour réinitialiser le localStorage
 function resetLocalStorage() {
-    localStorage.removeItem(sources_local);
-    localStorage.removeItem(mesuresLocal);
-    localStorage.removeItem(pasDeTempsLocal);
+    // Vérifier si le localStorage est vide pour les sources
+    if (!localStorage.getItem(sources_local)) {
+        localStorage.removeItem(sources_local);
+        // Réinitialiser avec les valeurs par défaut
+        saveArrayToLocalStorage(sources_local, [
+            'nebuleair',
+            'atmo_micro',
+            'atmo_ref',
+        ]);
+    }
 
-    // Réinitialiser avec les valeurs par défaut
-    saveArrayToLocalStorage(sources_local, ['atmo_ref']);
-    saveArrayToLocalStorage(mesuresLocal, ['pm1']);
-    saveArrayToLocalStorage(pasDeTempsLocal, ['2min']);
+    // Vérifier si le localStorage est vide pour les mesures
+    if (!localStorage.getItem(mesuresLocal)) {
+        localStorage.removeItem(mesuresLocal);
+        saveArrayToLocalStorage(mesuresLocal, ['pm1']);
+    }
+
+    // Vérifier si le localStorage est vide pour les pas de temps
+    if (!localStorage.getItem(pasDeTempsLocal)) {
+        localStorage.removeItem(pasDeTempsLocal);
+        saveArrayToLocalStorage(pasDeTempsLocal, ['2min']);
+    }
 }

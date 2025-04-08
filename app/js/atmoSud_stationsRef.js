@@ -9,9 +9,8 @@ import {
     mesuresLocal,
     getColorCodeForValue,
     map,
-    formatPollutantName,
     openSidePanelGeneric,
-    atmo_ref_layer,
+    atmoRefLayer,
 } from '../app.js';
 
 // Variables globales du module
@@ -23,23 +22,23 @@ let mesuresArray = [];
 let globalSelectedStationId = null;
 
 // Déclaration des variables pour les boutons
-let btn_historique_custom;
-let btn_historique_start_date;
-let btn_historique_end_date;
-let btn_historique_1h;
-let btn_historique_3h;
-let btn_historique_24h;
-let btn_historique_7d;
-let btn_historique_30d;
-let btn_historique_365d;
-let btn_pas_de_temps_2min;
-let btn_pas_de_temps_qh;
-let btn_pas_de_temps_h;
-let btn_pas_de_temps_d;
-let btn_poluant_pm1;
-let btn_poluant_pm25;
-let btn_poluant_pm10;
-let btn_poluant_no2;
+let btnHistoriqueCustom;
+let btnHistoriqueStartDate;
+let btnHistoriqueEndDate;
+let btnHistorique1h;
+let btnHistorique3h;
+let btnHistorique24h;
+let btnHistorique7d;
+let btnHistorique30d;
+let btnHistorique365d;
+let btnPasDeTemps2min;
+let btnPasDeTempsQh;
+let btnPasDeTempsH;
+let btnPasDeTempsD;
+let btnPolutantPm1;
+let btnPolutantPm25;
+let btnPolutantPm10;
+let btnPolutantNo2;
 
 /**
  * Fonction principale pour charger les stations de référence AtmoSud
@@ -54,18 +53,18 @@ export function loadAtmoSudStationsRef() {
     const today = new Date();
 
     // Initialisation de la couche si elle n'existe pas
-    if (!window.atmo_ref_layer) {
-        window.atmo_ref_layer = atmo_ref_layer;
+    if (!window.atmoRefLayer) {
+        window.atmoRefLayer = atmoRefLayer;
     }
 
     console.log('Nettoyage de la couche...');
-    window.atmo_ref_layer.clearLayers();
+    window.atmoRefLayer.clearLayers();
 
     // S'assurer que la couche est sur la carte
-    if (!map.hasLayer(window.atmo_ref_layer)) {
-        console.log('Ajout de la couche atmo_ref_layer à la carte...');
-        map.addLayer(window.atmo_ref_layer);
-        console.log('Couche atmo_ref_layer ajoutée à la carte');
+    if (!map.hasLayer(window.atmoRefLayer)) {
+        console.log('Ajout de la couche atmoRefLayer à la carte...');
+        map.addLayer(window.atmoRefLayer);
+        console.log('Couche atmoRefLayer ajoutée à la carte');
     }
 
     pasDeTemps = getArrayFromLocalStorage(pasDeTempsLocal);
@@ -221,10 +220,10 @@ export function loadAtmoSudStationsRef() {
             }
 
             // S'assurer que la couche est sur la carte
-            if (!map.hasLayer(window.atmo_ref_layer)) {
-                console.log('Ajout de la couche atmo_ref_layer à la carte...');
-                map.addLayer(window.atmo_ref_layer);
-                console.log('Couche atmo_ref_layer ajoutée à la carte');
+            if (!map.hasLayer(window.atmoRefLayer)) {
+                console.log('Ajout de la couche atmoRefLayer à la carte...');
+                map.addLayer(window.atmoRefLayer);
+                console.log('Couche atmoRefLayer ajoutée à la carte');
             }
         })
         .catch((error) => {
@@ -236,12 +235,12 @@ export function loadAtmoSudStationsRef() {
             ) {
                 createDefaultMarkers();
                 // S'assurer que la couche est sur la carte
-                if (!map.hasLayer(window.atmo_ref_layer)) {
+                if (!map.hasLayer(window.atmoRefLayer)) {
                     console.log(
-                        'Ajout de la couche atmo_ref_layer à la carte...'
+                        'Ajout de la couche atmoRefLayer à la carte...'
                     );
-                    map.addLayer(window.atmo_ref_layer);
-                    console.log('Couche atmo_ref_layer ajoutée à la carte');
+                    map.addLayer(window.atmoRefLayer);
+                    console.log('Couche atmoRefLayer ajoutée à la carte');
                 }
             }
         });
@@ -276,6 +275,95 @@ function createStationMarker(value, iconParam, stationData, mesure) {
         icon: textParam,
     });
 
+    // Ajout des fonctions de survol
+    function highlightMarker() {
+        stationMarker.setZIndexOffset(1000);
+        textMarker.setZIndexOffset(1000);
+
+        // Création d'un tooltip personnalisé avec Bootstrap
+        const tooltip = document.createElement('div');
+        tooltip.className = 'custom-tooltip';
+
+        // Récupération des polluants actifs
+        const polluantsActifs = [];
+        if (stationData.variables) {
+            Object.values(stationData.variables).forEach((variable) => {
+                if (variable.en_service) {
+                    polluantsActifs.push(variable.label);
+                }
+            });
+        }
+
+        tooltip.innerHTML = `
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-2">
+                    <h6 class="card-title mb-1">${stationData.nom_station}</h6>
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">
+                            <i class="bi bi-geo-alt me-1"></i>
+                            ${stationData.latitude.toFixed(4)}, ${stationData.longitude.toFixed(4)}
+                        </small>
+                        <small class="text-muted">
+                            Dernière mise à jour: ${new Date(value.date_debut).toLocaleString()}
+                        </small>
+                        <small class="text-muted">
+                            Polluants mesurés:
+                            <ul class="list-unstyled ms-3 mb-0">
+                                ${polluantsActifs
+                                    .map(
+                                        (polluant) =>
+                                            `<li><span class="text-success">●</span> ${polluant}</li>`
+                                    )
+                                    .join('')}
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Style du tooltip
+        tooltip.style.cssText = `
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: opacity 0.2s;
+            opacity: 1;
+        `;
+
+        // Ajout du tooltip directement au body pour éviter les problèmes de z-index
+        document.body.appendChild(tooltip);
+
+        // Stockage de la référence du tooltip
+        stationMarker.tooltip = tooltip;
+        textMarker.tooltip = tooltip;
+    }
+
+    function resetMarker() {
+        // Ne pas réinitialiser si c'est le marqueur sélectionné
+        if (globalSelectedMarker !== stationMarker) {
+            stationMarker.setZIndexOffset(0);
+            textMarker.setZIndexOffset(0);
+        }
+
+        // Suppression du tooltip
+        if (stationMarker.tooltip) {
+            stationMarker.tooltip.remove();
+            stationMarker.tooltip = null;
+            textMarker.tooltip = null;
+        }
+    }
+
+    // Application des effets de survol aux deux marqueurs
+    stationMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
+    textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
+
     setupMarkerEvents(stationMarker, textMarker, value, mesure);
     window.stationMarkers[value.id_station] = {
         marker: stationMarker,
@@ -285,8 +373,8 @@ function createStationMarker(value, iconParam, stationData, mesure) {
     };
 
     // Ajout des marqueurs à la couche
-    window.atmo_ref_layer.addLayer(stationMarker);
-    window.atmo_ref_layer.addLayer(textMarker);
+    window.atmoRefLayer.addLayer(stationMarker);
+    window.atmoRefLayer.addLayer(textMarker);
 }
 
 /**
@@ -382,7 +470,7 @@ function createDefaultMarkers() {
 
             // Ajout du marqueur à la couche
 
-            window.atmo_ref_layer.addLayer(stationMarker);
+            window.atmoRefLayer.addLayer(stationMarker);
 
             stationMarker.on('click', () => {
                 if (
@@ -812,11 +900,6 @@ export function retreiveHistoriqueDataStationRef(
                 break;
         }
 
-        console.log('Dates utilisées:', {
-            start: startDate.toISOString(),
-            end: endDate.toISOString(),
-        });
-
         fullUrl += `&date_debut=${startDate.toISOString()}&date_fin=${endDate.toISOString()}`;
     }
 
@@ -852,14 +935,6 @@ export function retreiveHistoriqueDataStationRef(
                         window.stationMarkers[item.id_station]?.data;
                     if (!stationData) return;
 
-                    // Log détaillé pour comprendre le problème
-                    console.log('Analyse de la mesure:', {
-                        labelOriginal: item.label_polluant,
-                        labelLower: item.label_polluant.toLowerCase(),
-                        valeur: item.valeur,
-                        date: item.date_debut,
-                    });
-
                     // Déterminer le nom du polluant en fonction du label_polluant
                     let nomPolluant;
                     const labelLower = item.label_polluant.toLowerCase();
@@ -875,7 +950,6 @@ export function retreiveHistoriqueDataStationRef(
                         labelLower.includes('(pm10)')
                     ) {
                         nomPolluant = 'pm10';
-                        console.log('PM10 trouvé:', item);
                     } else if (
                         labelLower.includes('pm2.5') ||
                         labelLower.includes('particules en suspension <2.5 µm')
@@ -906,18 +980,8 @@ export function retreiveHistoriqueDataStationRef(
                                 date: new Date(item.date_debut).getTime(),
                             });
                         }
-                    } else {
-                        console.log('Polluant non traité:', {
-                            label: item.label_polluant,
-                            labelLower: labelLower,
-                            mesuresArray: mesuresArray,
-                            nomPolluant: nomPolluant,
-                        });
                     }
                 });
-
-                // Log des données préparées
-                console.log('Données préparées:', seriesData);
 
                 // Tri des données par date pour s'assurer qu'elles sont dans le bon ordre
                 Object.keys(seriesData).forEach((variable) => {
@@ -926,39 +990,25 @@ export function retreiveHistoriqueDataStationRef(
 
                 // Création du graphique
                 if (amchart_root != undefined) {
-                    console.log('DISPOSE AMChart root (already created)');
                     amchart_root.dispose();
                 }
 
                 // Vider le conteneur du graphique
-                console.log('Vidage du conteneur du graphique');
                 document.getElementById('chartdiv_sensor').innerHTML = '';
 
-                console.log('Début de la création du graphique avec amCharts');
                 am5.ready(function () {
-                    console.log('am5.ready callback exécuté');
-
                     // Vérification du conteneur
                     const chartContainer =
                         document.getElementById('chartdiv_sensor');
-                    console.log('Dimensions du conteneur:', {
-                        width: chartContainer.offsetWidth,
-                        height: chartContainer.offsetHeight,
-                        position: chartContainer.style.position,
-                        display: chartContainer.style.display,
-                    });
 
                     // Ajustement de la taille du conteneur
                     chartContainer.style.height = '600px';
                     chartContainer.style.minHeight = '600px';
 
                     // Création du root element
-                    console.log('Création du root element');
                     amchart_root = am5.Root.new('chartdiv_sensor');
-                    console.log('Root element créé');
 
                     // Création du graphique
-                    console.log('Création du graphique');
                     let chart = amchart_root.container.children.push(
                         am5xy.XYChart.new(amchart_root, {
                             panX: false,
@@ -973,7 +1023,6 @@ export function retreiveHistoriqueDataStationRef(
                             }),
                         })
                     );
-                    console.log('Graphique créé');
 
                     // Ajout du curseur
                     let cursor = chart.set(
@@ -1042,17 +1091,10 @@ export function retreiveHistoriqueDataStationRef(
                             renderer: am5xy.AxisRendererY.new(amchart_root, {}),
                         })
                     );
-                    console.log('Axe Y créé');
 
                     // Préparation des données pour la série
                     data.mesures.forEach((item) => {
                         // Log détaillé pour comprendre le problème
-                        console.log('Analyse de la mesure:', {
-                            labelOriginal: item.label_polluant,
-                            labelLower: item.label_polluant.toLowerCase(),
-                            valeur: item.valeur,
-                            date: item.date_debut,
-                        });
 
                         // Déterminer le nom du polluant en fonction du label_polluant
                         let nomPolluant;
@@ -1069,7 +1111,6 @@ export function retreiveHistoriqueDataStationRef(
                             labelLower.includes('(pm10)')
                         ) {
                             nomPolluant = 'pm10';
-                            console.log('PM10 trouvé:', item);
                         } else if (
                             labelLower.includes('pm2.5') ||
                             labelLower.includes(
@@ -1115,7 +1156,6 @@ export function retreiveHistoriqueDataStationRef(
                     });
 
                     // Log des données préparées
-                    console.log('Données préparées:', seriesData);
 
                     // Tri des données par date pour s'assurer qu'elles sont dans le bon ordre
                     Object.keys(seriesData).forEach((variable) => {
@@ -1126,10 +1166,6 @@ export function retreiveHistoriqueDataStationRef(
 
                     // Création de la série
                     Object.keys(seriesData).forEach((variable) => {
-                        console.log(
-                            `Création de la série pour ${variable}:`,
-                            seriesData[variable]
-                        );
                         let series = chart.series.push(
                             am5xy.SmoothedXLineSeries.new(amchart_root, {
                                 name: seriesData[variable].label,
@@ -1143,13 +1179,6 @@ export function retreiveHistoriqueDataStationRef(
                             })
                         );
                         series.data.setAll(seriesData[variable].data);
-                        console.log(
-                            'Série créée pour:',
-                            variable,
-                            'avec',
-                            seriesData[variable].data.length,
-                            'points'
-                        );
                     });
 
                     // Ajout de la légende
@@ -1169,19 +1198,15 @@ export function retreiveHistoriqueDataStationRef(
                         })
                     );
                     legend.data.setAll(chart.series.values);
-                    console.log('Légende ajoutée');
 
                     // Animation
                     chart.appear(1000, 100);
-                    console.log('Animation démarrée');
                 });
             }
 
             // S'assurer que la couche est sur la carte
-            if (!map.hasLayer(window.atmo_ref_layer)) {
-                console.log('Ajout de la couche atmo_ref_layer à la carte...');
-                map.addLayer(window.atmo_ref_layer);
-                console.log('Couche atmo_ref_layer ajoutée à la carte');
+            if (!map.hasLayer(window.atmoRefLayer)) {
+                map.addLayer(window.atmoRefLayer);
             }
         })
         .catch((error) => {
@@ -1193,12 +1218,8 @@ export function retreiveHistoriqueDataStationRef(
             ) {
                 createDefaultMarkers();
                 // S'assurer que la couche est sur la carte
-                if (!map.hasLayer(window.atmo_ref_layer)) {
-                    console.log(
-                        'Ajout de la couche atmo_ref_layer à la carte...'
-                    );
-                    map.addLayer(window.atmo_ref_layer);
-                    console.log('Couche atmo_ref_layer ajoutée à la carte');
+                if (!map.hasLayer(window.atmoRefLayer)) {
+                    map.addLayer(window.atmoRefLayer);
                 }
             }
         });
@@ -1206,23 +1227,23 @@ export function retreiveHistoriqueDataStationRef(
 
 // Initialisation des boutons au chargement du DOM
 document.addEventListener('DOMContentLoaded', function () {
-    btn_historique_custom = document.getElementById('apply_date_range');
-    btn_historique_start_date = document.getElementById('start_date');
-    btn_historique_end_date = document.getElementById('end_date');
-    btn_historique_1h = document.getElementById('btn_historique_1h');
-    btn_historique_3h = document.getElementById('btn_historique_3h');
-    btn_historique_24h = document.getElementById('btn_historique_24h');
-    btn_historique_7d = document.getElementById('btn_historique_7d');
-    btn_historique_30d = document.getElementById('btn_historique_30d');
-    btn_historique_365d = document.getElementById('btn_historique_365d');
-    btn_pas_de_temps_2min = document.getElementById('btn_pas_de_temps_2min');
-    btn_pas_de_temps_qh = document.getElementById('btn_pas_de_temps_qh');
-    btn_pas_de_temps_h = document.getElementById('btn_pas_de_temps_h');
-    btn_pas_de_temps_d = document.getElementById('btn_pas_de_temps_d');
-    btn_poluant_pm1 = document.getElementById('btn_poluant_pm1');
-    btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
-    btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
-    btn_poluant_no2 = document.getElementById('btn_poluant_no2');
+    btnHistoriqueCustom = document.getElementById('apply_date_range');
+    btnHistoriqueStartDate = document.getElementById('start_date');
+    btnHistoriqueEndDate = document.getElementById('end_date');
+    btnHistorique1h = document.getElementById('btn_historique_1h');
+    btnHistorique3h = document.getElementById('btn_historique_3h');
+    btnHistorique24h = document.getElementById('btn_historique_24h');
+    btnHistorique7d = document.getElementById('btn_historique_7d');
+    btnHistorique30d = document.getElementById('btn_historique_30d');
+    btnHistorique365d = document.getElementById('btn_historique_365d');
+    btnPasDeTemps2min = document.getElementById('btn_pas_de_temps_2min');
+    btnPasDeTempsQh = document.getElementById('btn_pas_de_temps_qh');
+    btnPasDeTempsH = document.getElementById('btn_pas_de_temps_h');
+    btnPasDeTempsD = document.getElementById('btn_pas_de_temps_d');
+    btnPolutantPm1 = document.getElementById('btn_poluant_pm1');
+    btnPolutantPm25 = document.getElementById('btn_poluant_pm25');
+    btnPolutantPm10 = document.getElementById('btn_poluant_pm10');
+    btnPolutantNo2 = document.getElementById('btn_poluant_no2');
 });
 
 // Configuration des gestionnaires d'événements pour les boutons de polluants
@@ -1236,7 +1257,7 @@ if (btn_poluant_pm1) {
             mesuresArray = mesuresArray.filter((item) => item !== 'pm1');
         }
         retreiveHistoriqueDataStationRef(
-            stationID,
+            window.globalSelectedStationId,
             pasDeTempsChart,
             historiqueChart,
             mesuresArray
@@ -1254,7 +1275,7 @@ if (btn_poluant_pm25) {
             mesuresArray = mesuresArray.filter((item) => item !== 'pm2.5');
         }
         retreiveHistoriqueDataStationRef(
-            stationID,
+            window.globalSelectedStationId,
             pasDeTempsChart,
             historiqueChart,
             mesuresArray
@@ -1272,7 +1293,7 @@ if (btn_poluant_pm10) {
             mesuresArray = mesuresArray.filter((item) => item !== 'pm10');
         }
         retreiveHistoriqueDataStationRef(
-            stationID,
+            window.globalSelectedStationId,
             pasDeTempsChart,
             historiqueChart,
             mesuresArray
@@ -1290,7 +1311,7 @@ if (btn_poluant_no2) {
             mesuresArray = mesuresArray.filter((item) => item !== 'no2');
         }
         retreiveHistoriqueDataStationRef(
-            stationID,
+            window.globalSelectedStationId,
             pasDeTempsChart,
             historiqueChart,
             mesuresArray

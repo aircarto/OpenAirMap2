@@ -26,7 +26,7 @@ import {
     card1_img,
     card1_title,
     card1_text,
-    atmo_micro_layer,
+    atmoMicroLayer,
     seuils_PM1_PM25,
     seuils_PM10,
     sources,
@@ -85,7 +85,7 @@ export function loadAtmoSudMicroStation() {
         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
     );
     const start = Date.now();
-    atmo_micro_layer.clearLayers();
+    atmoMicroLayer.clearLayers();
 
     //need to switch pas de temps: d->journalier h->horaire qh -> quart horaire
     var pas_de_temps = getArrayFromLocalStorage(pasDeTempsLocal); //attention revoie un objet !!
@@ -271,7 +271,7 @@ export function loadAtmoSudMicroStation() {
                     {
                         icon: microStation_icon,
                     }
-                ).addTo(atmo_micro_layer);
+                ).addTo(atmoMicroLayer);
 
                 // Store device data with the marker
                 microStationMarker.deviceId = value['id_site'];
@@ -368,7 +368,7 @@ export function loadAtmoSudMicroStation() {
                             mesures_atmo
                         );
                     })
-                    .addTo(atmo_micro_layer);
+                    .addTo(atmoMicroLayer);
 
                 // Also store the text marker reference
                 textMarker.deviceId = value['id_site'];
@@ -392,10 +392,6 @@ export function loadAtmoSudMicroStation() {
                             <div class="card-body p-2">
                                 <h6 class="card-title mb-1">${value['nom_site']}</h6>
                                 <div class="d-flex flex-column">
-                                    <small class="text-muted mb-1">
-                                        <i class="bi bi-geo-alt me-1"></i>
-                                        ${value['lat'].toFixed(6)}, ${value['lon'].toFixed(6)}
-                                    </small>
                                     <small class="text-muted mb-1">
                                         <i class="bi bi-clock me-1"></i>
                                         Dernière mise à jour: ${new Date(value['time']).toLocaleString()}
