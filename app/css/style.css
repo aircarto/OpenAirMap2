@@ -40,3 +40,48 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transition: box-shadow 0.3s ease;
 }
+
+.leaflet-control-layers {
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+    padding: 5px;
+}
+
+.leaflet-control-layers-toggle {
+    background-color: white;
+    background-image: none;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.leaflet-control-layers-toggle i {
+    font-size: 16px;
+    color: #333;
+}
+
+.leaflet-control-layers-base {
+    margin-top: 5px;
+    padding: 5px;
+    background: white;
+    border-radius: 4px;
+}
+
+.leaflet-control-layers-base label {
+    display: block;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+.leaflet-control-layers-base label:hover {
+    background-color: #f5f5f5;
+}
+
+.leaflet-control-layers-base input[type='radio'] {
+    margin-right: 5px;
+}

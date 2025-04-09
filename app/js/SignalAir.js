@@ -12,80 +12,148 @@ Par défaut on affiche les trois derniers jours
 
 */
 
-var signalair_json = {
-    "odeur": {"name": "odeur", "code" : "odeur", "url" : "gq1jrnp9", "img": "odeur.png" },
-    "bruits": {"name": "bruit", "code" : "bruit", "url" : "yq7b5jal", "img": "bruits.png" },
-    "visuel": {"name": "visuel", "code" : "visuel", "url" : "28qg73y9", "img": "visuel.png" },
-    "brûlage": {"name": "brûlage", "code" : "brulage", "url" : "yib5aa1n", "img": "brulage.png"}
-}
+import { map, signalair_layer } from '../app.js';
 
-// Subtract 3 days from the current date
-var now2 = new Date();
-now2.setDate(now2.getDate() - 3);
-var year = now2.getFullYear();
-var month = (now2.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
-var day_minus3 = now2.getDate().toString().padStart(2, '0');
-// Format the date
-var date_YMD_minus3 = year + '-' + month + '-' + day_minus3;
-//console.log(date_YMD_minus3);
+// Configuration des types de signalements
+const signalair_json = {
+    odeur: { name: 'odeur', code: 'odeur', url: 'gq1jrnp9', img: 'odeur.png' },
+    bruits: {
+        name: 'bruit',
+        code: 'bruit',
+        url: 'yq7b5jal',
+        img: 'bruits.png',
+    },
+    visuel: {
+        name: 'visuel',
+        code: 'visuel',
+        url: '28qg73y9',
+        img: 'visuel.png',
+    },
+    brûlage: {
+        name: 'brûlage',
+        code: 'brulage',
+        url: 'yib5aa1n',
+        img: 'brulage.png',
+    },
+};
 
-function loadSignalAir() {
-    console.log("%cSignalAir", "color: yellow; font-style: bold; background-color: blue;padding: 2px",);
+/**
+ * Charge les données SignalAir sur la carte
+ */
+export function loadSignalAir() {
+    console.log(
+        '%cSignalAir',
+        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
+    );
+
+    // Nettoyage de la couche existante
     signalair_layer.clearLayers();
-    const url_odeurs = 'https://www.signalair.eu/fr/flux/geojson/gq1jrnp9/';
-    
-    //loop inside signalair JSON
+
+    // Calcul des dates (3 derniers jours)
+    const now = new Date();
+    const dateEnd = now.toISOString().split('T')[0];
+    const dateStart = new Date(now.setDate(now.getDate() - 3))
+        .toISOString()
+        .split('T')[0];
+
+    // Boucle sur chaque type de signalement
     for (let key in signalair_json) {
-        let code = signalair_json[key].code
-        let url = signalair_json[key].url
-        let full_url = 'https://www.signalair.eu/fr/flux/geojson/'+url+'/'+date_YMD_minus3+'/'+date_YMD
-        let img = signalair_json[key].img
-        //console.log(full_url);
-        $.ajax({
-            url: full_url,
-            method: 'GET',
-            //dataType: 'json',  
-            success: function(data) {
-                if (data) {
-                    //console.log(data);              
-                    $.each(data.features, function(index, value){
-                        var coordinates = value.geometry.coordinates;
-                        var lat = coordinates[1];  
-                        var long = coordinates[0]; 
-                        //image des points sur la carte
-                        var icon_param = {
-                            iconUrl: 'img/signalair/' + img,
-                            iconSize: [35, 35], // size of the icon
-                            iconAnchor: [15, 15], // point of the icon which will correspond to marker's location
-                            popupAnchor: [0, -10]
-                        }
-                        var signalair_odeur_icon = L.icon(icon_param);
-                        //popup lorsque l'on clique sur un élément
-                        var signalAirPopup = '<b>'+signalair_json[key].name+'<b>'
-                        L.marker([lat, long], { icon: signalair_odeur_icon })
-                        .bindPopup(signalAirPopup)
-                        .on('click', function (){
-                            //lorsque l'on clique sur un élément
-                            console.log("Clicked on signalair id " + value.properties.id_declaration)
-                            openSidePanel_signalair(value.properties, code)
-                        })
-                        .addTo(signalair_layer);
-                    }); //end each
-                    //ajouter la layer sur la carte
-                    map.addLayer(signalair_layer);
-                } else{
-                    console.log("No data for " + code)
+        const { code, url, img } = signalair_json[key];
+        const full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/${dateStart}/${dateEnd}`;
+
+        fetch(full_url)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
                 }
-            },
-            error: function(xhr, status, error) {
-            //console.error('Error fetching data from signalair:', error);  // Handle error
-            // Log errors if the AJAX request fails
-            console.error('Error:', error);
-            console.error('Status:', status);
-            console.error('Response:', xhr.responseText);
-            }
-        });
+                return response.json();
+            })
+            .then((data) => {
+                if (data && data.features) {
+                    data.features.forEach((feature) => {
+                        const [long, lat] = feature.geometry.coordinates;
+
+                        // Configuration de l'icône
+                        const icon_param = {
+                            iconUrl: `img/signalair/${img}`,
+                            iconSize: [35, 35],
+                            iconAnchor: [15, 15],
+                            popupAnchor: [0, -10],
+                        };
+
+                        const signalair_icon = L.icon(icon_param);
+
+                        // Création du marqueur
+                        L.marker([lat, long], { icon: signalair_icon })
+                            .bindPopup(`<b>${signalair_json[key].name}</b>`)
+                            .on('click', () => {
+                                console.log(
+                                    'Clicked on signalair id',
+                                    feature.properties.id_declaration
+                                );
+                                openSidePanel_signalair(
+                                    feature.properties,
+                                    code
+                                );
+                            })
+                            .addTo(signalair_layer);
+                    });
+
+                    // Ajout de la couche à la carte
+                    map.addLayer(signalair_layer);
+                } else {
+                    console.log(`Pas de données pour ${code}`);
+                }
+            })
+            .catch((error) => {
+                console.error(
+                    'Erreur lors de la récupération des données SignalAir:',
+                    error
+                );
+            });
     }
-      //fin de la loop
 }
 
+/**
+ * Ouvre le panneau latéral avec les informations du signalement
+ * @param {Object} data - Les données du signalement
+ * @param {string} nuisance_type - Le type de nuisance
+ */
+export function openSidePanel_signalair(data, nuisance_type) {
+    console.log('Ouverture du panneau latéral pour SignalAir');
+
+    // Mise à jour du contenu du panneau
+    card1_img.src = 'img/signalair/logoSignalAir.png';
+    card1_title.innerHTML = 'Nuisance: ' + nuisance_type;
+    card1_text.innerHTML = `
+        Ville: ${data.city} </br>
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td>Niveau de gêne</td>
+                    <td>${data['niveau-de-gene']}</td>
+                </tr>
+                <tr>
+                    <td>Symptômes déclarés</td>
+                    <td>${data['si-oui-quels-symptomes']}</td>
+                </tr>
+                <tr>
+                    <td>Origine de la nuisance</td>
+                    <td>${data['origine-de-la-nuisance']} ${data['description-de-lorigine-de-la-nuisance']}</td>
+                </tr>
+                <tr>
+                    <td>Durée de la nuisance</td>
+                    <td>${data['duree-de-la-nuisance']}</td>
+                </tr>
+                <tr>
+                    <td>Commentaires</td>
+                    <td>${data['remarque-commentaire']}</td>
+                </tr>
+            </tbody>
+        </table>
+        <a href="https://www.signalair.eu/fr/" target="_blank" class="btn btn-primary" id="card1_button">Faire un signalement</a>
+    `;
+
+    // Ouverture du panneau latéral
+    openSidePanelGeneric();
+}

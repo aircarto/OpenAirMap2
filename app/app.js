@@ -7,7 +7,7 @@ import {
 } from './js/atmoSud_microStations.js';
 import { loadAtmoSudStationsRef } from './js/atmoSud_stationsRef.js';
 import { loadModPM, loadModIcair } from './js/atmoSud_mod.js';
-
+import { loadSignalAir } from './js/SignalAir.js';
 console.log('OpenAirMap V2');
 
 //récupérer la date et l'heure (client side!)
@@ -36,11 +36,120 @@ export const map = L.map('map', {
     // Suppression des limites de déplacement pour permettre un déplacement libre
 });
 
-// Ajout de la couche de tuiles OpenStreetMap
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-}).addTo(map);
+// Définition des différents fonds de carte
+const baseLayers = {
+    'Carte standard': L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        {
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            pane: 'tilePane', // Utilisation du pane par défaut pour le fond de carte
+        }
+    ),
+    Satellite: L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+            attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
+            pane: 'tilePane',
+        }
+    ),
+    Terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution:
+            '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors',
+        pane: 'tilePane',
+    }),
+    Rues: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        pane: 'tilePane',
+    }),
+    'Noir et blanc': L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        {
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            pane: 'tilePane',
+        }
+    ),
+};
+
+// Création d'un groupe pour les fonds de carte
+const baseLayerGroup = L.layerGroup();
+
+// Ajout de la couche par défaut
+baseLayers['Carte standard'].addTo(baseLayerGroup);
+baseLayerGroup.addTo(map);
+
+// Fonction pour changer le fond de carte
+function changeBaseLayer(layerName) {
+    baseLayerGroup.clearLayers();
+    baseLayers[layerName].addTo(baseLayerGroup);
+}
+
+// Création d'un contrôle personnalisé pour les fonds de carte
+const baseLayerControl = L.control({ position: 'bottomleft' });
+
+baseLayerControl.onAdd = function (map) {
+    const div = L.DomUtil.create(
+        'div',
+        'leaflet-control-layers leaflet-control-layers-collapsed'
+    );
+    const toggleButton = L.DomUtil.create(
+        'a',
+        'leaflet-control-layers-toggle',
+        div
+    );
+    toggleButton.href = '#';
+    toggleButton.title = 'Changer le fond de carte';
+    toggleButton.innerHTML = '<i class="bi bi-layers"></i>';
+
+    const container = L.DomUtil.create(
+        'div',
+        'leaflet-control-layers-base',
+        div
+    );
+    container.style.display = 'none';
+
+    // Création des boutons radio pour chaque fond de carte
+    Object.keys(baseLayers).forEach((layerName) => {
+        const label = L.DomUtil.create(
+            'label',
+            'leaflet-control-layers-base',
+            container
+        );
+        const input = L.DomUtil.create('input', '', label);
+        input.type = 'radio';
+        input.name = 'baseLayer';
+        input.value = layerName;
+        if (layerName === 'Carte standard') {
+            input.checked = true;
+        }
+        label.appendChild(document.createTextNode(' ' + layerName));
+
+        // Gestion du changement de fond de carte
+        input.onchange = function () {
+            changeBaseLayer(layerName);
+        };
+    });
+
+    // Gestion du clic sur le bouton de basculement
+    L.DomEvent.on(toggleButton, 'click', function (e) {
+        L.DomEvent.stopPropagation(e);
+        L.DomEvent.preventDefault(e);
+
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            div.classList.remove('leaflet-control-layers-collapsed');
+        } else {
+            container.style.display = 'none';
+            div.classList.add('leaflet-control-layers-collapsed');
+        }
+    });
+
+    return div;
+};
+
+baseLayerControl.addTo(map);
 
 // Variables globales pour les marqueurs et l'interface
 window.globalSelectedMarker = null;
@@ -49,15 +158,33 @@ window.globalSelectedDeviceId = null;
 export const deviceInfo = L.control({ position: 'bottomright' });
 
 //variable pour les layers leaflet
-export const nebuleairLayer = new L.layerGroup().addTo(map);
-export const sensorCommmunityLayer = new L.layerGroup().addTo(map);
-export const purpleair_layer = new L.layerGroup().addTo(map);
-export const atmoMicroLayer = new L.layerGroup().addTo(map);
-export const atmoRefLayer = new L.layerGroup().addTo(map);
-export const modelisationPMAtmoSud_layer = new L.layerGroup().addTo(map);
-export const modelisationICAIRAtmoSud_layer = new L.layerGroup().addTo(map);
-export const signalair_layer = new L.layerGroup().addTo(map);
-export const mobileair_layer = new L.layerGroup().addTo(map);
+export const nebuleairLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+    map
+);
+export const sensorCommmunityLayer = new L.layerGroup({
+    pane: 'overlayPane',
+}).addTo(map);
+export const purpleair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+    map
+);
+export const atmoMicroLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+    map
+);
+export const atmoRefLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+    map
+);
+export const modelisationPMAtmoSud_layer = new L.layerGroup({
+    pane: 'overlayPane',
+}).addTo(map);
+export const modelisationICAIRAtmoSud_layer = new L.layerGroup({
+    pane: 'overlayPane',
+}).addTo(map);
+export const signalair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+    map
+);
+export const mobileair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+    map
+);
 
 // Rendre la couche atmoRefLayer disponible globalement
 window.atmoRefLayer = atmoRefLayer;
@@ -1131,6 +1258,23 @@ function loadSource(source) {
             loadAtmoSudStationsRef();
             break;
         case 'mod_pm':
+            // Désactiver ICAIR'H si actif
+            if (
+                isValueInObject(
+                    getArrayFromLocalStorage(sources_local),
+                    'icairh'
+                )
+            ) {
+                removeItemFromLocalStorageArray(sources_local, 'icairh');
+                clearLayer('icairh');
+                // Mettre à jour l'affichage du bouton ICAIR'H
+                const icairhButton = document.querySelector(
+                    'button[data-source="icairh"]'
+                );
+                if (icairhButton) {
+                    icairhButton.classList.remove('active');
+                }
+            }
             // Récupérer la mesure sélectionnée et la convertir en majuscules
             const mesure =
                 getArrayFromLocalStorage(mesuresLocal)[0].toUpperCase();
@@ -1139,6 +1283,23 @@ function loadSource(source) {
             loadModPM(compoundUpper);
             break;
         case 'icairh':
+            // Désactiver mod_pm si actif
+            if (
+                isValueInObject(
+                    getArrayFromLocalStorage(sources_local),
+                    'mod_pm'
+                )
+            ) {
+                removeItemFromLocalStorageArray(sources_local, 'mod_pm');
+                clearLayer('mod_pm');
+                // Mettre à jour l'affichage du bouton mod_pm
+                const modPmButton = document.querySelector(
+                    'button[data-source="mod_pm"]'
+                );
+                if (modPmButton) {
+                    modPmButton.classList.remove('active');
+                }
+            }
             loadModIcair();
             break;
         case 'vents':

@@ -48,6 +48,12 @@ export function loadModPM(compoundUpper) {
     );
     console.log('Polluant sélectionné:', compoundUpper);
 
+    // Désactiver la couche ICAIR'H si elle est active
+    if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
+        modelisationICAIRAtmoSud_layer.clearLayers();
+        console.log("Couche ICAIR'H désactivée");
+    }
+
     // Nettoyage de la couche existante
     modelisationPMAtmoSud_layer.clearLayers();
     console.log('Couche nettoyée');
@@ -74,7 +80,7 @@ export function loadModPM(compoundUpper) {
                     'https://geoservices.atmosud.org/geoserver/azurjour/wms';
             } else {
                 // Mode horaire ou inférieur
-                string_layer = 'paca_pm2_5_h01';
+                string_layer = 'paca_pm2_5_h24';
                 wmsUrl =
                     'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
             }
@@ -87,6 +93,8 @@ export function loadModPM(compoundUpper) {
                 version: '1.1.1',
                 styles: '',
                 noWrap: true,
+                pane: 'overlayPane',
+                zIndex: 1000,
             };
             const pm25Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
             console.log("Couche PM2.5 créée, tentative d'ajout à la carte");
@@ -101,7 +109,7 @@ export function loadModPM(compoundUpper) {
                     'https://geoservices.atmosud.org/geoserver/azurjour/wms';
             } else {
                 // Mode horaire ou inférieur
-                string_layer = 'paca_pm10_h01';
+                string_layer = 'paca_pm10_h24';
                 wmsUrl =
                     'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
             }
@@ -114,6 +122,8 @@ export function loadModPM(compoundUpper) {
                 version: '1.1.1',
                 styles: '',
                 noWrap: true,
+                pane: 'overlayPane',
+                zIndex: 1000,
             };
             const pm10Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
             console.log("Couche PM10 créée, tentative d'ajout à la carte");
@@ -152,7 +162,28 @@ export function loadModIcair() {
     const dateStr = today.toISOString().split('T')[0];
     console.log('Date utilisée:', dateStr);
     const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))[0];
+
+    // Désactiver la couche PM si elle est active
+    if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
+        modelisationPMAtmoSud_layer.clearLayers();
+        console.log('Couche PM désactivée');
+    }
+
     if (pasDeTemps === 'd') {
+        new L.tileLayer.wms(
+            'https://geoservices.atmosud.org/geoserver/azurjour/wms',
+            {
+                version: '1.1.1',
+                layers: `paca-multi-${new Date().toISOString().split('T')[0]}`,
+                format: 'image/png',
+                crs: L.CRS.EPSG4326,
+                transparent: true,
+                opacity: 0.6,
+                pane: 'overlayPane',
+                zIndex: 1000,
+            }
+        ).addTo(modelisationICAIRAtmoSud_layer);
+    } else {
         new L.tileLayer.wms(
             'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows',
             {
@@ -162,18 +193,8 @@ export function loadModIcair() {
                 crs: L.CRS.EPSG4326,
                 transparent: true,
                 opacity: 0.6,
-            }
-        ).addTo(modelisationICAIRAtmoSud_layer);
-    } else {
-        new L.tileLayer.wms(
-            'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows',
-            {
-                version: '1.1.1',
-                layers: 'paca_icairh_h01',
-                format: 'image/png',
-                crs: L.CRS.EPSG4326,
-                transparent: true,
-                opacity: 0.6,
+                pane: 'overlayPane',
+                zIndex: 1000,
             }
         ).addTo(modelisationICAIRAtmoSud_layer);
     }
