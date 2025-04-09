@@ -50,7 +50,7 @@ const sources = {
     Mod_horaire_pm: {
         name: 'Modélisation horaire PM AtmoSud',
         code: 'mod_pm',
-        activated: false,
+        activated: true,
     },
     Mod_horaire_icairh: {
         name: 'Modélisation horaire ICAIRh AtmoSud',

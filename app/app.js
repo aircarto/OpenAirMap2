@@ -6,6 +6,7 @@ import {
     openSidePanelMicroStation,
 } from './js/atmoSud_microStations.js';
 import { loadAtmoSudStationsRef } from './js/atmoSud_stationsRef.js';
+import { loadModPM, loadModIcair } from './js/atmoSud_mod.js';
 
 console.log('OpenAirMap V2');
 
@@ -116,7 +117,7 @@ export const sources = {
         code: 'atmo_ref',
         activated: true,
     },
-    mod_pm: { name: 'Modélisation PM', code: 'mod_pm', activated: false },
+    mod_pm: { name: 'Modélisation PM', code: 'mod_pm', activated: true },
     icairh: { name: "ICAIR'H", code: 'icairh', activated: false },
     signalair: { name: 'SignalAir', code: 'signalair', activated: false },
     mobileair: { name: 'MobileAir', code: 'mobileair', activated: false },
@@ -1130,10 +1131,15 @@ function loadSource(source) {
             loadAtmoSudStationsRef();
             break;
         case 'mod_pm':
-            loadModPM();
+            // Récupérer la mesure sélectionnée et la convertir en majuscules
+            const mesure =
+                getArrayFromLocalStorage(mesuresLocal)[0].toUpperCase();
+            // Convertir pm25 en PM25 pour la compatibilité
+            const compoundUpper = mesure === 'PM25' ? 'PM2.5' : mesure;
+            loadModPM(compoundUpper);
             break;
         case 'icairh':
-            loadicairh();
+            loadModIcair();
             break;
         case 'vents':
             loadVents();
@@ -1154,7 +1160,7 @@ function loadSource(source) {
 
 //Enlever les layers lorsque l'on change de pas de temps ou de source
 function clearLayer(source) {
-    console.log('Clearing layer  for ' + source);
+    console.log('Clearing layer for ' + source);
     switch (source) {
         case 'nebuleair':
             nebuleairLayer.clearLayers();
@@ -1171,20 +1177,11 @@ function clearLayer(source) {
         case 'atmo_ref':
             console.log('Nettoyage de la couche atmoRefLayer...');
             atmoRefLayer.clearLayers();
-            // Réinitialiser la couche
-            if (!window.atmoRefLayer) {
-                console.log('Création de la couche atmoRefLayer...');
-                window.atmoRefLayer = L.layerGroup();
-                console.log('Couche atmoRefLayer créée');
-            }
-            // S'assurer que la couche est sur la carte
-            if (!map.hasLayer(window.atmoRefLayer)) {
-                console.log('Ajout de la couche atmoRefLayer à la carte...');
-                map.addLayer(window.atmoRefLayer);
-                console.log('Couche atmoRefLayer ajoutée à la carte');
-            }
             break;
         case 'mod_pm':
+            console.log(
+                'Nettoyage de la couche modelisationPMAtmoSud_layer...'
+            );
             modelisationPMAtmoSud_layer.clearLayers();
             break;
         case 'icairh':
