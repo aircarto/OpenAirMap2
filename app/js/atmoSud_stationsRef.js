@@ -997,14 +997,6 @@ export function retreiveHistoriqueDataStationRef(
                 document.getElementById('chartdiv_sensor').innerHTML = '';
 
                 am5.ready(function () {
-                    // Vérification du conteneur
-                    const chartContainer =
-                        document.getElementById('chartdiv_sensor');
-
-                    // Ajustement de la taille du conteneur
-                    chartContainer.style.height = '600px';
-                    chartContainer.style.minHeight = '600px';
-
                     // Création du root element
                     amchart_root = am5.Root.new('chartdiv_sensor');
 
