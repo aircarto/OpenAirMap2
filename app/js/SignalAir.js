@@ -12,7 +12,7 @@ Par défaut on affiche les trois derniers jours
 
 */
 
-import { map, signalair_layer } from '../app.js';
+import { map, signalair_layer, openSidePanelGeneric } from '../app.js';
 import { isSourceActive } from './dataSourceManager.js';
 
 // Configuration des types de signalements
@@ -40,8 +40,10 @@ const signalair_json = {
 
 /**
  * Charge les données SignalAir sur la carte
+ * @param {string} [startDate] - Date de début au format YYYY-MM-DD
+ * @param {string} [endDate] - Date de fin au format YYYY-MM-DD
  */
-export function loadSignalAir() {
+export function loadSignalAir(startDate, endDate) {
     console.log(
         '%cSignalAir',
         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
@@ -50,15 +52,17 @@ export function loadSignalAir() {
     // Nettoyage de la couche existante
     signalair_layer.clearLayers();
 
-    // Calcul des dates (30 jours glissants)
-    const now = new Date();
-    const dateEnd = now.toISOString().split('T')[0];
-    const dateStart = new Date(now.setDate(now.getDate() - 30))
-        .toISOString()
-        .split('T')[0];
+    // Calcul des dates si non fournies (30 jours glissants)
+    if (!startDate || !endDate) {
+        const now = new Date();
+        endDate = now.toISOString().split('T')[0];
+        startDate = new Date(now.setDate(now.getDate() - 30))
+            .toISOString()
+            .split('T')[0];
+    }
 
     console.log(
-        `[SignalAir] Période de recherche: du ${dateStart} au ${dateEnd}`
+        `[SignalAir] Période de recherche: du ${startDate} au ${endDate}`
     );
 
     // Boucle sur chaque type de signalement
@@ -72,10 +76,10 @@ export function loadSignalAir() {
                 `[SignalAir] Vérification de l'URL pour le type visuel`
             );
             // On essaie avec une période plus longue pour voir si c'est un problème de données
-            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/2025-01-01/${dateEnd}`;
+            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/2025-01-01/${endDate}`;
             console.log(`[SignalAir] URL modifiée pour visuel: ${full_url}`);
         } else {
-            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/${dateStart}/${dateEnd}`;
+            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/${startDate}/${endDate}`;
             console.log(`[SignalAir] URL pour ${code}: ${full_url}`);
         }
 
@@ -210,7 +214,7 @@ export function loadSignalAir() {
                             console.log(
                                 `[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`
                             );
-                            openSidePanel_signalair(feature.properties, code);
+                            openSidePanel_signalair(feature.properties, key);
                         })
                         .addTo(signalair_layer);
                 });
@@ -231,6 +235,101 @@ export function loadSignalAir() {
 }
 
 /**
+ * Crée et injecte la div de sélection de dates
+ */
+function createDateRangeSelector() {
+    const dateRangeDiv = document.createElement('div');
+    dateRangeDiv.className = 'signalair-date-range';
+    dateRangeDiv.innerHTML = `
+        <h4>Période de recherche</h4>
+        <div class="date-range-inputs">
+            <div class="date-input-group">
+                <label for="signalair-date-start">Date de début</label>
+                <input type="date" id="signalair-date-start" class="form-control">
+            </div>
+            <div class="date-input-group">
+                <label for="signalair-date-end">Date de fin</label>
+                <input type="date" id="signalair-date-end" class="form-control">
+            </div>
+            <div class="date-range-actions">
+                <button class="btn-reset" id="signalair-reset-dates">Réinitialiser</button>
+                <button class="btn-apply" id="signalair-apply-dates">Appliquer</button>
+            </div>
+        </div>
+    `;
+
+    // Insérer la div au début du panneau latéral
+    const sidePanel = document.getElementById('side-panel');
+    if (sidePanel) {
+        sidePanel.insertBefore(dateRangeDiv, sidePanel.firstChild);
+    } else {
+        console.error("Le panneau latéral (side-panel) n'a pas été trouvé");
+    }
+
+    // Initialiser les dates par défaut (30 derniers jours)
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    document.getElementById('signalair-date-start').value = startDate
+        .toISOString()
+        .split('T')[0];
+    document.getElementById('signalair-date-end').value = endDate
+        .toISOString()
+        .split('T')[0];
+
+    // Ajouter les écouteurs d'événements
+    document
+        .getElementById('signalair-reset-dates')
+        .addEventListener('click', resetSignalAirDates);
+    document
+        .getElementById('signalair-apply-dates')
+        .addEventListener('click', applySignalAirDates);
+}
+
+/**
+ * Réinitialise les dates aux valeurs par défaut
+ */
+function resetSignalAirDates() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    document.getElementById('signalair-date-start').value = startDate
+        .toISOString()
+        .split('T')[0];
+    document.getElementById('signalair-date-end').value = endDate
+        .toISOString()
+        .split('T')[0];
+
+    loadSignalAir();
+}
+
+/**
+ * Applique les dates sélectionnées et recharge les données
+ */
+function applySignalAirDates() {
+    const startDate = document.getElementById('signalair-date-start').value;
+    const endDate = document.getElementById('signalair-date-end').value;
+
+    if (!startDate || !endDate) {
+        alert('Veuillez sélectionner une date de début et une date de fin');
+        return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+        alert('La date de début doit être antérieure à la date de fin');
+        return;
+    }
+
+    loadSignalAir(startDate, endDate);
+}
+
+// Exporter les fonctions pour qu'elles soient accessibles globalement
+window.resetSignalAirDates = resetSignalAirDates;
+window.applySignalAirDates = applySignalAirDates;
+
+/**
  * Ouvre le panneau latéral avec les informations du signalement
  * @param {Object} data - Les données du signalement
  * @param {string} nuisance_type - Le type de nuisance
@@ -238,36 +337,70 @@ export function loadSignalAir() {
 export function openSidePanel_signalair(data, nuisance_type) {
     console.log('Ouverture du panneau latéral pour SignalAir');
 
+    // Masquer le conteneur du graphique
+    document.getElementById('card3').style.display = 'none';
+
     // Mise à jour du contenu du panneau
     card1_img.src = 'img/signalair/logoSignalAir.png';
-    card1_title.innerHTML = 'Nuisance: ' + nuisance_type;
+    card1_title.innerHTML = `<h3 class="mb-3">Signalement de ${nuisance_type}</h3>`;
     card1_text.innerHTML = `
-        Ville: ${data.city} </br>
-        <table class="table">
-            <tbody>
-                <tr>
-                    <td>Niveau de gêne</td>
-                    <td>${data['niveau-de-gene']}</td>
-                </tr>
-                <tr>
-                    <td>Symptômes déclarés</td>
-                    <td>${data['si-oui-quels-symptomes']}</td>
-                </tr>
-                <tr>
-                    <td>Origine de la nuisance</td>
-                    <td>${data['origine-de-la-nuisance']} ${data['description-de-lorigine-de-la-nuisance']}</td>
-                </tr>
-                <tr>
-                    <td>Durée de la nuisance</td>
-                    <td>${data['duree-de-la-nuisance']}</td>
-                </tr>
-                <tr>
-                    <td>Commentaires</td>
-                    <td>${data['remarque-commentaire']}</td>
-                </tr>
-            </tbody>
-        </table>
-        <a href="https://www.signalair.eu/fr/" target="_blank" class="btn btn-primary" id="card1_button">Faire un signalement</a>
+        <div class="signalair-info-container">
+            <div class="info-card">
+                <h4>Localisation</h4>
+                <p class="info-value">${data.city || 'Non spécifiée'}</p>
+            </div>
+            
+            <div class="info-card">
+                <h4>Niveau de gêne</h4>
+                <p class="info-value">${data['niveau-de-gene'] || 'Non spécifié'}</p>
+            </div>
+            
+            <div class="info-card">
+                <h4>Symptômes déclarés</h4>
+                <p class="info-value">${data['si-oui-quels-symptomes'] || 'Aucun symptôme déclaré'}</p>
+            </div>
+            
+            <div class="info-card">
+                <h4>Origine de la nuisance</h4>
+                <p class="info-value">${data['origine-de-la-nuisance'] || 'Non spécifiée'}</p>
+                ${data['description-de-lorigine-de-la-nuisance'] ? `<p class="info-details">${data['description-de-lorigine-de-la-nuisance']}</p>` : ''}
+            </div>
+            
+            <div class="info-card">
+                <h4>Durée de la nuisance</h4>
+                <p class="info-value">${data['duree-de-la-nuisance'] || 'Non spécifiée'}</p>
+            </div>
+            
+            ${
+                data['remarque-commentaire']
+                    ? `
+            <div class="info-card">
+                <h4>Commentaires</h4>
+                <p class="info-value">${data['remarque-commentaire']}</p>
+            </div>
+            `
+                    : ''
+            }
+        </div>
+    `;
+
+    // Créer et injecter le sélecteur de dates
+    createDateRangeSelector();
+
+    // Mise à jour de la deuxième carte avec la description de Signal'Air
+    card2_title.innerHTML = '<h3 class="mb-3">À propos de Signal\'Air</h3>';
+    card2_text.innerHTML = `
+        <div class="signalair-description">
+            <p>Signal'Air est une plateforme collaborative qui permet aux citoyens de signaler les nuisances environnementales qu'ils rencontrent dans leur quotidien.</p>
+            
+            <p>Que ce soit des odeurs désagréables, des bruits excessifs, des problèmes visuels ou des brûlages illégaux, Signal'Air offre un moyen simple et efficace de partager ces informations avec les autorités compétentes.</p>
+            
+            <p>Votre participation contribue à une meilleure compréhension des problèmes environnementaux locaux et aide à mettre en place des solutions adaptées.</p>
+            
+            <div class="action-buttons">
+                <a href="https://www.signalair.eu/fr/" target="_blank" class="btn btn-primary btn-lg">Faire un signalement</a>
+            </div>
+        </div>
     `;
 
     // Ouverture du panneau latéral
