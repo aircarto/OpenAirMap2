@@ -1,4 +1,4 @@
-// Import des modules
+// Import des modules nécessaires pour l'application
 import { config } from './js/config.js';
 import { loadNebuleAir, openSidePanelNebuleAir } from './js/NebuleAir.js';
 import {
@@ -8,35 +8,39 @@ import {
 import { loadAtmoSudStationsRef } from './js/atmoSud_stationsRef.js';
 import { loadModPM, loadModIcair } from './js/atmoSud_mod.js';
 import { loadSignalAir } from './js/SignalAir.js';
+
+// Affichage de la version de l'application dans la console
 console.log('OpenAirMap V2');
 
-//récupérer la date et l'heure (client side!)
+// Récupération de la date et l'heure actuelle côté client
 var now = new Date();
 var year = now.getFullYear();
-var month = (now.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
+var month = (now.getMonth() + 1).toString().padStart(2, '0'); // Les mois commencent à 0
 var day = now.getDate().toString().padStart(2, '0');
 
 var hours = now.getHours().toString().padStart(2, '0');
 var minutes = now.getMinutes().toString().padStart(2, '0');
 var seconds = now.getSeconds().toString().padStart(2, '0');
 
+// Formatage de la date et de l'heure
 var dateYMD = year + '-' + month + '-' + day;
 var formattedTime = hours + ':' + minutes + ':' + seconds;
 
+// Affichage de la date et de l'heure dans la console
 console.log('Date: ' + dateYMD);
 console.log('Time: ' + formattedTime);
 
-// Initialisation de la carte Leaflet
+// Initialisation de la carte Leaflet avec les paramètres de configuration
 export const map = L.map('map', {
-    center: config.coordsCenter,
-    zoom: config.zoomLevel,
-    minZoom: config.minZoom,
-    maxZoom: config.maxZoom,
-    renderer: L.canvas(),
+    center: config.coordsCenter, // Centre de la carte défini dans config.js
+    zoom: config.zoomLevel, // Niveau de zoom initial
+    minZoom: config.minZoom, // Zoom minimum autorisé
+    maxZoom: config.maxZoom, // Zoom maximum autorisé
+    renderer: L.canvas(), // Utilisation du moteur de rendu Canvas
     // Suppression des limites de déplacement pour permettre un déplacement libre
 });
 
-// Définition des différents fonds de carte
+// Définition des différents fonds de carte disponibles
 const baseLayers = {
     'Carte standard': L.tileLayer(
         'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
@@ -76,7 +80,7 @@ const baseLayers = {
 // Création d'un groupe pour les fonds de carte
 const baseLayerGroup = L.layerGroup();
 
-// Ajout de la couche par défaut
+// Ajout de la couche par défaut (Carte standard)
 baseLayers['Carte standard'].addTo(baseLayerGroup);
 baseLayerGroup.addTo(map);
 
@@ -151,112 +155,114 @@ baseLayerControl.onAdd = function (map) {
 
 baseLayerControl.addTo(map);
 
-// Variables globales pour les marqueurs et l'interface
-window.globalSelectedMarker = null;
-window.globalSelectedText = null;
-window.globalSelectedDeviceId = null;
-export const deviceInfo = L.control({ position: 'bottomright' });
+// Variables globales pour la gestion des marqueurs et de l'interface
+window.globalSelectedMarker = null; // Stocke le marqueur actuellement sélectionné
+window.globalSelectedText = null; // Stocke le texte associé au marqueur sélectionné
+window.globalSelectedDeviceId = null; // Stocke l'ID de l'appareil sélectionné
+export const deviceInfo = L.control({ position: 'bottomright' }); // Contrôle pour afficher les informations de l'appareil
 
-//variable pour les layers leaflet
+// Création des groupes de couches pour les différentes sources de données
 export const nebuleairLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
-);
+); // Couche pour les capteurs NebuleAir
 export const sensorCommmunityLayer = new L.layerGroup({
     pane: 'overlayPane',
-}).addTo(map);
+}).addTo(map); // Couche pour les capteurs Sensor.Community
 export const purpleair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
-);
+); // Couche pour les capteurs PurpleAir
 export const atmoMicroLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
-);
+); // Couche pour les micro-stations AtmoSud
 export const atmoRefLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
-);
+); // Couche pour les stations de référence AtmoSud
 export const modelisationPMAtmoSud_layer = new L.layerGroup({
     pane: 'overlayPane',
-}).addTo(map);
+}).addTo(map); // Couche pour la modélisation PM AtmoSud
 export const modelisationICAIRAtmoSud_layer = new L.layerGroup({
     pane: 'overlayPane',
-}).addTo(map);
+}).addTo(map); // Couche pour la modélisation ICAIR AtmoSud
 export const signalair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
-);
+); // Couche pour les capteurs SignalAir
 export const mobileair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
-);
+); // Couche pour les capteurs MobileAir
 
-// Rendre la couche atmoRefLayer disponible globalement
+// Rendre la couche atmoRefLayer disponible globalement pour d'autres modules
 window.atmoRefLayer = atmoRefLayer;
 
-// Configuration des seuils pour les différents polluants
+// Configuration des seuils pour les particules fines PM1 et PM2.5
 export const seuils_PM1_PM25 = {
-    bon: { code: 'bon', min: 0, max: 10 },
-    moyen: { code: 'moyen', min: 11, max: 20 },
-    degrade: { code: 'degrade', min: 21, max: 25 },
-    mauvais: { code: 'mauvais', min: 26, max: 50 },
-    tres_mauvais: { code: 'tres_mauvais', min: 51, max: 75 },
-    extr_mauvais: { code: 'extr_mauvais', min: 76, max: 999 },
+    bon: { code: 'bon', min: 0, max: 10 }, // Qualité de l'air bonne (0-10 µg/m³)
+    moyen: { code: 'moyen', min: 11, max: 20 }, // Qualité de l'air moyenne (11-20 µg/m³)
+    degrade: { code: 'degrade', min: 21, max: 25 }, // Qualité de l'air dégradée (21-25 µg/m³)
+    mauvais: { code: 'mauvais', min: 26, max: 50 }, // Qualité de l'air mauvaise (26-50 µg/m³)
+    tres_mauvais: { code: 'tres_mauvais', min: 51, max: 75 }, // Qualité de l'air très mauvaise (51-75 µg/m³)
+    extr_mauvais: { code: 'extr_mauvais', min: 76, max: 999 }, // Qualité de l'air extrêmement mauvaise (>75 µg/m³)
 };
 
+// Configuration des seuils pour les particules fines PM10
 export const seuils_PM10 = {
-    bon: { code: 'bon', min: 0, max: 20 },
-    moyen: { code: 'moyen', min: 21, max: 40 },
-    degrade: { code: 'degrade', min: 41, max: 50 },
-    mauvais: { code: 'mauvais', min: 51, max: 100 },
-    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 },
-    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 999 },
+    bon: { code: 'bon', min: 0, max: 20 }, // Qualité de l'air bonne (0-20 µg/m³)
+    moyen: { code: 'moyen', min: 21, max: 40 }, // Qualité de l'air moyenne (21-40 µg/m³)
+    degrade: { code: 'degrade', min: 41, max: 50 }, // Qualité de l'air dégradée (41-50 µg/m³)
+    mauvais: { code: 'mauvais', min: 51, max: 100 }, // Qualité de l'air mauvaise (51-100 µg/m³)
+    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 }, // Qualité de l'air très mauvaise (101-150 µg/m³)
+    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 999 }, // Qualité de l'air extrêmement mauvaise (>150 µg/m³)
 };
 
+// Configuration des seuils pour le dioxyde d'azote (NO2) sur 24h
 export const seuils_NO2_24h = {
-    bon: { code: 'bon', min: 0, max: 40 },
-    moyen: { code: 'moyen', min: 41, max: 90 },
-    degrade: { code: 'degrade', min: 91, max: 120 },
-    mauvais: { code: 'mauvais', min: 121, max: 230 },
-    tres_mauvais: { code: 'tres_mauvais', min: 231, max: 340 },
-    extr_mauvais: { code: 'extr_mauvais', min: 341, max: 999 },
+    bon: { code: 'bon', min: 0, max: 40 }, // Qualité de l'air bonne (0-40 µg/m³)
+    moyen: { code: 'moyen', min: 41, max: 90 }, // Qualité de l'air moyenne (41-90 µg/m³)
+    degrade: { code: 'degrade', min: 91, max: 120 }, // Qualité de l'air dégradée (91-120 µg/m³)
+    mauvais: { code: 'mauvais', min: 121, max: 230 }, // Qualité de l'air mauvaise (121-230 µg/m³)
+    tres_mauvais: { code: 'tres_mauvais', min: 231, max: 340 }, // Qualité de l'air très mauvaise (231-340 µg/m³)
+    extr_mauvais: { code: 'extr_mauvais', min: 341, max: 999 }, // Qualité de l'air extrêmement mauvaise (>340 µg/m³)
 };
 
-// Configuration des mesures disponibles
+// Configuration des mesures de polluants disponibles dans l'application
 export const mesures = {
-    pm1: { name: 'PM1', code: 'pm1', activated: true },
-    pm25: { name: 'PM2.5', code: 'pm25', activated: false },
-    pm10: { name: 'PM10', code: 'pm10', activated: false },
-    no2: { name: 'NO2', code: 'no2', activated: false },
+    pm1: { name: 'PM1', code: 'pm1', activated: true }, // Particules fines de diamètre inférieur à 1 µm
+    pm25: { name: 'PM2.5', code: 'pm25', activated: false }, // Particules fines de diamètre inférieur à 2.5 µm
+    pm10: { name: 'PM10', code: 'pm10', activated: false }, // Particules fines de diamètre inférieur à 10 µm
+    no2: { name: 'NO2', code: 'no2', activated: false }, // Dioxyde d'azote
 };
 
-// Configuration des sources de données
+// Configuration des différentes sources de données disponibles
 export const sources = {
-    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true },
+    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true }, // Capteurs citoyens NebuleAir
     sensor_community: {
         name: 'Sensor.Community',
         code: 'sensor_commmunity',
         activated: false,
-    },
-    purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false },
+    }, // Réseau de capteurs Sensor.Community
+    purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false }, // Capteurs PurpleAir
     atmo_micro: {
         name: 'AtmoSud µStations',
         code: 'atmo_micro',
         activated: true,
-    },
+    }, // Micro-stations AtmoSud
     atmo_ref: {
         name: 'AtmoSud Stations Ref',
         code: 'atmo_ref',
         activated: true,
-    },
-    mod_pm: { name: 'Modélisation PM', code: 'mod_pm', activated: true },
-    icairh: { name: "ICAIR'H", code: 'icairh', activated: false },
-    signalair: { name: 'SignalAir', code: 'signalair', activated: false },
-    mobileair: { name: 'MobileAir', code: 'mobileair', activated: false },
+    }, // Stations de référence AtmoSud
+    mod_pm: { name: 'Modélisation PM', code: 'mod_pm', activated: true }, // Modélisation des particules fines
+    icairh: { name: "ICAIR'H", code: 'icairh', activated: false }, // Modélisation ICAIR'H
+    signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir
+    mobileair: { name: 'MobileAir', code: 'mobileair', activated: false }, // Capteurs mobiles
 };
 
-// Configuration des pas de temps
+// Configuration des pas de temps disponibles pour l'affichage des données
 export const pas_de_temps = {
-    instantane: { name: 'Instantané', code: 'instantane', activated: false },
-    deux_min: { name: '2 minutes', code: '2min', activated: true },
-    quart_heure: { name: '15 minutes', code: 'qh', activated: false },
-    heure: { name: 'Heure', code: 'h', activated: false },
-    jour: { name: 'Jour', code: 'd', activated: false },
+    instantane: { name: 'Instantané', code: 'instantane', activated: false }, // Valeurs instantanées
+    deux_min: { name: '2 minutes', code: '2min', activated: true }, // Moyenne sur 2 minutes
+    quart_heure: { name: '15 minutes', code: 'qh', activated: false }, // Moyenne sur 15 minutes
+    heure: { name: 'Heure', code: 'h', activated: false }, // Moyenne horaire
+    jour: { name: 'Jour', code: 'd', activated: false }, // Moyenne journalière
 };
 
 //Amcharts chart
@@ -282,45 +288,46 @@ export var dropdown_pas_de_temps = document.getElementById(
     'dropdown_pas_de_temps'
 );
 
-// Export des constantes de stockage local
-export const mesuresLocal = 'mesuresLocal';
-export const sources_local = 'sources_local';
-export const pasDeTempsLocal = 'pasDeTempsLocal';
+// Constantes pour les clés de stockage local
+export const mesuresLocal = 'mesuresLocal'; // Clé pour stocker les mesures sélectionnées
+export const sources_local = 'sources_local'; // Clé pour stocker les sources sélectionnées
+export const pasDeTempsLocal = 'pasDeTempsLocal'; // Clé pour stocker le pas de temps sélectionné
 
-// Export des fonctions de stockage local
+// Fonction pour sauvegarder un tableau dans le stockage local
 export function saveArrayToLocalStorage(key, array) {
-    localStorage.setItem(key, JSON.stringify(array));
+    localStorage.setItem(key, JSON.stringify(array)); // Convertit le tableau en JSON et le stocke
 }
 
+// Fonction pour récupérer un tableau depuis le stockage local
 export function getArrayFromLocalStorage(key) {
-    const storedArray = localStorage.getItem(key);
-    return storedArray ? JSON.parse(storedArray) : [];
+    const storedArray = localStorage.getItem(key); // Récupère la chaîne JSON
+    return storedArray ? JSON.parse(storedArray) : []; // Convertit en tableau ou retourne un tableau vide
 }
 
+// Fonction pour ajouter un élément à un tableau dans le stockage local
 export function addItemToLocalStorageArray(key, item) {
-    const array = getArrayFromLocalStorage(key);
-    array.push(item);
-    saveArrayToLocalStorage(key, array);
+    const array = getArrayFromLocalStorage(key); // Récupère le tableau existant
+    array.push(item); // Ajoute le nouvel élément
+    saveArrayToLocalStorage(key, array); // Sauvegarde le tableau mis à jour
 }
 
+// Fonction pour supprimer un élément d'un tableau dans le stockage local
 export function removeItemFromLocalStorageArray(key, item) {
-    const array = getArrayFromLocalStorage(key);
-    const index = array.indexOf(item);
+    const array = getArrayFromLocalStorage(key); // Récupère le tableau existant
+    const index = array.indexOf(item); // Trouve l'index de l'élément à supprimer
     if (index > -1) {
-        array.splice(index, 1);
-        saveArrayToLocalStorage(key, array);
+        array.splice(index, 1); // Supprime l'élément s'il existe
+        saveArrayToLocalStorage(key, array); // Sauvegarde le tableau mis à jour
     }
 }
 
-// fonction permettant de mettre en forme les lieux
+// Fonction pour formater les noms de lieux
 export function formatString(str) {
-    // On remplace les underscores par des espaces
+    // Remplacement des underscores par des espaces
     let formattedStr = str.replace(/_/g, ' ');
 
-    // les consonnes
+    // Définition des consonnes et voyelles pour le traitement
     const consonants = 'bcdfghjklmnpqrstvwxz';
-
-    // les voyelles en majuscules
     const uppercaseVowels = 'AEIOUYÀÁÂÄÆÈÉÊËÌÍÎÏÒÓÔÖŒÙÚÛÜÝ';
 
     // Ajout d'une apostrophe entre une consonne et une voyelle en majuscule
@@ -335,41 +342,44 @@ export function formatString(str) {
     // Ajout d'une apostrophe entre une consonne et une voyelle en minuscule si pas d'apostrophe précédemment ajoutée
     formattedStr = formattedStr.replace(/([^'\s-])([A-Z])/g, '$1 $2');
 
+    // Suppression des espaces superflus en début et fin de chaîne
     formattedStr.trim();
     return formattedStr;
 }
 
-// Fonction pour formater les noms du polluants
+// Fonction pour formater les noms des polluants avec les indices en HTML
 export function formatPollutantName(name) {
+    // Vérification de la validité de l'entrée
     if (!name || typeof name !== 'string') {
         console.warn('formatPollutantName received non-string value:', name);
         return String(name || '');
     }
 
+    // Remplacement des formules chimiques par leur version HTML avec indices
     return name
-        .replace(/NO2/g, 'NO<sub>2</sub>')
-        .replace(/NOx/g, 'NO<sub>x</sub>')
-        .replace(/SO2/g, 'SO<sub>2</sub>')
-        .replace(/O3/g, 'O<sub>3</sub>')
-        .replace(/CO2/g, 'CO<sub>2</sub>')
-        .replace(/H2S/g, 'H<sub>2</sub>S')
-        .replace(/NH3/g, 'NH<sub>3</sub>');
+        .replace(/NO2/g, 'NO<sub>2</sub>') // Dioxyde d'azote
+        .replace(/NOx/g, 'NO<sub>x</sub>') // Oxydes d'azote
+        .replace(/SO2/g, 'SO<sub>2</sub>') // Dioxyde de soufre
+        .replace(/O3/g, 'O<sub>3</sub>') // Ozone
+        .replace(/CO2/g, 'CO<sub>2</sub>') // Dioxyde de carbone
+        .replace(/H2S/g, 'H<sub>2</sub>S') // Sulfure d'hydrogène
+        .replace(/NH3/g, 'NH<sub>3</sub>'); // Ammoniac
 }
 
 // Fonction pour mettre à jour l'affichage de l'heure en fonction du pas de temps sélectionné
 function updateTimeDisplay() {
-    const now = new Date();
-    const horlogeButton = document.getElementById('button_horloge');
+    const now = new Date(); // Récupération de la date et heure actuelles
+    const horlogeButton = document.getElementById('button_horloge'); // Récupération du bouton horloge
 
-    // Récupère le pas de temps actuellement sélectionné depuis le localStorage
+    // Récupération du pas de temps actuellement sélectionné
     const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
 
-    let displayText = '';
+    let displayText = ''; // Texte à afficher
 
     switch (selectedTimeStep) {
         case 'instantane':
         case '2min':
-            // Affiche l'heure actuelle pour le pas de temps de 2 minutes
+            // Affichage de l'heure actuelle pour le pas de temps de 2 minutes
             displayText = now.toLocaleTimeString('fr-FR', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -377,13 +387,13 @@ function updateTimeDisplay() {
             break;
 
         case 'qh':
-            // Affiche le dernier quart d'heure terminé
+            // Calcul du dernier quart d'heure terminé
             const currentMinutes = now.getMinutes();
             const lastQuarterHour = new Date(now);
 
-            // Trouve le dernier quart d'heure complet
+            // Détermination du dernier quart d'heure complet
             if (currentMinutes < 15) {
-                // Si on est dans le premier quart, retourne au dernier quart de l'heure précédente
+                // Si dans le premier quart, retour au dernier quart de l'heure précédente
                 lastQuarterHour.setHours(
                     lastQuarterHour.getHours() - 1,
                     45,
@@ -391,24 +401,25 @@ function updateTimeDisplay() {
                     0
                 );
             } else if (currentMinutes < 30) {
-                // Entre 15-29 minutes, le dernier quart était 0-15
+                // Entre 15-29 minutes, dernier quart était 0-15
                 lastQuarterHour.setMinutes(0, 0, 0);
             } else if (currentMinutes < 45) {
-                // Entre 30-44 minutes, le dernier quart était 15-30
+                // Entre 30-44 minutes, dernier quart était 15-30
                 lastQuarterHour.setMinutes(15, 0, 0);
             } else {
-                // Entre 45-59 minutes, le dernier quart était 30-45
+                // Entre 45-59 minutes, dernier quart était 30-45
                 lastQuarterHour.setMinutes(30, 0, 0);
             }
 
             const endOfLastQuarter = new Date(lastQuarterHour);
             endOfLastQuarter.setMinutes(lastQuarterHour.getMinutes() + 15);
 
+            // Formatage de l'affichage avec l'intervalle de temps
             displayText = `${lastQuarterHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${endOfLastQuarter.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
             break;
 
         case 'h':
-            // Affiche la dernière heure complète
+            // Affichage de la dernière heure complète
             const lastHour = new Date(now);
             lastHour.setHours(lastHour.getHours() - 1, 0, 0, 0);
             const nextHour = new Date(lastHour);
@@ -418,11 +429,10 @@ function updateTimeDisplay() {
             break;
 
         case 'd':
-            // Affiche uniquement la date d'hier
+            // Affichage de la date d'hier
             const yesterday = new Date(now);
             yesterday.setDate(yesterday.getDate() - 1);
 
-            // Formate avec juste JJ/MM
             displayText = yesterday.toLocaleDateString('fr-FR', {
                 day: '2-digit',
                 month: '2-digit',
@@ -430,25 +440,27 @@ function updateTimeDisplay() {
             break;
 
         default:
+            // Par défaut, affichage de l'heure actuelle
             displayText = now.toLocaleTimeString('fr-FR', {
                 hour: '2-digit',
                 minute: '2-digit',
             });
     }
 
-    horlogeButton.innerHTML = displayText;
+    horlogeButton.innerHTML = displayText; // Mise à jour de l'affichage
 }
-// Fonction pour actualiser automatiquement les données en fonction du pas de temps sélectionné
+
+// Fonction pour configurer le rafraîchissement automatique des données
 function setupAutoRefresh() {
-    // Efface tout intervalle de rafraîchissement existant
+    // Nettoyage de tout intervalle de rafraîchissement existant
     if (window.refreshInterval) {
         clearInterval(window.refreshInterval);
     }
 
-    // Récupère le pas de temps actuel depuis le localStorage
+    // Récupération du pas de temps actuel
     const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
 
-    // Détermine l'intervalle de rafraîchissement en millisecondes selon le pas de temps
+    // Détermination de l'intervalle de rafraîchissement en millisecondes
     let refreshIntervalMs;
     switch (selectedTimeStep) {
         case 'instantane':
@@ -472,24 +484,18 @@ function setupAutoRefresh() {
         `Rafraîchissement automatique réglé sur ${refreshIntervalMs / 1000} secondes basé sur le pas de temps '${selectedTimeStep}'`
     );
 
-    // Configure l'intervalle pour rafraîchir toutes les sources de données actives
+    // Configuration de l'intervalle de rafraîchissement
     window.refreshInterval = setInterval(() => {
         console.log(
             '⏰ Rafraîchissement automatique des données selon le pas de temps'
         );
 
-        // Stocke l'ID de l'appareil actuellement sélectionné et l'état du panneau avant le rafraîchissement
+        // Sauvegarde de l'état actuel avant le rafraîchissement
         const currentDeviceId = globalSelectedDeviceId;
         const sidePanelOpen =
             document.getElementById('side-panel').style.display !== 'none';
 
-        console.log(
-            'Appareil sélectionné avant rafraîchissement:',
-            currentDeviceId
-        );
-        console.log('Panneau latéral ouvert:', sidePanelOpen);
-
-        // Stocke les données actuelles de l'appareil si disponibles
+        // Sauvegarde des données actuelles de l'appareil si disponible
         if (
             currentDeviceId &&
             window.deviceMarkers &&
@@ -499,39 +505,27 @@ function setupAutoRefresh() {
                 window.deviceMarkers[currentDeviceId].data;
         }
 
-        // Réinitialise l'objet des marqueurs d'appareils
+        // Réinitialisation des marqueurs
         window.deviceMarkers = {};
-
-        // Réinitialise les références des marqueurs sélectionnés mais garde l'ID de l'appareil
         globalSelectedMarker = null;
         globalSelectedText = null;
 
-        // Récupère toutes les sources actives depuis le localStorage
+        // Récupération et rafraîchissement des sources actives
         const activeSources = getArrayFromLocalStorage(sources_local);
-        console.log('Sources actives à rafraîchir:', activeSources);
-
-        // Rafraîchit chaque source active
         activeSources.forEach((source) => {
             clearLayer(source);
             loadSource(source);
         });
 
-        // Met à jour l'affichage de l'heure
+        // Mise à jour de l'affichage
         updateTimeDisplay();
-
-        // Met à jour l'affichage des boutons
         updateButtonDisplay();
 
-        // Si un appareil était sélectionné et le panneau latéral ouvert, essaie de le restaurer
+        // Restauration de l'état précédent si nécessaire
         if (currentDeviceId && sidePanelOpen) {
-            console.log(
-                "Tentative de restauration de l'appareil sélectionné:",
-                currentDeviceId
-            );
-            // Utilise un délai pour s'assurer que les couches sont chargées
             setTimeout(() => {
                 findAndHighlightMarker(currentDeviceId);
-            }, 1000); // Délai de 1 seconde pour s'assurer que les couches sont complètement chargées
+            }, 1000);
         }
     }, refreshIntervalMs);
 }
@@ -540,7 +534,7 @@ function setupAutoRefresh() {
 function findAndHighlightMarker(deviceId) {
     console.log(`Tentative de remise en évidence de l'appareil: ${deviceId}`);
 
-    // On efface d'abord les références globales des marqueurs pour éviter les conflits
+    // Nettoyage des références globales des marqueurs
     if (globalSelectedMarker) {
         if (globalSelectedMarker._icon) {
             globalSelectedMarker._icon.classList.remove('marker-selected');
@@ -557,30 +551,26 @@ function findAndHighlightMarker(deviceId) {
         globalSelectedText = null;
     }
 
-    // On attend que les couches soient complètement chargées
+    // Attente du chargement complet des couches
     setTimeout(() => {
         let found = false;
         console.log('Recherche du marqueur avec deviceId:', deviceId);
 
-        // On convertit deviceId en chaîne de caractères si ce n'est pas déjà fait
+        // Conversion de l'ID en chaîne de caractères
         const deviceIdStr = String(deviceId || '');
 
-        // On essaie plusieurs méthodes de recherche
-
-        // Méthode 1: Vérifier si le marqueur est dans la couche nebuleair
+        // Recherche dans la couche NebuleAir
         if (deviceIdStr.indexOf('nebuleair') >= 0) {
             nebuleairLayer.eachLayer(function (layer) {
-                // On ignore si ce n'est pas un marqueur ou s'il n'a pas d'icône
                 if (!layer._icon) return;
 
-                // On essaie les deux options pour trouver l'ID de l'appareil
                 const layerDeviceId =
                     (layer.options && layer.options.deviceId) || layer.deviceId;
 
                 if (layerDeviceId == deviceId) {
                     console.log('Marqueur NebuleAir trouvé:', layer);
 
-                    // On cherche le marqueur de texte correspondant
+                    // Recherche du marqueur de texte correspondant
                     let textMarker = null;
                     nebuleairLayer.eachLayer(function (textLayer) {
                         if (!textLayer._icon) return;
@@ -597,7 +587,7 @@ function findAndHighlightMarker(deviceId) {
                         }
                     });
 
-                    // On applique la mise en évidence
+                    // Mise en évidence du marqueur
                     layer.setZIndexOffset(1000);
                     if (layer._icon)
                         layer._icon.classList.add('marker-selected');
@@ -612,7 +602,7 @@ function findAndHighlightMarker(deviceId) {
 
                     found = true;
 
-                    // On réouvre le panneau latéral si nécessaire
+                    // Réouverture du panneau latéral si nécessaire
                     if (
                         document.getElementById('side-panel').style.display ===
                             'none' &&
@@ -630,20 +620,18 @@ function findAndHighlightMarker(deviceId) {
                 }
             });
         }
-        // Méthode 2: Vérifier si le marqueur est dans la couche atmo_micro
+        // Recherche dans la couche AtmoSud
         else {
             atmoMicroLayer.eachLayer(function (layer) {
-                // On ignore si ce n'est pas un marqueur ou s'il n'a pas d'icône
                 if (!layer._icon) return;
 
-                // On essaie les deux options pour trouver l'ID de l'appareil
                 const layerDeviceId =
                     (layer.options && layer.options.deviceId) || layer.deviceId;
 
                 if (layerDeviceId == deviceId) {
                     console.log('Marqueur AtmoSud trouvé:', layer);
 
-                    // On cherche le marqueur de texte correspondant
+                    // Recherche du marqueur de texte correspondant
                     let textMarker = null;
                     atmoMicroLayer.eachLayer(function (textLayer) {
                         if (!textLayer._icon) return;
@@ -660,7 +648,7 @@ function findAndHighlightMarker(deviceId) {
                         }
                     });
 
-                    // On applique la mise en évidence
+                    // Mise en évidence du marqueur
                     layer.setZIndexOffset(1000);
                     if (layer._icon)
                         layer._icon.classList.add('marker-selected');
@@ -675,13 +663,12 @@ function findAndHighlightMarker(deviceId) {
 
                     found = true;
 
-                    // On réouvre le panneau latéral si nécessaire
+                    // Réouverture du panneau latéral si nécessaire
                     if (
                         document.getElementById('side-panel').style.display ===
                             'none' &&
                         layer.deviceData
                     ) {
-                        // On récupère le pas de temps actuel et on le convertit pour AtmoSud
                         var pas_de_temps =
                             getArrayFromLocalStorage(pasDeTempsLocal)[0];
                         var pas_de_temps_atmo = '';
@@ -700,7 +687,6 @@ function findAndHighlightMarker(deviceId) {
                                 break;
                         }
 
-                        // On récupère les mesures actuelles et on les convertit pour AtmoSud si nécessaire
                         var mesures = getArrayFromLocalStorage(mesuresLocal)[0];
                         var mesures_atmo = mesures;
                         if (mesures === 'pm25') {
@@ -720,13 +706,12 @@ function findAndHighlightMarker(deviceId) {
             });
         }
 
-        // Si on n'a pas trouvé le marqueur, on essaie d'autres méthodes
+        // Si le marqueur n'est pas trouvé, tentative de restauration avec les données stockées
         if (!found) {
             console.warn(
                 `Impossible de trouver le marqueur pour l'appareil: ${deviceId}`
             );
 
-            // Méthode 3: On essaie d'utiliser les données stockées de l'appareil
             if (window.lastSelectedDeviceData) {
                 console.log(
                     'Réouverture du panneau latéral avec les données stockées'
@@ -740,7 +725,6 @@ function findAndHighlightMarker(deviceId) {
                         getArrayFromLocalStorage(mesuresLocal)[0]
                     );
                 } else {
-                    // Pour les microStations AtmoSud
                     var pas_de_temps =
                         getArrayFromLocalStorage(pasDeTempsLocal)[0];
                     var pas_de_temps_atmo = '';
@@ -759,7 +743,6 @@ function findAndHighlightMarker(deviceId) {
                             break;
                     }
 
-                    // On récupère les mesures et on les convertit pour AtmoSud si nécessaire
                     var mesures = getArrayFromLocalStorage(mesuresLocal)[0];
                     var mesures_atmo = mesures;
                     if (mesures === 'pm25') {
@@ -780,75 +763,67 @@ function findAndHighlightMarker(deviceId) {
 
 // Fonction pour mettre à jour les boutons de seuil en fonction du polluant sélectionné
 function updateThresholdButtons() {
-    // On récupère le polluant actuellement sélectionné
+    // Récupération du polluant actuellement sélectionné
     const selectedPollutant = getArrayFromLocalStorage(mesuresLocal)[0];
 
-    // On détermine quel ensemble de seuils utiliser
+    // Détermination des seuils à utiliser
     const thresholds = getThresholdsForPollutant(selectedPollutant);
 
-    // On met à jour l'info-bulle de chaque bouton avec la plage appropriée
+    // Mise à jour des info-bulles des boutons
     document
         .getElementById('btn_bon')
         .setAttribute(
             'data-bs-title',
             `${thresholds.bon.min} à ${thresholds.bon.max} µg/m³`
         );
-
     document
         .getElementById('btn_moyen')
         .setAttribute(
             'data-bs-title',
             `${thresholds.moyen.min} à ${thresholds.moyen.max} µg/m³`
         );
-
     document
         .getElementById('btn_degrade')
         .setAttribute(
             'data-bs-title',
             `${thresholds.degrade.min} à ${thresholds.degrade.max} µg/m³`
         );
-
     document
         .getElementById('btn_mauvais')
         .setAttribute(
             'data-bs-title',
             `${thresholds.mauvais.min} à ${thresholds.mauvais.max} µg/m³`
         );
-
     document
         .getElementById('btn_tres_mauvais')
         .setAttribute(
             'data-bs-title',
             `${thresholds.tres_mauvais.min} à ${thresholds.tres_mauvais.max} µg/m³`
         );
-
     document
         .getElementById('btn_extr_mauvais')
         .setAttribute('data-bs-title', `>${thresholds.extr_mauvais.min} µg/m³`);
 
-    // On réinitialise les info-bulles pour les mettre à jour
+    // Réinitialisation des info-bulles
     const tooltipTriggerList = document.querySelectorAll(
         '[data-bs-toggle="tooltip"]'
     );
     [...tooltipTriggerList].map((tooltipTriggerEl) => {
-        // On supprime toute info-bulle existante
         const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
         if (tooltip) {
             tooltip.dispose();
         }
-        // On crée une nouvelle info-bulle
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 }
 
-// Fonction auxiliaire pour obtenir l'ensemble de seuils approprié pour un polluant
+// Fonction pour obtenir les seuils appropriés pour un polluant donné
 export function getThresholdsForPollutant(pollutant) {
     if (pollutant === 'pm10') {
         return seuils_PM10;
     } else if (pollutant === 'no2') {
         return seuils_NO2_24h;
     } else {
-        // Par défaut pour PM1 et PM2.5
         return seuils_PM1_PM25;
     }
 }
@@ -856,13 +831,9 @@ export function getThresholdsForPollutant(pollutant) {
 // Fonction pour obtenir le code couleur en fonction de la valeur et du polluant
 export function getColorCodeForValue(value, pollutant) {
     const thresholds = getThresholdsForPollutant(pollutant);
-
     let colorCode = 'default';
-
-    // On arrondit la valeur pour assurer une comparaison cohérente
     const roundedValue = Math.round(parseFloat(value));
 
-    // On vérifie chaque plage de seuils
     for (let key in thresholds) {
         const min = thresholds[key].min;
         const max = thresholds[key].max;
@@ -876,17 +847,16 @@ export function getColorCodeForValue(value, pollutant) {
     return colorCode;
 }
 
-// Fonction pour charger les sources initiales
+// Fonction pour charger les sources initiales au démarrage
 function loadInitialSources() {
     const activeSources = getArrayFromLocalStorage(sources_local);
     console.log('Sources actives au démarrage:', activeSources);
 
-    // Mettre à jour l'affichage des boutons avant de charger les sources
+    // Mise à jour de l'affichage des boutons
     updateButtonDisplay();
 
-    // Charger chaque source active
+    // Chargement de chaque source active
     activeSources.forEach((source) => {
-        // Ajouter la classe active au bouton correspondant
         const sourceKey = Object.keys(sources).find(
             (key) => sources[key].code === source
         );
@@ -902,10 +872,10 @@ function loadInitialSources() {
         loadSource(source);
     });
 
-    // Mettre à jour l'affichage des boutons après le chargement des sources
+    // Mise à jour finale de l'affichage
     setTimeout(() => {
         updateButtonDisplay();
-    }, 1000); // Attendre un peu pour s'assurer que le chargement est terminé
+    }, 1000);
 }
 
 // Fonction pour mettre à jour l'affichage des boutons
@@ -936,7 +906,7 @@ function updateButtonDisplay() {
         .closest('.dropdown')
         .querySelector('.selected-option').innerHTML = timeStepName;
 
-    // Mise à jour des classes active des boutons de mesures
+    // Mise à jour des classes active des boutons
     document.querySelectorAll('#dropdown_mesures button').forEach((button) => {
         button.classList.remove('active');
         if (button.textContent === mesureName) {
@@ -944,7 +914,6 @@ function updateButtonDisplay() {
         }
     });
 
-    // Mise à jour des classes active des boutons de pas de temps
     document
         .querySelectorAll('#dropdown_pas_de_temps button')
         .forEach((button) => {
@@ -967,28 +936,18 @@ function updateButtonDisplay() {
     });
 }
 
-// On initialise l'horloge au chargement de la page
+// Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function () {
     updateTimeDisplay();
-    // On met à jour l'horloge toutes les minutes
-    setInterval(updateTimeDisplay, 60000);
+    setInterval(updateTimeDisplay, 60000); // Mise à jour de l'horloge toutes les minutes
 
-    // On configure le rafraîchissement automatique des données
-    setupAutoRefresh();
+    setupAutoRefresh(); // Configuration du rafraîchissement automatique
+    updateThresholdButtons(); // Mise à jour des boutons de seuil
+    updateButtonDisplay(); // Mise à jour de l'affichage des boutons
+    resetLocalStorage(); // Réinitialisation du localStorage
+    loadInitialSources(); // Chargement des sources initiales
 
-    // On initialise les boutons de seuil en fonction du polluant sélectionné
-    updateThresholdButtons();
-
-    // Mise à jour de l'affichage des boutons
-    updateButtonDisplay();
-
-    // Réinitialiser le localStorage
-    resetLocalStorage();
-
-    // Chargement des sources initiales
-    loadInitialSources();
-
-    // Initialisation du bouton d'agrandissement
+    // Initialisation des boutons d'agrandissement/réduction du panneau latéral
     const expandButton = document.getElementById('expandSidePanel');
     const collapseButton = document.getElementById('collapseSidePanel');
 
@@ -997,17 +956,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const sidePanel = document.getElementById('side-panel');
             const mapContainer = document.getElementById('map-container');
 
-            // Passage en plein écran
             sidePanel.classList.add('expanded');
             mapContainer.classList.add('map-collapsed');
             sidePanel.style.display = 'block';
             mapContainer.style.display = 'none';
 
-            // Masquer le bouton d'ouverture et afficher le bouton de fermeture
             expandButton.style.display = 'none';
             collapseButton.style.display = 'block';
 
-            // Forcer la mise à jour de la taille de la carte
             if (map) {
                 map.invalidateSize();
             }
@@ -1017,17 +973,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const sidePanel = document.getElementById('side-panel');
             const mapContainer = document.getElementById('map-container');
 
-            // Retour à la taille normale
             sidePanel.classList.remove('expanded');
             mapContainer.classList.remove('map-collapsed');
             sidePanel.style.display = 'block';
             mapContainer.style.display = 'block';
 
-            // Masquer le bouton de fermeture et afficher le bouton d'ouverture
             collapseButton.style.display = 'none';
             expandButton.style.display = 'block';
 
-            // Forcer la mise à jour de la taille de la carte
             if (map) {
                 map.invalidateSize();
             }
@@ -1035,20 +988,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-//vérifier si un élément est dans un js object
+// Fonction pour vérifier si une valeur est présente dans un objet
 function isValueInObject(obj, value) {
     for (let key in obj) {
         if (obj.hasOwnProperty(key)) {
             if (obj[key] === value) {
-                //console.log(`Value "${value}" is present in the object.`);
                 return true;
             }
         }
     }
-    //console.log(`Value "${value}" is not present in the object.`);
     return false;
 }
 
+// Fonction pour vérifier si un objet est vide
 function isEmptyObject(obj) {
     return Object.keys(obj).length === 0;
 }
