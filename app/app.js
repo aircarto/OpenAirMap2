@@ -1356,6 +1356,7 @@ export function openSidePanelGeneric() {
 }
 
 export function openSidePanel_signalair(data, nuisance_type) {
+    console.log('data', data);
     console.log('Opening side panel for SignalAir');
     card1_img.src = 'img/signalair/logoSignalAir.png';
     card1_title.innerHTML = 'Nuisance: ' + nuisance_type;

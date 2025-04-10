@@ -12,6 +12,7 @@ import {
     openSidePanelGeneric,
     atmoRefLayer,
 } from '../app.js';
+import { isSourceActive } from './dataSourceManager.js';
 
 // Variables globales du module
 let pasDeTempsChart = '1h';
@@ -636,7 +637,7 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
 function setupButtonHandlers(stationID) {
     setupHistoriqueButtonHandlers(stationID);
     setupPasDeTempsButtonHandlers(stationID);
-    setupPolluantButtonHandlers(stationID);
+    setupPollutantButtonHandlers(stationID);
 }
 
 /**
@@ -764,72 +765,46 @@ function setupPasDeTempsButton(id, pasDeTemps, stationID) {
  * Configure les gestionnaires d'événements pour les boutons de polluants
  * @param {string} stationID - ID de la station
  */
-function setupPolluantButtonHandlers(stationID) {
-    setupPolluantButton('pm1', stationID);
-    setupPolluantButton('pm25', stationID);
-    setupPolluantButton('pm10', stationID);
-    setupPolluantButton('no2', stationID);
-}
+function setupPollutantButtonHandlers(stationID) {
+    const buttons = {
+        pm1: 'pm1',
+        pm25: 'pm2.5',
+        pm10: 'pm10',
+        no2: 'no2',
+    };
 
-/**
- * Configure un bouton de polluant spécifique
- * @param {string} polluant - Nom du polluant
- * @param {string} stationID - ID de la station
- */
-function setupPolluantButton(polluant, stationID) {
-    const btn = document.getElementById(`btn_poluant_${polluant}`);
-    if (btn) {
-        btn.onclick = () => {
-            const polluantId = polluant === 'pm25' ? 'pm2.5' : polluant;
-            if (mesuresArray.includes(polluantId)) {
-                mesuresArray = mesuresArray.filter(
-                    (item) => item !== polluantId
-                );
-                btn.checked = false;
-            } else {
-                mesuresArray.push(polluantId);
-                btn.checked = true;
-            }
+    Object.entries(buttons).forEach(([buttonId, pollutant]) => {
+        const button = document.getElementById(`btn_poluant_${buttonId}`);
+        if (button) {
+            button.addEventListener('change', function () {
+                // Vérifier si la source stationRef est active
+                if (!isSourceActive('atmo_ref')) {
+                    return;
+                }
 
-            const btnHistoriqueCustom = document.getElementById(
-                'btn_historique_custom'
-            );
-            if (btnHistoriqueCustom && btnHistoriqueCustom.checked) {
-                const startDate = document.getElementById(
-                    'btn_historique_start_date'
-                ).value;
-                const endDate = document.getElementById(
-                    'btn_historique_end_date'
-                ).value;
-                const startTime = '00:00';
-                const endTime = '23:59';
+                // Mise à jour du tableau des mesures
+                if (this.checked) {
+                    if (!mesuresArray.includes(pollutant)) {
+                        mesuresArray.push(pollutant);
+                    }
+                } else {
+                    mesuresArray = mesuresArray.filter(
+                        (item) => item !== pollutant
+                    );
+                }
 
-                const startDateTime = new Date(
-                    `${startDate}T${startTime}`
-                ).toISOString();
-                const endDateTime = new Date(
-                    `${endDate}T${endTime}`
-                ).toISOString();
-
-                retreiveHistoriqueDataStationRef(
-                    stationID,
-                    pasDeTempsChart,
-                    null,
-                    mesuresArray,
-                    false,
-                    startDateTime,
-                    endDateTime
-                );
-            } else {
-                retreiveHistoriqueDataStationRef(
-                    stationID,
-                    pasDeTempsChart,
-                    historiqueChart,
-                    mesuresArray
-                );
-            }
-        };
-    }
+                // Mise à jour des données uniquement si une station est sélectionnée
+                if (window.globalSelectedStationId) {
+                    retreiveHistoriqueDataStationRef(
+                        window.globalSelectedStationId,
+                        pasDeTempsChart,
+                        historiqueChart,
+                        mesuresArray
+                    );
+                }
+            });
+        }
+    });
 }
 
 /**
@@ -1241,6 +1216,12 @@ document.addEventListener('DOMContentLoaded', function () {
 // Configuration des gestionnaires d'événements pour les boutons de polluants
 if (btn_poluant_pm1) {
     btn_poluant_pm1.addEventListener('change', function () {
+        // Vérifier si la source stationRef est active
+        const activeSources = getArrayFromLocalStorage('sources_local');
+        if (!activeSources.includes('atmo_ref')) {
+            return;
+        }
+
         if (this.checked) {
             if (!mesuresArray.includes('pm1')) {
                 mesuresArray.push('pm1');
@@ -1259,6 +1240,12 @@ if (btn_poluant_pm1) {
 
 if (btn_poluant_pm25) {
     btn_poluant_pm25.addEventListener('change', function () {
+        // Vérifier si la source stationRef est active
+        const activeSources = getArrayFromLocalStorage('sources_local');
+        if (!activeSources.includes('atmo_ref')) {
+            return;
+        }
+
         if (this.checked) {
             if (!mesuresArray.includes('pm2.5')) {
                 mesuresArray.push('pm2.5');
@@ -1277,6 +1264,12 @@ if (btn_poluant_pm25) {
 
 if (btn_poluant_pm10) {
     btn_poluant_pm10.addEventListener('change', function () {
+        // Vérifier si la source stationRef est active
+        const activeSources = getArrayFromLocalStorage('sources_local');
+        if (!activeSources.includes('atmo_ref')) {
+            return;
+        }
+
         if (this.checked) {
             if (!mesuresArray.includes('pm10')) {
                 mesuresArray.push('pm10');
@@ -1295,6 +1288,12 @@ if (btn_poluant_pm10) {
 
 if (btn_poluant_no2) {
     btn_poluant_no2.addEventListener('change', function () {
+        // Vérifier si la source stationRef est active
+        const activeSources = getArrayFromLocalStorage('sources_local');
+        if (!activeSources.includes('atmo_ref')) {
+            return;
+        }
+
         if (this.checked) {
             if (!mesuresArray.includes('no2')) {
                 mesuresArray.push('no2');

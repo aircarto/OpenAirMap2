@@ -85,3 +85,48 @@
 .leaflet-control-layers-base input[type='radio'] {
     margin-right: 5px;
 }
+
+/* Style pour les tooltips SignalAir */
+.signalair-tooltip-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.signalair-tooltip {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 12px;
+    max-width: 250px;
+    font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+        Arial, sans-serif;
+}
+
+.signalair-tooltip .tooltip-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.signalair-tooltip .tooltip-header h6 {
+    color: #333;
+    font-weight: 600;
+    margin: 0;
+}
+
+.signalair-tooltip .tooltip-header small {
+    font-size: 0.75rem;
+}
+
+.signalair-tooltip .tooltip-body p {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #666;
+}
+
+.signalair-tooltip .tooltip-body strong {
+    color: #333;
+    font-weight: 500;
+}

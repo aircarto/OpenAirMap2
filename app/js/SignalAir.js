@@ -13,6 +13,7 @@ Par défaut on affiche les trois derniers jours
 */
 
 import { map, signalair_layer } from '../app.js';
+import { isSourceActive } from './dataSourceManager.js';
 
 // Configuration des types de signalements
 const signalair_json = {
@@ -49,67 +50,182 @@ export function loadSignalAir() {
     // Nettoyage de la couche existante
     signalair_layer.clearLayers();
 
-    // Calcul des dates (3 derniers jours)
+    // Calcul des dates (30 jours glissants)
     const now = new Date();
     const dateEnd = now.toISOString().split('T')[0];
-    const dateStart = new Date(now.setDate(now.getDate() - 3))
+    const dateStart = new Date(now.setDate(now.getDate() - 30))
         .toISOString()
         .split('T')[0];
+
+    console.log(
+        `[SignalAir] Période de recherche: du ${dateStart} au ${dateEnd}`
+    );
 
     // Boucle sur chaque type de signalement
     for (let key in signalair_json) {
         const { code, url, img } = signalair_json[key];
-        const full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/${dateStart}/${dateEnd}`;
+        let full_url;
+
+        // Vérification spéciale pour le type visuel
+        if (code === 'visuel') {
+            console.log(
+                `[SignalAir] Vérification de l'URL pour le type visuel`
+            );
+            // On essaie avec une période plus longue pour voir si c'est un problème de données
+            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/2025-01-01/${dateEnd}`;
+            console.log(`[SignalAir] URL modifiée pour visuel: ${full_url}`);
+        } else {
+            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/${dateStart}/${dateEnd}`;
+            console.log(`[SignalAir] URL pour ${code}: ${full_url}`);
+        }
 
         fetch(full_url)
             .then((response) => {
+                console.log(
+                    `[SignalAir] Statut de la réponse pour ${code}:`,
+                    response.status
+                );
+                console.log(
+                    `[SignalAir] Headers de la réponse pour ${code}:`,
+                    response.headers
+                );
+
                 if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
+                    throw new Error(
+                        `Erreur HTTP: ${response.status} - ${response.statusText}`
+                    );
                 }
-                return response.json();
+
+                return response.text();
+            })
+            .then((text) => {
+                console.log(
+                    `[SignalAir] Longueur de la réponse pour ${code}:`,
+                    text.length
+                );
+
+                // Si la réponse est vide, on considère qu'il n'y a pas de données
+                if (!text.trim()) {
+                    console.log(
+                        `[SignalAir] Pas de données disponibles pour ${code}`
+                    );
+                    return { type: 'FeatureCollection', features: [] };
+                }
+
+                console.log(
+                    `[SignalAir] Début de la réponse pour ${code}:`,
+                    text.substring(0, 100)
+                );
+
+                try {
+                    const parsedData = JSON.parse(text);
+                    console.log(
+                        `[SignalAir] Données parsées pour ${code}:`,
+                        parsedData
+                    );
+                    return parsedData;
+                } catch (e) {
+                    console.error(
+                        `[SignalAir] Erreur de parsing JSON pour ${code}:`,
+                        e
+                    );
+                    console.error(
+                        `[SignalAir] Contenu reçu pour ${code}:`,
+                        text
+                    );
+                    throw new Error(`Erreur de parsing JSON: ${e.message}`);
+                }
             })
             .then((data) => {
-                if (data && data.features) {
-                    data.features.forEach((feature) => {
-                        const [long, lat] = feature.geometry.coordinates;
-
-                        // Configuration de l'icône
-                        const icon_param = {
-                            iconUrl: `img/signalair/${img}`,
-                            iconSize: [35, 35],
-                            iconAnchor: [15, 15],
-                            popupAnchor: [0, -10],
-                        };
-
-                        const signalair_icon = L.icon(icon_param);
-
-                        // Création du marqueur
-                        L.marker([lat, long], { icon: signalair_icon })
-                            .bindPopup(`<b>${signalair_json[key].name}</b>`)
-                            .on('click', () => {
-                                console.log(
-                                    'Clicked on signalair id',
-                                    feature.properties.id_declaration
-                                );
-                                openSidePanel_signalair(
-                                    feature.properties,
-                                    code
-                                );
-                            })
-                            .addTo(signalair_layer);
-                    });
-
-                    // Ajout de la couche à la carte
-                    map.addLayer(signalair_layer);
-                } else {
-                    console.log(`Pas de données pour ${code}`);
+                if (!data || !data.features) {
+                    console.warn(
+                        `[SignalAir] Pas de données valides pour ${code}`
+                    );
+                    return;
                 }
+
+                console.log(
+                    `[SignalAir] Nombre de signalements trouvés pour ${code}:`,
+                    data.features.length
+                );
+
+                data.features.forEach((feature) => {
+                    const [long, lat] = feature.geometry.coordinates;
+
+                    // Configuration de l'icône
+                    const icon_param = {
+                        iconUrl: `img/signalair/${img}`,
+                        iconSize: [35, 35],
+                        iconAnchor: [15, 15],
+                        popupAnchor: [0, -10],
+                    };
+
+                    const signalair_icon = L.icon(icon_param);
+
+                    // Fonction pour formater la date
+                    const formatDate = (dateString) => {
+                        if (!dateString) return 'Date non spécifiée';
+                        try {
+                            const date = new Date(dateString);
+                            if (isNaN(date.getTime())) {
+                                return 'Date non spécifiée';
+                            }
+                            return date.toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                            });
+                        } catch (e) {
+                            return 'Date non spécifiée';
+                        }
+                    };
+
+                    // Création du marqueur
+                    L.marker([lat, long], { icon: signalair_icon })
+                        .bindPopup(`<b>${signalair_json[key].name}</b>`)
+                        .bindTooltip(
+                            `
+                            <div class="signalair-tooltip">
+                                <div class="tooltip-header">
+                                    <h6 class="mb-1">${signalair_json[key].name}</h6>
+                                    <small class="text-muted">${formatDate(feature.properties.created_at)}</small>
+                                </div>
+                                <div class="tooltip-body">
+                                    <p class="mb-1"><strong>Ville:</strong> ${feature.properties.city || 'Non spécifiée'}</p>
+                                    <p class="mb-1"><strong>Niveau de gêne:</strong> ${feature.properties['niveau-de-gene'] || 'Non spécifié'}</p>
+                                    <p class="mb-0"><strong>Durée:</strong> ${feature.properties['duree-de-la-nuisance'] || 'Non spécifiée'}</p>
+                                </div>
+                            </div>
+                        `,
+                            {
+                                direction: 'top',
+                                permanent: false,
+                                className: 'signalair-tooltip-container',
+                                offset: [0, -10],
+                            }
+                        )
+                        .on('click', () => {
+                            console.log(
+                                `[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`
+                            );
+                            openSidePanel_signalair(feature.properties, code);
+                        })
+                        .addTo(signalair_layer);
+                });
+
+                // Ajout de la couche à la carte
+                map.addLayer(signalair_layer);
             })
             .catch((error) => {
                 console.error(
-                    'Erreur lors de la récupération des données SignalAir:',
+                    `[SignalAir] Erreur lors de la récupération des données pour ${code}:`,
                     error
                 );
+                // Afficher un message à l'utilisateur
+                const errorMessage = `[SignalAir] Impossible de charger les données ${code}: ${error.message}`;
+                console.error(errorMessage);
             });
     }
 }
