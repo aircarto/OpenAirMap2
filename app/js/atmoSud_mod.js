@@ -3,6 +3,7 @@ import {
     map,
     modelisationICAIRAtmoSud_layer,
 } from '../app.js';
+import { toastManager, createCustomToast } from './toaster.js';
 
 // Définition de la projection EPSG:2154 (Lambert 93)
 L.CRS.EPSG2154 = L.extend({}, L.CRS.EPSG3857, {
@@ -65,14 +66,17 @@ export function loadModPM(compoundUpper) {
     let string_layer;
     let wmsUrl;
     let wmsOptions;
-
+    console.log('########################');
+    console.log(compoundUpper);
+    console.log('########################');
     switch (compoundUpper) {
-        case 'PM1':
+        case 'pm1':
             string_layer = 'paca_pm1_h24';
             console.log('Pas de modélisation AtmoSud pour les PM1');
-            openToast('Pas de modélisation AtmoSud pour les PM1');
+            toastManager.atmoModPm1Warning();
+            return;
             break;
-        case 'PM2.5':
+        case 'pm25':
             if (pasDeTemps === 'd') {
                 // Mode journalier
                 string_layer = `azurjour:paca-pm2_5-${new Date().toISOString().split('T')[0]}`;
@@ -101,7 +105,7 @@ export function loadModPM(compoundUpper) {
             pm25Layer.addTo(modelisationPMAtmoSud_layer);
             console.log('Couche PM2.5 ajoutée à modelisationPMAtmoSud_layer');
             break;
-        case 'PM10':
+        case 'pm10':
             if (pasDeTemps === 'd') {
                 // Mode journalier
                 string_layer = `azurjour:paca-pm10-${new Date().toISOString().split('T')[0]}`;
@@ -130,8 +134,95 @@ export function loadModPM(compoundUpper) {
             pm10Layer.addTo(modelisationPMAtmoSud_layer);
             console.log('Couche PM10 ajoutée à modelisationPMAtmoSud_layer');
             break;
+        case 'no2':
+            if (pasDeTemps === 'd') {
+                string_layer = `azurjour:paca-no2-${new Date().toISOString().split('T')[0]}`;
+                wmsUrl =
+                    'https://geoservices.atmosud.org/geoserver/azurjour/wms';
+            } else {
+                string_layer = 'paca_no2_h24';
+                wmsUrl =
+                    'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
+            }
+            wmsOptions = {
+                layers: string_layer,
+                format: 'image/png',
+                transparent: true,
+                opacity: 0.6,
+                version: '1.1.1',
+                styles: '',
+                noWrap: true,
+                pane: 'overlayPane',
+                zIndex: 1000,
+            };
+            const no2Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            console.log("Couche NO2 créée, tentative d'ajout à la carte");
+            no2Layer.addTo(modelisationPMAtmoSud_layer);
+            console.log('Couche NO2 ajoutée à modelisationPMAtmoSud_layer');
+            break;
+        case 'o3':
+            if (pasDeTemps === 'd') {
+                string_layer = `azurjour:paca-o3-${new Date().toISOString().split('T')[0]}`;
+                wmsUrl =
+                    'https://geoservices.atmosud.org/geoserver/azurjour/wms';
+            } else {
+                string_layer = 'paca_o3_h24';
+                wmsUrl =
+                    'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
+            }
+            wmsOptions = {
+                layers: string_layer,
+                format: 'image/png',
+                transparent: true,
+                opacity: 0.6,
+                version: '1.1.1',
+                styles: '',
+                noWrap: true,
+                pane: 'overlayPane',
+                zIndex: 1000,
+            };
+
+            const o3Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            console.log("Couche O3 créée, tentative d'ajout à la carte");
+            o3Layer.addTo(modelisationPMAtmoSud_layer);
+            console.log('Couche O3 ajoutée à modelisationPMAtmoSud_layer');
+            break;
+        case 'so2':
+            if (pasDeTemps === 'd') {
+                string_layer = `azurjour:paca-so2-${new Date().toISOString().split('T')[0]}`;
+                wmsUrl =
+                    'https://geoservices.atmosud.org/geoserver/azurjour/wms';
+            } else {
+                string_layer = 'paca_so2_h24';
+                wmsUrl =
+                    'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
+            }
+            wmsOptions = {
+                layers: string_layer,
+                format: 'image/png',
+                transparent: true,
+                opacity: 0.6,
+                version: '1.1.1',
+                styles: '',
+                noWrap: true,
+                pane: 'overlayPane',
+                zIndex: 1000,
+            };
+            const so2Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            console.log("Couche SO2 créée, tentative d'ajout à la carte");
+            so2Layer.addTo(modelisationPMAtmoSud_layer);
+            console.log('Couche SO2 ajoutée à modelisationPMAtmoSud_layer');
+            break;
         default:
-            console.error('Polluant non reconnu:', compoundUpper);
+            createCustomToast({
+                message: 'Polluant non reconnu: ' + compoundUpper,
+                type: 'error',
+                title: 'Erreur',
+                icon: 'error',
+                timer: 5000,
+                toast: true,
+                position: 'top',
+            });
     }
 
     // Vérification finale

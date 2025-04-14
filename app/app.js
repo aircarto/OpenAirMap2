@@ -1833,7 +1833,7 @@ function loadSource(source, isInitialLoad = false) {
                 loadAtmoSudStationsRef();
                 break;
             case 'mod_pm':
-                loadModPM();
+                loadModPM(getArrayFromLocalStorage(mesuresLocal)[0]);
                 break;
             case 'icairh':
                 loadModIcair();

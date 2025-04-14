@@ -172,6 +172,18 @@ export const toastManager = {
         console.log('Debug - Toast créé:', toast);
         return toast;
     },
+
+    //Notification pour la modélisation PM1
+    atmoModPm1Warning: () => {
+        console.log('Debug - atmoModPm1Warning appelée');
+        const toast = createToast(
+            "La modélisation PM1 n'est pas disponible",
+            'warning',
+            { timer: 5000 }
+        );
+        console.log('Debug - Toast créé:', toast);
+        return toast;
+    },
 };
 
 // Fonction pour créer un toaster personnalisé avec des options avancées
