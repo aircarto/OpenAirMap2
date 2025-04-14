@@ -29,6 +29,8 @@ import {
 
 import { isSourceActive } from './dataSourceManager.js';
 
+import { toastManager } from './toaster.js';
+
 // Variables locales au module
 var pas_de_temps_chart = 'horaire';
 var historique_chart = '24h';
@@ -100,9 +102,8 @@ export async function loadAtmoSudMicroStation() {
                 pas_de_temps_chart = 'horaire';
                 break;
             case 'd':
-                pas_de_temps_atmo = 'journalier';
-                pas_de_temps_chart = 'journalier';
-                break;
+                // La notification est maintenant gérée par handleTimeStepNotifications
+                return;
             default:
                 pas_de_temps_atmo = 'horaire';
                 pas_de_temps_chart = 'horaire';
@@ -114,12 +115,6 @@ export async function loadAtmoSudMicroStation() {
 
         if (mesures[0] === 'pm25') {
             mesures_atmo = ['pm2.5'];
-        }
-
-        if (pas_de_temps[0] === 'd') {
-            throw new Error(
-                'Pas de données pour le pas de temps ' + pas_de_temps
-            );
         }
 
         let allPollutants = ['pm1', 'pm2.5', 'pm10', 'no2'];
