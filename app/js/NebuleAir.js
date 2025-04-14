@@ -88,6 +88,12 @@ export function loadNebuleAir() {
         // data: ({timespan: timespanLower}),
         success: function (data) {
             console.log(data);
+            if (mesures[0] === 'no2') {
+                console.warn(
+                    'Mesure NO2 non disponible pour NebuleAir airCarto'
+                );
+                return;
+            }
             //on ne traite que les nebuleair dont le parametre "displayMap" est true
             var displayed = data.filter((e) => e.displayMap == true);
             $.each(displayed, function (key, value) {

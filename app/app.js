@@ -229,6 +229,10 @@ export const mesures = {
     pm25: { name: 'PM2.5', code: 'pm25', activated: false }, // Particules fines de diamètre inférieur à 2.5 µm
     pm10: { name: 'PM10', code: 'pm10', activated: false }, // Particules fines de diamètre inférieur à 10 µm
     no2: { name: 'NO2', code: 'no2', activated: false }, // Dioxyde d'azote
+    so2: { name: 'SO2', code: 'so2', activated: false }, // Dioxyde de soufre
+    o3: { name: 'O3', code: 'o3', activated: false }, // Ozone
+    h2s: { name: 'H2S', code: 'h2s', activated: false }, // Sulfure d'hydrogène
+    nh3: { name: 'NH3', code: 'nh3', activated: false }, // Ammoniac
 };
 
 // Configuration des différentes sources de données disponibles
@@ -250,8 +254,8 @@ export const sources = {
         code: 'atmo_ref',
         activated: true,
     }, // Stations de référence AtmoSud
-    mod_pm: { name: 'Modélisation PM', code: 'mod_pm', activated: true }, // Modélisation des particules fines
-    icairh: { name: "ICAIR'H", code: 'icairh', activated: false }, // Modélisation ICAIR'H
+    mod_pm: { name: 'Modélisation', code: 'mod_pm', activated: true }, // Modélisation des particules fines
+    icairh: { name: 'ICAIR', code: 'icairh', activated: false }, // Modélisation ICAIR'H
     signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir
     mobileair: { name: 'MobileAir', code: 'mobileair', activated: false }, // Capteurs mobiles
 };
@@ -280,6 +284,7 @@ export var card2 = document.getElementById('card2');
 export var card2_title = document.getElementById('card2_title');
 export var card2_text = document.getElementById('card2_text');
 export var card2_button = document.getElementById('card2_button');
+export var card2_link = document.getElementById('card2_link');
 
 export var mapContainer = document.getElementById('map-container');
 export var dropdown_mesures = document.getElementById('dropdown_mesures');

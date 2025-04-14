@@ -766,6 +766,8 @@ function setupPasDeTempsButton(id, pasDeTemps, stationID) {
  * @param {string} stationID - ID de la station
  */
 function setupPollutantButtonHandlers(stationID) {
+    console.log('Configuration des boutons de polluants');
+
     const buttons = {
         pm1: 'pm1',
         pm25: 'pm2.5',
@@ -776,7 +778,20 @@ function setupPollutantButtonHandlers(stationID) {
     Object.entries(buttons).forEach(([buttonId, pollutant]) => {
         const button = document.getElementById(`btn_poluant_${buttonId}`);
         if (button) {
-            button.addEventListener('change', function () {
+            console.log(`Configuration du bouton ${buttonId}`);
+
+            // Supprimer tous les écouteurs d'événements existants
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+
+            // Changer le type en checkbox
+            newButton.type = 'checkbox';
+
+            // Gestionnaire pour les changements
+            newButton.addEventListener('change', function (e) {
+                console.log(`Événement change détecté pour ${buttonId}`);
+                console.log(`État du bouton: ${this.checked}`);
+
                 // Vérifier si la source stationRef est active
                 if (!isSourceActive('atmo_ref')) {
                     return;
@@ -793,6 +808,8 @@ function setupPollutantButtonHandlers(stationID) {
                     );
                 }
 
+                console.log('Mesures après mise à jour:', mesuresArray);
+
                 // Mise à jour des données uniquement si une station est sélectionnée
                 if (window.globalSelectedStationId) {
                     retreiveHistoriqueDataStationRef(
@@ -803,6 +820,17 @@ function setupPollutantButtonHandlers(stationID) {
                     );
                 }
             });
+
+            // Gestionnaire pour le clic
+            newButton.addEventListener('click', function (e) {
+                // Permettre la désélection
+                if (this.checked && mesuresArray.includes(pollutant)) {
+                    this.checked = false;
+                    this.dispatchEvent(new Event('change'));
+                }
+            });
+        } else {
+            console.warn(`Bouton ${buttonId} non trouvé`);
         }
     });
 }
@@ -832,6 +860,13 @@ export function retreiveHistoriqueDataStationRef(
     );
     const start = Date.now();
 
+    // Nettoyage du graphique précédent
+    if (amchart_root) {
+        amchart_root.dispose();
+        amchart_root = undefined;
+    }
+    document.getElementById('chartdiv_sensor').innerHTML = '';
+
     // Récupération des mesures
     const mesure = getArrayFromLocalStorage(mesuresLocal);
 
@@ -845,7 +880,8 @@ export function retreiveHistoriqueDataStationRef(
         station_id=${stationId}&
         nom_polluant=${mesuresStringComma}&
         temporalite=${pasDeTemps}&
-        download=false`.replace(/\s+/g, '');
+        download=false&
+        metadata=true`.replace(/\s+/g, '');
 
     // Ajout des paramètres de date
     if (customStart && customEnd) {

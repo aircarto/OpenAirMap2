@@ -23,6 +23,7 @@ import {
     card1_img,
     card1_title,
     card1_text,
+    card2_link,
     atmoMicroLayer,
 } from '../app.js';
 
