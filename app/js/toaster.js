@@ -6,6 +6,7 @@ const defaultConfig = {
     toast: true,
     width: 'auto',
     padding: '1em',
+    html: true,
 };
 
 // Types de toasters prédéfinis
@@ -46,7 +47,7 @@ export function createToast(message, type = 'info', config = {}) {
                     ...defaultConfig,
                     ...config,
                     ...toastTypes[type.toUpperCase()],
-                    text: message,
+                    html: message,
                     customClass: {
                         popup: 'custom-toast',
                     },
@@ -197,14 +198,22 @@ export function createCustomToast(options) {
         position,
         showConfirmButton,
         toast,
+        html = true,
     } = options;
-
+    console.log('Debug - createCustomToast - Options:', options);
     return createToast(message, type, {
-        title,
-        icon,
-        timer,
-        position,
-        showConfirmButton,
-        toast,
+        ...defaultConfig,
+        title: title || toastTypes[type.toUpperCase()].title,
+        icon: icon || toastTypes[type.toUpperCase()].icon,
+        timer: timer || defaultConfig.timer,
+        position: position || defaultConfig.position,
+        showConfirmButton: showConfirmButton || defaultConfig.showConfirmButton,
+        toast: toast || defaultConfig.toast,
+        html,
+        customClass: {
+            popup: 'custom-toast',
+            title: 'toast-title',
+            content: 'toast-content',
+        },
     });
 }

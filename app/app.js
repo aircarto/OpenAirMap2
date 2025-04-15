@@ -8,7 +8,7 @@ import {
 import { loadAtmoSudStationsRef } from './js/atmoSud_stationsRef.js';
 import { loadModPM, loadModIcair } from './js/atmoSud_mod.js';
 import { loadSignalAir } from './js/SignalAir.js';
-import { toastManager } from './js/toaster.js';
+import { toastManager, createCustomToast } from './js/toaster.js';
 
 // Affichage de la version de l'application dans la console
 console.log('OpenAirMap V2');
@@ -905,18 +905,6 @@ function loadInitialSources() {
             }
         });
     });
-
-    // Une seule notification de succès après le chargement de toutes les sources
-    Promise.all(loadPromises)
-        .then(() => {
-            if (activeSources.length > 0) {
-                toastManager.dataLoaded('Toutes les sources');
-            }
-        })
-        .catch((error) => {
-            console.error('Erreur lors du chargement des sources:', error);
-        });
-
     // Mise à jour finale de l'affichage
     setTimeout(() => {
         updateButtonDisplay();
@@ -925,14 +913,8 @@ function loadInitialSources() {
 
 // Fonction pour mettre à jour l'affichage des boutons
 function updateButtonDisplay() {
-    console.log('Debug - updateButtonDisplay - Début de la mise à jour');
-
     // Mise à jour du bouton des mesures
     const selectedMesure = getArrayFromLocalStorage(mesuresLocal)[0];
-    console.log(
-        'Debug - updateButtonDisplay - Mesure sélectionnée:',
-        selectedMesure
-    );
 
     const mesureName =
         mesures[
@@ -947,10 +929,6 @@ function updateButtonDisplay() {
 
     // Mise à jour du bouton des pas de temps
     const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
-    console.log(
-        'Debug - updateButtonDisplay - Pas de temps sélectionné:',
-        selectedTimeStep
-    );
 
     const timeStepName =
         pas_de_temps[
@@ -983,10 +961,6 @@ function updateButtonDisplay() {
 
     // Mise à jour des classes active des boutons de sources
     const activeSources = getArrayFromLocalStorage(sources_local);
-    console.log(
-        'Debug - updateButtonDisplay - Sources actives:',
-        activeSources
-    );
 
     document.querySelectorAll('#dropdown_sources button').forEach((button) => {
         button.classList.remove('active');
@@ -996,17 +970,10 @@ function updateButtonDisplay() {
 
         if (buttonCode) {
             const sourceCode = sources[buttonCode].code;
-            console.log(
-                'Debug - updateButtonDisplay - Vérification source:',
-                sourceCode
-            );
 
             // Vérification des cas particuliers
             if (activeSources.includes(sourceCode)) {
                 if (sourceCode === 'atmo_micro' && selectedTimeStep === 'd') {
-                    console.log(
-                        'Debug - updateButtonDisplay - Désactivation de atmo_micro pour pas de temps journalier'
-                    );
                     button.classList.remove('active');
                     // Afficher la notification
                     toastManager.atmoMicroTimeStepDailyWarning();
@@ -1015,24 +982,30 @@ function updateButtonDisplay() {
                     (selectedTimeStep === '2min' ||
                         selectedTimeStep === 'instantane')
                 ) {
-                    console.log(
-                        'Debug - updateButtonDisplay - Désactivation de atmo_ref pour pas de temps 2min/instantané'
-                    );
                     button.classList.remove('active');
                     // Afficher la notification
                     toastManager.atmoRefTimeStepWarning();
-                } else {
+                } else if (
+                    sourceCode === 'nebuleair' &&
+                    !['pm1', 'pm25', 'pm10'].includes(selectedMesure)
+                ) {
                     console.log(
-                        'Debug - updateButtonDisplay - Activation de la source:',
-                        sourceCode
+                        'Désactivation de NebuleAir pour le polluant non supporté'
                     );
+                    removeItemFromLocalStorageArray(sources_local, sourceCode);
+                    createCustomToast({
+                        message: `La mesure ${formatPollutantName(selectedMesure)} n'est pas disponible pour NebuleAir`,
+                        type: 'warning',
+                        title: 'Attention',
+                        icon: 'exclamation-triangle',
+                        timer: 5000,
+                    });
+                } else {
                     button.classList.add('active');
                 }
             }
         }
     });
-
-    console.log('Debug - updateButtonDisplay - Fin de la mise à jour');
 }
 
 // Initialisation au chargement de la page
@@ -1125,7 +1098,7 @@ for (let key in mesures) {
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
         }
-        // Action quand on clique sur le bouton
+        // Action quand on clique sur un polluant
         button.onclick = function () {
             let check_array = getArrayFromLocalStorage(mesuresLocal);
             if (isValueInObject(check_array, code)) {
@@ -1142,6 +1115,18 @@ for (let key in mesures) {
                         button.classList.remove('active');
                     });
                 });
+
+                if (
+                    code === 'nebuleair' &&
+                    getArrayFromLocalStorage(mesuresLocal).includes('no2')
+                ) {
+                    console.log('#########################');
+                    console.log('mesure :' + code);
+                    console.log(
+                        'source :' + getArrayFromLocalStorage(sources_local)
+                    );
+                    console.log('#########################');
+                }
                 // On active le nouveau choix
                 addItemToLocalStorageArray(mesuresLocal, code);
                 button.classList.add('active');
@@ -1185,6 +1170,7 @@ for (let key in sources) {
         let name = sources[key].name;
         let code = sources[key].code;
         let activated = sources[key].activated;
+        let selectedMesure = getArrayFromLocalStorage(mesuresLocal)[0];
         button.innerHTML = name;
         button.classList.add('dropdown-item');
         // Configuration initiale du stockage local
@@ -1234,7 +1220,6 @@ for (let key in sources) {
                         selectedTimeStep === 'instantane')
                 ) {
                     try {
-                        toastManager.atmoRefTimeStepWarning();
                         // Ne pas activer la source dans ce cas
                         removeItemFromLocalStorageArray(sources_local, code);
                         console.log(
@@ -1246,6 +1231,21 @@ for (let key in sources) {
                             error
                         );
                     }
+                } else if (
+                    code === 'nebuleair' &&
+                    !['pm1', 'pm25', 'pm10'].includes(selectedMesure)
+                ) {
+                    console.log(
+                        'Désactivation de NebuleAir pour le polluant non supporté'
+                    );
+                    removeItemFromLocalStorageArray(sources_local, code);
+                    createCustomToast({
+                        message: `La mesure ${formatPollutantName(selectedMesure)} n'est pas disponible pour NebuleAir`,
+                        type: 'warning',
+                        title: 'Attention',
+                        icon: 'exclamation-triangle',
+                        timer: 5000,
+                    });
                 } else {
                     // Activer la source normalement pour les autres cas
                     button.classList.add('active');
@@ -1284,7 +1284,7 @@ for (let key in pas_de_temps) {
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
         }
-
+        // action lors du clic sur un pas de temps
         button.onclick = function () {
             let check_array = getArrayFromLocalStorage(pasDeTempsLocal);
             if (isValueInObject(check_array, code)) {
@@ -1312,27 +1312,11 @@ for (let key in pas_de_temps) {
 
                 // Vérification des conditions pour afficher l'avertissement spécifique
                 const activeSources = getArrayFromLocalStorage(sources_local);
-                console.log(
-                    'Debug - TimeStep change - activeSources:',
-                    activeSources
-                );
-                console.log('Debug - TimeStep change - code:', code);
-                console.log(
-                    'Debug - TimeStep change - toastManager:',
-                    toastManager
-                );
 
                 // Vérification pour AtmoSud Micro-stations
                 if (code === '2min' && activeSources.includes('atmo_micro')) {
-                    console.log(
-                        "Debug - TimeStep change - Conditions remplies pour afficher l'avertissement AtmoSud Micro 2min"
-                    );
                     try {
                         const result = toastManager.atmoMicroTimeStepWarning();
-                        console.log(
-                            'Debug - TimeStep change - Résultat de la notification:',
-                            result
-                        );
                     } catch (error) {
                         console.error(
                             "Debug - TimeStep change - Erreur lors de l'affichage de la notification:",
@@ -1846,9 +1830,9 @@ function loadSource(source, isInitialLoad = false) {
                 break;
         }
         // On affiche la notification de succès pour les changements manuels
-        if (!isInitialLoad) {
-            toastManager.dataLoaded(source);
-        }
+        // if (!isInitialLoad) {
+        //     toastManager.dataLoaded(source);
+        // }
     } catch (error) {
         console.error(
             `Erreur lors du chargement de la source ${source}:`,

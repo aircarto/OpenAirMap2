@@ -7,12 +7,12 @@ import {
     mesuresLocal,
     getColorCodeForValue,
     map,
-    deviceInfo,
     openSidePanelGeneric,
     nebuleairLayer,
     seuils_PM1_PM25,
     seuils_PM10,
 } from '../app.js';
+import { createCustomToast } from './toaster.js';
 
 // Variables locales au module
 var pasDeTempsChart = '1h';
@@ -66,8 +66,15 @@ export function loadNebuleAir() {
     var pas_de_temps = getArrayFromLocalStorage(pasDeTempsLocal);
     var mesures = getArrayFromLocalStorage(mesuresLocal);
 
+    // Vérification si le polluant est supporté
+    if (!['pm1', 'pm25', 'pm10'].includes(mesures[0])) {
+        console.log('Polluant non supporté pour NebuleAir');
+        return;
+    }
+
     console.log('Pas de temps : ' + pas_de_temps);
     console.log('Mesures : ' + mesures);
+
     let mesure_StringA = mesures[0];
     let mesure_String = `${mesure_StringA}`;
     let pas_de_tempsA = pas_de_temps[0];
@@ -88,12 +95,18 @@ export function loadNebuleAir() {
         // data: ({timespan: timespanLower}),
         success: function (data) {
             console.log(data);
-            if (mesures[0] === 'no2') {
-                console.warn(
-                    'Mesure NO2 non disponible pour NebuleAir airCarto'
-                );
-                return;
-            }
+            // if (mesures[0] === 'no2') {
+            //     createCustomToast({
+            //         message:
+            //             'Mesure NO<sub>2</sub> non disponible pour NebuleAir airCarto',
+            //         type: 'warning',
+            //         title: 'Attention',
+            //         icon: 'exclamation-triangle',
+            //         timer: 5000,
+            //         html: true,
+            //     });
+            //     return;
+            // }
             //on ne traite que les nebuleair dont le parametre "displayMap" est true
             var displayed = data.filter((e) => e.displayMap == true);
             $.each(displayed, function (key, value) {
