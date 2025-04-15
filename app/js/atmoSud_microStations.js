@@ -174,7 +174,7 @@ export async function loadAtmoSudMicroStation() {
                 tooltipAnchor: [-50, -10],
             };
 
-            let valueToCheck = value['valeur_brute'];
+            let valueToCheck = value['valeur_ref'];
             let colorCode = getColorCodeForValue(valueToCheck, mesures[0]);
 
             if (colorCode !== 'default') {
@@ -204,7 +204,7 @@ export async function loadAtmoSudMicroStation() {
                 data: value,
             };
 
-            let roundedvalue = Math.round(parseFloat(value['valeur_brute']));
+            let roundedvalue = Math.round(parseFloat(value['valeur_ref']));
             var textSize = 32;
             var x_position = -10;
             var y_position = 41;
@@ -225,8 +225,11 @@ export async function loadAtmoSudMicroStation() {
                 html:
                     '<div id="textDiv" style="font-size: ' +
                     textSize +
-                    'px;">' +
+                    'px; position: relative;">' +
                     roundedvalue +
+                    (value['valeur'] !== null
+                        ? '<i class="bi bi-check-circle-fill" style="position: absolute; top: -10px; right: -15px; font-size: 12px; color: #28a745;"></i>'
+                        : '') +
                     '</div>',
                 iconAnchor: [x_position, y_position],
                 popupAnchor: [30, -60],
