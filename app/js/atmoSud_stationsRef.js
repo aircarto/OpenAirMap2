@@ -144,6 +144,7 @@ export function loadAtmoSudStationsRef() {
 
             // Traitement des stations actives
             let stationsActives = 0;
+            window.stationsRef = []; // Initialisation de window.stationsRef
             data.stations.forEach((item) => {
                 const dateFinStation = new Date(item.date_fin_mesure);
                 if (today < dateFinStation || item.date_fin_mesure === null) {
@@ -151,6 +152,7 @@ export function loadAtmoSudStationsRef() {
                         data: item,
                         hasValue: false,
                     };
+                    window.stationsRef.push(item); // Ajout de la station active à window.stationsRef
                     stationsActives++;
                 }
             });
@@ -259,6 +261,13 @@ export function loadAtmoSudStationsRef() {
  * @param {Array} mesure - Mesures sélectionnées
  */
 function createStationMarker(value, iconParam, stationData, mesure) {
+    // Supprimer le marqueur par défaut s'il existe
+    if (window.stationMarkers[value.id_station]?.marker) {
+        window.atmoRefLayer.removeLayer(
+            window.stationMarkers[value.id_station].marker
+        );
+    }
+
     const stationMarker = L.marker(
         [stationData.latitude, stationData.longitude],
         {
@@ -457,30 +466,37 @@ function getTextPosition(valeur) {
  * Crée les marqueurs par défaut pour les stations sans données
  */
 function createDefaultMarkers() {
-    Object.entries(window.stationMarkers).forEach(([stationId, stationObj]) => {
-        if (!stationObj.hasValue && stationObj.data) {
-            const item = stationObj.data;
-            const iconParam = {
-                iconUrl: 'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
-                iconSize: [50, 50],
-                iconAnchor: [25, 25],
-                popupAnchor: [0, -10],
-                tooltipAnchor: [-50, -10],
-                className: item.id_station,
-            };
+    // Vérifier si window.stationsRef existe, sinon l'initialiser
+    if (!window.stationsRef) {
+        window.stationsRef = [];
+    }
 
-            const stationMarker = L.marker([item.latitude, item.longitude], {
-                icon: L.icon(iconParam),
-            });
+    // Créer des marqueurs par défaut pour toutes les stations actives
+    window.stationsRef.forEach((station) => {
+        // Ne pas créer de marqueur par défaut si la station a déjà des données
+        if (!window.stationMarkers[station.id_station]?.marker) {
+            const defaultMarker = L.marker(
+                [station.latitude, station.longitude],
+                {
+                    icon: L.icon({
+                        iconUrl:
+                            'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
+                        iconSize: [50, 50],
+                        iconAnchor: [25, 25],
+                        popupAnchor: [0, -10],
+                        tooltipAnchor: [-50, -10],
+                        className: station.id_station,
+                    }),
+                }
+            );
 
             // Ajout du marqueur à la couche
+            window.atmoRefLayer.addLayer(defaultMarker);
 
-            window.atmoRefLayer.addLayer(stationMarker);
-
-            stationMarker.on('click', () => {
+            defaultMarker.on('click', () => {
                 if (
                     window.globalSelectedMarker &&
-                    window.globalSelectedMarker !== stationMarker
+                    window.globalSelectedMarker !== defaultMarker
                 ) {
                     window.globalSelectedMarker.setZIndexOffset(0);
                     window.globalSelectedMarker._icon.classList.remove(
@@ -495,23 +511,20 @@ function createDefaultMarkers() {
                     );
                 }
 
-                stationMarker.setZIndexOffset(1000);
-                stationMarker._icon.classList.add('marker-selected');
-
-                window.globalSelectedMarker = stationMarker;
+                window.globalSelectedMarker = defaultMarker;
                 window.globalSelectedText = null;
-                window.globalSelectedStationId = item.id_station;
-                window.lastSelectedStationData = item;
+                window.globalSelectedStationId = station.id_station;
+                window.lastSelectedStationData = station;
 
-                console.log('Click on station: ' + item.id_station);
+                console.log('Click on station: ' + station.id_station);
                 openSidePanel_stationRef(
-                    item.id_station,
-                    item.nom_station,
+                    station.id_station,
+                    station.nom_station,
                     getArrayFromLocalStorage(mesuresLocal)
                 );
             });
 
-            window.stationMarkers[stationId].marker = stationMarker;
+            window.stationMarkers[station.id_station].marker = defaultMarker;
         }
     });
 }
