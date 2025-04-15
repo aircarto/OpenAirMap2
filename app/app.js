@@ -1017,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateThresholdButtons(); // Mise à jour des boutons de seuil
     updateButtonDisplay(); // Mise à jour de l'affichage des boutons
     resetLocalStorage(); // Réinitialisation du localStorage
-    loadInitialSources(); // Chargement des sources initiales
+    // loadInitialSources(); // Chargement des sources initiales
 
     // Initialisation des boutons d'agrandissement/réduction du panneau latéral
     const expandButton = document.getElementById('expandSidePanel');

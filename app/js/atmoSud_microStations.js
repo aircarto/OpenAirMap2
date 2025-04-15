@@ -29,7 +29,7 @@ import {
 
 import { isSourceActive } from './dataSourceManager.js';
 
-import { toastManager } from './toaster.js';
+import { toastManager, createCustomToast } from './toaster.js';
 
 // Variables locales au module
 var pas_de_temps_chart = 'horaire';
@@ -153,9 +153,14 @@ export async function loadAtmoSudMicroStation() {
         }
 
         if (filteredData.length === 0) {
-            showErrorNotification(
-                'Aucune donnée disponible pour les critères sélectionnés'
-            );
+            createCustomToast({
+                message:
+                    'Aucune donnée disponible pour les critères sélectionnés',
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
             return;
         }
 
