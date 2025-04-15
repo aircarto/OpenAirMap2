@@ -1822,6 +1822,35 @@ document.addEventListener('DOMContentLoaded', function () {
 function loadSource(source, isInitialLoad = false) {
     console.log('Loading data for ' + source);
     try {
+        // Gestion de la désactivation automatique des sources mod_pm et icairh
+        if (source === 'mod_pm' || source === 'icairh') {
+            const activeSources = getArrayFromLocalStorage(sources_local);
+            if (source === 'mod_pm' && activeSources.includes('icairh')) {
+                removeItemFromLocalStorageArray(sources_local, 'icairh');
+                clearLayer('icairh');
+                // Mettre à jour l'affichage du bouton icairh
+                const icairButton = Array.from(
+                    document.querySelectorAll('#dropdown_sources button')
+                ).find((btn) => btn.textContent.trim() === 'ICAIR');
+                if (icairButton) {
+                    icairButton.classList.remove('active');
+                }
+            } else if (
+                source === 'icairh' &&
+                activeSources.includes('mod_pm')
+            ) {
+                removeItemFromLocalStorageArray(sources_local, 'mod_pm');
+                clearLayer('mod_pm');
+                // Mettre à jour l'affichage du bouton mod_pm
+                const modButton = Array.from(
+                    document.querySelectorAll('#dropdown_sources button')
+                ).find((btn) => btn.textContent.trim() === 'Modélisation');
+                if (modButton) {
+                    modButton.classList.remove('active');
+                }
+            }
+        }
+
         switch (source) {
             case 'nebuleair':
                 loadNebuleAir();
