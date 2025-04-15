@@ -21,6 +21,10 @@ let pasDeTemps = '';
 let historiqueChart = '7d';
 let mesuresArray = [];
 let globalSelectedStationId = null;
+let customDateRange = {
+    start: null,
+    end: null,
+};
 
 // Déclaration des variables pour les boutons
 let btnHistoriqueCustom;
@@ -706,6 +710,9 @@ function setupHistoriqueButton(periode, stationID) {
     if (btn) {
         btn.onclick = () => {
             historiqueChart = periode;
+            // Réinitialiser la plage de dates personnalisée
+            customDateRange.start = null;
+            customDateRange.end = null;
             document
                 .querySelectorAll('[id^="btn_historique_"]')
                 .forEach((b) => (b.checked = false));
@@ -897,6 +904,8 @@ export function retreiveHistoriqueDataStationRef(
     // Ajout des paramètres de date
     if (customStart && customEnd) {
         fullUrl += `&date_debut=${customStart}&date_fin=${customEnd}`;
+    } else if (customDateRange.start && customDateRange.end) {
+        fullUrl += `&date_debut=${customDateRange.start}&date_fin=${customDateRange.end}`;
     } else if (historique) {
         const endDate = new Date();
         const startDate = new Date();
@@ -1161,6 +1170,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const endDateTime = new Date(
                     `${endDate}T${endTime}`
                 ).toISOString();
+
+                // Sauvegarder la plage de dates personnalisée
+                customDateRange.start = startDateTime;
+                customDateRange.end = endDateTime;
 
                 if (window.globalSelectedStationId) {
                     retreiveHistoriqueDataStationRef(
