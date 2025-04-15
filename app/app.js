@@ -224,6 +224,24 @@ export const seuils_NO2_24h = {
     extr_mauvais: { code: 'extr_mauvais', min: 341, max: 999 }, // Qualité de l'air extrêmement mauvaise (>340 µg/m³)
 };
 
+export const seuilsO3_24h = {
+    bon: { code: 'bon', min: 0, max: 100 },
+    moyen: { code: 'moyen', min: 101, max: 120 },
+    degrade: { code: 'degrade', min: 121, max: 140 },
+    mauvais: { code: 'mauvais', min: 141, max: 160 },
+    tres_mauvais: { code: 'tres_mauvais', min: 161, max: 180 },
+    extr_mauvais: { code: 'extr_mauvais', min: 181, max: 999 },
+};
+
+export const seuilsSO2_24h = {
+    bon: { code: 'bon', min: 0, max: 40 },
+    moyen: { code: 'moyen', min: 41, max: 80 },
+    degrade: { code: 'degrade', min: 81, max: 120 },
+    mauvais: { code: 'mauvais', min: 121, max: 160 },
+    tres_mauvais: { code: 'tres_mauvais', min: 161, max: 200 },
+    extr_mauvais: { code: 'extr_mauvais', min: 201, max: 999 },
+};
+
 // Configuration des mesures de polluants disponibles dans l'application
 export const mesures = {
     pm1: { name: 'PM1', code: 'pm1', activated: true }, // Particules fines de diamètre inférieur à 1 µm
@@ -850,6 +868,10 @@ export function getThresholdsForPollutant(pollutant) {
         return seuils_PM10;
     } else if (pollutant === 'no2') {
         return seuils_NO2_24h;
+    } else if (pollutant === 'o3') {
+        return seuilsO3_24h;
+    } else if (pollutant === 'so2') {
+        return seuilsSO2_24h;
     } else {
         return seuils_PM1_PM25;
     }

@@ -251,12 +251,24 @@
                             <div class="card-body">
                                 <h5 class="card-title text-center">
                                     Historique des mesures
+                                    <!-- Bouton pour afficher/masquer les polluants -->
+                                    <div class="text-center mt-2">
+                                        <button
+                                            class="btn btn-outline-primary btn-sm"
+                                            type="button"
+                                            id="togglePollutants"
+                                        >
+                                            <i class="bi bi-chevron-down"></i>
+                                            Afficher les polluants
+                                        </button>
+                                    </div>
                                     <!-- Polluants -->
                                     <div
-                                        class="btn-group btn-group-sm mt-1"
+                                        class="btn-group btn-group-sm mt-2"
                                         id="btn_polluants"
                                         role="group"
                                         aria-label="Basic radio toggle button group"
+                                        style="display: none"
                                     >
                                         <input
                                             type="radio"
@@ -308,6 +320,58 @@
                                             class="btn btn-outline-primary"
                                             for="btn_poluant_no2"
                                             >NO<sub>2</sub></label
+                                        >
+
+                                        <input
+                                            type="radio"
+                                            class="btn-check"
+                                            name="btn_poluant_so2"
+                                            id="btn_poluant_so2"
+                                            autocomplete="off"
+                                        />
+                                        <label
+                                            class="btn btn-outline-primary"
+                                            for="btn_poluant_so2"
+                                            >SO<sub>2</sub></label
+                                        >
+
+                                        <input
+                                            type="radio"
+                                            class="btn-check"
+                                            name="btn_poluant_o3"
+                                            id="btn_poluant_o3"
+                                            autocomplete="off"
+                                        />
+                                        <label
+                                            class="btn btn-outline-primary"
+                                            for="btn_poluant_o3"
+                                            >O<sub>3</sub></label
+                                        >
+
+                                        <input
+                                            type="radio"
+                                            class="btn-check"
+                                            name="btn_poluant_nh3"
+                                            id="btn_poluant_nh3"
+                                            autocomplete="off"
+                                        />
+                                        <label
+                                            class="btn btn-outline-primary"
+                                            for="btn_poluant_nh3"
+                                            >NH<sub>3</sub></label
+                                        >
+
+                                        <input
+                                            type="radio"
+                                            class="btn-check"
+                                            name="btn_poluant_h2s"
+                                            id="btn_poluant_h2s"
+                                            autocomplete="off"
+                                        />
+                                        <label
+                                            class="btn btn-outline-primary"
+                                            for="btn_poluant_h2s"
+                                            >H<sub>2</sub>S</label
                                         >
                                     </div>
                                 </h5>

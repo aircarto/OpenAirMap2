@@ -534,14 +534,16 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
     }
 
     pasDeTempsChart = pasDeTempsAtmo;
-    mesuresArray.length = 0;
 
-    // Conversion du polluant pour l'API
-    let polluantAPI = mesure[0];
-    if (polluantAPI === 'pm25') {
-        polluantAPI = 'pm2.5';
+    // Initialisation de mesuresArray uniquement s'il est vide
+    if (mesuresArray.length === 0) {
+        // Conversion du polluant pour l'API
+        let polluantAPI = mesure[0];
+        if (polluantAPI === 'pm25') {
+            polluantAPI = 'pm2.5';
+        }
+        mesuresArray.push(polluantAPI);
     }
-    mesuresArray.push(polluantAPI);
 
     // Réinitialisation des boutons
     const historiqueButtons = document.querySelectorAll(
@@ -586,26 +588,17 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
         btnPasDeTemps.checked = true;
     }
 
-    // Sélection du bouton du polluant actif
-    let activeMeasure = mesure[0];
-    if (activeMeasure === 'pm25') {
-        activeMeasure = 'pm2.5';
-    }
-
-    const btnPoluantPm1 = document.getElementById('btn_poluant_pm1');
-    const btnPoluantPm25 = document.getElementById('btn_poluant_pm25');
-    const btnPoluantPm10 = document.getElementById('btn_poluant_pm10');
-    const btnPoluantNo2 = document.getElementById('btn_poluant_no2');
-
-    if (activeMeasure === 'pm1' && btnPoluantPm1) {
-        btnPoluantPm1.checked = true;
-    } else if (activeMeasure === 'pm2.5' && btnPoluantPm25) {
-        btnPoluantPm25.checked = true;
-    } else if (activeMeasure === 'pm10' && btnPoluantPm10) {
-        btnPoluantPm10.checked = true;
-    } else if (activeMeasure === 'no2' && btnPoluantNo2) {
-        btnPoluantNo2.checked = true;
-    }
+    // Sélection des boutons des polluants actifs
+    mesuresArray.forEach((polluant) => {
+        let buttonId = polluant;
+        if (polluant === 'pm2.5') {
+            buttonId = 'pm25';
+        }
+        const btn = document.getElementById(`btn_poluant_${buttonId}`);
+        if (btn) {
+            btn.checked = true;
+        }
+    });
 
     // Récupération des données historiques
     retreiveHistoriqueDataStationRef(
@@ -773,6 +766,8 @@ function setupPollutantButtonHandlers(stationID) {
         pm25: 'pm2.5',
         pm10: 'pm10',
         no2: 'no2',
+        o3: 'o3',
+        so2: 'so2',
     };
 
     Object.entries(buttons).forEach(([buttonId, pollutant]) => {
@@ -812,21 +807,19 @@ function setupPollutantButtonHandlers(stationID) {
 
                 // Mise à jour des données uniquement si une station est sélectionnée
                 if (window.globalSelectedStationId) {
+                    // Nettoyage complet du graphique avant la mise à jour
+                    if (amchart_root) {
+                        amchart_root.dispose();
+                        amchart_root = undefined;
+                    }
+                    document.getElementById('chartdiv_sensor').innerHTML = '';
+
                     retreiveHistoriqueDataStationRef(
                         window.globalSelectedStationId,
                         pasDeTempsChart,
                         historiqueChart,
                         mesuresArray
                     );
-                }
-            });
-
-            // Gestionnaire pour le clic
-            newButton.addEventListener('click', function (e) {
-                // Permettre la désélection
-                if (this.checked && mesuresArray.includes(pollutant)) {
-                    this.checked = false;
-                    this.dispatchEvent(new Event('change'));
                 }
             });
         } else {
@@ -860,26 +853,42 @@ export function retreiveHistoriqueDataStationRef(
     );
     const start = Date.now();
 
-    // Nettoyage du graphique précédent
+    // Nettoyage complet du graphique précédent
     if (amchart_root) {
         amchart_root.dispose();
         amchart_root = undefined;
     }
     document.getElementById('chartdiv_sensor').innerHTML = '';
 
-    // Récupération des mesures
-    const mesure = getArrayFromLocalStorage(mesuresLocal);
+    // Conversion du pas de temps pour l'API
+    let pasDeTempsAPI;
+    switch (pasDeTemps) {
+        case 'brute':
+        case '2min':
+            pasDeTempsAPI = 'brute';
+            break;
+        case 'quart-horaire':
+        case 'qh':
+            pasDeTempsAPI = 'quart-horaire';
+            break;
+        case 'horaire':
+        case 'h':
+            pasDeTempsAPI = 'horaire';
+            break;
+        case 'journalière':
+        case 'd':
+            pasDeTempsAPI = 'journalière';
+            break;
+        default:
+            pasDeTempsAPI = pasDeTemps;
+    }
 
-    // Transformation des mesures pour l'API
-    const mesuresStringComma = mesuresArray
-        .map((value) => (value === 'pm25' ? 'pm2.5' : value))
-        .join(',');
-
+    // Construction de l'URL avec les paramètres
     let fullUrl = `https://api.atmosud.org/observations/stations/mesures?
         format=json&
         station_id=${stationId}&
-        nom_polluant=${mesuresStringComma}&
-        temporalite=${pasDeTemps}&
+        nom_polluant=${mesuresArray.join(',')}&
+        temporalite=${pasDeTempsAPI}&
         download=false&
         metadata=true`.replace(/\s+/g, '');
 
@@ -914,317 +923,175 @@ export function retreiveHistoriqueDataStationRef(
         fullUrl += `&date_debut=${startDate.toISOString()}&date_fin=${endDate.toISOString()}`;
     }
 
-    // Premier appel API pour obtenir les données historiques
+    // Appel API
     fetch(fullUrl)
         .then((response) => {
             if (!response.ok) {
-                console.warn(
-                    `Erreur lors de la récupération des données historiques: ${response.status}`
-                );
-                return { mesures: [] }; // Retourne un tableau vide en cas d'erreur
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
             return response.json();
         })
         .then((data) => {
-            console.log('Call API get historique stations:');
-            const end = Date.now();
-            const requestTimer = (end - start) / 1000;
-            console.log(
-                `Data gathered in %c${requestTimer} sec`,
-                'color: red;'
-            );
-            console.log('full url historique: ' + fullUrl);
-            console.log(data);
+            console.log('Données reçues:', data);
 
-            // Traitement des données historiques
-            if (data.mesures && data.mesures.length > 0) {
-                // Initialisation de seriesData
-                let seriesData = {};
+            if (!data.mesures || data.mesures.length === 0) {
+                console.warn('Aucune donnée disponible');
+                return;
+            }
 
-                data.mesures.forEach((item) => {
-                    const stationData =
-                        window.stationMarkers[item.id_station]?.data;
-                    if (!stationData) return;
+            // Initialisation des données pour le graphique
+            let seriesData = {};
 
-                    // Déterminer le nom du polluant en fonction du label_polluant
-                    let nomPolluant;
-                    const labelLower = item.label_polluant.toLowerCase();
+            // Traitement des données
+            data.mesures.forEach((item) => {
+                let nomPolluant;
+                const labelLower = item.label_polluant.toLowerCase();
 
-                    if (
-                        labelLower.includes('pm10') ||
-                        labelLower.includes(
-                            'particules en suspension <10 µm'
-                        ) ||
-                        labelLower.includes(
-                            'particules en suspension <10 µm (masses)'
-                        ) ||
-                        labelLower.includes('(pm10)')
-                    ) {
-                        nomPolluant = 'pm10';
-                    } else if (
-                        labelLower.includes('pm2.5') ||
-                        labelLower.includes('particules en suspension <2.5 µm')
-                    ) {
-                        nomPolluant = 'pm2.5';
-                    } else if (
-                        labelLower.includes('pm1') ||
-                        labelLower.includes('particules en suspension <1 µm')
-                    ) {
-                        nomPolluant = 'pm1';
-                    } else if (
-                        labelLower.includes('no2') ||
-                        labelLower.includes("dioxyde d'azote")
-                    ) {
-                        nomPolluant = 'no2';
+                if (
+                    labelLower.includes('pm10') ||
+                    labelLower.includes('particules en suspension <10 µm')
+                ) {
+                    nomPolluant = 'pm10';
+                } else if (
+                    labelLower.includes('pm2.5') ||
+                    labelLower.includes('particules en suspension <2.5 µm')
+                ) {
+                    nomPolluant = 'pm2.5';
+                } else if (
+                    labelLower.includes('pm1') ||
+                    labelLower.includes('particules en suspension <1 µm')
+                ) {
+                    nomPolluant = 'pm1';
+                } else if (
+                    labelLower.includes('no2') ||
+                    labelLower.includes("dioxyde d'azote")
+                ) {
+                    nomPolluant = 'no2';
+                } else if (
+                    labelLower.includes('o3') ||
+                    labelLower.includes('ozone')
+                ) {
+                    nomPolluant = 'o3';
+                } else if (
+                    labelLower.includes('so2') ||
+                    labelLower.includes('dioxyde de soufre')
+                ) {
+                    nomPolluant = 'so2';
+                }
+
+                if (nomPolluant && mesuresArray.includes(nomPolluant)) {
+                    if (!seriesData[nomPolluant]) {
+                        seriesData[nomPolluant] = {
+                            data: [],
+                            label: item.label_polluant,
+                        };
                     }
-
-                    if (nomPolluant && mesuresArray.includes(nomPolluant)) {
-                        if (!seriesData[nomPolluant]) {
-                            seriesData[nomPolluant] = {
-                                data: [],
-                                label: item.label_polluant,
-                            };
-                        }
-                        if (item.valeur !== null) {
-                            seriesData[nomPolluant].data.push({
-                                value: item.valeur,
-                                date: new Date(item.date_debut).getTime(),
-                            });
-                        }
+                    if (item.valeur !== null) {
+                        seriesData[nomPolluant].data.push({
+                            value: item.valeur,
+                            date: new Date(item.date_debut).getTime(),
+                        });
                     }
-                });
+                } else {
+                    console.log('Polluant non traité:', {
+                        label: item.label_polluant,
+                        labelLower: labelLower,
+                        mesuresArray: mesuresArray,
+                        nomPolluant: nomPolluant,
+                    });
+                }
+            });
 
-                // Tri des données par date pour s'assurer qu'elles sont dans le bon ordre
-                Object.keys(seriesData).forEach((variable) => {
-                    seriesData[variable].data.sort((a, b) => a.date - b.date);
-                });
+            // Tri des données par date pour chaque polluant
+            Object.keys(seriesData).forEach((polluant) => {
+                seriesData[polluant].data.sort((a, b) => a.date - b.date);
+            });
+
+            // Création du graphique
+            am5.ready(function () {
+                // Création du root element
+                amchart_root = am5.Root.new('chartdiv_sensor');
 
                 // Création du graphique
-                if (amchart_root != undefined) {
-                    amchart_root.dispose();
-                }
+                let chart = amchart_root.container.children.push(
+                    am5xy.XYChart.new(amchart_root, {
+                        panX: false,
+                        panY: false,
+                        wheelX: 'panX',
+                        wheelY: 'zoomX',
+                        paddingLeft: 0,
+                        paddingBottom: 100,
+                    })
+                );
 
-                // Vider le conteneur du graphique
-                document.getElementById('chartdiv_sensor').innerHTML = '';
+                // Ajout du curseur
+                let cursor = chart.set(
+                    'cursor',
+                    am5xy.XYCursor.new(amchart_root, {
+                        behavior: 'zoomX',
+                    })
+                );
+                cursor.lineY.set('visible', false);
 
-                am5.ready(function () {
-                    // Création du root element
-                    amchart_root = am5.Root.new('chartdiv_sensor');
+                // Configuration de l'axe X
+                let xAxis = chart.xAxes.push(
+                    am5xy.DateAxis.new(amchart_root, {
+                        maxDeviation: 0.2,
+                        baseInterval: {
+                            timeUnit: 'minute',
+                            count: 15,
+                        },
+                        renderer: am5xy.AxisRendererX.new(amchart_root, {
+                            minorGridEnabled: true,
+                        }),
+                        tooltip: am5.Tooltip.new(amchart_root, {}),
+                    })
+                );
 
-                    // Création du graphique
-                    let chart = amchart_root.container.children.push(
-                        am5xy.XYChart.new(amchart_root, {
-                            panX: false,
-                            panY: false,
-                            wheelX: 'panX',
-                            wheelY: 'zoomX',
-                            paddingLeft: 0,
-                            paddingBottom: 100, // Ajout d'espace pour la légende
-                            layout: am5.GridLayout.new(amchart_root, {
-                                maxColumns: 1,
-                                fixedWidthGrid: true,
+                // Configuration de l'axe Y
+                let yAxis = chart.yAxes.push(
+                    am5xy.ValueAxis.new(amchart_root, {
+                        renderer: am5xy.AxisRendererY.new(amchart_root, {}),
+                    })
+                );
+
+                // Création des séries pour chaque polluant
+                Object.keys(seriesData).forEach((polluant) => {
+                    let series = chart.series.push(
+                        am5xy.SmoothedXLineSeries.new(amchart_root, {
+                            name: seriesData[polluant].label,
+                            xAxis: xAxis,
+                            yAxis: yAxis,
+                            valueYField: 'value',
+                            valueXField: 'date',
+                            tooltip: am5.Tooltip.new(amchart_root, {
+                                labelText: '{name}: {valueY} µg/m³',
                             }),
                         })
                     );
-
-                    // Ajout du curseur
-                    let cursor = chart.set(
-                        'cursor',
-                        am5xy.XYCursor.new(amchart_root, {
-                            behavior: 'zoomX',
-                        })
-                    );
-                    cursor.lineY.set('visible', false);
-
-                    // Configuration du pas de temps en fonction de temporalite
-                    let baseInterval = {
-                        timeUnit: 'minute',
-                        count: 15,
-                    };
-                    let dateFormat = 'HH:mm';
-
-                    switch (pasDeTempsAtmo) {
-                        case 'brute':
-                            baseInterval = { timeUnit: 'minute', count: 2 };
-                            dateFormat = 'HH:mm:ss';
-                            break;
-                        case 'quart-horaire':
-                            baseInterval = { timeUnit: 'minute', count: 15 };
-                            dateFormat = 'HH:mm';
-                            break;
-                        case 'horaire':
-                            baseInterval = { timeUnit: 'hour', count: 1 };
-                            dateFormat = 'HH:mm';
-                            break;
-                        case 'journalière':
-                            baseInterval = { timeUnit: 'day', count: 1 };
-                            dateFormat = 'dd/MM';
-                            break;
-                    }
-
-                    // Ajout de l'axe X
-                    let xAxis = chart.xAxes.push(
-                        am5xy.DateAxis.new(amchart_root, {
-                            maxDeviation: 0.2,
-                            baseInterval: baseInterval,
-                            renderer: am5xy.AxisRendererX.new(amchart_root, {
-                                minorGridEnabled: true,
-                            }),
-                            tooltip: am5.Tooltip.new(amchart_root, {}),
-                            dateFormats: {
-                                minute: dateFormat,
-                                hour: dateFormat,
-                                day: 'dd/MM',
-                                month: 'MMM',
-                                year: 'yyyy',
-                            },
-                            periodChangeDateFormats: {
-                                minute: dateFormat,
-                                hour: dateFormat,
-                                day: 'dd/MM',
-                                month: 'MMM',
-                                year: 'yyyy',
-                            },
-                        })
-                    );
-
-                    // Ajout de l'axe Y
-                    let yAxis = chart.yAxes.push(
-                        am5xy.ValueAxis.new(amchart_root, {
-                            renderer: am5xy.AxisRendererY.new(amchart_root, {}),
-                        })
-                    );
-
-                    // Préparation des données pour la série
-                    data.mesures.forEach((item) => {
-                        // Log détaillé pour comprendre le problème
-
-                        // Déterminer le nom du polluant en fonction du label_polluant
-                        let nomPolluant;
-                        const labelLower = item.label_polluant.toLowerCase();
-
-                        if (
-                            labelLower.includes('pm10') ||
-                            labelLower.includes(
-                                'particules en suspension <10 µm'
-                            ) ||
-                            labelLower.includes(
-                                'particules en suspension <10 µm (masses)'
-                            ) ||
-                            labelLower.includes('(pm10)')
-                        ) {
-                            nomPolluant = 'pm10';
-                        } else if (
-                            labelLower.includes('pm2.5') ||
-                            labelLower.includes(
-                                'particules en suspension <2.5 µm'
-                            )
-                        ) {
-                            nomPolluant = 'pm2.5';
-                        } else if (
-                            labelLower.includes('pm1') ||
-                            labelLower.includes(
-                                'particules en suspension <1 µm'
-                            )
-                        ) {
-                            nomPolluant = 'pm1';
-                        } else if (
-                            labelLower.includes('no2') ||
-                            labelLower.includes("dioxyde d'azote")
-                        ) {
-                            nomPolluant = 'no2';
-                        }
-
-                        if (nomPolluant && mesuresArray.includes(nomPolluant)) {
-                            if (!seriesData[nomPolluant]) {
-                                seriesData[nomPolluant] = {
-                                    data: [],
-                                    label: item.label_polluant,
-                                };
-                            }
-                            if (item.valeur !== null) {
-                                seriesData[nomPolluant].data.push({
-                                    value: item.valeur,
-                                    date: new Date(item.date_debut).getTime(),
-                                });
-                            }
-                        } else {
-                            console.log('Polluant non traité:', {
-                                label: item.label_polluant,
-                                labelLower: labelLower,
-                                mesuresArray: mesuresArray,
-                                nomPolluant: nomPolluant,
-                            });
-                        }
-                    });
-
-                    // Log des données préparées
-
-                    // Tri des données par date pour s'assurer qu'elles sont dans le bon ordre
-                    Object.keys(seriesData).forEach((variable) => {
-                        seriesData[variable].data.sort(
-                            (a, b) => a.date - b.date
-                        );
-                    });
-
-                    // Création de la série
-                    Object.keys(seriesData).forEach((variable) => {
-                        let series = chart.series.push(
-                            am5xy.SmoothedXLineSeries.new(amchart_root, {
-                                name: seriesData[variable].label,
-                                xAxis: xAxis,
-                                yAxis: yAxis,
-                                valueYField: 'value',
-                                valueXField: 'date',
-                                tooltip: am5.Tooltip.new(amchart_root, {
-                                    labelText: '{name}: {valueY} µg/m³',
-                                }),
-                            })
-                        );
-                        series.data.setAll(seriesData[variable].data);
-                    });
-
-                    // Ajout de la légende
-                    let legend = chart.children.push(
-                        am5.Legend.new(amchart_root, {
-                            centerX: am5.percent(50),
-                            x: am5.percent(50),
-                            y: am5.percent(95),
-                            layout: am5.GridLayout.new(amchart_root, {
-                                maxColumns: 2,
-                                fixedWidthGrid: true,
-                            }),
-                            paddingTop: 10,
-                            paddingBottom: 10,
-                            marginTop: 10,
-                            marginBottom: 10,
-                        })
-                    );
-                    legend.data.setAll(chart.series.values);
-
-                    // Animation
-                    chart.appear(1000, 100);
+                    series.data.setAll(seriesData[polluant].data);
                 });
-            }
 
-            // S'assurer que la couche est sur la carte
-            if (!map.hasLayer(window.atmoRefLayer)) {
-                map.addLayer(window.atmoRefLayer);
-            }
+                // Ajout de la légende
+                let legend = chart.children.push(
+                    am5.Legend.new(amchart_root, {
+                        centerX: am5.percent(50),
+                        x: am5.percent(50),
+                        y: am5.percent(95),
+                        layout: am5.GridLayout.new(amchart_root, {
+                            maxColumns: 2,
+                            fixedWidthGrid: true,
+                        }),
+                    })
+                );
+                legend.data.setAll(chart.series.values);
+
+                // Animation
+                chart.appear(1000, 100);
+            });
         })
         .catch((error) => {
-            console.error('Error fetching data:', error);
-            // En cas d'erreur, on s'assure que les marqueurs par défaut sont affichés
-            if (
-                window.stationMarkers &&
-                Object.keys(window.stationMarkers).length > 0
-            ) {
-                createDefaultMarkers();
-                // S'assurer que la couche est sur la carte
-                if (!map.hasLayer(window.atmoRefLayer)) {
-                    map.addLayer(window.atmoRefLayer);
-                }
-            }
+            console.error('Erreur lors de la récupération des données:', error);
         });
 }
 
@@ -1247,6 +1114,25 @@ document.addEventListener('DOMContentLoaded', function () {
     btnPolutantPm25 = document.getElementById('btn_poluant_pm25');
     btnPolutantPm10 = document.getElementById('btn_poluant_pm10');
     btnPolutantNo2 = document.getElementById('btn_poluant_no2');
+
+    // Gestion du bouton d'affichage des polluants
+    const togglePollutantsBtn = document.getElementById('togglePollutants');
+    const pollutantsGroup = document.getElementById('btn_polluants');
+    const toggleIcon = togglePollutantsBtn.querySelector('i');
+
+    togglePollutantsBtn.addEventListener('click', function () {
+        if (pollutantsGroup.style.display === 'none') {
+            pollutantsGroup.style.display = 'flex';
+            toggleIcon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+            togglePollutantsBtn.textContent = ' Masquer les polluants';
+            togglePollutantsBtn.prepend(toggleIcon);
+        } else {
+            pollutantsGroup.style.display = 'none';
+            toggleIcon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+            togglePollutantsBtn.textContent = ' Afficher les polluants';
+            togglePollutantsBtn.prepend(toggleIcon);
+        }
+    });
 });
 
 // Configuration des gestionnaires d'événements pour les boutons de polluants
