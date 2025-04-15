@@ -533,6 +533,8 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
         historiqueChart = '3h';
     }
 
+    btnPasDeTemps2min.disabled = true;
+
     pasDeTempsChart = pasDeTempsAtmo;
 
     // Initialisation de mesuresArray uniquement s'il est vide
@@ -1133,6 +1135,51 @@ document.addEventListener('DOMContentLoaded', function () {
             togglePollutantsBtn.prepend(toggleIcon);
         }
     });
+
+    // Gestion de la plage de dates personnalisée
+    const applyDateRangeBtn = document.getElementById('apply_date_range');
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+
+    if (applyDateRangeBtn && startDateInput && endDateInput) {
+        applyDateRangeBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            const startTime = '00:00';
+            const endTime = '23:59';
+
+            if (startDate && endDate) {
+                // Désélectionner tous les boutons d'historique
+                document
+                    .querySelectorAll('[id^="btn_historique_"]')
+                    .forEach((btn) => (btn.checked = false));
+
+                const startDateTime = new Date(
+                    `${startDate}T${startTime}`
+                ).toISOString();
+                const endDateTime = new Date(
+                    `${endDate}T${endTime}`
+                ).toISOString();
+
+                if (window.globalSelectedStationId) {
+                    retreiveHistoriqueDataStationRef(
+                        window.globalSelectedStationId,
+                        pasDeTempsChart,
+                        null,
+                        mesuresArray,
+                        false,
+                        startDateTime,
+                        endDateTime
+                    );
+                }
+            } else {
+                alert(
+                    'Veuillez sélectionner une date de début et une date de fin.'
+                );
+            }
+        });
+    }
 });
 
 // Configuration des gestionnaires d'événements pour les boutons de polluants
