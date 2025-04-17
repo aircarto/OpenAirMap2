@@ -460,9 +460,15 @@ export function openSidePanelMicroStation(
     );
     var polluants_buttons = document.querySelectorAll('[id^="btn_poluant_"]');
 
-    historique_buttons.forEach((btn) => (btn.checked = false));
-    pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
-    polluants_buttons.forEach((btn) => (btn.checked = false));
+    historique_buttons.forEach(
+        (btn) => ((btn.checked = false), (btn.disabled = false))
+    );
+    pas_de_temps_buttons.forEach(
+        (btn) => ((btn.checked = false), (btn.disabled = false))
+    );
+    polluants_buttons.forEach(
+        (btn) => ((btn.checked = false), (btn.disabled = false))
+    );
 
     btn_poluant_so2.disabled = true;
     btn_poluant_o3.disabled = true;

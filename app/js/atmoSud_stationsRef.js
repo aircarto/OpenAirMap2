@@ -564,8 +564,6 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
         state.historiqueChart = '3h';
     }
 
-    buttons.pasDeTemps['2min'].disabled = true;
-
     state.pasDeTempsChart = state.pasDeTempsAtmo;
 
     // Initialisation de state.mesuresArray uniquement s'il est vide
@@ -582,16 +580,19 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
     Object.values(buttons.historique).forEach((btn) => {
         if (btn) {
             btn.checked = false;
+            btn.disabled = false;
         }
     });
     Object.values(buttons.pasDeTemps).forEach((btn) => {
         if (btn) {
             btn.checked = false;
+            btn.disabled = false;
         }
     });
     Object.values(buttons.polluants).forEach((btn) => {
         if (btn) {
             btn.checked = false;
+            btn.disabled = false;
         }
     });
 
@@ -600,6 +601,9 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
     if (btnHistorique) {
         btnHistorique.checked = true;
     }
+
+    // Désactivation du bouton 2min
+    buttons.pasDeTemps['2min'].disabled = true;
 
     // Conversion du pas de temps pour l'interface et sélection du bouton correspondant
     let btnPasDeTempsId;

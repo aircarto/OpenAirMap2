@@ -57,6 +57,13 @@ const buttons = {
     },
 };
 
+// Variables pour stocker les gestionnaires d'événements
+const eventHandlers = {
+    historique: {},
+    pasDeTemps: {},
+    polluants: {},
+};
+
 // Initialisation des boutons au chargement du DOM
 document.addEventListener('DOMContentLoaded', function () {
     // Initialisation des boutons d'historique
@@ -91,51 +98,59 @@ function setupButtonHandlers() {
         return;
     }
 
-    // Nettoyage des anciens gestionnaires d'événements
-    Object.values(buttons.historique).forEach((button) => {
-        if (button) {
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-            buttons.historique[button.id.split('_')[2]] = newButton;
-        }
-    });
+    console.log('Configuration des gestionnaires de boutons');
 
-    Object.values(buttons.pasDeTemps).forEach((button) => {
-        if (button) {
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-            buttons.pasDeTemps[button.id.split('_')[3]] = newButton;
-        }
-    });
+    // Nettoyer les anciens gestionnaires d'événements
+    cleanupEventHandlers();
 
-    Object.values(buttons.polluants).forEach((button) => {
-        if (button) {
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-            buttons.polluants[button.id.split('_')[2]] = newButton;
-        }
-    });
-
-    // Ajout des nouveaux gestionnaires d'événements
     setupHistoriqueButtonHandlers();
     setupPasDeTempsButtonHandlers();
     setupPollutantButtonHandlers();
 }
 
+function cleanupEventHandlers() {
+    // Nettoyer les gestionnaires d'historique
+    Object.keys(eventHandlers.historique).forEach((key) => {
+        const btn = document.getElementById(`btn_historique_${key}`);
+        if (btn) {
+            btn.removeEventListener('click', eventHandlers.historique[key]);
+        }
+    });
+
+    // Nettoyer les gestionnaires de pas de temps
+    Object.keys(eventHandlers.pasDeTemps).forEach((key) => {
+        const btn = document.getElementById(`btn_pas_de_temps_${key}`);
+        if (btn) {
+            btn.removeEventListener('click', eventHandlers.pasDeTemps[key]);
+        }
+    });
+
+    // Nettoyer les gestionnaires de polluants
+    Object.keys(eventHandlers.polluants).forEach((key) => {
+        const btn = document.getElementById(`btn_poluant_${key}`);
+        if (btn) {
+            btn.removeEventListener('change', eventHandlers.polluants[key]);
+        }
+    });
+
+    // Réinitialiser les objets de stockage
+    eventHandlers.historique = {};
+    eventHandlers.pasDeTemps = {};
+    eventHandlers.polluants = {};
+}
+
 function setupHistoriqueButtonHandlers() {
-    // Vérifier si la source NebuleAir est active
     if (!isSourceActive('nebuleair')) {
         return;
     }
 
     console.log("Configuration des boutons d'historique");
 
-    // Configuration des boutons de période
     const periodes = ['1h', '3h', '24h', '7d', '30d', '365d'];
     periodes.forEach((periode) => {
         const btn = buttons.historique[periode];
         if (btn) {
-            btn.onclick = () => {
+            const handler = () => {
                 if (!isSourceActive('nebuleair')) {
                     return;
                 }
@@ -158,6 +173,12 @@ function setupHistoriqueButtonHandlers() {
                     state.mesuresArray
                 );
             };
+
+            // Stocker la référence du gestionnaire
+            eventHandlers.historique[periode] = handler;
+
+            // Ajouter le gestionnaire d'événements
+            btn.addEventListener('click', handler);
         }
     });
 
@@ -167,18 +188,14 @@ function setupHistoriqueButtonHandlers() {
     const customBtn = buttons.historique.custom;
 
     if (startDateBtn && endDateBtn && customBtn) {
-        startDateBtn.onchange = () => {
-            state.customDateRange.start = startDateBtn.value;
-            updateCustomDateRange();
-        };
+        const customHandler = (event) => {
+            event.preventDefault();
+            const startDate = startDateBtn.value;
+            const endDate = endDateBtn.value;
+            const startTime = '00:00';
+            const endTime = '23:59';
 
-        endDateBtn.onchange = () => {
-            state.customDateRange.end = endDateBtn.value;
-            updateCustomDateRange();
-        };
-
-        customBtn.onclick = () => {
-            if (state.customDateRange.start && state.customDateRange.end) {
+            if (startDate && startTime && endDate && endTime) {
                 state.historiqueChart = 'custom';
                 Object.values(buttons.historique).forEach((b) => {
                     if (b) {
@@ -196,32 +213,34 @@ function setupHistoriqueButtonHandlers() {
                 );
             }
         };
+
+        // Stocker la référence du gestionnaire
+        eventHandlers.historique.custom = customHandler;
+
+        // Ajouter le gestionnaire d'événements
+        customBtn.addEventListener('click', customHandler);
     }
 }
 
 function setupPasDeTempsButtonHandlers() {
-    // Vérifier si la source NebuleAir est active
     if (!isSourceActive('nebuleair')) {
         return;
     }
 
     console.log('Configuration des boutons de pas de temps');
 
-    const pasDeTemps = {
-        '2min': '2m',
-        qh: '15m',
-        h: '1h',
-        d: '1d',
-    };
+    const pasDeTemps = ['2min', 'qh', 'h', 'd'];
+    pasDeTemps.forEach((periode) => {
+        const btn = document.getElementById(`btn_pas_de_temps_${periode}`);
+        console.log(`Bouton ${periode} trouvé:`, btn);
 
-    Object.entries(pasDeTemps).forEach(([buttonId, apiValue]) => {
-        const btn = buttons.pasDeTemps[buttonId];
         if (btn) {
-            btn.onclick = () => {
+            const handler = () => {
+                console.log(`Clic sur le bouton ${periode}`);
                 if (!isSourceActive('nebuleair')) {
                     return;
                 }
-                state.pasDeTempsChart = apiValue;
+                state.pasDeTempsChart = periode;
                 Object.values(buttons.pasDeTemps).forEach((b) => {
                     if (b) {
                         b.checked = false;
@@ -230,6 +249,15 @@ function setupPasDeTempsButtonHandlers() {
                 if (btn) {
                     btn.checked = true;
                 }
+                console.log(
+                    'Appel de retreive_historiqueData_nebuleAir avec:',
+                    {
+                        deviceId: state.globalSelectedDeviceId,
+                        pasDeTemps: state.pasDeTempsChart,
+                        historique: state.historiqueChart,
+                        mesures: state.mesuresArray,
+                    }
+                );
                 retreive_historiqueData_nebuleAir(
                     state.globalSelectedDeviceId,
                     state.pasDeTempsChart,
@@ -237,6 +265,14 @@ function setupPasDeTempsButtonHandlers() {
                     state.mesuresArray
                 );
             };
+
+            // Stocker la référence du gestionnaire
+            eventHandlers.pasDeTemps[periode] = handler;
+
+            // Ajouter le gestionnaire d'événements
+            btn.addEventListener('click', handler);
+        } else {
+            console.warn(`Bouton ${periode} non trouvé`);
         }
     });
 }
@@ -266,8 +302,7 @@ function setupPollutantButtonHandlers() {
             // Supprimer l'attribut name pour éviter le comportement radio
             button.removeAttribute('name');
 
-            // Gestionnaire pour les changements
-            button.addEventListener('change', function (e) {
+            const handler = function (e) {
                 console.log(`Événement change détecté pour ${buttonId}`);
                 console.log(`État du bouton: ${this.checked}`);
 
@@ -305,7 +340,13 @@ function setupPollutantButtonHandlers() {
                         state.mesuresArray
                     );
                 }
-            });
+            };
+
+            // Stocker la référence du gestionnaire
+            eventHandlers.polluants[buttonId] = handler;
+
+            // Ajouter le gestionnaire d'événements
+            button.addEventListener('change', handler);
         } else {
             console.warn(`Bouton ${buttonId} non trouvé`);
         }
@@ -657,8 +698,12 @@ export function openSidePanelNebuleAir(
         '[id^="btn_pas_de_temps_"]'
     );
 
-    historique_buttons.forEach((btn) => (btn.checked = false));
-    pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
+    historique_buttons.forEach(
+        (btn) => ((btn.checked = false), (btn.disabled = false))
+    );
+    pas_de_temps_buttons.forEach(
+        (btn) => ((btn.checked = false), (btn.disabled = false))
+    );
 
     buttons.polluants.so2.disabled = true;
     buttons.polluants.o3.disabled = true;
@@ -702,7 +747,7 @@ export function openSidePanelNebuleAir(
     card2_link.innerHTML = 'AirCarto.fr'; //empty content from previous opening
     card2_link.href = 'https://aircarto.fr';
 
-    // Historique Button handlers setup
+    // Historique custom Button handlers setup
     if (buttons.historique.custom) {
         buttons.historique.custom.addEventListener('click', function (event) {
             event.preventDefault();
@@ -1175,26 +1220,18 @@ export function retreive_historiqueData_nebuleAir(
     });
 
     //pour le pas de temps (pour l'URL) il faut convertir (2min, qh, h et d -->en--> 2m, 15m, 1h et 1d)
-    //pour le pas de temps (pour l'URL) il faut convertir (2min, qh, h et d -->en--> 2m, 15m, 1h et 1d)
-    //pour le pas de temps (pour l'URL) il faut convertir
     var api_pas_de_temps;
     switch (pas_de_temps) {
-        case '2m':
         case '2min':
             api_pas_de_temps = '2m';
             break;
-        case '15m':
         case 'qh':
             api_pas_de_temps = '15m';
             break;
-        case '1h':
         case 'h':
             api_pas_de_temps = '1h';
             break;
-        case '1d':
         case 'd':
-        case 'journalier':
-        case '24h':
             api_pas_de_temps = '1d';
             break;
         default:
