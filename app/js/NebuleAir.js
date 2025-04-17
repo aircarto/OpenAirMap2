@@ -1237,6 +1237,7 @@ export function retreive_historiqueData_nebuleAir(
                 var yAxis = chart.yAxes.push(
                     am5xy.ValueAxis.new(amchart_root, {
                         renderer: am5xy.AxisRendererY.new(amchart_root, {}),
+                        min: 0,
                     })
                 );
 

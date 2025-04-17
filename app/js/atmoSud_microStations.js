@@ -474,6 +474,7 @@ export function openSidePanelMicroStation(
         .getElementById('toggleSidePanel')
         .querySelector('i');
     closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
+    console.log('data: ', data);
 
     historique_chart = historique;
     pas_de_temps_chart = pas_de_temps_atmo;
@@ -503,61 +504,58 @@ export function openSidePanelMicroStation(
         (btn) => ((btn.checked = false), (btn.disabled = false))
     );
 
+    btn_poluant_pm1.disabled = true;
+    btn_poluant_pm25.disabled = true;
+    btn_poluant_pm10.disabled = true;
+    btn_poluant_no2.disabled = true;
     btn_poluant_so2.disabled = true;
     btn_poluant_o3.disabled = true;
     btn_poluant_h2s.disabled = true;
     btn_poluant_nh3.disabled = true;
 
-    let availablePollutants = [];
+    console.log('Avant désactivation des boutons :');
+    console.log('PM1 disabled:', btn_poluant_pm1.disabled);
+    console.log('PM2.5 disabled:', btn_poluant_pm25.disabled);
+    console.log('PM10 disabled:', btn_poluant_pm10.disabled);
+    console.log('NO2 disabled:', btn_poluant_no2.disabled);
 
-    if (data.pollutants) {
-        availablePollutants = Object.keys(data.pollutants);
-    } else if (data.allPollutantsData) {
-        availablePollutants = Object.keys(data.allPollutantsData);
-    } else if (
-        window.deviceMarkers &&
-        window.deviceMarkers[data.id_site] &&
-        window.deviceMarkers[data.id_site].allPollutantsData
-    ) {
-        availablePollutants = Object.keys(
-            window.deviceMarkers[data.id_site].allPollutantsData
-        );
-    } else {
-        const pollutant =
-            data.variable === 'PM25'
-                ? 'pm2.5'
-                : data.variable
-                  ? data.variable.toLowerCase()
-                  : '';
-        if (pollutant) {
-            availablePollutants = [pollutant];
-        }
-    }
+    let availablePollutants = data.variablesMesure;
+    console.log('Données disponibles:', availablePollutants);
 
     if (
         availablePollutants.includes('pm1') ||
         availablePollutants.includes('PM1')
     ) {
+        console.log('pm1 available');
         btn_poluant_pm1.disabled = false;
     }
     if (
         availablePollutants.includes('pm2.5') ||
         availablePollutants.includes('PM2.5')
     ) {
+        console.log('pm2.5 available');
         btn_poluant_pm25.disabled = false;
     }
     if (
         availablePollutants.includes('pm10') ||
         availablePollutants.includes('PM10')
     ) {
+        console.log('pm10 available');
         btn_poluant_pm10.disabled = false;
     }
     if (
         availablePollutants.includes('no2') ||
         availablePollutants.includes('NO2')
     ) {
+        console.log('no2 available');
         btn_poluant_no2.disabled = false;
     }
+
+    console.log('Après réactivation des boutons :');
+    console.log('PM1 disabled:', btn_poluant_pm1.disabled);
+    console.log('PM2.5 disabled:', btn_poluant_pm25.disabled);
+    console.log('PM10 disabled:', btn_poluant_pm10.disabled);
+    console.log('NO2 disabled:', btn_poluant_no2.disabled);
 
     const btn_historique = document.getElementById(
         'btn_historique_' + historique
@@ -906,12 +904,41 @@ export function openSidePanelMicroStation(
 
     btn_pas_de_temps_d.disabled = true;
 
+    console.log('=== État des boutons avant setupPollutantButtonHandlers ===');
+    console.log('PM1:', {
+        exists: !!btn_poluant_pm1,
+        disabled: btn_poluant_pm1?.disabled,
+        checked: btn_poluant_pm1?.checked,
+    });
+    console.log('PM2.5:', {
+        exists: !!btn_poluant_pm25,
+        disabled: btn_poluant_pm25?.disabled,
+        checked: btn_poluant_pm25?.checked,
+    });
+    console.log('PM10:', {
+        exists: !!btn_poluant_pm10,
+        disabled: btn_poluant_pm10?.disabled,
+        checked: btn_poluant_pm10?.checked,
+    });
+    console.log('NO2:', {
+        exists: !!btn_poluant_no2,
+        disabled: btn_poluant_no2?.disabled,
+        checked: btn_poluant_no2?.checked,
+    });
+
     setupPollutantButtonHandlers();
+
+    console.log('État final des boutons avant ouverture du panneau :');
+    console.log('PM1 disabled:', btn_poluant_pm1.disabled);
+    console.log('PM2.5 disabled:', btn_poluant_pm25.disabled);
+    console.log('PM10 disabled:', btn_poluant_pm10.disabled);
+    console.log('NO2 disabled:', btn_poluant_no2.disabled);
 
     openSidePanelGeneric();
 }
 
 function setupPollutantButtonHandlers() {
+    console.log('=== Début setupPollutantButtonHandlers ===');
     const buttons = {
         pm1: 'pm1',
         pm25: 'pm2.5',
@@ -925,46 +952,66 @@ function setupPollutantButtonHandlers() {
 
     Object.entries(buttons).forEach(([buttonId, pollutant]) => {
         const button = document.getElementById(`btn_poluant_${buttonId}`);
+        console.log(`État initial du bouton ${buttonId}:`, {
+            exists: !!button,
+            disabled: button?.disabled,
+            checked: button?.checked,
+            type: button?.type,
+        });
+
         if (button) {
-            // Supprimer tous les gestionnaires d'événements existants
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
+            // Vérifier si le bouton a déjà un gestionnaire d'événements
+            const hasExistingHandler =
+                button.hasAttribute('data-handler-setup');
 
-            // Changer le type en checkbox
-            newButton.type = 'checkbox';
+            if (!hasExistingHandler) {
+                // Marquer le bouton comme ayant un gestionnaire
+                button.setAttribute('data-handler-setup', 'true');
 
-            // Supprimer l'attribut name pour éviter le comportement radio
-            newButton.removeAttribute('name');
-
-            newButton.addEventListener('change', function () {
-                // Vérifier si la source micro est active
-                if (!isSourceActive('atmo_micro')) {
-                    return;
+                // Changer le type en checkbox si ce n'est pas déjà fait
+                if (button.type !== 'checkbox') {
+                    button.type = 'checkbox';
                 }
 
-                // Mise à jour du tableau des mesures
-                if (this.checked) {
-                    if (!mesures_array.includes(pollutant)) {
-                        mesures_array.push(pollutant);
+                // Supprimer l'attribut name pour éviter le comportement radio
+                button.removeAttribute('name');
+
+                button.addEventListener('change', function () {
+                    console.log(`Changement détecté sur ${buttonId}:`, {
+                        checked: this.checked,
+                        disabled: this.disabled,
+                    });
+
+                    // Vérifier si la source micro est active
+                    if (!isSourceActive('atmo_micro')) {
+                        return;
                     }
-                } else {
-                    mesures_array = mesures_array.filter(
-                        (item) => item !== pollutant
-                    );
-                }
 
-                // Mise à jour des données uniquement si un capteur est sélectionné
-                if (window.globalSelectedDeviceId) {
-                    retreive_historiqueData_microStation(
-                        window.globalSelectedDeviceId,
-                        pas_de_temps_chart,
-                        historique_chart,
-                        mesures_array
-                    );
-                }
-            });
+                    // Mise à jour du tableau des mesures
+                    if (this.checked) {
+                        if (!mesures_array.includes(pollutant)) {
+                            mesures_array.push(pollutant);
+                        }
+                    } else {
+                        mesures_array = mesures_array.filter(
+                            (item) => item !== pollutant
+                        );
+                    }
+
+                    // Mise à jour des données uniquement si un capteur est sélectionné
+                    if (window.globalSelectedDeviceId) {
+                        retreive_historiqueData_microStation(
+                            window.globalSelectedDeviceId,
+                            pas_de_temps_chart,
+                            historique_chart,
+                            mesures_array
+                        );
+                    }
+                });
+            }
         }
     });
+    console.log('=== Fin setupPollutantButtonHandlers ===');
 }
 
 function setupPasDeTempsButtonHandlers() {
@@ -1230,6 +1277,7 @@ export async function retreive_historiqueData_microStation(
             let yAxis = chart.yAxes.push(
                 am5xy.ValueAxis.new(window.amchart_root, {
                     renderer: am5xy.AxisRendererY.new(window.amchart_root, {}),
+                    min: 0,
                 })
             );
 

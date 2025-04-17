@@ -1112,8 +1112,8 @@ export function retreiveHistoriqueDataStationRef(
                 window.amchart_root = am5.Root.new('chartdiv_sensor');
 
                 // Création du graphique
-                let chart = amchart_root.container.children.push(
-                    am5xy.XYChart.new(amchart_root, {
+                let chart = window.amchart_root.container.children.push(
+                    am5xy.XYChart.new(window.amchart_root, {
                         panX: false,
                         panY: false,
                         wheelX: 'panX',
@@ -1132,18 +1132,53 @@ export function retreiveHistoriqueDataStationRef(
                 );
                 cursor.lineY.set('visible', false);
 
-                // Configuration de l'axe X
+                // Configuration de l'axe X avec gestion flexible des pas de temps
+                let baseIntervalConfig = {
+                    timeUnit: 'minute',
+                    count: 1,
+                };
+
+                // Ajustement de l'intervalle en fonction du pas de temps
+                if (state.pasDeTempsChart === '2min') {
+                    baseIntervalConfig = {
+                        timeUnit: 'minute',
+                        count: 2,
+                    };
+                } else if (state.pasDeTempsChart === 'quart-horaire') {
+                    baseIntervalConfig = {
+                        timeUnit: 'minute',
+                        count: 15,
+                    };
+                } else if (state.pasDeTempsChart === 'horaire') {
+                    baseIntervalConfig = {
+                        timeUnit: 'hour',
+                        count: 1,
+                    };
+                } else if (state.pasDeTempsChart === 'journalière') {
+                    baseIntervalConfig = {
+                        timeUnit: 'day',
+                        count: 1,
+                    };
+                }
+
                 let xAxis = chart.xAxes.push(
                     am5xy.DateAxis.new(amchart_root, {
                         maxDeviation: 0.2,
-                        baseInterval: {
-                            timeUnit: 'minute',
-                            count: 15,
-                        },
+                        baseInterval: baseIntervalConfig,
                         renderer: am5xy.AxisRendererX.new(amchart_root, {
                             minorGridEnabled: true,
                         }),
                         tooltip: am5.Tooltip.new(amchart_root, {}),
+                        dateFormats: {
+                            minute: 'HH:mm',
+                            hour: 'HH:mm',
+                            day: 'dd/MM HH:mm',
+                        },
+                        periodChangeDateFormats: {
+                            minute: 'HH:mm',
+                            hour: 'HH:mm',
+                            day: 'dd/MM HH:mm',
+                        },
                     })
                 );
 
@@ -1151,6 +1186,7 @@ export function retreiveHistoriqueDataStationRef(
                 let yAxis = chart.yAxes.push(
                     am5xy.ValueAxis.new(amchart_root, {
                         renderer: am5xy.AxisRendererY.new(amchart_root, {}),
+                        min: 0,
                     })
                 );
 
