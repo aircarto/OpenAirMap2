@@ -31,6 +31,24 @@ var formattedTime = hours + ':' + minutes + ':' + seconds;
 console.log('Date: ' + dateYMD);
 console.log('Time: ' + formattedTime);
 
+const togglePollutants = document.getElementById('togglePollutants');
+const btn_polluants = document.getElementById('btn_polluants');
+
+togglePollutants.addEventListener('click', () => {
+    // Toggle visibility of pollutants section
+    const isHidden = btn_polluants.style.display === 'none';
+    btn_polluants.style.display = isHidden ? 'flex' : 'none';
+
+    // Update button text and icon
+    const icon = togglePollutants.querySelector('i');
+    icon.classList.toggle('bi-chevron-down');
+    icon.classList.toggle('bi-chevron-up');
+    togglePollutants.innerHTML = `
+        <i class="bi ${isHidden ? 'bi-chevron-up' : 'bi-chevron-down'}"></i>
+        ${isHidden ? 'Masquer les polluants' : 'Afficher les polluants'}
+    `;
+});
+
 // Initialisation de la carte Leaflet avec les paramètres de configuration
 export const map = L.map('map', {
     center: config.coordsCenter, // Centre de la carte défini dans config.js

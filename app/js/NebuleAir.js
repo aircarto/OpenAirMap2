@@ -587,8 +587,8 @@ export function loadNebuleAir() {
                                     <h6 class="card-title mb-1">${value['sensorId']}</h6>
                                     <div class="d-flex flex-column">
                                         <small class="text-muted mb-1">
-                                            <i class="bi bi-wifi ${value['connected'] ? 'text-success' : ''} me-1"></i>
-                                            ${value['connected'] ? 'Connecté' : 'Déconnecté'}
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            NebuleAir - AirCarto
                                         </small>
                                         <small class="text-muted">
                                             Polluants mesurés:
@@ -697,6 +697,7 @@ export function openSidePanelNebuleAir(
     var pas_de_temps_buttons = document.querySelectorAll(
         '[id^="btn_pas_de_temps_"]'
     );
+    var polluants_buttons = document.querySelectorAll('[id^="btn_poluant_"]');
 
     historique_buttons.forEach(
         (btn) => ((btn.checked = false), (btn.disabled = false))
@@ -704,11 +705,23 @@ export function openSidePanelNebuleAir(
     pas_de_temps_buttons.forEach(
         (btn) => ((btn.checked = false), (btn.disabled = false))
     );
+    polluants_buttons.forEach(
+        (btn) => ((btn.checked = false), (btn.disabled = false))
+    );
 
     buttons.polluants.so2.disabled = true;
     buttons.polluants.o3.disabled = true;
     buttons.polluants.h2s.disabled = true;
     buttons.polluants.nh3.disabled = true;
+
+    // Désactiver tous les boutons de polluants
+    buttons.polluants.pm1.disabled = true;
+    buttons.polluants.pm25.disabled = true;
+    buttons.polluants.pm10.disabled = true;
+
+    buttons.polluants.pm1.checked = true;
+    buttons.polluants.pm25.checked = true;
+    buttons.polluants.pm10.checked = true;
 
     //il faut passer à la fonction un array pour mesures
     // Clear the array by setting its length to 0
@@ -959,144 +972,27 @@ export function openSidePanelNebuleAir(
 
     //3. Mesures
     if (buttons.polluants.pm1) {
-        buttons.polluants.pm1.addEventListener('change', function () {
-            if (this.checked) {
-                if (state.mesuresArray.includes('pm1')) {
-                    state.mesuresArray = state.mesuresArray.filter(
-                        (item) => item !== 'pm1'
-                    );
-                    this.checked = false;
-                } else {
-                    state.mesuresArray.push('pm1');
-                    this.checked = true;
-                }
-
-                if (
-                    buttons.historique.custom &&
-                    buttons.historique.custom.checked
-                ) {
-                    var startDate = buttons.historique.startDate.value;
-                    var endDate = buttons.historique.endDate.value;
-                    let startDateTime = new Date(
-                        `${startDate}T00:00`
-                    ).toISOString();
-                    let endDateTime = new Date(
-                        `${endDate}T23:59`
-                    ).toISOString();
-                    retreive_historiqueData_nebuleAir(
-                        data.sensorId,
-                        state.pasDeTempsChart,
-                        null,
-                        state.mesuresArray,
-                        true,
-                        startDateTime,
-                        endDateTime
-                    );
-                } else {
-                    retreive_historiqueData_nebuleAir(
-                        data.sensorId,
-                        state.pasDeTempsChart,
-                        state.historiqueChart,
-                        state.mesuresArray,
-                        true
-                    );
-                }
-            }
-        });
+        // Supprimer le gestionnaire d'événements
+        buttons.polluants.pm1.removeEventListener(
+            'change',
+            buttons.polluants.pm1.changeHandler
+        );
     }
 
     if (buttons.polluants.pm25) {
-        buttons.polluants.pm25.addEventListener('change', function () {
-            if (this.checked) {
-                if (state.mesuresArray.includes('pm25')) {
-                    state.mesuresArray = state.mesuresArray.filter(
-                        (item) => item !== 'pm25'
-                    );
-                    this.checked = false;
-                } else {
-                    state.mesuresArray.push('pm25');
-                    this.checked = true;
-                }
-
-                if (
-                    buttons.historique.custom &&
-                    buttons.historique.custom.checked
-                ) {
-                    var startDate = buttons.historique.startDate.value;
-                    var endDate = buttons.historique.endDate.value;
-                    let startDateTime = new Date(
-                        `${startDate}T00:00`
-                    ).toISOString();
-                    let endDateTime = new Date(
-                        `${endDate}T23:59`
-                    ).toISOString();
-                    retreive_historiqueData_nebuleAir(
-                        data.sensorId,
-                        state.pasDeTempsChart,
-                        null,
-                        state.mesuresArray,
-                        true,
-                        startDateTime,
-                        endDateTime
-                    );
-                } else {
-                    retreive_historiqueData_nebuleAir(
-                        data.sensorId,
-                        state.pasDeTempsChart,
-                        state.historiqueChart,
-                        state.mesuresArray,
-                        true
-                    );
-                }
-            }
-        });
+        // Supprimer le gestionnaire d'événements
+        buttons.polluants.pm25.removeEventListener(
+            'change',
+            buttons.polluants.pm25.changeHandler
+        );
     }
 
     if (buttons.polluants.pm10) {
-        buttons.polluants.pm10.addEventListener('change', function () {
-            if (this.checked) {
-                if (state.mesuresArray.includes('pm10')) {
-                    state.mesuresArray = state.mesuresArray.filter(
-                        (item) => item !== 'pm10'
-                    );
-                    this.checked = false;
-                } else {
-                    state.mesuresArray.push('pm10');
-                    this.checked = true;
-                }
-
-                if (
-                    buttons.historique.custom &&
-                    buttons.historique.custom.checked
-                ) {
-                    var startDate = buttons.historique.startDate.value;
-                    var endDate = buttons.historique.endDate.value;
-                    let startDateTime = new Date(
-                        `${startDate}T00:00`
-                    ).toISOString();
-                    let endDateTime = new Date(
-                        `${endDate}T23:59`
-                    ).toISOString();
-                    retreive_historiqueData_nebuleAir(
-                        data.sensorId,
-                        state.pasDeTempsChart,
-                        null,
-                        state.mesuresArray,
-                        true,
-                        startDateTime,
-                        endDateTime
-                    );
-                } else {
-                    retreive_historiqueData_nebuleAir(
-                        data.sensorId,
-                        state.pasDeTempsChart,
-                        state.historiqueChart,
-                        state.mesuresArray,
-                        true
-                    );
-                }
-            }
-        });
+        // Supprimer le gestionnaire d'événements
+        buttons.polluants.pm10.removeEventListener(
+            'change',
+            buttons.polluants.pm10.changeHandler
+        );
     }
 
     if (buttons.polluants.no2) {
@@ -1152,12 +1048,12 @@ export function retreive_historiqueData_nebuleAir(
     console.log('Adding mesure: ' + add_mesure);
 
     //il faut unchecked les boutons
-    var inputs = document.querySelectorAll(
-        'input[type="checkbox"], input[type="radio"]'
-    );
-    inputs.forEach(function (input) {
-        input.checked = false;
-    });
+    // var inputs = document.querySelectorAll(
+    //     'input[type="checkbox"], input[type="radio"]'
+    // );
+    // inputs.forEach(function (input) {
+    //     input.checked = false;
+    // });
 
     //attention pour le pas de temps des boutons il faut convertir ()
     var pas_de_temps_btn;

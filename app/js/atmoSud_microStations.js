@@ -149,14 +149,14 @@ export async function loadAtmoSudMicroStation() {
         // Liste de tous les polluants possibles
         let allPollutants = ['pm1', 'pm2.5', 'pm10', 'no2'];
 
-        // On construit l'URL pour appeler l'API AtmoSud
+        // On construit l'URL pour appeler l'API AtmoSud pour récupérer les dernieres mesures disponible
         let full_url_derniere = `
             https://api.atmosud.org/observations/capteurs/mesures/dernieres?
             format=json
             &download=false
             &valeur_brute=true
             &type_capteur=true
-            &variable=${allPollutants.join(',')}
+            &variable=${mesures_atmo}
             &aggregation=${pas_de_temps_atmo}
             &nb_dec=1
         `.replace(/\s+/g, '');
@@ -165,19 +165,48 @@ export async function loadAtmoSudMicroStation() {
         const data = await fetchAPI(full_url_derniere);
         isFetching = false; // On indique que le chargement est terminé
 
+        let fullUrlCapteurSite = `https://preprod-api.atmosud.org/observations/capteurs/sites?format=json`;
+        let dataCapteurSite = await fetchAPI(fullUrlCapteurSite);
+        console.log('dataCapteurSite: ', dataCapteurSite);
         // On vérifie que les données reçues sont bien un tableau
         if (!Array.isArray(data)) {
             throw new Error('Les données reçues ne sont pas au bon format');
         }
 
         // On filtre les données pour ne garder que le polluant sélectionné
-        let filteredData = data.filter((item) => {
+        let filteredData = data.filter(async (item) => {
             if (!item || !item.variable) return false;
 
             let selectedPollutant = mesures[0];
             if (selectedPollutant === 'pm25') {
                 selectedPollutant = 'pm2.5';
             }
+            dataCapteurSite.forEach((capteur) => {
+                if (capteur.id_site === item.id_site) {
+                    // Filter capteur.variables to only keep pollutants from allPollutants
+                    if (capteur.variables) {
+                        capteur.variables =
+                            typeof capteur.variables === 'string'
+                                ? capteur.variables
+                                      .split(',')
+                                      .map((v) => v.trim())
+                                      .filter((variable) =>
+                                          allPollutants.includes(
+                                              variable.toLowerCase()
+                                          )
+                                      )
+                                : Array.isArray(capteur.variables)
+                                  ? capteur.variables.filter((variable) =>
+                                        allPollutants.includes(
+                                            variable.toLowerCase()
+                                        )
+                                    )
+                                  : [];
+                    }
+                    item.variablesMesure = capteur.variables;
+                }
+            });
+            console.log('item: ', item);
             return item.variable.toLowerCase() === selectedPollutant;
         });
 
@@ -371,9 +400,13 @@ export async function loadAtmoSudMicroStation() {
                                     <i class="bi bi-clock me-1"></i>
                                     Dernière mise à jour: ${new Date(value['time']).toLocaleString()}
                                 </small>
-                                <small class="text-muted">
+                                <small class="text-muted mb-1">
                                     <i class="bi bi-info-circle me-1"></i>
                                     ${value['modele_capteur']} - ${value['marque_capteur']}
+                                </small>
+                                <small class="text-muted">
+                                    Polluants mesurés:<br>
+                                    ${value['variablesMesure'].map((polluant) => `<span class="text-success">●</span> ${polluant}`).join('<br>')}
                                 </small>
                             </div>
                         </div>
@@ -1375,8 +1408,6 @@ async function fetchAPI(url, options = {}) {
         }
 
         const data = await response.json();
-        console.log(url);
-        console.log(data);
 
         // Validation des données
         if (!data) {
