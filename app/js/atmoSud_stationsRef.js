@@ -14,36 +14,48 @@ import {
 } from '../app.js';
 import { isSourceActive } from './dataSourceManager.js';
 
-// Variables globales du module
-let pasDeTempsChart = '1h';
-let pasDeTempsAtmo = '';
-let pasDeTemps = '';
-let historiqueChart = '7d';
-let mesuresArray = [];
-let globalSelectedStationId = null;
-let customDateRange = {
-    start: null,
-    end: null,
+// Variables locales au module
+const state = {
+    pasDeTempsChart: '1h',
+    pasDeTempsAtmo: '',
+    pasDeTemps: '',
+    historiqueChart: '7d',
+    mesuresArray: [],
+    globalSelectedDeviceId: null,
+    customDateRange: {
+        start: null,
+        end: null,
+    },
 };
 
 // Déclaration des variables pour les boutons
-let btnHistoriqueCustom;
-let btnHistoriqueStartDate;
-let btnHistoriqueEndDate;
-let btnHistorique1h;
-let btnHistorique3h;
-let btnHistorique24h;
-let btnHistorique7d;
-let btnHistorique30d;
-let btnHistorique365d;
-let btnPasDeTemps2min;
-let btnPasDeTempsQh;
-let btnPasDeTempsH;
-let btnPasDeTempsD;
-let btnPolutantPm1;
-let btnPolutantPm25;
-let btnPolutantPm10;
-let btnPolutantNo2;
+const buttons = {
+    historique: {
+        custom: null,
+        startDate: null,
+        endDate: null,
+        '1h': null,
+        '3h': null,
+        '24h': null,
+        '7d': null,
+        '30d': null,
+        '365d': null,
+    },
+    pasDeTemps: {
+        '2min': null,
+        qh: null,
+        h: null,
+        d: null,
+    },
+    polluants: {
+        pm1: null,
+        pm25: null,
+        pm10: null,
+        no2: null,
+        o3: null,
+        so2: null,
+    },
+};
 
 /**
  * Fonction principale pour charger les stations de référence AtmoSud
@@ -72,21 +84,21 @@ export function loadAtmoSudStationsRef() {
         console.log('Couche atmoRefLayer ajoutée à la carte');
     }
 
-    pasDeTemps = getArrayFromLocalStorage(pasDeTempsLocal);
+    state.pasDeTemps = getArrayFromLocalStorage(pasDeTempsLocal);
 
     // Conversion du pas de temps pour l'API AtmoSud
-    switch (pasDeTemps[0]) {
+    switch (state.pasDeTemps[0]) {
         case '2min':
-            pasDeTempsAtmo = 'brute';
+            state.pasDeTempsAtmo = 'brute';
             break;
         case 'qh':
-            pasDeTempsAtmo = 'quart-horaire';
+            state.pasDeTempsAtmo = 'quart-horaire';
             break;
         case 'h':
-            pasDeTempsAtmo = 'horaire';
+            state.pasDeTempsAtmo = 'horaire';
             break;
         case 'd':
-            pasDeTempsAtmo = 'journalière';
+            state.pasDeTempsAtmo = 'journalière';
             break;
     }
 
@@ -98,13 +110,15 @@ export function loadAtmoSudStationsRef() {
     }
 
     // Vérification de la disponibilité des données
-    if (pasDeTemps[0] === '2min') {
-        console.warn('Pas de données pour le pas de temps ' + pasDeTemps[0]);
+    if (state.pasDeTemps[0] === '2min') {
+        console.warn(
+            'Pas de données pour le pas de temps ' + state.pasDeTemps[0]
+        );
         return;
     }
 
-    console.log('Pas de temps : ' + pasDeTemps);
-    console.log('Pas de temps Atmo: ' + pasDeTempsAtmo);
+    console.log('Pas de temps : ' + state.pasDeTemps);
+    console.log('Pas de temps Atmo: ' + state.pasDeTempsAtmo);
     console.log('Mesure : ' + mesure);
 
     // Initialisation de l'objet global pour les stations
@@ -166,7 +180,7 @@ export function loadAtmoSudStationsRef() {
                 https://api.atmosud.org/observations/stations/mesures/derniere?
                 format=json&
                 nom_polluant=${mesureAtmo}&
-                temporalite=${pasDeTempsAtmo}&
+                temporalite=${state.pasDeTempsAtmo}&
                 download=false
             `.replace(/\s+/g, '');
 
@@ -361,7 +375,7 @@ function createStationMarker(value, iconParam, stationData, mesure) {
 
     function resetMarker() {
         // Ne pas réinitialiser si c'est le marqueur sélectionné
-        if (globalSelectedMarker !== stationMarker) {
+        if (state.globalSelectedMarker !== stationMarker) {
             stationMarker.setZIndexOffset(0);
             textMarker.setZIndexOffset(0);
         }
@@ -401,21 +415,21 @@ function createStationMarker(value, iconParam, stationData, mesure) {
 function setupMarkerEvents(stationMarker, textMarker, value, mesure) {
     const clickHandler = () => {
         if (
-            window.globalSelectedMarker &&
-            window.globalSelectedMarker !== stationMarker
+            state.globalSelectedMarker &&
+            state.globalSelectedMarker !== stationMarker
         ) {
-            window.globalSelectedMarker.setZIndexOffset(0);
-            window.globalSelectedMarker._icon.classList.remove(
+            state.globalSelectedMarker.setZIndexOffset(0);
+            state.globalSelectedMarker._icon.classList.remove(
                 'marker-selected'
             );
         }
 
         if (
-            window.globalSelectedText &&
-            window.globalSelectedText !== textMarker
+            state.globalSelectedText &&
+            state.globalSelectedText !== textMarker
         ) {
-            window.globalSelectedText.setZIndexOffset(0);
-            window.globalSelectedText._icon.classList.remove('marker-selected');
+            state.globalSelectedText.setZIndexOffset(0);
+            state.globalSelectedText._icon.classList.remove('marker-selected');
         }
 
         stationMarker.setZIndexOffset(1000);
@@ -423,10 +437,10 @@ function setupMarkerEvents(stationMarker, textMarker, value, mesure) {
         stationMarker._icon.classList.add('marker-selected');
         textMarker._icon.classList.add('marker-selected');
 
-        window.globalSelectedMarker = stationMarker;
-        window.globalSelectedText = textMarker;
-        window.globalSelectedStationId = value.id_station;
-        window.lastSelectedStationData = value;
+        state.globalSelectedMarker = stationMarker;
+        state.globalSelectedText = textMarker;
+        window.globalSelectedDeviceId = value.id_station;
+        state.lastSelectedStationData = value;
 
         console.log('Click on station: ' + value.id_station);
         openSidePanel_stationRef(
@@ -495,26 +509,26 @@ function createDefaultMarkers() {
 
             defaultMarker.on('click', () => {
                 if (
-                    window.globalSelectedMarker &&
-                    window.globalSelectedMarker !== defaultMarker
+                    state.globalSelectedMarker &&
+                    state.globalSelectedMarker !== defaultMarker
                 ) {
-                    window.globalSelectedMarker.setZIndexOffset(0);
-                    window.globalSelectedMarker._icon.classList.remove(
+                    state.globalSelectedMarker.setZIndexOffset(0);
+                    state.globalSelectedMarker._icon.classList.remove(
                         'marker-selected'
                     );
                 }
 
-                if (window.globalSelectedText) {
-                    window.globalSelectedText.setZIndexOffset(0);
-                    window.globalSelectedText._icon.classList.remove(
+                if (state.globalSelectedText) {
+                    state.globalSelectedText.setZIndexOffset(0);
+                    state.globalSelectedText._icon.classList.remove(
                         'marker-selected'
                     );
                 }
 
-                window.globalSelectedMarker = defaultMarker;
-                window.globalSelectedText = null;
-                window.globalSelectedStationId = station.id_station;
-                window.lastSelectedStationData = station;
+                state.globalSelectedMarker = defaultMarker;
+                state.globalSelectedText = null;
+                window.globalSelectedDeviceId = station.id_station;
+                state.lastSelectedStationData = station;
 
                 console.log('Click on station: ' + station.id_station);
                 openSidePanel_stationRef(
@@ -542,52 +556,54 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
     closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
 
     // Définition de l'historique par défaut en fonction du pas de temps
-    if (pasDeTempsAtmo === 'horaire') {
-        historiqueChart = '24h';
-    } else if (pasDeTempsAtmo === 'journalière') {
-        historiqueChart = '30d';
+    if (state.pasDeTempsAtmo === 'horaire') {
+        state.historiqueChart = '24h';
+    } else if (state.pasDeTempsAtmo === 'journalière') {
+        state.historiqueChart = '30d';
     } else {
-        historiqueChart = '3h';
+        state.historiqueChart = '3h';
     }
 
-    btnPasDeTemps2min.disabled = true;
+    buttons.pasDeTemps['2min'].disabled = true;
 
-    pasDeTempsChart = pasDeTempsAtmo;
+    state.pasDeTempsChart = state.pasDeTempsAtmo;
 
-    // Initialisation de mesuresArray uniquement s'il est vide
-    if (mesuresArray.length === 0) {
+    // Initialisation de state.mesuresArray uniquement s'il est vide
+    if (state.mesuresArray.length === 0) {
         // Conversion du polluant pour l'API
         let polluantAPI = mesure[0];
         if (polluantAPI === 'pm25') {
             polluantAPI = 'pm2.5';
         }
-        mesuresArray.push(polluantAPI);
+        state.mesuresArray.push(polluantAPI);
     }
 
     // Réinitialisation des boutons
-    const historiqueButtons = document.querySelectorAll(
-        '[id^="btn_historique_"]'
-    );
-    const pasDeTempsButtons = document.querySelectorAll(
-        '[id^="btn_pas_de_temps_"]'
-    );
-    const polluantsButtons = document.querySelectorAll('[id^="btn_poluant_"]');
-
-    historiqueButtons.forEach((btn) => (btn.checked = false));
-    pasDeTempsButtons.forEach((btn) => (btn.checked = false));
-    polluantsButtons.forEach((btn) => (btn.checked = false));
+    Object.values(buttons.historique).forEach((btn) => {
+        if (btn) {
+            btn.checked = false;
+        }
+    });
+    Object.values(buttons.pasDeTemps).forEach((btn) => {
+        if (btn) {
+            btn.checked = false;
+        }
+    });
+    Object.values(buttons.polluants).forEach((btn) => {
+        if (btn) {
+            btn.checked = false;
+        }
+    });
 
     // Mise à jour des boutons des filtres
-    const btnHistorique = document.getElementById(
-        'btn_historique_' + historiqueChart
-    );
+    const btnHistorique = buttons.historique[state.historiqueChart];
     if (btnHistorique) {
         btnHistorique.checked = true;
     }
 
-    // Conversion du pas de temps pour l'interface
-    let btnPasDeTempsId = 'btn_pas_de_temps_h';
-    switch (pasDeTempsAtmo) {
+    // Conversion du pas de temps pour l'interface et sélection du bouton correspondant
+    let btnPasDeTempsId;
+    switch (state.pasDeTempsAtmo) {
         case 'brute':
             btnPasDeTempsId = 'btn_pas_de_temps_2min';
             break;
@@ -600,6 +616,8 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
         case 'journalière':
             btnPasDeTempsId = 'btn_pas_de_temps_d';
             break;
+        default:
+            btnPasDeTempsId = 'btn_pas_de_temps_h';
     }
 
     const btnPasDeTemps = document.getElementById(btnPasDeTempsId);
@@ -608,12 +626,12 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
     }
 
     // Sélection des boutons des polluants actifs
-    mesuresArray.forEach((polluant) => {
+    state.mesuresArray.forEach((polluant) => {
         let buttonId = polluant;
         if (polluant === 'pm2.5') {
             buttonId = 'pm25';
         }
-        const btn = document.getElementById(`btn_poluant_${buttonId}`);
+        const btn = buttons.polluants[buttonId];
         if (btn) {
             btn.checked = true;
         }
@@ -622,9 +640,9 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
     // Récupération des données historiques
     retreiveHistoriqueDataStationRef(
         stationID,
-        pasDeTempsAtmo,
-        historiqueChart,
-        mesuresArray
+        state.pasDeTempsAtmo,
+        state.historiqueChart,
+        state.mesuresArray
     );
 
     // Mise à jour des informations de la carte
@@ -647,6 +665,11 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
  * @param {string} stationID - ID de la station
  */
 function setupButtonHandlers(stationID) {
+    // Vérifier si la source stationRef est active
+    if (!isSourceActive('atmo_ref')) {
+        return;
+    }
+
     setupHistoriqueButtonHandlers(stationID);
     setupPasDeTempsButtonHandlers(stationID);
     setupPollutantButtonHandlers(stationID);
@@ -657,15 +680,14 @@ function setupButtonHandlers(stationID) {
  * @param {string} stationID - ID de la station
  */
 function setupHistoriqueButtonHandlers(stationID) {
-    const btnHistoriqueCustom = document.getElementById(
-        'btn_historique_custom'
-    );
-    const btnHistoriqueStartDate = document.getElementById(
-        'btn_historique_start_date'
-    );
-    const btnHistoriqueEndDate = document.getElementById(
-        'btn_historique_end_date'
-    );
+    // Vérifier si la source stationRef est active
+    if (!isSourceActive('atmo_ref')) {
+        return;
+    }
+
+    const btnHistoriqueCustom = buttons.historique.custom;
+    const btnHistoriqueStartDate = buttons.historique.startDate;
+    const btnHistoriqueEndDate = buttons.historique.endDate;
 
     if (btnHistoriqueCustom) {
         btnHistoriqueCustom.onclick = (event) => {
@@ -676,9 +698,9 @@ function setupHistoriqueButtonHandlers(stationID) {
             const endTime = '23:59';
 
             if (startDate && startTime && endDate && endTime) {
-                document
-                    .querySelectorAll('[id^="btn_historique_"]')
-                    .forEach((btn) => (btn.checked = false));
+                Object.values(buttons.historique).forEach(
+                    (btn) => (btn.checked = false)
+                );
                 btnHistoriqueCustom.checked = true;
 
                 const startDateTime = new Date(
@@ -690,9 +712,9 @@ function setupHistoriqueButtonHandlers(stationID) {
 
                 retreiveHistoriqueDataStationRef(
                     stationID,
-                    pasDeTempsChart,
+                    state.pasDeTempsChart,
                     null,
-                    mesuresArray,
+                    state.mesuresArray,
                     false,
                     startDateTime,
                     endDateTime
@@ -719,22 +741,26 @@ function setupHistoriqueButtonHandlers(stationID) {
  * @param {string} stationID - ID de la station
  */
 function setupHistoriqueButton(periode, stationID) {
-    const btn = document.getElementById(`btn_historique_${periode}`);
+    const btn = buttons.historique[periode];
     if (btn) {
         btn.onclick = () => {
-            historiqueChart = periode;
+            state.historiqueChart = periode;
             // Réinitialiser la plage de dates personnalisée
-            customDateRange.start = null;
-            customDateRange.end = null;
-            document
-                .querySelectorAll('[id^="btn_historique_"]')
-                .forEach((b) => (b.checked = false));
-            btn.checked = true;
+            state.customDateRange.start = null;
+            state.customDateRange.end = null;
+            Object.values(buttons.historique).forEach((b) => {
+                if (b) {
+                    b.checked = false;
+                }
+            });
+            if (btn) {
+                btn.checked = true;
+            }
             retreiveHistoriqueDataStationRef(
                 stationID,
-                pasDeTempsChart,
-                historiqueChart,
-                mesuresArray
+                state.pasDeTempsChart,
+                state.historiqueChart,
+                state.mesuresArray
             );
         };
     }
@@ -745,6 +771,11 @@ function setupHistoriqueButton(periode, stationID) {
  * @param {string} stationID - ID de la station
  */
 function setupPasDeTempsButtonHandlers(stationID) {
+    // Vérifier si la source stationRef est active
+    if (!isSourceActive('atmo_ref')) {
+        return;
+    }
+
     setupPasDeTempsButton('2min', 'brute', stationID);
     setupPasDeTempsButton('qh', 'quart-horaire', stationID);
     setupPasDeTempsButton('h', 'horaire', stationID);
@@ -758,19 +789,19 @@ function setupPasDeTempsButtonHandlers(stationID) {
  * @param {string} stationID - ID de la station
  */
 function setupPasDeTempsButton(id, pasDeTemps, stationID) {
-    const btn = document.getElementById(`btn_pas_de_temps_${id}`);
+    const btn = buttons.pasDeTemps[id];
     if (btn) {
         btn.onclick = () => {
-            pasDeTempsChart = pasDeTemps;
-            document
-                .querySelectorAll('[id^="btn_pas_de_temps_"]')
-                .forEach((b) => (b.checked = false));
+            state.pasDeTempsChart = pasDeTemps;
+            Object.values(buttons.pasDeTemps).forEach(
+                (b) => (b.checked = false)
+            );
             btn.checked = true;
             retreiveHistoriqueDataStationRef(
                 stationID,
-                pasDeTempsChart,
-                historiqueChart,
-                mesuresArray
+                state.pasDeTempsChart,
+                state.historiqueChart,
+                state.mesuresArray
             );
         };
     }
@@ -783,7 +814,7 @@ function setupPasDeTempsButton(id, pasDeTemps, stationID) {
 function setupPollutantButtonHandlers(stationID) {
     console.log('Configuration des boutons de polluants');
 
-    const buttons = {
+    const polluants = {
         pm1: 'pm1',
         pm25: 'pm2.5',
         pm10: 'pm10',
@@ -792,20 +823,19 @@ function setupPollutantButtonHandlers(stationID) {
         so2: 'so2',
     };
 
-    Object.entries(buttons).forEach(([buttonId, pollutant]) => {
+    Object.entries(polluants).forEach(([buttonId, pollutant]) => {
         const button = document.getElementById(`btn_poluant_${buttonId}`);
         if (button) {
             console.log(`Configuration du bouton ${buttonId}`);
 
-            // Supprimer tous les écouteurs d'événements existants
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-
             // Changer le type en checkbox
-            newButton.type = 'checkbox';
+            button.type = 'checkbox';
+
+            // Supprimer l'attribut name pour éviter le comportement radio
+            button.removeAttribute('name');
 
             // Gestionnaire pour les changements
-            newButton.addEventListener('change', function (e) {
+            button.addEventListener('change', function (e) {
                 console.log(`Événement change détecté pour ${buttonId}`);
                 console.log(`État du bouton: ${this.checked}`);
 
@@ -816,31 +846,31 @@ function setupPollutantButtonHandlers(stationID) {
 
                 // Mise à jour du tableau des mesures
                 if (this.checked) {
-                    if (!mesuresArray.includes(pollutant)) {
-                        mesuresArray.push(pollutant);
+                    if (!state.mesuresArray.includes(pollutant)) {
+                        state.mesuresArray.push(pollutant);
                     }
                 } else {
-                    mesuresArray = mesuresArray.filter(
+                    state.mesuresArray = state.mesuresArray.filter(
                         (item) => item !== pollutant
                     );
                 }
 
-                console.log('Mesures après mise à jour:', mesuresArray);
+                console.log('Mesures après mise à jour:', state.mesuresArray);
 
                 // Mise à jour des données uniquement si une station est sélectionnée
-                if (window.globalSelectedStationId) {
+                if (window.globalSelectedDeviceId) {
                     // Nettoyage complet du graphique avant la mise à jour
-                    if (amchart_root) {
-                        amchart_root.dispose();
-                        amchart_root = undefined;
+                    if (window.amchart_root_station) {
+                        window.amchart_root_station.dispose();
+                        window.amchart_root_station = undefined;
                     }
                     document.getElementById('chartdiv_sensor').innerHTML = '';
 
                     retreiveHistoriqueDataStationRef(
-                        window.globalSelectedStationId,
-                        pasDeTempsChart,
-                        historiqueChart,
-                        mesuresArray
+                        window.globalSelectedDeviceId,
+                        state.pasDeTempsChart,
+                        state.historiqueChart,
+                        state.mesuresArray
                     );
                 }
             });
@@ -869,6 +899,14 @@ export function retreiveHistoriqueDataStationRef(
     customStart = null,
     customEnd = null
 ) {
+    // Vérification que la station sélectionnée est toujours la même
+    if (stationId !== window.globalSelectedDeviceId) {
+        console.log(
+            'La station sélectionnée a changé, annulation de la requête'
+        );
+        return;
+    }
+
     console.log(
         '%cretreiveHistoriqueDataStationRef',
         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
@@ -876,11 +914,25 @@ export function retreiveHistoriqueDataStationRef(
     const start = Date.now();
 
     // Nettoyage complet du graphique précédent
-    if (amchart_root) {
-        amchart_root.dispose();
-        amchart_root = undefined;
+    const chartDiv = document.getElementById('chartdiv_sensor');
+    if (chartDiv) {
+        chartDiv.innerHTML = '';
     }
-    document.getElementById('chartdiv_sensor').innerHTML = '';
+
+    // Nettoyage de toutes les instances amCharts existantes
+    if (window.amchart_root) {
+        try {
+            window.amchart_root.dispose();
+        } catch (e) {
+            console.warn("Erreur lors du nettoyage de l'instance amCharts:", e);
+        }
+        window.amchart_root = undefined;
+    }
+
+    // Réinitialisation des données
+    state.mesuresArray = [...mesuresArray];
+    state.pasDeTempsChart = pasDeTemps;
+    state.historiqueChart = historique;
 
     // Conversion du pas de temps pour l'API
     let pasDeTempsAPI;
@@ -909,7 +961,7 @@ export function retreiveHistoriqueDataStationRef(
     let fullUrl = `https://api.atmosud.org/observations/stations/mesures?
         format=json&
         station_id=${stationId}&
-        nom_polluant=${mesuresArray.join(',')}&
+        nom_polluant=${state.mesuresArray.join(',')}&
         temporalite=${pasDeTempsAPI}&
         download=false&
         metadata=true`.replace(/\s+/g, '');
@@ -917,8 +969,8 @@ export function retreiveHistoriqueDataStationRef(
     // Ajout des paramètres de date
     if (customStart && customEnd) {
         fullUrl += `&date_debut=${customStart}&date_fin=${customEnd}`;
-    } else if (customDateRange.start && customDateRange.end) {
-        fullUrl += `&date_debut=${customDateRange.start}&date_fin=${customDateRange.end}`;
+    } else if (state.customDateRange.start && state.customDateRange.end) {
+        fullUrl += `&date_debut=${state.customDateRange.start}&date_fin=${state.customDateRange.end}`;
     } else if (historique) {
         const endDate = new Date();
         const startDate = new Date();
@@ -1003,7 +1055,7 @@ export function retreiveHistoriqueDataStationRef(
                     nomPolluant = 'so2';
                 }
 
-                if (nomPolluant && mesuresArray.includes(nomPolluant)) {
+                if (nomPolluant && state.mesuresArray.includes(nomPolluant)) {
                     if (!seriesData[nomPolluant]) {
                         seriesData[nomPolluant] = {
                             data: [],
@@ -1020,7 +1072,7 @@ export function retreiveHistoriqueDataStationRef(
                     console.log('Polluant non traité:', {
                         label: item.label_polluant,
                         labelLower: labelLower,
-                        mesuresArray: mesuresArray,
+                        mesuresArray: state.mesuresArray,
                         nomPolluant: nomPolluant,
                     });
                 }
@@ -1033,8 +1085,27 @@ export function retreiveHistoriqueDataStationRef(
 
             // Création du graphique
             am5.ready(function () {
+                // Vérification que l'élément existe toujours
+                const chartDiv = document.getElementById('chartdiv_sensor');
+                if (!chartDiv) {
+                    console.error("L'élément chartdiv_sensor n'existe plus");
+                    return;
+                }
+
+                // Nettoyage supplémentaire pour s'assurer qu'il n'y a pas d'instances résiduelles
+                if (window.amchart_root) {
+                    try {
+                        window.amchart_root.dispose();
+                    } catch (e) {
+                        console.warn(
+                            "Erreur lors du nettoyage de l'instance amCharts:",
+                            e
+                        );
+                    }
+                }
+
                 // Création du root element
-                amchart_root = am5.Root.new('chartdiv_sensor');
+                window.amchart_root = am5.Root.new('chartdiv_sensor');
 
                 // Création du graphique
                 let chart = amchart_root.container.children.push(
@@ -1116,191 +1187,42 @@ export function retreiveHistoriqueDataStationRef(
         })
         .catch((error) => {
             console.error('Erreur lors de la récupération des données:', error);
+            // Nettoyage en cas d'erreur
+            if (window.amchart_root) {
+                try {
+                    window.amchart_root.dispose();
+                } catch (e) {
+                    console.warn(
+                        "Erreur lors du nettoyage de l'instance amCharts:",
+                        e
+                    );
+                }
+                window.amchart_root = undefined;
+            }
         });
 }
 
 // Initialisation des boutons au chargement du DOM
 document.addEventListener('DOMContentLoaded', function () {
-    btnHistoriqueCustom = document.getElementById('apply_date_range');
-    btnHistoriqueStartDate = document.getElementById('start_date');
-    btnHistoriqueEndDate = document.getElementById('end_date');
-    btnHistorique1h = document.getElementById('btn_historique_1h');
-    btnHistorique3h = document.getElementById('btn_historique_3h');
-    btnHistorique24h = document.getElementById('btn_historique_24h');
-    btnHistorique7d = document.getElementById('btn_historique_7d');
-    btnHistorique30d = document.getElementById('btn_historique_30d');
-    btnHistorique365d = document.getElementById('btn_historique_365d');
-    btnPasDeTemps2min = document.getElementById('btn_pas_de_temps_2min');
-    btnPasDeTempsQh = document.getElementById('btn_pas_de_temps_qh');
-    btnPasDeTempsH = document.getElementById('btn_pas_de_temps_h');
-    btnPasDeTempsD = document.getElementById('btn_pas_de_temps_d');
-    btnPolutantPm1 = document.getElementById('btn_poluant_pm1');
-    btnPolutantPm25 = document.getElementById('btn_poluant_pm25');
-    btnPolutantPm10 = document.getElementById('btn_poluant_pm10');
-    btnPolutantNo2 = document.getElementById('btn_poluant_no2');
-
-    // Gestion du bouton d'affichage des polluants
-    const togglePollutantsBtn = document.getElementById('togglePollutants');
-    const pollutantsGroup = document.getElementById('btn_polluants');
-    const toggleIcon = togglePollutantsBtn.querySelector('i');
-
-    togglePollutantsBtn.addEventListener('click', function () {
-        if (pollutantsGroup.style.display === 'none') {
-            pollutantsGroup.style.display = 'flex';
-            toggleIcon.classList.replace('bi-chevron-down', 'bi-chevron-up');
-            togglePollutantsBtn.textContent = ' Masquer les polluants';
-            togglePollutantsBtn.prepend(toggleIcon);
-        } else {
-            pollutantsGroup.style.display = 'none';
-            toggleIcon.classList.replace('bi-chevron-up', 'bi-chevron-down');
-            togglePollutantsBtn.textContent = ' Afficher les polluants';
-            togglePollutantsBtn.prepend(toggleIcon);
-        }
+    // Initialisation des boutons d'historique
+    Object.keys(buttons.historique).forEach((key) => {
+        buttons.historique[key] = document.getElementById(
+            `btn_historique_${key}`
+        );
     });
 
-    // Gestion de la plage de dates personnalisée
-    const applyDateRangeBtn = document.getElementById('apply_date_range');
-    const startDateInput = document.getElementById('start_date');
-    const endDateInput = document.getElementById('end_date');
+    // Initialisation des boutons de pas de temps
+    Object.keys(buttons.pasDeTemps).forEach((key) => {
+        buttons.pasDeTemps[key] = document.getElementById(
+            `btn_pas_de_temps_${key}`
+        );
+    });
 
-    if (applyDateRangeBtn && startDateInput && endDateInput) {
-        applyDateRangeBtn.addEventListener('click', function (event) {
-            event.preventDefault();
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const startTime = '00:00';
-            const endTime = '23:59';
+    // Initialisation des boutons de polluants
+    Object.keys(buttons.polluants).forEach((key) => {
+        buttons.polluants[key] = document.getElementById(`btn_poluant_${key}`);
+    });
 
-            if (startDate && endDate) {
-                // Désélectionner tous les boutons d'historique
-                document
-                    .querySelectorAll('[id^="btn_historique_"]')
-                    .forEach((btn) => (btn.checked = false));
-
-                const startDateTime = new Date(
-                    `${startDate}T${startTime}`
-                ).toISOString();
-                const endDateTime = new Date(
-                    `${endDate}T${endTime}`
-                ).toISOString();
-
-                // Sauvegarder la plage de dates personnalisée
-                customDateRange.start = startDateTime;
-                customDateRange.end = endDateTime;
-
-                if (window.globalSelectedStationId) {
-                    retreiveHistoriqueDataStationRef(
-                        window.globalSelectedStationId,
-                        pasDeTempsChart,
-                        null,
-                        mesuresArray,
-                        false,
-                        startDateTime,
-                        endDateTime
-                    );
-                }
-            } else {
-                alert(
-                    'Veuillez sélectionner une date de début et une date de fin.'
-                );
-            }
-        });
-    }
+    // Configuration des gestionnaires d'événements
+    setupButtonHandlers();
 });
-
-// Configuration des gestionnaires d'événements pour les boutons de polluants
-if (btn_poluant_pm1) {
-    btn_poluant_pm1.addEventListener('change', function () {
-        // Vérifier si la source stationRef est active
-        const activeSources = getArrayFromLocalStorage('sources_local');
-        if (!activeSources.includes('atmo_ref')) {
-            return;
-        }
-
-        if (this.checked) {
-            if (!mesuresArray.includes('pm1')) {
-                mesuresArray.push('pm1');
-            }
-        } else {
-            mesuresArray = mesuresArray.filter((item) => item !== 'pm1');
-        }
-        retreiveHistoriqueDataStationRef(
-            window.globalSelectedStationId,
-            pasDeTempsChart,
-            historiqueChart,
-            mesuresArray
-        );
-    });
-}
-
-if (btn_poluant_pm25) {
-    btn_poluant_pm25.addEventListener('change', function () {
-        // Vérifier si la source stationRef est active
-        const activeSources = getArrayFromLocalStorage('sources_local');
-        if (!activeSources.includes('atmo_ref')) {
-            return;
-        }
-
-        if (this.checked) {
-            if (!mesuresArray.includes('pm2.5')) {
-                mesuresArray.push('pm2.5');
-            }
-        } else {
-            mesuresArray = mesuresArray.filter((item) => item !== 'pm2.5');
-        }
-        retreiveHistoriqueDataStationRef(
-            window.globalSelectedStationId,
-            pasDeTempsChart,
-            historiqueChart,
-            mesuresArray
-        );
-    });
-}
-
-if (btn_poluant_pm10) {
-    btn_poluant_pm10.addEventListener('change', function () {
-        // Vérifier si la source stationRef est active
-        const activeSources = getArrayFromLocalStorage('sources_local');
-        if (!activeSources.includes('atmo_ref')) {
-            return;
-        }
-
-        if (this.checked) {
-            if (!mesuresArray.includes('pm10')) {
-                mesuresArray.push('pm10');
-            }
-        } else {
-            mesuresArray = mesuresArray.filter((item) => item !== 'pm10');
-        }
-        retreiveHistoriqueDataStationRef(
-            window.globalSelectedStationId,
-            pasDeTempsChart,
-            historiqueChart,
-            mesuresArray
-        );
-    });
-}
-
-if (btn_poluant_no2) {
-    btn_poluant_no2.addEventListener('change', function () {
-        // Vérifier si la source stationRef est active
-        const activeSources = getArrayFromLocalStorage('sources_local');
-        if (!activeSources.includes('atmo_ref')) {
-            return;
-        }
-
-        if (this.checked) {
-            if (!mesuresArray.includes('no2')) {
-                mesuresArray.push('no2');
-            }
-        } else {
-            mesuresArray = mesuresArray.filter((item) => item !== 'no2');
-        }
-        retreiveHistoriqueDataStationRef(
-            window.globalSelectedStationId,
-            pasDeTempsChart,
-            historiqueChart,
-            mesuresArray
-        );
-    });
-}

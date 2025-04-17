@@ -525,6 +525,13 @@ function setupAutoRefresh() {
 
     // Configuration de l'intervalle de rafraîchissement
     window.refreshInterval = setInterval(() => {
+        // Vérification si un rafraîchissement est déjà en cours
+        if (window.isRefreshing) {
+            console.log('Un rafraîchissement est déjà en cours, attente...');
+            return;
+        }
+        window.isRefreshing = true;
+
         console.log(
             '⏰ Rafraîchissement automatique des données selon le pas de temps'
         );
@@ -551,21 +558,31 @@ function setupAutoRefresh() {
 
         // Récupération et rafraîchissement des sources actives
         const activeSources = getArrayFromLocalStorage(sources_local);
-        activeSources.forEach((source) => {
+        const refreshPromises = activeSources.map((source) => {
             clearLayer(source);
-            loadSource(source);
+            return loadSource(source);
         });
 
-        // Mise à jour de l'affichage
-        updateTimeDisplay();
-        updateButtonDisplay();
+        // Attente de la fin de tous les rafraîchissements
+        Promise.all(refreshPromises)
+            .then(() => {
+                // Mise à jour de l'affichage
+                updateTimeDisplay();
+                updateButtonDisplay();
 
-        // Restauration de l'état précédent si nécessaire
-        if (currentDeviceId && sidePanelOpen) {
-            setTimeout(() => {
-                findAndHighlightMarker(currentDeviceId);
-            }, 1000);
-        }
+                // Restauration de l'état précédent si nécessaire
+                if (currentDeviceId && sidePanelOpen) {
+                    setTimeout(() => {
+                        findAndHighlightMarker(currentDeviceId);
+                    }, 1000);
+                }
+            })
+            .catch((error) => {
+                console.error('Erreur lors du rafraîchissement:', error);
+            })
+            .finally(() => {
+                window.isRefreshing = false;
+            });
     }, refreshIntervalMs);
 }
 

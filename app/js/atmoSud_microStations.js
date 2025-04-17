@@ -29,12 +29,13 @@ import {
 
 import { isSourceActive } from './dataSourceManager.js';
 
-import { toastManager, createCustomToast } from './toaster.js';
+import { createCustomToast } from './toaster.js';
 
 // Variables locales au module
 var pas_de_temps_chart = 'horaire';
 var historique_chart = '24h';
 var mesures_array = [];
+var isFetching = false; // Variable pour gérer l'état des appels API
 
 // Déclaration des variables pour les boutons d'historique
 let btn_historique_custom;
@@ -54,6 +55,10 @@ let btn_poluant_pm1;
 let btn_poluant_pm25;
 let btn_poluant_pm10;
 let btn_poluant_no2;
+let btn_poluant_so2;
+let btn_poluant_o3;
+let btn_poluant_h2s;
+let btn_poluant_nh3;
 
 // Initialisation des boutons au chargement du DOM
 document.addEventListener('DOMContentLoaded', function () {
@@ -74,16 +79,38 @@ document.addEventListener('DOMContentLoaded', function () {
     btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
     btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
     btn_poluant_no2 = document.getElementById('btn_poluant_no2');
+    btn_poluant_so2 = document.getElementById('btn_poluant_so2');
+    btn_poluant_o3 = document.getElementById('btn_poluant_o3');
+    btn_poluant_h2s = document.getElementById('btn_poluant_h2s');
+    btn_poluant_nh3 = document.getElementById('btn_poluant_nh3');
 });
 
-// Fonction principale exportée
+/**
+ * Cette fonction charge les micro-stations AtmoSud sur la carte
+ * Elle fait plusieurs choses :
+ * 1. Vérifie qu'aucun autre chargement n'est en cours
+ * 2. Récupère les paramètres de l'utilisateur (temps, mesures)
+ * 3. Appelle l'API AtmoSud pour obtenir les données
+ * 4. Affiche les stations sur la carte avec des marqueurs
+ */
 export async function loadAtmoSudMicroStation() {
     try {
+        // On vérifie si un chargement est déjà en cours pour éviter les doublons
+        if (isFetching) {
+            console.log('Un chargement est déjà en cours, on attend...');
+            return;
+        }
+        isFetching = true; // On indique qu'un chargement commence
+
+        // On nettoie la carte en enlevant tous les marqueurs existants
         atmoMicroLayer.clearLayers();
 
+        // On récupère le pas de temps choisi par l'utilisateur
+        // Le pas de temps c'est l'intervalle entre chaque mesure (ex: toutes les heures)
         var pas_de_temps = getArrayFromLocalStorage(pasDeTempsLocal);
         var pas_de_temps_atmo = '';
 
+        // On convertit le pas de temps en format compatible avec l'API AtmoSud
         switch (pas_de_temps[0]) {
             case 'instantane':
                 pas_de_temps_atmo = 'brute';
@@ -102,40 +129,48 @@ export async function loadAtmoSudMicroStation() {
                 pas_de_temps_chart = 'horaire';
                 break;
             case 'd':
-                // La notification est maintenant gérée par handleTimeStepNotifications
+                // Si c'est quotidien, on ne fait rien car c'est géré ailleurs
                 return;
             default:
                 pas_de_temps_atmo = 'horaire';
                 pas_de_temps_chart = 'horaire';
         }
 
+        // On récupère les polluants que l'utilisateur veut voir
         var mesures = getArrayFromLocalStorage(mesuresLocal);
         mesures_array = [...mesures];
         var mesures_atmo = mesures;
 
+        // Cas spécial pour PM2.5 qui s'écrit différemment dans l'API
         if (mesures[0] === 'pm25') {
             mesures_atmo = ['pm2.5'];
         }
 
+        // Liste de tous les polluants possibles
         let allPollutants = ['pm1', 'pm2.5', 'pm10', 'no2'];
 
+        // On construit l'URL pour appeler l'API AtmoSud
         let full_url_derniere = `
-        https://api.atmosud.org/observations/capteurs/mesures/dernieres?
-        format=json
-        &download=false
-        &valeur_brute=true
-        &type_capteur=true
-        &variable=${allPollutants.join(',')}
-        &aggregation=${pas_de_temps_atmo}
-        &nb_dec=1
+            https://api.atmosud.org/observations/capteurs/mesures/dernieres?
+            format=json
+            &download=false
+            &valeur_brute=true
+            &type_capteur=true
+            &variable=${allPollutants.join(',')}
+            &aggregation=${pas_de_temps_atmo}
+            &nb_dec=1
         `.replace(/\s+/g, '');
 
+        // On appelle l'API et on attend la réponse
         const data = await fetchAPI(full_url_derniere);
+        isFetching = false; // On indique que le chargement est terminé
 
+        // On vérifie que les données reçues sont bien un tableau
         if (!Array.isArray(data)) {
-            throw new Error("Format de données invalide reçu de l'API");
+            throw new Error('Les données reçues ne sont pas au bon format');
         }
 
+        // On filtre les données pour ne garder que le polluant sélectionné
         let filteredData = data.filter((item) => {
             if (!item || !item.variable) return false;
 
@@ -146,12 +181,14 @@ export async function loadAtmoSudMicroStation() {
             return item.variable.toLowerCase() === selectedPollutant;
         });
 
+        // Filtre supplémentaire pour le pas de temps de 2 minutes
         if (pas_de_temps[0] === '2min') {
             filteredData = filteredData.filter(
                 (item) => item.pas_de_temps === 120
             );
         }
 
+        // Si on n'a pas de données, on affiche un message d'avertissement
         if (filteredData.length === 0) {
             createCustomToast({
                 message:
@@ -164,12 +201,15 @@ export async function loadAtmoSudMicroStation() {
             return;
         }
 
+        // Pour chaque station dans les données filtrées
         for (const value of filteredData) {
+            // On vérifie que les données sont complètes
             if (!value || !value.id_site || !value.lat || !value.lon) {
                 console.warn('Données incomplètes pour un capteur:', value);
                 continue;
             }
 
+            // On prépare l'icône du marqueur
             var icon_param = {
                 iconUrl:
                     'img/microStationsAtmoSud/microStationAtmoSud_default.png',
@@ -179,6 +219,7 @@ export async function loadAtmoSudMicroStation() {
                 tooltipAnchor: [-50, -10],
             };
 
+            // On détermine la couleur de l'icône selon la valeur mesurée
             let valueToCheck = value['valeur_ref'];
             let colorCode = getColorCodeForValue(valueToCheck, mesures[0]);
 
@@ -195,25 +236,30 @@ export async function loadAtmoSudMicroStation() {
                     '.png';
             }
 
+            // On crée le marqueur sur la carte
             var microStation_icon = L.icon(icon_param);
             let microStationMarker = L.marker([value['lat'], value['lon']], {
                 icon: microStation_icon,
             }).addTo(atmoMicroLayer);
 
+            // On stocke des informations sur le marqueur
             microStationMarker.deviceId = value['id_site'];
             microStationMarker.deviceData = value;
 
+            // On garde une référence à tous les marqueurs
             if (!window.deviceMarkers) window.deviceMarkers = {};
             window.deviceMarkers[value['id_site']] = {
                 marker: microStationMarker,
                 data: value,
             };
 
+            // On prépare l'affichage de la valeur
             let roundedvalue = Math.round(parseFloat(value['valeur_ref']));
             var textSize = 32;
             var x_position = -10;
             var y_position = 41;
 
+            // On ajuste la taille du texte selon la valeur
             if (roundedvalue >= 10) {
                 textSize = 25;
                 x_position = -5;
@@ -225,6 +271,7 @@ export async function loadAtmoSudMicroStation() {
                 y_position = 26;
             }
 
+            // On crée le texte qui sera affiché sur le marqueur
             var text_param = L.divIcon({
                 className: 'my-div-icon',
                 html:
@@ -240,10 +287,15 @@ export async function loadAtmoSudMicroStation() {
                 popupAnchor: [30, -60],
             });
 
+            // On ajoute le texte sur la carte
             let textMarker = L.marker([value['lat'], value['lon']], {
                 icon: text_param,
             })
                 .on('click', function () {
+                    // Quand on clique sur un marqueur
+                    console.log('click on micro station:', value['nom_site']);
+
+                    // On désélectionne le marqueur précédent s'il existe
                     if (
                         globalSelectedMarker &&
                         globalSelectedMarker !== microStationMarker &&
@@ -266,6 +318,7 @@ export async function loadAtmoSudMicroStation() {
                         );
                     }
 
+                    // On met en surbrillance le nouveau marqueur
                     microStationMarker.setZIndexOffset(1000);
                     textMarker.setZIndexOffset(1000);
                     if (microStationMarker._icon) {
@@ -277,11 +330,13 @@ export async function loadAtmoSudMicroStation() {
                         textMarker._icon.classList.add('marker-selected');
                     }
 
+                    // On met à jour les variables globales
                     globalSelectedMarker = microStationMarker;
                     globalSelectedText = textMarker;
                     globalSelectedDeviceId = value['id_site'];
                     window.lastSelectedDeviceData = value;
 
+                    // On ouvre le panneau latéral avec les détails
                     openSidePanelMicroStation(
                         value,
                         pas_de_temps_atmo,
@@ -291,6 +346,7 @@ export async function loadAtmoSudMicroStation() {
                 })
                 .addTo(atmoMicroLayer);
 
+            // On stocke des informations sur le texte
             textMarker.deviceId = value['id_site'];
             textMarker.deviceData = value;
 
@@ -298,10 +354,12 @@ export async function loadAtmoSudMicroStation() {
                 window.deviceMarkers[value['id_site']].textMarker = textMarker;
             }
 
+            // Fonction appelée quand on survole un marqueur
             function highlightMarker() {
                 microStationMarker.setZIndexOffset(1000);
                 textMarker.setZIndexOffset(1000);
 
+                // On crée une infobulle
                 const tooltip = document.createElement('div');
                 tooltip.className = 'custom-tooltip';
                 tooltip.innerHTML = `
@@ -322,6 +380,7 @@ export async function loadAtmoSudMicroStation() {
                     </div>
                 `;
 
+                // On positionne l'infobulle
                 tooltip.style.cssText = `
                     position: fixed;
                     z-index: 10000;
@@ -336,11 +395,13 @@ export async function loadAtmoSudMicroStation() {
                     opacity: 1;
                 `;
 
+                // On ajoute l'infobulle à la page
                 document.body.appendChild(tooltip);
                 microStationMarker.tooltip = tooltip;
                 textMarker.tooltip = tooltip;
             }
 
+            // Fonction appelée quand on quitte un marqueur
             function resetMarker() {
                 if (globalSelectedMarker !== microStationMarker) {
                     microStationMarker.setZIndexOffset(0);
@@ -354,6 +415,7 @@ export async function loadAtmoSudMicroStation() {
                 }
             }
 
+            // On ajoute les événements de survol aux marqueurs
             microStationMarker
                 .on('mouseover', highlightMarker)
                 .on('mouseout', resetMarker);
@@ -362,6 +424,7 @@ export async function loadAtmoSudMicroStation() {
                 .on('mouseout', resetMarker);
         }
     } catch (error) {
+        // Si une erreur se produit, on l'affiche
         console.error('Erreur dans loadAtmoSudMicroStation:', error);
         showErrorNotification(error.message);
     }
@@ -400,6 +463,11 @@ export function openSidePanelMicroStation(
     historique_buttons.forEach((btn) => (btn.checked = false));
     pas_de_temps_buttons.forEach((btn) => (btn.checked = false));
     polluants_buttons.forEach((btn) => (btn.checked = false));
+
+    btn_poluant_so2.disabled = true;
+    btn_poluant_o3.disabled = true;
+    btn_poluant_h2s.disabled = true;
+    btn_poluant_nh3.disabled = true;
 
     let availablePollutants = [];
 
@@ -738,7 +806,8 @@ export function openSidePanelMicroStation(
 
     // Gestionnaire d'événement pour le bouton de pas de temps 2 minutes
     btn_pas_de_temps_2min.onclick = function () {
-        pas_de_temps_chart = 'brute';
+        // On utilise '2min' au lieu de 'brute' pour éviter la vérification du pas de temps du capteur
+        pas_de_temps_chart = '2min';
         // Désélection de tous les autres boutons de pas de temps
         document
             .querySelectorAll('[id^="btn_pas_de_temps_"]')
@@ -809,12 +878,26 @@ function setupPollutantButtonHandlers() {
         pm25: 'pm2.5',
         pm10: 'pm10',
         no2: 'no2',
+        so2: 'so2',
+        o3: 'o3',
+        h2s: 'h2s',
+        nh3: 'nh3',
     };
 
     Object.entries(buttons).forEach(([buttonId, pollutant]) => {
         const button = document.getElementById(`btn_poluant_${buttonId}`);
         if (button) {
-            button.addEventListener('change', function () {
+            // Supprimer tous les gestionnaires d'événements existants
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+
+            // Changer le type en checkbox
+            newButton.type = 'checkbox';
+
+            // Supprimer l'attribut name pour éviter le comportement radio
+            newButton.removeAttribute('name');
+
+            newButton.addEventListener('change', function () {
                 // Vérifier si la source micro est active
                 if (!isSourceActive('atmo_micro')) {
                     return;
@@ -830,6 +913,44 @@ function setupPollutantButtonHandlers() {
                         (item) => item !== pollutant
                     );
                 }
+
+                // Mise à jour des données uniquement si un capteur est sélectionné
+                if (window.globalSelectedDeviceId) {
+                    retreive_historiqueData_microStation(
+                        window.globalSelectedDeviceId,
+                        pas_de_temps_chart,
+                        historique_chart,
+                        mesures_array
+                    );
+                }
+            });
+        }
+    });
+}
+
+function setupPasDeTempsButtonHandlers() {
+    const buttons = {
+        '2min': '2min',
+        'quarter-hour': 'quarter-hour',
+        hourly: 'hourly',
+        daily: 'daily',
+    };
+
+    Object.entries(buttons).forEach(([buttonId, timeStep]) => {
+        const button = document.getElementById(`btn_pas_de_temps_${buttonId}`);
+        if (button) {
+            // Supprimer tous les gestionnaires d'événements existants
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+
+            newButton.addEventListener('click', function () {
+                // Vérifier si la source micro est active
+                if (!isSourceActive('atmo_micro')) {
+                    return;
+                }
+
+                // Mise à jour du pas de temps
+                pas_de_temps_chart = timeStep;
 
                 // Mise à jour des données uniquement si un capteur est sélectionné
                 if (window.globalSelectedDeviceId) {
@@ -865,13 +986,37 @@ export async function retreive_historiqueData_microStation(
     custom_end = null
 ) {
     try {
+        // Vérification que le capteur sélectionné est toujours le même
+        if (sensorId !== window.globalSelectedDeviceId) {
+            console.log(
+                'Le capteur sélectionné a changé, annulation de la requête'
+            );
+            return;
+        }
+
         // Vérification de la présence d'un ID de capteur
         if (!sensorId) {
             throw new Error('ID du capteur non défini');
         }
 
-        // Réinitialisation de la zone de graphique
-        document.getElementById('chartdiv_sensor').innerHTML = '';
+        // Nettoyage de la zone de graphique
+        const chartDiv = document.getElementById('chartdiv_sensor');
+        if (chartDiv) {
+            chartDiv.innerHTML = '';
+        }
+
+        // Nettoyage de toutes les instances amCharts existantes
+        if (window.amchart_root) {
+            try {
+                window.amchart_root.dispose();
+                window.amchart_root = null;
+            } catch (e) {
+                console.warn(
+                    "Erreur lors du nettoyage de l'instance amCharts:",
+                    e
+                );
+            }
+        }
 
         // Calcul de la période d'historique en heures
         let hours;
@@ -950,95 +1095,34 @@ export async function retreive_historiqueData_microStation(
         }
 
         // Nettoyage du graphique précédent s'il existe
-        if (amchart_root != undefined) {
-            amchart_root.dispose();
+        if (window.amchart_root) {
+            window.amchart_root.dispose();
+            window.amchart_root = undefined;
         }
 
-        // Configuration de l'intervalle de temps pour l'axe X du graphique
+        // Configuration de l'intervalle de temps pour l'axe X
         let baseIntervalConfig = {
             timeUnit: 'minute',
             count: 1,
         };
 
-        // Configuration spécifique selon le pas de temps
-        if (pas_de_temps == 'instantane' || pas_de_temps == 'brute') {
-            if (data && data.length > 1) {
-                // Récupération du pas de temps du capteur en secondes
-                const timeStepInSeconds =
-                    window.lastSelectedDeviceData.pas_de_temps;
-                if (!timeStepInSeconds) {
-                    throw new Error('Pas de temps non défini pour le capteur');
-                }
-
-                // Conversion en minutes pour l'affichage
-                const timeStepInMinutes = Math.round(timeStepInSeconds / 60);
-
-                // On ne modifie le bouton que si le pas de temps est différent de 15 minutes
-                if (timeStepInMinutes !== 15) {
-                    baseIntervalConfig = {
-                        timeUnit: 'minute',
-                        count: timeStepInMinutes,
-                    };
-
-                    // Mise à jour du bouton de pas de temps avec la valeur réelle
-                    const btn_pas_de_temps_id = 'btn_pas_de_temps_2min';
-                    const existingButton =
-                        document.getElementById(btn_pas_de_temps_id);
-
-                    if (existingButton) {
-                        existingButton.value = `${timeStepInMinutes}min`;
-                        const label = document.querySelector(
-                            `label[for="${btn_pas_de_temps_id}"]`
-                        );
-                        if (label) {
-                            label.textContent = `${timeStepInMinutes}min`;
-                        }
-                        existingButton.checked = true;
-                        pas_de_temps_chart = `${timeStepInMinutes}min`;
-                    }
-                } else {
-                    // Si le pas de temps est de 15 minutes, on utilise le bouton quart-horaire existant
-                    baseIntervalConfig = {
-                        timeUnit: 'minute',
-                        count: 15,
-                    };
-                    const btn_pas_de_temps_id = 'btn_pas_de_temps_qh';
-                    const existingButton =
-                        document.getElementById(btn_pas_de_temps_id);
-                    if (existingButton) {
-                        existingButton.checked = true;
-                        pas_de_temps_chart = 'quart-horaire';
-                    }
-                }
-            }
-        } else if (pas_de_temps == '2m' || pas_de_temps == '2min') {
+        // Ajustement de l'intervalle en fonction du pas de temps
+        if (pas_de_temps === '2min') {
             baseIntervalConfig = {
                 timeUnit: 'minute',
                 count: 2,
             };
-        } else if (
-            pas_de_temps == '15m' ||
-            pas_de_temps == 'qh' ||
-            pas_de_temps == 'quart-horaire'
-        ) {
+        } else if (pas_de_temps === 'quart-horaire') {
             baseIntervalConfig = {
                 timeUnit: 'minute',
                 count: 15,
             };
-        } else if (
-            pas_de_temps == '1h' ||
-            pas_de_temps == 'h' ||
-            pas_de_temps == 'horaire'
-        ) {
+        } else if (pas_de_temps === 'horaire') {
             baseIntervalConfig = {
                 timeUnit: 'hour',
                 count: 1,
             };
-        } else if (
-            pas_de_temps == '24h' ||
-            pas_de_temps == '1d' ||
-            pas_de_temps == 'journalier'
-        ) {
+        } else if (pas_de_temps === 'journalier') {
             baseIntervalConfig = {
                 timeUnit: 'day',
                 count: 1,
@@ -1047,7 +1131,89 @@ export async function retreive_historiqueData_microStation(
 
         // Initialisation du graphique avec amCharts 5
         am5.ready(function () {
-            // Préparation des données pour chaque polluant
+            // Vérification que l'élément existe toujours
+            const chartDiv = document.getElementById('chartdiv_sensor');
+            if (!chartDiv) {
+                console.error("L'élément chartdiv_sensor n'existe plus");
+                return;
+            }
+
+            // Nettoyage supplémentaire pour s'assurer qu'il n'y a pas d'instances résiduelles
+            if (window.amchart_root) {
+                try {
+                    window.amchart_root.dispose();
+                } catch (e) {
+                    console.warn(
+                        "Erreur lors du nettoyage de l'instance amCharts:",
+                        e
+                    );
+                }
+            }
+
+            // Création de la racine du graphique
+            window.amchart_root = am5.Root.new('chartdiv_sensor');
+
+            // Configuration du graphique XY (axes X et Y)
+            let chart = window.amchart_root.container.children.push(
+                am5xy.XYChart.new(window.amchart_root, {
+                    panX: false,
+                    panY: false,
+                    wheelX: 'panX',
+                    wheelY: 'zoomX',
+                    paddingLeft: 0,
+                })
+            );
+
+            // Configuration de l'axe X (temps)
+            let xAxis = chart.xAxes.push(
+                am5xy.DateAxis.new(window.amchart_root, {
+                    maxDeviation: 0.2,
+                    baseInterval: baseIntervalConfig,
+                    renderer: am5xy.AxisRendererX.new(window.amchart_root, {
+                        minorGridEnabled: true, // Affiche les grilles mineures
+                    }),
+                    tooltip: am5.Tooltip.new(window.amchart_root, {}),
+                    // Format des dates selon l'intervalle
+                    dateFormats: {
+                        minute: 'HH:mm',
+                        hour: 'HH:mm',
+                        day: 'dd/MM HH:mm',
+                    },
+                    periodChangeDateFormats: {
+                        minute: 'HH:mm',
+                        hour: 'HH:mm',
+                        day: 'dd/MM HH:mm',
+                    },
+                })
+            );
+
+            // Configuration de l'axe Y (valeurs)
+            let yAxis = chart.yAxes.push(
+                am5xy.ValueAxis.new(window.amchart_root, {
+                    renderer: am5xy.AxisRendererY.new(window.amchart_root, {}),
+                })
+            );
+
+            // Configuration du curseur pour l'interaction
+            let cursor = chart.set(
+                'cursor',
+                am5xy.XYCursor.new(window.amchart_root, {
+                    behavior: 'zoomX', // Comportement du curseur
+                    xAxis: xAxis,
+                    yAxis: yAxis,
+                })
+            );
+            cursor.lineY.set('visible', false); // Cache la ligne verticale du curseur
+
+            // Définition des couleurs pour chaque polluant
+            const pollutantColors = {
+                pm1: '#FF5733',
+                'pm2.5': '#33A1FF',
+                pm10: '#33FF57',
+                no2: '#A133FF',
+            };
+
+            // Création des séries de données pour chaque polluant
             let seriesData = {};
             data.forEach((item) => {
                 const variable = item.variable;
@@ -1072,69 +1238,6 @@ export async function retreive_historiqueData_microStation(
                 }
             });
 
-            // Création de la racine du graphique
-            amchart_root = am5.Root.new('chartdiv_sensor');
-
-            // Configuration du graphique XY (axes X et Y)
-            let chart = amchart_root.container.children.push(
-                am5xy.XYChart.new(amchart_root, {
-                    panX: false, // Désactive le déplacement horizontal
-                    panY: false, // Désactive le déplacement vertical
-                    wheelX: 'panX', // Permet le défilement horizontal avec la molette
-                    wheelY: 'zoomX', // Permet le zoom avec la molette
-                    paddingLeft: 0, // Supprime la marge à gauche
-                })
-            );
-
-            // Configuration de l'axe X (temps)
-            let xAxis = chart.xAxes.push(
-                am5xy.DateAxis.new(amchart_root, {
-                    maxDeviation: 0.2,
-                    baseInterval: baseIntervalConfig,
-                    renderer: am5xy.AxisRendererX.new(amchart_root, {
-                        minorGridEnabled: true, // Affiche les grilles mineures
-                    }),
-                    tooltip: am5.Tooltip.new(amchart_root, {}),
-                    // Format des dates selon l'intervalle
-                    dateFormats: {
-                        minute: 'HH:mm',
-                        hour: 'HH:mm',
-                        day: 'dd/MM HH:mm',
-                    },
-                    periodChangeDateFormats: {
-                        minute: 'HH:mm',
-                        hour: 'HH:mm',
-                        day: 'dd/MM HH:mm',
-                    },
-                })
-            );
-
-            // Configuration de l'axe Y (valeurs)
-            let yAxis = chart.yAxes.push(
-                am5xy.ValueAxis.new(amchart_root, {
-                    renderer: am5xy.AxisRendererY.new(amchart_root, {}),
-                })
-            );
-
-            // Configuration du curseur pour l'interaction
-            let cursor = chart.set(
-                'cursor',
-                am5xy.XYCursor.new(amchart_root, {
-                    behavior: 'zoomX', // Comportement du curseur
-                    xAxis: xAxis,
-                    yAxis: yAxis,
-                })
-            );
-            cursor.lineY.set('visible', false); // Cache la ligne verticale du curseur
-
-            // Définition des couleurs pour chaque polluant
-            const pollutantColors = {
-                pm1: '#FF5733',
-                'pm2.5': '#33A1FF',
-                pm10: '#33FF57',
-                no2: '#A133FF',
-            };
-
             // Création des séries de données pour chaque polluant
             Object.keys(seriesData).forEach((variable) => {
                 // Gestion des noms de variables (ex: pm2.5 -> pm25)
@@ -1147,13 +1250,13 @@ export async function retreive_historiqueData_microStation(
                 // Création de la série pour les données corrigées
                 if (seriesData[variable].corrected.length > 0) {
                     let series = chart.series.push(
-                        am5xy.SmoothedXLineSeries.new(amchart_root, {
+                        am5xy.SmoothedXLineSeries.new(window.amchart_root, {
                             name: variable.toUpperCase() + ' (corrigé)',
                             xAxis: xAxis,
                             yAxis: yAxis,
                             valueYField: 'value',
                             valueXField: 'date',
-                            tooltip: am5.Tooltip.new(amchart_root, {
+                            tooltip: am5.Tooltip.new(window.amchart_root, {
                                 labelText: `${variable.toUpperCase()}: {valueY} µg/m³ (donnée corrigée)`,
                             }),
                         })
@@ -1173,13 +1276,13 @@ export async function retreive_historiqueData_microStation(
                 // Création de la série pour les données brutes
                 if (seriesData[variable].raw.length > 0) {
                     let series = chart.series.push(
-                        am5xy.SmoothedXLineSeries.new(amchart_root, {
+                        am5xy.SmoothedXLineSeries.new(window.amchart_root, {
                             name: variable.toUpperCase() + ' (brut)',
                             xAxis: xAxis,
                             yAxis: yAxis,
                             valueYField: 'value',
                             valueXField: 'date',
-                            tooltip: am5.Tooltip.new(amchart_root, {
+                            tooltip: am5.Tooltip.new(window.amchart_root, {
                                 labelText: `${variable.toUpperCase()}: {valueY} µg/m³ (donnée brute)`,
                             }),
                         })
@@ -1200,10 +1303,10 @@ export async function retreive_historiqueData_microStation(
 
             // Création et configuration de la légende
             let legend = chart.children.push(
-                am5.Legend.new(amchart_root, {
+                am5.Legend.new(window.amchart_root, {
                     centerX: am5.percent(50), // Centrage horizontal
                     x: am5.percent(50),
-                    layout: am5.GridLayout.new(amchart_root, {
+                    layout: am5.GridLayout.new(window.amchart_root, {
                         maxColumns: 2, // Maximum 2 colonnes
                         fixedWidthGrid: true, // Grille de largeur fixe
                     }),
@@ -1217,17 +1320,35 @@ export async function retreive_historiqueData_microStation(
             chart.appear(1000, 100);
 
             // Configuration de l'exportation des données
-            let exporting = am5plugins_exporting.Exporting.new(amchart_root, {
-                menu: am5plugins_exporting.ExportingMenu.new(amchart_root, {}),
-                filePrefix: 'historique_data',
-                dataSource: data,
-            });
+            let exporting = am5plugins_exporting.Exporting.new(
+                window.amchart_root,
+                {
+                    menu: am5plugins_exporting.ExportingMenu.new(
+                        window.amchart_root,
+                        {}
+                    ),
+                    filePrefix: 'historique_data',
+                    dataSource: data,
+                }
+            );
         });
     } catch (error) {
         console.error(
             'Erreur dans retreive_historiqueData_microStation:',
             error
         );
+        // Nettoyage en cas d'erreur
+        if (window.amchart_root) {
+            try {
+                window.amchart_root.dispose();
+            } catch (e) {
+                console.warn(
+                    "Erreur lors du nettoyage de l'instance amCharts:",
+                    e
+                );
+            }
+            window.amchart_root = undefined;
+        }
         showErrorNotification(error.message);
     }
 }
@@ -1248,6 +1369,8 @@ async function fetchAPI(url, options = {}) {
         }
 
         const data = await response.json();
+        console.log(url);
+        console.log(data);
 
         // Validation des données
         if (!data) {
