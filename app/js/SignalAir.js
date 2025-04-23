@@ -52,13 +52,12 @@ export function loadSignalAir(startDate, endDate) {
     // Nettoyage de la couche existante
     signalair_layer.clearLayers();
 
-    // Calcul des dates si non fournies (30 jours glissants)
+    // Calcul des dates si non fournies (veille)
     if (!startDate || !endDate) {
         const now = new Date();
+        now.setDate(now.getDate() - 1); // On se place à la veille
         endDate = now.toISOString().split('T')[0];
-        startDate = new Date(now.setDate(now.getDate() - 30))
-            .toISOString()
-            .split('T')[0];
+        startDate = endDate; // Même date que la fin pour n'avoir que la veille
     }
 
     console.log(

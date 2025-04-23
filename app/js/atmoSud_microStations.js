@@ -28,6 +28,7 @@ import {
 } from '../app.js';
 
 import { isSourceActive } from './dataSourceManager.js';
+import { panelManager } from './panelManager.js';
 
 import { createCustomToast } from './toaster.js';
 
@@ -36,6 +37,10 @@ var pas_de_temps_chart = 'horaire';
 var historique_chart = '24h';
 var mesures_array = [];
 var isFetching = false; // Variable pour gérer l'état des appels API
+var customDateRange = {
+    start: null,
+    end: null,
+};
 
 // Déclaration des variables pour les boutons d'historique
 let btn_historique_custom;
@@ -83,6 +88,51 @@ document.addEventListener('DOMContentLoaded', function () {
     btn_poluant_o3 = document.getElementById('btn_poluant_o3');
     btn_poluant_h2s = document.getElementById('btn_poluant_h2s');
     btn_poluant_nh3 = document.getElementById('btn_poluant_nh3');
+
+    // Configuration du bouton historique custom
+    if (btn_historique_custom) {
+        btn_historique_custom.onclick = (event) => {
+            if (!isSourceActive('atmo_micro')) return;
+
+            event.preventDefault();
+            const startDate = btn_historique_start_date.value;
+            const endDate = btn_historique_end_date.value;
+            const startTime = '00:00';
+            const endTime = '23:59';
+
+            if (startDate && startTime && endDate && endTime) {
+                const startDateTime = new Date(
+                    `${startDate}T${startTime}`
+                ).toISOString();
+                const endDateTime = new Date(
+                    `${endDate}T${endTime}`
+                ).toISOString();
+
+                if (
+                    customDateRange.start !== startDateTime ||
+                    customDateRange.end !== endDateTime
+                ) {
+                    customDateRange.start = startDateTime;
+                    customDateRange.end = endDateTime;
+                    panelManager.updateHistoriqueData(
+                        'atmo_micro',
+                        true,
+                        startDateTime,
+                        endDateTime
+                    );
+                }
+            } else {
+                createCustomToast({
+                    message:
+                        'Veuillez sélectionner une date et une heure de début et de fin.',
+                    type: 'warning',
+                    title: 'Attention',
+                    icon: 'exclamation-triangle',
+                    timer: 5000,
+                });
+            }
+        };
+    }
 });
 
 /**
@@ -151,7 +201,7 @@ export async function loadAtmoSudMicroStation() {
 
         // On construit l'URL pour appeler l'API AtmoSud pour récupérer les dernieres mesures disponible
         let full_url_derniere = `
-            https://api.atmosud.org/observations/capteurs/mesures/dernieres?
+            https://preprod-api.atmosud.org/observations/capteurs/mesures/dernieres?
             format=json
             &download=false
             &valeur_brute=true
@@ -206,7 +256,6 @@ export async function loadAtmoSudMicroStation() {
                     item.variablesMesure = capteur.variables;
                 }
             });
-            console.log('item: ', item);
             return item.variable.toLowerCase() === selectedPollutant;
         });
 
@@ -470,211 +519,18 @@ export function openSidePanelMicroStation(
     historique,
     mesures_atmo
 ) {
-    var closeButton = document
+    if (!isSourceActive('atmo_micro')) {
+        return;
+    }
+
+    const closeButton = document
         .getElementById('toggleSidePanel')
         .querySelector('i');
     closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
+
     console.log('data: ', data);
 
-    historique_chart = historique;
-    pas_de_temps_chart = pas_de_temps_atmo;
-    mesures_array.length = 0;
-
-    if (Array.isArray(mesures_atmo)) {
-        mesures_atmo.forEach((measure) => mesures_array.push(measure));
-    } else {
-        mesures_array.push(mesures_atmo);
-    }
-
-    var historique_buttons = document.querySelectorAll(
-        '[id^="btn_historique_"]'
-    );
-    var pas_de_temps_buttons = document.querySelectorAll(
-        '[id^="btn_pas_de_temps_"]'
-    );
-    var polluants_buttons = document.querySelectorAll('[id^="btn_poluant_"]');
-
-    historique_buttons.forEach(
-        (btn) => ((btn.checked = false), (btn.disabled = false))
-    );
-    pas_de_temps_buttons.forEach(
-        (btn) => ((btn.checked = false), (btn.disabled = false))
-    );
-    polluants_buttons.forEach(
-        (btn) => ((btn.checked = false), (btn.disabled = false))
-    );
-
-    btn_poluant_pm1.disabled = true;
-    btn_poluant_pm25.disabled = true;
-    btn_poluant_pm10.disabled = true;
-    btn_poluant_no2.disabled = true;
-    btn_poluant_so2.disabled = true;
-    btn_poluant_o3.disabled = true;
-    btn_poluant_h2s.disabled = true;
-    btn_poluant_nh3.disabled = true;
-
-    console.log('Avant désactivation des boutons :');
-    console.log('PM1 disabled:', btn_poluant_pm1.disabled);
-    console.log('PM2.5 disabled:', btn_poluant_pm25.disabled);
-    console.log('PM10 disabled:', btn_poluant_pm10.disabled);
-    console.log('NO2 disabled:', btn_poluant_no2.disabled);
-
-    let availablePollutants = data.variablesMesure;
-    console.log('Données disponibles:', availablePollutants);
-
-    if (
-        availablePollutants.includes('pm1') ||
-        availablePollutants.includes('PM1')
-    ) {
-        console.log('pm1 available');
-        btn_poluant_pm1.disabled = false;
-    }
-    if (
-        availablePollutants.includes('pm2.5') ||
-        availablePollutants.includes('PM2.5')
-    ) {
-        console.log('pm2.5 available');
-        btn_poluant_pm25.disabled = false;
-    }
-    if (
-        availablePollutants.includes('pm10') ||
-        availablePollutants.includes('PM10')
-    ) {
-        console.log('pm10 available');
-        btn_poluant_pm10.disabled = false;
-    }
-    if (
-        availablePollutants.includes('no2') ||
-        availablePollutants.includes('NO2')
-    ) {
-        console.log('no2 available');
-        btn_poluant_no2.disabled = false;
-    }
-
-    console.log('Après réactivation des boutons :');
-    console.log('PM1 disabled:', btn_poluant_pm1.disabled);
-    console.log('PM2.5 disabled:', btn_poluant_pm25.disabled);
-    console.log('PM10 disabled:', btn_poluant_pm10.disabled);
-    console.log('NO2 disabled:', btn_poluant_no2.disabled);
-
-    const btn_historique = document.getElementById(
-        'btn_historique_' + historique
-    );
-    if (btn_historique) {
-        btn_historique.checked = true;
-    }
-
-    let btn_pas_de_temps_id = 'btn_pas_de_temps_h';
-    const previousPasDeTemps = getArrayFromLocalStorage(pasDeTempsLocal);
-
-    if (previousPasDeTemps && previousPasDeTemps[0] === 'instantane') {
-        if (data && data.pas_de_temps) {
-            const timeStepInSeconds = data.pas_de_temps;
-            switch (timeStepInSeconds) {
-                case 120:
-                    btn_pas_de_temps_id = 'btn_pas_de_temps_2min';
-                    break;
-                case 900:
-                    btn_pas_de_temps_id = 'btn_pas_de_temps_qh';
-                    break;
-                case 3600:
-                    btn_pas_de_temps_id = 'btn_pas_de_temps_h';
-                    break;
-                case 86400:
-                    btn_pas_de_temps_id = 'btn_pas_de_temps_d';
-                    break;
-                default:
-                    btn_pas_de_temps_id = 'btn_pas_de_temps_2min';
-                    const button2min =
-                        document.getElementById(btn_pas_de_temps_id);
-                    if (button2min) {
-                        const timeStepInMinutes = Math.round(
-                            timeStepInSeconds / 60
-                        );
-                        button2min.value = `${timeStepInMinutes}min`;
-                        const label = document.querySelector(
-                            `label[for="${btn_pas_de_temps_id}"]`
-                        );
-                        if (label) {
-                            label.textContent = `${timeStepInMinutes}min`;
-                        }
-                        button2min.checked = true;
-                        pas_de_temps_chart = `${timeStepInMinutes}min`;
-                    }
-            }
-        }
-    } else {
-        switch (pas_de_temps_atmo) {
-            case 'brute':
-                btn_pas_de_temps_id = 'btn_pas_de_temps_2min';
-                break;
-            case 'quart-horaire':
-                btn_pas_de_temps_id = 'btn_pas_de_temps_qh';
-                break;
-            case 'horaire':
-                btn_pas_de_temps_id = 'btn_pas_de_temps_h';
-                break;
-            case 'journalier':
-                btn_pas_de_temps_id = 'btn_pas_de_temps_d';
-                break;
-        }
-    }
-
-    const btn_pas_de_temps = document.getElementById(btn_pas_de_temps_id);
-    if (btn_pas_de_temps) {
-        btn_pas_de_temps.checked = true;
-    }
-
-    let activeMeasure = '';
-    if (Array.isArray(mesures_atmo)) {
-        activeMeasure = mesures_atmo[0];
-    } else {
-        activeMeasure = mesures_atmo;
-    }
-
-    if (activeMeasure === 'pm25') {
-        activeMeasure = 'pm2.5';
-    }
-
-    if (activeMeasure === 'pm1' && !btn_poluant_pm1.disabled) {
-        btn_poluant_pm1.checked = true;
-        mesures_array = ['pm1'];
-    } else if (
-        (activeMeasure === 'pm2.5' || activeMeasure === 'pm25') &&
-        !btn_poluant_pm25.disabled
-    ) {
-        btn_poluant_pm25.checked = true;
-        mesures_array = ['pm2.5'];
-    } else if (activeMeasure === 'pm10' && !btn_poluant_pm10.disabled) {
-        btn_poluant_pm10.checked = true;
-        mesures_array = ['pm10'];
-    } else if (activeMeasure === 'no2' && !btn_poluant_no2.disabled) {
-        btn_poluant_no2.checked = true;
-        mesures_array = ['no2'];
-    } else {
-        if (!btn_poluant_pm25.disabled) {
-            btn_poluant_pm25.checked = true;
-            mesures_array = ['pm2.5'];
-        } else if (!btn_poluant_pm10.disabled) {
-            btn_poluant_pm10.checked = true;
-            mesures_array = ['pm10'];
-        } else if (!btn_poluant_pm1.disabled) {
-            btn_poluant_pm1.checked = true;
-            mesures_array = ['pm1'];
-        } else if (!btn_poluant_no2.disabled) {
-            btn_poluant_no2.checked = true;
-            mesures_array = ['no2'];
-        }
-    }
-
-    const siteId = data.site_info ? data.id_site : data.id_site;
-    retreive_historiqueData_microStation(
-        siteId,
-        pas_de_temps_atmo,
-        historique,
-        mesures_array
-    );
-
+    // Mise à jour des informations de la carte
     card1_img.src = 'img/microStationsAtmoSud/microStationAtmoSud_default.png';
     card1_title.innerHTML = data.site_info
         ? data.site_info.nom_site
@@ -689,367 +545,17 @@ export function openSidePanelMicroStation(
     card2_link.innerHTML = 'AtmoSud.org';
     card2_link.href = 'https://www.atmosud.org';
 
-    btn_historique_custom.onclick = function (event) {
-        event.preventDefault();
-        var startDate = btn_historique_start_date.value;
-        var endDate = btn_historique_end_date.value;
-        var startTime = '00:00';
-        var endTime = '23:59';
-
-        if (startDate && startTime && endDate && endTime) {
-            historique_buttons.forEach((btn) => (btn.checked = false));
-            btn_historique_custom.checked = true;
-
-            let startDateTime = new Date(
-                `${startDate}T${startTime}`
-            ).toISOString();
-            let endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
-
-            retreive_historiqueData_microStation(
-                data.id_site,
-                pas_de_temps_chart,
-                null,
-                mesures_array,
-                false,
-                startDateTime,
-                endDateTime
-            );
-        } else {
-            alert(
-                'Veuillez sélectionner une date et une heure de début et de fin.'
-            );
-        }
-    };
-
-    // Gestionnaire d'événement pour le bouton d'historique 1 heure
-    btn_historique_1h.onclick = function () {
-        historique_chart = '1h';
-        // Désélection de tous les autres boutons d'historique
-        document.querySelectorAll('[id^="btn_historique_"]').forEach((btn) => {
-            if (btn !== btn_historique_1h) {
-                btn.checked = false;
-            }
-        });
-        // Mise à jour des données avec la nouvelle période
-        retreive_historiqueData_microStation(
-            data.id_site,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-
-    // Gestionnaire d'événement pour le bouton d'historique 3 heures
-    btn_historique_3h.onclick = function () {
-        historique_chart = '3h';
-        // Désélection de tous les autres boutons d'historique
-        document.querySelectorAll('[id^="btn_historique_"]').forEach((btn) => {
-            if (btn !== btn_historique_3h) {
-                btn.checked = false;
-            }
-        });
-        // Mise à jour des données avec la nouvelle période
-        retreive_historiqueData_microStation(
-            data.id_site,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-
-    // Gestionnaire d'événement pour le bouton d'historique 24 heures
-    btn_historique_24h.onclick = function () {
-        historique_chart = '24h';
-        // Désélection de tous les autres boutons d'historique
-        document.querySelectorAll('[id^="btn_historique_"]').forEach((btn) => {
-            if (btn !== btn_historique_24h) {
-                btn.checked = false;
-            }
-        });
-        // Mise à jour des données avec la nouvelle période
-        retreive_historiqueData_microStation(
-            data.id_site,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-
-    // Gestionnaire d'événement pour le bouton d'historique 7 jours
-    if (btn_historique_7d) {
-        btn_historique_7d.onclick = function () {
-            historique_chart = '7d';
-            // Désélection de tous les autres boutons d'historique
-            document
-                .querySelectorAll('[id^="btn_historique_"]')
-                .forEach((btn) => {
-                    if (btn !== btn_historique_7d) {
-                        btn.checked = false;
-                    }
-                });
-            // Mise à jour des données avec la nouvelle période
-            retreive_historiqueData_microStation(
-                data.id_site,
-                pas_de_temps_chart,
-                historique_chart,
-                mesures_array
-            );
-        };
-    }
-
-    // Gestionnaire d'événement pour le bouton d'historique 30 jours
-    if (btn_historique_30d) {
-        btn_historique_30d.onclick = function () {
-            historique_chart = '30d';
-            // Désélection de tous les autres boutons d'historique
-            document
-                .querySelectorAll('[id^="btn_historique_"]')
-                .forEach((btn) => {
-                    if (btn !== btn_historique_30d) {
-                        btn.checked = false;
-                    }
-                });
-            // Mise à jour des données avec la nouvelle période
-            retreive_historiqueData_microStation(
-                data.id_site,
-                pas_de_temps_chart,
-                historique_chart,
-                mesures_array
-            );
-        };
-    }
-
-    // Gestionnaire d'événement pour le bouton d'historique 365 jours
-    if (btn_historique_365d) {
-        btn_historique_365d.onclick = function () {
-            historique_chart = '365d';
-            // Désélection de tous les autres boutons d'historique
-            document
-                .querySelectorAll('[id^="btn_historique_"]')
-                .forEach((btn) => {
-                    if (btn !== btn_historique_365d) {
-                        btn.checked = false;
-                    }
-                });
-            // Mise à jour des données avec la nouvelle période
-            retreive_historiqueData_microStation(
-                data.id_site,
-                pas_de_temps_chart,
-                historique_chart,
-                mesures_array
-            );
-        };
-    }
-
-    // Gestionnaire d'événement pour le bouton de pas de temps 2 minutes
-    btn_pas_de_temps_2min.onclick = function () {
-        // On utilise '2min' au lieu de 'brute' pour éviter la vérification du pas de temps du capteur
-        pas_de_temps_chart = '2min';
-        // Désélection de tous les autres boutons de pas de temps
-        document
-            .querySelectorAll('[id^="btn_pas_de_temps_"]')
-            .forEach((btn) => {
-                if (btn !== btn_pas_de_temps_2min) {
-                    btn.checked = false;
-                }
-            });
-        // Mise à jour des données avec le nouveau pas de temps
-        retreive_historiqueData_microStation(
-            data.id_site,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-
-    // Gestionnaire d'événement pour le bouton de pas de temps quart-horaire
-    btn_pas_de_temps_qh.onclick = function () {
-        pas_de_temps_chart = 'quart-horaire';
-        // Désélection de tous les autres boutons de pas de temps
-        document
-            .querySelectorAll('[id^="btn_pas_de_temps_"]')
-            .forEach((btn) => {
-                if (btn !== btn_pas_de_temps_qh) {
-                    btn.checked = false;
-                }
-            });
-        // Mise à jour des données avec le nouveau pas de temps
-        retreive_historiqueData_microStation(
-            data.id_site,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-
-    // Gestionnaire d'événement pour le bouton de pas de temps horaire
-    btn_pas_de_temps_h.onclick = function () {
-        pas_de_temps_chart = 'horaire';
-        // Désélection de tous les autres boutons de pas de temps
-        document
-            .querySelectorAll('[id^="btn_pas_de_temps_"]')
-            .forEach((btn) => {
-                if (btn !== btn_pas_de_temps_h) {
-                    btn.checked = false;
-                }
-            });
-        // Mise à jour des données avec le nouveau pas de temps
-        retreive_historiqueData_microStation(
-            data.id_site,
-            pas_de_temps_chart,
-            historique_chart,
-            mesures_array
-        );
-    };
-
-    btn_pas_de_temps_d.disabled = true;
-
-    console.log('=== État des boutons avant setupPollutantButtonHandlers ===');
-    console.log('PM1:', {
-        exists: !!btn_poluant_pm1,
-        disabled: btn_poluant_pm1?.disabled,
-        checked: btn_poluant_pm1?.checked,
+    // Utiliser le gestionnaire de panneau pour configurer les boutons
+    panelManager.openPanel('atmo_micro', data.id_site, {
+        pasDeTempsAtmo: pas_de_temps_atmo,
+        historiqueChart: historique,
+        mesuresArray: mesures_atmo,
+        pasDeTempsChart: pas_de_temps_atmo,
+        pasDeTemps: pas_de_temps_atmo,
+        customDateRange: customDateRange,
     });
-    console.log('PM2.5:', {
-        exists: !!btn_poluant_pm25,
-        disabled: btn_poluant_pm25?.disabled,
-        checked: btn_poluant_pm25?.checked,
-    });
-    console.log('PM10:', {
-        exists: !!btn_poluant_pm10,
-        disabled: btn_poluant_pm10?.disabled,
-        checked: btn_poluant_pm10?.checked,
-    });
-    console.log('NO2:', {
-        exists: !!btn_poluant_no2,
-        disabled: btn_poluant_no2?.disabled,
-        checked: btn_poluant_no2?.checked,
-    });
-
-    setupPollutantButtonHandlers();
-
-    console.log('État final des boutons avant ouverture du panneau :');
-    console.log('PM1 disabled:', btn_poluant_pm1.disabled);
-    console.log('PM2.5 disabled:', btn_poluant_pm25.disabled);
-    console.log('PM10 disabled:', btn_poluant_pm10.disabled);
-    console.log('NO2 disabled:', btn_poluant_no2.disabled);
 
     openSidePanelGeneric();
-}
-
-function setupPollutantButtonHandlers() {
-    console.log('=== Début setupPollutantButtonHandlers ===');
-    const buttons = {
-        pm1: 'pm1',
-        pm25: 'pm2.5',
-        pm10: 'pm10',
-        no2: 'no2',
-        so2: 'so2',
-        o3: 'o3',
-        h2s: 'h2s',
-        nh3: 'nh3',
-    };
-
-    Object.entries(buttons).forEach(([buttonId, pollutant]) => {
-        const button = document.getElementById(`btn_poluant_${buttonId}`);
-        console.log(`État initial du bouton ${buttonId}:`, {
-            exists: !!button,
-            disabled: button?.disabled,
-            checked: button?.checked,
-            type: button?.type,
-        });
-
-        if (button) {
-            // Vérifier si le bouton a déjà un gestionnaire d'événements
-            const hasExistingHandler =
-                button.hasAttribute('data-handler-setup');
-
-            if (!hasExistingHandler) {
-                // Marquer le bouton comme ayant un gestionnaire
-                button.setAttribute('data-handler-setup', 'true');
-
-                // Changer le type en checkbox si ce n'est pas déjà fait
-                if (button.type !== 'checkbox') {
-                    button.type = 'checkbox';
-                }
-
-                // Supprimer l'attribut name pour éviter le comportement radio
-                button.removeAttribute('name');
-
-                button.addEventListener('change', function () {
-                    console.log(`Changement détecté sur ${buttonId}:`, {
-                        checked: this.checked,
-                        disabled: this.disabled,
-                    });
-
-                    // Vérifier si la source micro est active
-                    if (!isSourceActive('atmo_micro')) {
-                        return;
-                    }
-
-                    // Mise à jour du tableau des mesures
-                    if (this.checked) {
-                        if (!mesures_array.includes(pollutant)) {
-                            mesures_array.push(pollutant);
-                        }
-                    } else {
-                        mesures_array = mesures_array.filter(
-                            (item) => item !== pollutant
-                        );
-                    }
-
-                    // Mise à jour des données uniquement si un capteur est sélectionné
-                    if (window.globalSelectedDeviceId) {
-                        retreive_historiqueData_microStation(
-                            window.globalSelectedDeviceId,
-                            pas_de_temps_chart,
-                            historique_chart,
-                            mesures_array
-                        );
-                    }
-                });
-            }
-        }
-    });
-    console.log('=== Fin setupPollutantButtonHandlers ===');
-}
-
-function setupPasDeTempsButtonHandlers() {
-    const buttons = {
-        '2min': '2min',
-        'quarter-hour': 'quarter-hour',
-        hourly: 'hourly',
-        daily: 'daily',
-    };
-
-    Object.entries(buttons).forEach(([buttonId, timeStep]) => {
-        const button = document.getElementById(`btn_pas_de_temps_${buttonId}`);
-        if (button) {
-            // Supprimer tous les gestionnaires d'événements existants
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-
-            newButton.addEventListener('click', function () {
-                // Vérifier si la source micro est active
-                if (!isSourceActive('atmo_micro')) {
-                    return;
-                }
-
-                // Mise à jour du pas de temps
-                pas_de_temps_chart = timeStep;
-
-                // Mise à jour des données uniquement si un capteur est sélectionné
-                if (window.globalSelectedDeviceId) {
-                    retreive_historiqueData_microStation(
-                        window.globalSelectedDeviceId,
-                        pas_de_temps_chart,
-                        historique_chart,
-                        mesures_array
-                    );
-                }
-            });
-        }
-    });
 }
 
 /**
@@ -1073,9 +579,13 @@ export async function retreive_historiqueData_microStation(
 ) {
     try {
         // Vérification que le capteur sélectionné est toujours le même
-        if (sensorId !== window.globalSelectedDeviceId) {
+        let testSensorId = String(sensorId);
+        if (
+            testSensorId.startsWith('FR') ||
+            testSensorId.startsWith('nebule')
+        ) {
             console.log(
-                'Le capteur sélectionné a changé, annulation de la requête'
+                "Le capteur sélectionné n'est pas une micro-station, annulation de la requête"
             );
             return;
         }
@@ -1104,61 +614,18 @@ export async function retreive_historiqueData_microStation(
             }
         }
 
-        // Calcul de la période d'historique en heures
-        let hours;
-        switch (historique) {
-            case '1h':
-                hours = 1;
-                break;
-            case '3h':
-                hours = 3;
-                break;
-            case '24h':
-                hours = 24;
-                break;
-            case '7d':
-                hours = 24 * 7;
-                break;
-            case '30d':
-                hours = 24 * 30;
-                break;
-            case '365d':
-                hours = 24 * 365;
-                break;
-            default:
-                hours = 24;
-        }
-
-        // Définition des dates de début et de fin
-        const end_date = custom_end || new Date().toISOString();
-        const start_date =
-            custom_start ||
-            new Date(Date.now() - hours * 3600 * 1000).toISOString();
-
-        // Vérification de la présence de mesures à récupérer
-        if (
-            !mesures_array ||
-            !Array.isArray(mesures_array) ||
-            mesures_array.length === 0
-        ) {
-            throw new Error('Aucune mesure sélectionnée');
-        }
-
-        // Conversion des mesures pour l'API (ex: 'pm25' -> 'pm2.5')
-        const mesures_api = mesures_array
-            .map((mesure) => (mesure === 'pm25' ? 'pm2.5' : mesure))
-            .join(',');
+        // Mise à jour des variables d'état
+        pas_de_temps_chart = pas_de_temps;
+        historique_chart = historique;
 
         // Construction des paramètres de l'URL avec URLSearchParams pour un encodage correct
         const params = new URLSearchParams({
-            debut: start_date,
-            fin: end_date,
             id_site: sensorId,
             format: 'json',
             download: 'false',
-            nb_dec: '0',
+            nb_dec: '1',
             valeur_brute: 'true',
-            variable: mesures_api,
+            variable: mesures_array.join(','),
             type_capteur: 'true',
         });
 
@@ -1169,8 +636,58 @@ export async function retreive_historiqueData_microStation(
             params.append('aggregation', pas_de_temps);
         }
 
+        // Ajout des paramètres de date
+        if (custom_start && custom_end) {
+            params.append('debut', custom_start);
+            params.append('fin', custom_end);
+        } else if (customDateRange.start && customDateRange.end) {
+            params.append('debut', customDateRange.start);
+            params.append('fin', customDateRange.end);
+        } else if (historique) {
+            const now = new Date();
+            const startDate = new Date();
+
+            switch (historique) {
+                case '1h':
+                    startDate.setHours(startDate.getHours() - 1);
+                    break;
+                case '3h':
+                    startDate.setHours(startDate.getHours() - 3);
+                    break;
+                case '24h':
+                    startDate.setHours(startDate.getHours() - 24);
+                    break;
+                case '7d':
+                    startDate.setDate(startDate.getDate() - 7);
+                    break;
+                case '30d':
+                    startDate.setDate(startDate.getDate() - 30);
+                    break;
+                case '365d':
+                    startDate.setDate(startDate.getDate() - 365);
+                    break;
+            }
+
+            params.append('debut', startDate.toISOString());
+            params.append('fin', now.toISOString());
+        }
+
         // Construction de l'URL complète pour l'appel API
         const full_url = `https://api.atmosud.org/observations/capteurs/mesures?${params.toString()}`;
+
+        console.log('URL retreive_historiqueData_microStation', full_url);
+        console.log('Paramètres de la requête:', {
+            'Date de début': params.get('debut'),
+            'Date de fin': params.get('fin'),
+            'ID du site': params.get('id_site'),
+            Format: params.get('format'),
+            Téléchargement: params.get('download'),
+            'Nombre décimales': params.get('nb_dec'),
+            'Valeur brute': params.get('valeur_brute'),
+            'Variable(s)': params.get('variable'),
+            'Type capteur': params.get('type_capteur'),
+            Agrégation: params.get('aggregation'),
+        });
 
         // Appel à l'API pour récupérer les données
         const data = await fetchAPI(full_url);
@@ -1488,4 +1005,62 @@ function showErrorNotification(message) {
     setTimeout(() => {
         errorDiv.remove();
     }, 10000);
+}
+
+// Gestion du changement de pas de temps
+const pasDeTempsElement = document.getElementById('pas_de_temps');
+if (pasDeTempsElement) {
+    pasDeTempsElement.addEventListener('change', function (e) {
+        const selectedPasDeTemps = e.target.value;
+        const selectedHistorique = document.getElementById('historique').value;
+        const selectedSensorId = document.getElementById('sensor_id').value;
+        const selectedMesures = Array.from(
+            document.querySelectorAll('input[name="mesures"]:checked')
+        ).map((input) => input.value);
+
+        // Mise à jour du pas de temps dans l'état
+        pas_de_temps_chart = selectedPasDeTemps;
+
+        // Appel de la fonction de récupération des données avec la plage historique personnalisée préservée
+        retreive_historiqueData_microStation(
+            selectedSensorId,
+            selectedPasDeTemps,
+            selectedHistorique,
+            selectedMesures,
+            false,
+            customDateRange.start,
+            customDateRange.end
+        );
+    });
+}
+
+// Gestion du changement d'historique
+const historiqueElement = document.getElementById('historique');
+if (historiqueElement) {
+    historiqueElement.addEventListener('change', function (e) {
+        const selectedHistorique = e.target.value;
+        const selectedPasDeTemps =
+            document.getElementById('pas_de_temps').value;
+        const selectedSensorId = document.getElementById('sensor_id').value;
+        const selectedMesures = Array.from(
+            document.querySelectorAll('input[name="mesures"]:checked')
+        ).map((input) => input.value);
+
+        // Réinitialisation de la plage historique personnalisée lors du changement d'historique
+        customDateRange = {
+            start: null,
+            end: null,
+        };
+
+        // Mise à jour de l'historique dans l'état
+        historique_chart = selectedHistorique;
+
+        // Appel de la fonction de récupération des données
+        retreive_historiqueData_microStation(
+            selectedSensorId,
+            selectedPasDeTemps,
+            selectedHistorique,
+            selectedMesures
+        );
+    });
 }

@@ -13,6 +13,7 @@ import {
     atmoRefLayer,
 } from '../app.js';
 import { isSourceActive } from './dataSourceManager.js';
+import { panelManager } from './panelManager.js';
 
 // Variables locales au module
 const state = {
@@ -74,7 +75,6 @@ export function loadAtmoSudStationsRef() {
         window.atmoRefLayer = atmoRefLayer;
     }
 
-    console.log('Nettoyage de la couche...');
     window.atmoRefLayer.clearLayers();
 
     // S'assurer que la couche est sur la carte
@@ -117,10 +117,6 @@ export function loadAtmoSudStationsRef() {
         return;
     }
 
-    console.log('Pas de temps : ' + state.pasDeTemps);
-    console.log('Pas de temps Atmo: ' + state.pasDeTempsAtmo);
-    console.log('Mesure : ' + mesure);
-
     // Initialisation de l'objet global pour les stations
     if (!window.stationMarkers) {
         window.stationMarkers = {};
@@ -128,7 +124,7 @@ export function loadAtmoSudStationsRef() {
 
     // Construction de l'URL pour la première requête API
     const fullUrlStations = `
-        https://api.atmosud.org/observations/stations?
+        https://preprod-api.atmosud.org/observations/stations?
         format=json&
         nom_polluant=${mesureAtmo}&
         delais=${'64'}&
@@ -145,16 +141,14 @@ export function loadAtmoSudStationsRef() {
             return response.json();
         })
         .then((data) => {
-            console.log('Call API get all stations:');
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
+            console.log('full_url_stations', fullUrlStations);
             console.log(
                 `Data gathered in %c${requestTimer} sec`,
                 'color: red;'
             );
-            console.log('full_url_stations', fullUrlStations);
-            console.log('Nombre de stations trouvées:', data.stations.length);
-            console.log('Données des stations:', data.stations);
+            console.log('Stations:', data.stations);
 
             // Traitement des stations actives
             let stationsActives = 0;
@@ -177,7 +171,7 @@ export function loadAtmoSudStationsRef() {
 
             // Construction de l'URL pour la deuxième requête API
             const fullUrlDerniere = `
-                https://api.atmosud.org/observations/stations/mesures/derniere?
+                https://preprod-api.atmosud.org/observations/stations/mesures/derniere?
                 format=json&
                 nom_polluant=${mesureAtmo}&
                 temporalite=${state.pasDeTempsAtmo}&
@@ -199,15 +193,14 @@ export function loadAtmoSudStationsRef() {
         .then((result) => {
             const { data, url: fullUrlDerniere } = result;
 
-            console.log('Call API get dernière mesure stations:');
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
+            console.log('full url derniere: ' + fullUrlDerniere);
             console.log(
                 `Data gathered in %c${requestTimer} sec`,
                 'color: red;'
             );
-            console.log('full url derniere: ' + fullUrlDerniere);
-            console.log(data);
+            console.log('Station ayant renvoyé mesure/derniere', data);
 
             // Traitement des données de mesure
             if (data.mesures && data.mesures.length > 0) {
@@ -545,109 +538,38 @@ function createDefaultMarkers() {
 
 /**
  * Ouvre le panneau latéral pour une station
- * @param {string} stationID - ID de la station
+ * @param {string} deviceId - ID de la station
  * @param {string} station_name - Nom de la station
  * @param {Array} mesure - Mesures sélectionnées
  */
-export function openSidePanel_stationRef(stationID, station_name, mesure) {
+export function openSidePanel_stationRef(deviceId, station_name, mesure) {
+    if (!isSourceActive('atmo_ref')) {
+        return;
+    }
+
     const closeButton = document
         .getElementById('toggleSidePanel')
         .querySelector('i');
     closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
 
-    // Définition de l'historique par défaut en fonction du pas de temps
-    if (state.pasDeTempsAtmo === 'horaire') {
-        state.historiqueChart = '24h';
-    } else if (state.pasDeTempsAtmo === 'journalière') {
-        state.historiqueChart = '30d';
-    } else {
-        state.historiqueChart = '3h';
-    }
-
-    state.pasDeTempsChart = state.pasDeTempsAtmo;
-
-    // Initialisation de state.mesuresArray uniquement s'il est vide
-    if (state.mesuresArray.length === 0) {
-        // Conversion du polluant pour l'API
-        let polluantAPI = mesure[0];
-        if (polluantAPI === 'pm25') {
-            polluantAPI = 'pm2.5';
-        }
-        state.mesuresArray.push(polluantAPI);
-    }
-
-    // Réinitialisation des boutons
-    Object.values(buttons.historique).forEach((btn) => {
-        if (btn) {
-            btn.checked = false;
-            btn.disabled = false;
-        }
-    });
-    Object.values(buttons.pasDeTemps).forEach((btn) => {
-        if (btn) {
-            btn.checked = false;
-            btn.disabled = false;
-        }
-    });
-    Object.values(buttons.polluants).forEach((btn) => {
-        if (btn) {
-            btn.checked = false;
-            btn.disabled = false;
-        }
-    });
-
-    // Mise à jour des boutons des filtres
-    const btnHistorique = buttons.historique[state.historiqueChart];
-    if (btnHistorique) {
-        btnHistorique.checked = true;
-    }
-
-    // Désactivation du bouton 2min
-    buttons.pasDeTemps['2min'].disabled = true;
-
-    // Conversion du pas de temps pour l'interface et sélection du bouton correspondant
-    let btnPasDeTempsId;
-    switch (state.pasDeTempsAtmo) {
-        case 'brute':
-            btnPasDeTempsId = 'btn_pas_de_temps_2min';
-            break;
-        case 'quart-horaire':
-            btnPasDeTempsId = 'btn_pas_de_temps_qh';
-            break;
-        case 'horaire':
-            btnPasDeTempsId = 'btn_pas_de_temps_h';
-            break;
-        case 'journalière':
-            btnPasDeTempsId = 'btn_pas_de_temps_d';
-            break;
-        default:
-            btnPasDeTempsId = 'btn_pas_de_temps_h';
-    }
-
-    const btnPasDeTemps = document.getElementById(btnPasDeTempsId);
-    if (btnPasDeTemps) {
-        btnPasDeTemps.checked = true;
-    }
-
-    // Sélection des boutons des polluants actifs
-    state.mesuresArray.forEach((polluant) => {
-        let buttonId = polluant;
-        if (polluant === 'pm2.5') {
-            buttonId = 'pm25';
-        }
-        const btn = buttons.polluants[buttonId];
-        if (btn) {
-            btn.checked = true;
-        }
-    });
-
-    // Récupération des données historiques
-    retreiveHistoriqueDataStationRef(
-        stationID,
-        state.pasDeTempsAtmo,
-        state.historiqueChart,
-        state.mesuresArray
+    console.log(
+        '%copenSidePanel_stationRef',
+        'color: white; font-style: bold; background-color: green;padding: 2px'
     );
+
+    // Définition de l'historique par défaut en fonction du pas de temps
+    let historiqueChart = '3h';
+    if (state.pasDeTempsAtmo === 'horaire') {
+        historiqueChart = '24h';
+    } else if (state.pasDeTempsAtmo === 'journalière') {
+        historiqueChart = '30d';
+    }
+
+    // Conversion du polluant pour l'API
+    let polluantAPI = mesure[0];
+    if (polluantAPI === 'pm25') {
+        polluantAPI = 'pm2.5';
+    }
 
     // Mise à jour des informations de la carte
     card1_img.src = 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
@@ -660,228 +582,17 @@ export function openSidePanel_stationRef(stationID, station_name, mesure) {
     card2_link.innerHTML = 'AtmoSud.org';
     card2_link.href = 'https://www.atmosud.org';
 
-    setupButtonHandlers(stationID);
-    openSidePanelGeneric();
-}
-
-/**
- * Configure les gestionnaires d'événements pour les boutons
- * @param {string} stationID - ID de la station
- */
-function setupButtonHandlers(stationID) {
-    // Vérifier si la source stationRef est active
-    if (!isSourceActive('atmo_ref')) {
-        return;
-    }
-
-    setupHistoriqueButtonHandlers(stationID);
-    setupPasDeTempsButtonHandlers(stationID);
-    setupPollutantButtonHandlers(stationID);
-}
-
-/**
- * Configure les gestionnaires d'événements pour les boutons d'historique
- * @param {string} stationID - ID de la station
- */
-function setupHistoriqueButtonHandlers(stationID) {
-    // Vérifier si la source stationRef est active
-    if (!isSourceActive('atmo_ref')) {
-        return;
-    }
-
-    const btnHistoriqueCustom = buttons.historique.custom;
-    const btnHistoriqueStartDate = buttons.historique.startDate;
-    const btnHistoriqueEndDate = buttons.historique.endDate;
-
-    if (btnHistoriqueCustom) {
-        btnHistoriqueCustom.onclick = (event) => {
-            event.preventDefault();
-            const startDate = btnHistoriqueStartDate.value;
-            const endDate = btnHistoriqueEndDate.value;
-            const startTime = '00:00';
-            const endTime = '23:59';
-
-            if (startDate && startTime && endDate && endTime) {
-                Object.values(buttons.historique).forEach(
-                    (btn) => (btn.checked = false)
-                );
-                btnHistoriqueCustom.checked = true;
-
-                const startDateTime = new Date(
-                    `${startDate}T${startTime}`
-                ).toISOString();
-                const endDateTime = new Date(
-                    `${endDate}T${endTime}`
-                ).toISOString();
-
-                retreiveHistoriqueDataStationRef(
-                    stationID,
-                    state.pasDeTempsChart,
-                    null,
-                    state.mesuresArray,
-                    false,
-                    startDateTime,
-                    endDateTime
-                );
-            } else {
-                alert(
-                    'Veuillez sélectionner une date et une heure de début et de fin.'
-                );
-            }
-        };
-    }
-
-    setupHistoriqueButton('1h', stationID);
-    setupHistoriqueButton('3h', stationID);
-    setupHistoriqueButton('24h', stationID);
-    setupHistoriqueButton('7d', stationID);
-    setupHistoriqueButton('30d', stationID);
-    setupHistoriqueButton('365d', stationID);
-}
-
-/**
- * Configure un bouton d'historique spécifique
- * @param {string} periode - Période de l'historique
- * @param {string} stationID - ID de la station
- */
-function setupHistoriqueButton(periode, stationID) {
-    const btn = buttons.historique[periode];
-    if (btn) {
-        btn.onclick = () => {
-            state.historiqueChart = periode;
-            // Réinitialiser la plage de dates personnalisée
-            state.customDateRange.start = null;
-            state.customDateRange.end = null;
-            Object.values(buttons.historique).forEach((b) => {
-                if (b) {
-                    b.checked = false;
-                }
-            });
-            if (btn) {
-                btn.checked = true;
-            }
-            retreiveHistoriqueDataStationRef(
-                stationID,
-                state.pasDeTempsChart,
-                state.historiqueChart,
-                state.mesuresArray
-            );
-        };
-    }
-}
-
-/**
- * Configure les gestionnaires d'événements pour les boutons de pas de temps
- * @param {string} stationID - ID de la station
- */
-function setupPasDeTempsButtonHandlers(stationID) {
-    // Vérifier si la source stationRef est active
-    if (!isSourceActive('atmo_ref')) {
-        return;
-    }
-
-    setupPasDeTempsButton('2min', 'brute', stationID);
-    setupPasDeTempsButton('qh', 'quart-horaire', stationID);
-    setupPasDeTempsButton('h', 'horaire', stationID);
-    setupPasDeTempsButton('d', 'journalière', stationID);
-}
-
-/**
- * Configure un bouton de pas de temps spécifique
- * @param {string} id - ID du bouton
- * @param {string} pasDeTemps - Pas de temps correspondant
- * @param {string} stationID - ID de la station
- */
-function setupPasDeTempsButton(id, pasDeTemps, stationID) {
-    const btn = buttons.pasDeTemps[id];
-    if (btn) {
-        btn.onclick = () => {
-            state.pasDeTempsChart = pasDeTemps;
-            Object.values(buttons.pasDeTemps).forEach(
-                (b) => (b.checked = false)
-            );
-            btn.checked = true;
-            retreiveHistoriqueDataStationRef(
-                stationID,
-                state.pasDeTempsChart,
-                state.historiqueChart,
-                state.mesuresArray
-            );
-        };
-    }
-}
-
-/**
- * Configure les gestionnaires d'événements pour les boutons de polluants
- * @param {string} stationID - ID de la station
- */
-function setupPollutantButtonHandlers(stationID) {
-    console.log('Configuration des boutons de polluants');
-
-    const polluants = {
-        pm1: 'pm1',
-        pm25: 'pm2.5',
-        pm10: 'pm10',
-        no2: 'no2',
-        o3: 'o3',
-        so2: 'so2',
-    };
-
-    Object.entries(polluants).forEach(([buttonId, pollutant]) => {
-        const button = document.getElementById(`btn_poluant_${buttonId}`);
-        if (button) {
-            console.log(`Configuration du bouton ${buttonId}`);
-
-            // Changer le type en checkbox
-            button.type = 'checkbox';
-
-            // Supprimer l'attribut name pour éviter le comportement radio
-            button.removeAttribute('name');
-
-            // Gestionnaire pour les changements
-            button.addEventListener('change', function (e) {
-                console.log(`Événement change détecté pour ${buttonId}`);
-                console.log(`État du bouton: ${this.checked}`);
-
-                // Vérifier si la source stationRef est active
-                if (!isSourceActive('atmo_ref')) {
-                    return;
-                }
-
-                // Mise à jour du tableau des mesures
-                if (this.checked) {
-                    if (!state.mesuresArray.includes(pollutant)) {
-                        state.mesuresArray.push(pollutant);
-                    }
-                } else {
-                    state.mesuresArray = state.mesuresArray.filter(
-                        (item) => item !== pollutant
-                    );
-                }
-
-                console.log('Mesures après mise à jour:', state.mesuresArray);
-
-                // Mise à jour des données uniquement si une station est sélectionnée
-                if (window.globalSelectedDeviceId) {
-                    // Nettoyage complet du graphique avant la mise à jour
-                    if (window.amchart_root_station) {
-                        window.amchart_root_station.dispose();
-                        window.amchart_root_station = undefined;
-                    }
-                    document.getElementById('chartdiv_sensor').innerHTML = '';
-
-                    retreiveHistoriqueDataStationRef(
-                        window.globalSelectedDeviceId,
-                        state.pasDeTempsChart,
-                        state.historiqueChart,
-                        state.mesuresArray
-                    );
-                }
-            });
-        } else {
-            console.warn(`Bouton ${buttonId} non trouvé`);
-        }
+    // Utiliser le gestionnaire de panneau pour configurer les boutons
+    panelManager.openPanel('atmo_ref', deviceId, {
+        pasDeTempsAtmo: state.pasDeTempsAtmo,
+        historiqueChart: historiqueChart,
+        mesuresArray: [polluantAPI],
+        pasDeTempsChart: state.pasDeTempsAtmo,
+        pasDeTemps: state.pasDeTemps,
+        customDateRange: state.customDateRange,
     });
+
+    openSidePanelGeneric();
 }
 
 /**
@@ -904,17 +615,25 @@ export function retreiveHistoriqueDataStationRef(
     customEnd = null
 ) {
     // Vérification que la station sélectionnée est toujours la même
-    if (stationId !== window.globalSelectedDeviceId) {
+    let testStationId = String(stationId);
+    if (!testStationId.startsWith('FR')) {
         console.log(
-            'La station sélectionnée a changé, annulation de la requête'
+            "La station sélectionnée n'est pas une station de référence, annulation de la requête"
         );
         return;
     }
 
     console.log(
         '%cretreiveHistoriqueDataStationRef',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
+        'color: yellow; font-style: bold; background-color: brown;padding: 2px'
     );
+    console.log('Paramètres:', {
+        stationId,
+        pasDeTemps,
+        historique,
+        mesuresArray,
+        addMesure,
+    });
     const start = Date.now();
 
     // Nettoyage complet du graphique précédent
@@ -962,7 +681,8 @@ export function retreiveHistoriqueDataStationRef(
     }
 
     // Construction de l'URL avec les paramètres
-    let fullUrl = `https://api.atmosud.org/observations/stations/mesures?
+    let fullUrl =
+        `https://preprod-api.atmosud.org/observations/stations/mesures?
         format=json&
         station_id=${stationId}&
         nom_polluant=${state.mesuresArray.join(',')}&
@@ -1244,25 +964,28 @@ export function retreiveHistoriqueDataStationRef(
 
 // Initialisation des boutons au chargement du DOM
 document.addEventListener('DOMContentLoaded', function () {
-    // Initialisation des boutons d'historique
-    Object.keys(buttons.historique).forEach((key) => {
-        buttons.historique[key] = document.getElementById(
-            `btn_historique_${key}`
-        );
-    });
+    // Initialisation des boutons
+    buttons.historique.custom = document.getElementById('apply_date_range');
+    buttons.historique.startDate = document.getElementById('start_date');
+    buttons.historique.endDate = document.getElementById('end_date');
+    buttons.historique['1h'] = document.getElementById('btn_historique_1h');
+    buttons.historique['3h'] = document.getElementById('btn_historique_3h');
+    buttons.historique['24h'] = document.getElementById('btn_historique_24h');
+    buttons.historique['7d'] = document.getElementById('btn_historique_7d');
+    buttons.historique['30d'] = document.getElementById('btn_historique_30d');
+    buttons.historique['365d'] = document.getElementById('btn_historique_365d');
 
-    // Initialisation des boutons de pas de temps
-    Object.keys(buttons.pasDeTemps).forEach((key) => {
-        buttons.pasDeTemps[key] = document.getElementById(
-            `btn_pas_de_temps_${key}`
-        );
-    });
+    buttons.pasDeTemps['2min'] = document.getElementById(
+        'btn_pas_de_temps_2min'
+    );
+    buttons.pasDeTemps['qh'] = document.getElementById('btn_pas_de_temps_qh');
+    buttons.pasDeTemps['h'] = document.getElementById('btn_pas_de_temps_h');
+    buttons.pasDeTemps['d'] = document.getElementById('btn_pas_de_temps_d');
 
-    // Initialisation des boutons de polluants
-    Object.keys(buttons.polluants).forEach((key) => {
-        buttons.polluants[key] = document.getElementById(`btn_poluant_${key}`);
-    });
-
-    // Configuration des gestionnaires d'événements
-    setupButtonHandlers();
+    buttons.polluants['pm1'] = document.getElementById('btn_poluant_pm1');
+    buttons.polluants['pm25'] = document.getElementById('btn_poluant_pm25');
+    buttons.polluants['pm10'] = document.getElementById('btn_poluant_pm10');
+    buttons.polluants['no2'] = document.getElementById('btn_poluant_no2');
+    buttons.polluants['so2'] = document.getElementById('btn_poluant_so2');
+    buttons.polluants['o3'] = document.getElementById('btn_poluant_o3');
 });

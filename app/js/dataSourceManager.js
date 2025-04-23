@@ -15,6 +15,7 @@ export function initializeDataSources() {
 
 // Fonction pour vérifier si une source est active
 export function isSourceActive(sourceId) {
+    initializeDataSources();
     return activeSources.includes(sourceId);
 }
 
