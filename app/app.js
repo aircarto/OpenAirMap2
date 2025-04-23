@@ -1545,19 +1545,25 @@ function clearLayer(source) {
     switch (source) {
         case 'nebuleair':
             nebuleairLayer.clearLayers();
+            window.deviceMarkers = {};
             break;
         case 'sensor_commmunity':
             sensorCommmunityLayer.clearLayers();
+            window.deviceMarkers = {};
             break;
         case 'purpleair':
             purpleair_layer.clearLayers();
+            window.deviceMarkers = {};
             break;
         case 'atmo_micro':
             atmoMicroLayer.clearLayers();
+            window.deviceMarkers = {};
             break;
         case 'atmo_ref':
             console.log('Nettoyage de la couche atmoRefLayer...');
             atmoRefLayer.clearLayers();
+            window.stationMarkers = {};
+            window.stationsRef = [];
             break;
         case 'mod_pm':
             console.log(
@@ -1575,6 +1581,11 @@ function clearLayer(source) {
             mobileair_layer.clearLayers();
             break;
     }
+    // Réinitialiser les marqueurs sélectionnés
+    window.globalSelectedMarker = null;
+    window.globalSelectedText = null;
+    window.globalSelectedDeviceId = null;
+    window.lastSelectedDeviceData = null;
 }
 
 //actualisation des sources toutes les minutes

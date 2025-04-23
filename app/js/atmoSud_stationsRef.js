@@ -268,7 +268,6 @@ export function loadAtmoSudStationsRef() {
  * @param {Array} mesure - Mesures sélectionnées
  */
 function createStationMarker(value, iconParam, stationData, mesure) {
-    console.log('createStationMarker', value);
     // Supprimer le marqueur par défaut s'il existe
     if (window.stationMarkers[value.id_station]?.marker) {
         window.atmoRefLayer.removeLayer(
@@ -414,9 +413,11 @@ function setupMarkerEvents(stationMarker, textMarker, value, mesure) {
             state.globalSelectedMarker !== stationMarker
         ) {
             state.globalSelectedMarker.setZIndexOffset(0);
-            state.globalSelectedMarker._icon.classList.remove(
-                'marker-selected'
-            );
+            if (state.globalSelectedMarker._icon) {
+                state.globalSelectedMarker._icon.classList.remove(
+                    'marker-selected'
+                );
+            }
         }
 
         if (
@@ -424,13 +425,21 @@ function setupMarkerEvents(stationMarker, textMarker, value, mesure) {
             state.globalSelectedText !== textMarker
         ) {
             state.globalSelectedText.setZIndexOffset(0);
-            state.globalSelectedText._icon.classList.remove('marker-selected');
+            if (state.globalSelectedText._icon) {
+                state.globalSelectedText._icon.classList.remove(
+                    'marker-selected'
+                );
+            }
         }
 
         stationMarker.setZIndexOffset(1000);
         textMarker.setZIndexOffset(1000);
-        stationMarker._icon.classList.add('marker-selected');
-        textMarker._icon.classList.add('marker-selected');
+        if (stationMarker._icon) {
+            stationMarker._icon.classList.add('marker-selected');
+        }
+        if (textMarker._icon) {
+            textMarker._icon.classList.add('marker-selected');
+        }
 
         state.globalSelectedMarker = stationMarker;
         state.globalSelectedText = textMarker;
@@ -509,16 +518,20 @@ function createDefaultMarkers() {
                     state.globalSelectedMarker !== defaultMarker
                 ) {
                     state.globalSelectedMarker.setZIndexOffset(0);
-                    state.globalSelectedMarker._icon.classList.remove(
-                        'marker-selected'
-                    );
+                    if (state.globalSelectedMarker._icon) {
+                        state.globalSelectedMarker._icon.classList.remove(
+                            'marker-selected'
+                        );
+                    }
                 }
 
                 if (state.globalSelectedText) {
                     state.globalSelectedText.setZIndexOffset(0);
-                    state.globalSelectedText._icon.classList.remove(
-                        'marker-selected'
-                    );
+                    if (state.globalSelectedText._icon) {
+                        state.globalSelectedText._icon.classList.remove(
+                            'marker-selected'
+                        );
+                    }
                 }
 
                 state.globalSelectedMarker = defaultMarker;

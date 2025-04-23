@@ -8,7 +8,6 @@ class PanelManager {
         this.state = {
             atmo_ref: {
                 deviceId: null,
-                pasDeTempsAtmo: '1h',
                 historiqueChart: '1j',
                 mesuresArray: [],
                 pasDeTempsChart: '1h',
@@ -20,7 +19,6 @@ class PanelManager {
             },
             atmo_micro: {
                 deviceId: null,
-                pasDeTempsAtmo: '1h',
                 historiqueChart: '1j',
                 mesuresArray: [],
                 pasDeTempsChart: '1h',
@@ -32,7 +30,6 @@ class PanelManager {
             },
             nebuleair: {
                 deviceId: null,
-                pasDeTempsAtmo: '1h',
                 historiqueChart: '1j',
                 mesuresArray: [],
                 pasDeTempsChart: '1h',
@@ -199,11 +196,6 @@ class PanelManager {
                 } else if (source === 'atmo_ref') {
                     const deviceData = window.lastSelectedDeviceData;
                     if (deviceData && deviceData.polluantMesure) {
-                        console.log(
-                            'Polluants mesurés:',
-                            deviceData.polluantMesure
-                        );
-
                         const polluantMapping = {
                             pm1: 'PM1',
                             pm25: 'PM2.5',
@@ -250,8 +242,6 @@ class PanelManager {
         this.state[source].deviceId = deviceId;
         Object.assign(this.state[source], data);
 
-        console.log('État mis à jour pour', source, ':', this.state[source]);
-
         this.initializeButtons();
         this.setupButtonHandlers();
         this.updateButtonStates(source);
@@ -262,18 +252,11 @@ class PanelManager {
     }
 
     initializeButtons() {
-        console.log('Initialisation des boutons...');
         this.buttons.historique.custom =
             document.getElementById('apply_date_range');
         this.buttons.historique.startDate =
             document.getElementById('start_date');
         this.buttons.historique.endDate = document.getElementById('end_date');
-
-        console.log('Boutons personnalisés:', {
-            custom: this.buttons.historique.custom,
-            startDate: this.buttons.historique.startDate,
-            endDate: this.buttons.historique.endDate,
-        });
 
         ['1h', '3h', '24h', '7d', '30d', '365d'].forEach((periode) => {
             const buttonId = `btn_historique_${periode}`;
@@ -303,20 +286,8 @@ class PanelManager {
         const btnHistoriqueStartDate = this.buttons.historique.startDate;
         const btnHistoriqueEndDate = this.buttons.historique.endDate;
 
-        console.log('Configuration des gestionnaires de boutons historiques:', {
-            custom: btnHistoriqueCustom,
-            startDate: btnHistoriqueStartDate,
-            endDate: btnHistoriqueEndDate,
-        });
-
         if (btnHistoriqueCustom) {
             btnHistoriqueCustom.addEventListener('click', () => {
-                console.log('Bouton Appliquer cliqué');
-                console.log('Dates sélectionnées:', {
-                    start: btnHistoriqueStartDate.value,
-                    end: btnHistoriqueEndDate.value,
-                });
-
                 if (
                     !btnHistoriqueStartDate.value ||
                     !btnHistoriqueEndDate.value
