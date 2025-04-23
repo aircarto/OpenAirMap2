@@ -268,6 +268,7 @@ export function loadAtmoSudStationsRef() {
  * @param {Array} mesure - Mesures sélectionnées
  */
 function createStationMarker(value, iconParam, stationData, mesure) {
+    console.log('createStationMarker', value);
     // Supprimer le marqueur par défaut s'il existe
     if (window.stationMarkers[value.id_station]?.marker) {
         window.atmoRefLayer.removeLayer(
@@ -314,6 +315,7 @@ function createStationMarker(value, iconParam, stationData, mesure) {
                 }
             });
         }
+        value.polluantMesure = polluantsActifs;
 
         tooltip.innerHTML = `
             <div class="card border-0 shadow-sm">
@@ -433,6 +435,7 @@ function setupMarkerEvents(stationMarker, textMarker, value, mesure) {
         state.globalSelectedMarker = stationMarker;
         state.globalSelectedText = textMarker;
         window.globalSelectedDeviceId = value.id_station;
+        window.lastSelectedDeviceData = value;
         state.lastSelectedStationData = value;
 
         console.log('Click on station: ' + value.id_station);

@@ -159,7 +159,6 @@ class PanelManager {
                 } else if (source === 'atmo_micro') {
                     // Récupérer les données du capteur depuis window.deviceMarkers
                     const deviceData = window.deviceMarkers?.[deviceId]?.data;
-                    console.log('Données du capteur:', deviceData);
 
                     if (deviceData && deviceData.variablesMesure) {
                         const variablesMesure = deviceData.variablesMesure.map(
@@ -196,6 +195,36 @@ class PanelManager {
                         );
                         this.buttons.pollutant[key].disabled = false;
                         this.buttons.pollutant[key].title = '';
+                    }
+                } else if (source === 'atmo_ref') {
+                    const deviceData = window.lastSelectedDeviceData;
+                    if (deviceData && deviceData.polluantMesure) {
+                        console.log(
+                            'Polluants mesurés:',
+                            deviceData.polluantMesure
+                        );
+
+                        const polluantMapping = {
+                            pm1: 'PM1',
+                            pm25: 'PM2.5',
+                            pm10: 'PM10',
+                            no2: 'NO2',
+                            o3: 'O3',
+                            so2: 'SO2',
+                        };
+
+                        Object.entries(this.buttons.pollutant).forEach(
+                            ([key, button]) => {
+                                const polluantMesure =
+                                    deviceData.polluantMesure.includes(
+                                        polluantMapping[key]
+                                    );
+                                button.disabled = !polluantMesure;
+                                button.title = polluantMesure
+                                    ? ''
+                                    : 'Polluant non mesuré par cette station';
+                            }
+                        );
                     }
                 } else {
                     this.buttons.pollutant[key].disabled = false;
