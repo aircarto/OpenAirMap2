@@ -68,9 +68,36 @@ class PanelManager {
                 no2: null,
                 o3: null,
                 so2: null,
+                h2s: null,
+                nh3: null,
             },
         };
         this.currentSource = null;
+
+        // Initialiser les boutons après le chargement du DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            this.initializeButtons();
+            this.setupButtonHandlers();
+
+            // Ajouter un écouteur pour le collapse
+            const dateRangeForm = document.getElementById('dateRangeForm');
+            if (dateRangeForm) {
+                dateRangeForm.addEventListener('shown.bs.collapse', () => {
+                    console.log('Formulaire de plage de dates affiché');
+                    // Réinitialiser les boutons quand le formulaire est affiché
+                    this.initializeButtons();
+                    this.setupButtonHandlers();
+                });
+            }
+
+            // Délégation d'événements pour le bouton Appliquer
+            document.addEventListener('click', (event) => {
+                if (event.target && event.target.id === 'apply_date_range') {
+                    console.log('Bouton Appliquer cliqué via délégation');
+                    this.handleCustomDateRange();
+                }
+            });
+        });
     }
 
     convertPasDeTempsToButtonId(pasDeTemps) {
@@ -119,8 +146,73 @@ class PanelManager {
         Object.keys(this.buttons.pollutant).forEach((key) => {
             if (this.buttons.pollutant[key]) {
                 this.buttons.pollutant[key].checked = false;
+                // Désactiver les boutons non supportés par NebuleAir
+                if (source === 'nebuleair') {
+                    if (['no2', 'o3', 'so2', 'nh3', 'h2s'].includes(key)) {
+                        this.buttons.pollutant[key].disabled = true;
+                        this.buttons.pollutant[key].title =
+                            'Polluant non supporté par NebuleAir';
+                    } else {
+                        this.buttons.pollutant[key].disabled = false;
+                        this.buttons.pollutant[key].title = '';
+                    }
+                } else if (source === 'atmo_micro') {
+                    // Récupérer les données du capteur depuis window.deviceMarkers
+                    const deviceData = window.deviceMarkers?.[deviceId]?.data;
+                    console.log('Données du capteur:', deviceData);
+
+                    if (deviceData && deviceData.variablesMesure) {
+                        const variablesMesure = deviceData.variablesMesure.map(
+                            (v) => v.toUpperCase()
+                        );
+                        console.log('Polluants mesurés:', variablesMesure);
+
+                        const polluantMapping = {
+                            pm1: 'PM1',
+                            pm25: 'PM2.5',
+                            pm10: 'PM10',
+                            no2: 'NO2',
+                            o3: 'O3',
+                            so2: 'SO2',
+                            h2s: 'H2S',
+                            nh3: 'NH3',
+                        };
+
+                        const polluantMesure = variablesMesure.includes(
+                            polluantMapping[key]
+                        );
+                        console.log(
+                            `Polluant ${key} (${polluantMapping[key]}) mesuré:`,
+                            polluantMesure
+                        );
+
+                        this.buttons.pollutant[key].disabled = !polluantMesure;
+                        this.buttons.pollutant[key].title = polluantMesure
+                            ? ''
+                            : 'Polluant non mesuré par cette station';
+                    } else {
+                        console.log(
+                            'Aucune donnée de polluants trouvée pour ce capteur'
+                        );
+                        this.buttons.pollutant[key].disabled = false;
+                        this.buttons.pollutant[key].title = '';
+                    }
+                } else {
+                    this.buttons.pollutant[key].disabled = false;
+                    this.buttons.pollutant[key].title = '';
+                }
             }
         });
+
+        // Désactiver le bouton de pas de temps journalier pour atmo_micro
+        if (source === 'atmo_micro' && this.buttons.pasDeTemps['d']) {
+            this.buttons.pasDeTemps['d'].disabled = true;
+            this.buttons.pasDeTemps['d'].title =
+                'Pas de temps non disponible pour les micro-stations AtmoSud';
+        } else if (this.buttons.pasDeTemps['d']) {
+            this.buttons.pasDeTemps['d'].disabled = false;
+            this.buttons.pasDeTemps['d'].title = '';
+        }
 
         // Réinitialisation du tableau des mesures
         this.state[source].mesuresArray = [];
@@ -147,6 +239,12 @@ class PanelManager {
         this.buttons.historique.startDate =
             document.getElementById('start_date');
         this.buttons.historique.endDate = document.getElementById('end_date');
+
+        console.log('Boutons personnalisés:', {
+            custom: this.buttons.historique.custom,
+            startDate: this.buttons.historique.startDate,
+            endDate: this.buttons.historique.endDate,
+        });
 
         ['1h', '3h', '24h', '7d', '30d', '365d'].forEach((periode) => {
             const buttonId = `btn_historique_${periode}`;
@@ -176,8 +274,81 @@ class PanelManager {
         const btnHistoriqueStartDate = this.buttons.historique.startDate;
         const btnHistoriqueEndDate = this.buttons.historique.endDate;
 
+        console.log('Configuration des gestionnaires de boutons historiques:', {
+            custom: btnHistoriqueCustom,
+            startDate: btnHistoriqueStartDate,
+            endDate: btnHistoriqueEndDate,
+        });
+
         if (btnHistoriqueCustom) {
-            btnHistoriqueCustom.onclick = null;
+            btnHistoriqueCustom.addEventListener('click', () => {
+                console.log('Bouton Appliquer cliqué');
+                console.log('Dates sélectionnées:', {
+                    start: btnHistoriqueStartDate.value,
+                    end: btnHistoriqueEndDate.value,
+                });
+
+                if (
+                    !btnHistoriqueStartDate.value ||
+                    !btnHistoriqueEndDate.value
+                ) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Veuillez sélectionner une date de début et une date de fin',
+                    });
+                    return;
+                }
+
+                const startDate = new Date(btnHistoriqueStartDate.value);
+                const endDate = new Date(btnHistoriqueEndDate.value);
+
+                if (startDate > endDate) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'La date de début doit être antérieure à la date de fin',
+                    });
+                    return;
+                }
+
+                // Décocher tous les boutons d'historique prédéfinis
+                Object.entries(this.buttons.historique).forEach(
+                    ([otherId, otherButton]) => {
+                        if (
+                            otherButton &&
+                            otherId !== 'startDate' &&
+                            otherId !== 'endDate' &&
+                            otherId !== 'custom'
+                        ) {
+                            otherButton.checked = false;
+                        }
+                    }
+                );
+
+                // Mettre à jour l'état avec la plage personnalisée
+                this.state[this.currentSource].historiqueChart = 'custom';
+                this.state[this.currentSource].customDateRange.start =
+                    startDate;
+                this.state[this.currentSource].customDateRange.end = endDate;
+
+                console.log(
+                    "Mise à jour de l'état avec la plage personnalisée:",
+                    {
+                        source: this.currentSource,
+                        startDate,
+                        endDate,
+                    }
+                );
+
+                // Appeler updateHistoriqueData avec la plage personnalisée
+                this.updateHistoriqueData(
+                    this.currentSource,
+                    true,
+                    startDate,
+                    endDate
+                );
+            });
         } else {
             console.warn('Bouton historique personnalisé non trouvé');
         }
@@ -244,7 +415,43 @@ class PanelManager {
                     this.state[this.currentSource].pasDeTempsChart = pasDeTemps;
                     this.updatePasDeTempsButtons(false);
                     button.checked = true;
-                    this.updateHistoriqueData(this.currentSource);
+
+                    // Conserver la plage de dates personnalisée si elle existe
+                    const useCustomRange =
+                        this.state[this.currentSource].historiqueChart ===
+                        'custom';
+                    let startDate = null;
+                    let endDate = null;
+
+                    if (useCustomRange) {
+                        // Formater les dates selon la source
+                        if (this.currentSource === 'nebuleair') {
+                            startDate = this.formatDateForNebuleAir(
+                                this.state[this.currentSource].customDateRange
+                                    .start
+                            );
+                            endDate = this.formatDateForNebuleAir(
+                                this.state[this.currentSource].customDateRange
+                                    .end
+                            );
+                        } else {
+                            startDate = this.formatDateForAPI(
+                                this.state[this.currentSource].customDateRange
+                                    .start
+                            );
+                            endDate = this.formatDateForAPI(
+                                this.state[this.currentSource].customDateRange
+                                    .end
+                            );
+                        }
+                    }
+
+                    this.updateHistoriqueData(
+                        this.currentSource,
+                        useCustomRange,
+                        startDate,
+                        endDate
+                    );
                 });
             } else {
                 console.warn(`Bouton pas de temps ${id} non trouvé`);
@@ -255,7 +462,7 @@ class PanelManager {
     setupPollutantButtonHandlers() {
         const polluants = {
             pm1: 'pm1',
-            pm25: 'pm2.5',
+            pm25: this.currentSource === 'nebuleair' ? 'pm25' : 'pm2.5',
             pm10: 'pm10',
             no2: 'no2',
             o3: 'o3',
@@ -299,7 +506,42 @@ class PanelManager {
                         this.state[this.currentSource].mesuresArray.length !==
                         previousLength
                     ) {
-                        this.updateHistoriqueData(this.currentSource);
+                        // Conserver la plage de dates personnalisée si elle existe
+                        const useCustomRange =
+                            this.state[this.currentSource].historiqueChart ===
+                            'custom';
+                        let startDate = null;
+                        let endDate = null;
+
+                        if (useCustomRange) {
+                            // Formater les dates selon la source
+                            if (this.currentSource === 'nebuleair') {
+                                startDate = this.formatDateForNebuleAir(
+                                    this.state[this.currentSource]
+                                        .customDateRange.start
+                                );
+                                endDate = this.formatDateForNebuleAir(
+                                    this.state[this.currentSource]
+                                        .customDateRange.end
+                                );
+                            } else {
+                                startDate = this.formatDateForAPI(
+                                    this.state[this.currentSource]
+                                        .customDateRange.start
+                                );
+                                endDate = this.formatDateForAPI(
+                                    this.state[this.currentSource]
+                                        .customDateRange.end
+                                );
+                            }
+                        }
+
+                        this.updateHistoriqueData(
+                            this.currentSource,
+                            useCustomRange,
+                            startDate,
+                            endDate
+                        );
                     }
                 });
             }
@@ -359,12 +601,28 @@ class PanelManager {
             this.buttons.historique[historique].checked = true;
         }
 
+        // Mapping des polluants selon la source
+        const polluants = {
+            'pm2.5': 'pm25',
+            pm25: 'pm25',
+            pm1: 'pm1',
+            pm10: 'pm10',
+            no2: 'no2',
+            o3: 'o3',
+            so2: 'so2',
+        };
+
         this.state[source].mesuresArray.forEach((pollutant) => {
-            const buttonId = pollutant === 'pm2.5' ? 'pm25' : pollutant;
+            const buttonId = polluants[pollutant] || pollutant;
             if (this.buttons.pollutant[buttonId]) {
                 this.buttons.pollutant[buttonId].checked = true;
             }
         });
+    }
+
+    formatDateForNebuleAir(date) {
+        // Formater la date au format YYYY-MM-DDTHH:mm:ssZ
+        return date.toISOString().split('.')[0] + 'Z';
     }
 
     updateHistoriqueData(
@@ -401,6 +659,18 @@ class PanelManager {
         }
         chartDiv.innerHTML = '';
 
+        // Convertir le pas de temps selon la source
+        let pasDeTemps = this.state[source].pasDeTempsChart;
+        if (source === 'nebuleair') {
+            const conversions = {
+                'quart-horaire': '15m',
+                horaire: '1h',
+                journalière: '1d',
+                '2min': '2m',
+            };
+            pasDeTemps = conversions[pasDeTemps] || pasDeTemps;
+        }
+
         if (source === 'atmo_ref') {
             retreiveHistoriqueDataStationRef(
                 this.state[source].deviceId,
@@ -426,23 +696,31 @@ class PanelManager {
                 'Appel à retreive_historiqueData_nebuleAir avec les paramètres:',
                 {
                     deviceId: this.state[source].deviceId,
-                    pasDeTemps: this.state[source].pasDeTempsAtmo,
+                    pasDeTemps: pasDeTemps,
                     historique: this.state[source].historiqueChart,
                     mesuresArray: this.state[source].mesuresArray,
                     useCustomRange,
-                    startDateTime,
-                    endDateTime,
+                    startDateTime: startDateTime
+                        ? this.formatDateForNebuleAir(new Date(startDateTime))
+                        : null,
+                    endDateTime: endDateTime
+                        ? this.formatDateForNebuleAir(new Date(endDateTime))
+                        : null,
                 }
             );
 
             retreive_historiqueData_nebuleAir(
                 this.state[source].deviceId,
-                this.state[source].pasDeTempsAtmo,
+                pasDeTemps,
                 this.state[source].historiqueChart,
                 this.state[source].mesuresArray,
                 useCustomRange,
-                startDateTime,
+                startDateTime
+                    ? this.formatDateForNebuleAir(new Date(startDateTime))
+                    : null,
                 endDateTime
+                    ? this.formatDateForNebuleAir(new Date(endDateTime))
+                    : null
             );
         }
     }
@@ -455,6 +733,83 @@ class PanelManager {
                     'Pas de temps non disponible pour les stations de référence AtmoSud';
             }
         }
+    }
+
+    formatDateForAPI(date) {
+        // Formater la date au format YYYY-MM-DDTHH:mm:ss
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    }
+
+    handleCustomDateRange() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        console.log('Dates sélectionnées:', { start: startDate, end: endDate });
+
+        if (!startDate || !endDate) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Veuillez sélectionner une date de début et une date de fin',
+            });
+            return;
+        }
+
+        // Créer les dates avec des heures spécifiques
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0); // Début de la journée (00:00:00)
+
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Fin de la journée (23:59:59)
+
+        if (start > end) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'La date de début doit être antérieure à la date de fin',
+            });
+            return;
+        }
+
+        // Décocher tous les boutons d'historique prédéfinis
+        Object.entries(this.buttons.historique).forEach(
+            ([otherId, otherButton]) => {
+                if (
+                    otherButton &&
+                    otherId !== 'startDate' &&
+                    otherId !== 'endDate' &&
+                    otherId !== 'custom'
+                ) {
+                    otherButton.checked = false;
+                }
+            }
+        );
+
+        // Mettre à jour l'état avec la plage personnalisée
+        this.state[this.currentSource].historiqueChart = 'custom';
+        this.state[this.currentSource].customDateRange.start = start;
+        this.state[this.currentSource].customDateRange.end = end;
+
+        console.log("Mise à jour de l'état avec la plage personnalisée:", {
+            source: this.currentSource,
+            start: this.formatDateForAPI(start),
+            end: this.formatDateForAPI(end),
+        });
+
+        // Appeler updateHistoriqueData avec la plage personnalisée
+        this.updateHistoriqueData(
+            this.currentSource,
+            true,
+            this.formatDateForAPI(start),
+            this.formatDateForAPI(end)
+        );
     }
 }
 

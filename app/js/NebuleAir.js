@@ -318,6 +318,7 @@ export function retreive_historiqueData_nebuleAir(
             custom_end,
         }
     );
+    console.log('mesuresArray:', mesuresArray);
 
     if (!isSourceActive('nebuleair')) {
         console.log('Source NebuleAir non active, annulation de la requête');
@@ -447,7 +448,6 @@ export function retreive_historiqueData_nebuleAir(
                     })
                 );
 
-                let seriesData = {};
                 let availablePollutants = [];
 
                 if (data.length > 0) {
@@ -467,36 +467,41 @@ export function retreive_historiqueData_nebuleAir(
                         polluantCompare = 'pm25';
                     }
 
-                    let dataPoints = data.map((e) => ({
-                        value: e[pollutant === 'PM2.5' ? 'PM25' : pollutant],
-                        date: new Date(e.time).getTime(),
-                    }));
+                    // Ne créer la série que si le polluant est dans mesuresArray
+                    if (mesuresArray.includes(polluantCompare)) {
+                        let dataPoints = data.map((e) => ({
+                            value: e[
+                                pollutant === 'PM2.5' ? 'PM25' : pollutant
+                            ],
+                            date: new Date(e.time).getTime(),
+                        }));
 
-                    let series = chart.series.push(
-                        am5xy.SmoothedXLineSeries.new(amchart_root, {
+                        let series = chart.series.push(
+                            am5xy.SmoothedXLineSeries.new(amchart_root, {
+                                name: pollutant,
+                                xAxis: xAxis,
+                                yAxis: yAxis,
+                                valueYField: 'value',
+                                valueXField: 'date',
+                                tooltip: am5.Tooltip.new(amchart_root, {
+                                    labelText: `${pollutant}: {valueY} µg/m³`,
+                                }),
+                            })
+                        );
+
+                        series.strokes.template.setAll({
+                            strokeWidth: 2,
+                        });
+
+                        series.data.setAll(dataPoints);
+                        series.appear(1000);
+
+                        allSeries.push({
+                            series: series,
                             name: pollutant,
-                            xAxis: xAxis,
-                            yAxis: yAxis,
-                            valueYField: 'value',
-                            valueXField: 'date',
-                            tooltip: am5.Tooltip.new(amchart_root, {
-                                labelText: `${pollutant}: {valueY} µg/m³`,
-                            }),
-                        })
-                    );
-
-                    series.strokes.template.setAll({
-                        strokeWidth: 2,
-                    });
-
-                    series.data.setAll(dataPoints);
-                    series.appear(1000);
-
-                    allSeries.push({
-                        series: series,
-                        name: pollutant,
-                        compare: polluantCompare,
-                    });
+                            compare: polluantCompare,
+                        });
+                    }
                 });
 
                 let legend = chart.children.push(
