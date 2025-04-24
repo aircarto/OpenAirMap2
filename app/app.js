@@ -412,15 +412,18 @@ export function formatPollutantName(name) {
         return String(name || '');
     }
 
-    // Remplacement des formules chimiques par leur version HTML avec indices
+    // Remplacement des formules chimiques par leur version avec caractères Unicode
     return name
-        .replace(/NO2/g, 'NO<sub>2</sub>') // Dioxyde d'azote
-        .replace(/NOx/g, 'NO<sub>x</sub>') // Oxydes d'azote
-        .replace(/SO2/g, 'SO<sub>2</sub>') // Dioxyde de soufre
-        .replace(/O3/g, 'O<sub>3</sub>') // Ozone
-        .replace(/CO2/g, 'CO<sub>2</sub>') // Dioxyde de carbone
-        .replace(/H2S/g, 'H<sub>2</sub>S') // Sulfure d'hydrogène
-        .replace(/NH3/g, 'NH<sub>3</sub>'); // Ammoniac
+        .replace(/PM10/g, 'PM₁₀') // Doit être avant PM1 pour éviter les conflits
+        .replace(/PM2.5/g, 'PM₂.₅')
+        .replace(/PM1/g, 'PM₁')
+        .replace(/NO2/g, 'NO₂') // Dioxyde d'azote
+        .replace(/NOx/g, 'NOₓ') // Oxydes d'azote
+        .replace(/SO2/g, 'SO₂') // Dioxyde de soufre
+        .replace(/O3/g, 'O₃') // Ozone
+        .replace(/CO2/g, 'CO₂') // Dioxyde de carbone
+        .replace(/H2S/g, 'H₂S') // Sulfure d'hydrogène
+        .replace(/NH3/g, 'NH₃'); // Ammoniac
 }
 
 // Fonction pour mettre à jour l'affichage de l'heure en fonction du pas de temps sélectionné
@@ -1188,13 +1191,16 @@ for (let key in mesures) {
                 addItemToLocalStorageArray(mesuresLocal, code);
                 button.classList.add('active');
                 // Mise à jour du texte du bouton principal
+                console.log('#########################');
+                console.log('name :' + name);
+                console.log('#########################');
                 document
                     .querySelector('#dropdown_mesures')
                     .closest('.dropdown')
                     .querySelector('.selected-option').innerHTML = name;
 
                 updateThresholdButtons();
-                toastManager.pollutantChanged(name);
+                // toastManager.pollutantChanged(name);
 
                 // Rechargement des données
                 console.log(

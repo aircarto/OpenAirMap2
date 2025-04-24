@@ -139,6 +139,7 @@ class PanelManager {
 
         // Mise à jour de la source courante
         this.currentSource = source;
+        console.log('DATA: ', data);
 
         // Réinitialisation de l'état des boutons de polluants
         Object.keys(this.buttons.pollutant).forEach((key) => {
@@ -177,7 +178,7 @@ class PanelManager {
                         const polluantMesure = variablesMesure.includes(
                             polluantMapping[key]
                         );
-
+                        console.log('polluantMesure: ', polluantMesure);
                         this.buttons.pollutant[key].disabled = !polluantMesure;
                         this.buttons.pollutant[key].title = polluantMesure
                             ? ''
@@ -194,7 +195,7 @@ class PanelManager {
                     if (deviceData && deviceData.polluantMesure) {
                         const polluantMapping = {
                             pm1: 'PM1',
-                            pm25: 'PM2.5',
+                            pm25: 'PM25',
                             pm10: 'PM10',
                             no2: 'NO2',
                             o3: 'O3',

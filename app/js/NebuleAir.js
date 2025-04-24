@@ -9,14 +9,14 @@ import {
     map,
     openSidePanelGeneric,
     nebuleairLayer,
-    seuils_PM1_PM25,
     seuils_PM10,
+    formatPollutantName,
 } from '../app.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
 
 // Variables locales au module
-const state = {
+var state = {
     pasDeTempsChart: '1h',
     historiqueChart: '24h',
     mesuresArray: [],
@@ -174,7 +174,7 @@ export function loadNebuleAir() {
                             openSidePanelNebuleAir(
                                 value,
                                 pas_de_temps_String,
-                                '24h',
+                                state.historiqueChart,
                                 mesures
                             );
                         })
@@ -198,9 +198,9 @@ export function loadNebuleAir() {
                                         <small class="text-muted">
                                             Polluants mesurés:
                                             <ul class="list-unstyled ms-3 mb-0">
-                                                ${value.PM1 !== undefined ? '<li><span class="text-success">●</span> PM1</li>' : ''}
-                                                ${value.PM25 !== undefined ? '<li><span class="text-success">●</span> PM2.5</li>' : ''}
-                                                ${value.PM10 !== undefined ? '<li><span class="text-success">●</span> PM10</li>' : ''}
+                                                ${value.PM1 !== undefined ? '<li><span class="text-success">●</span><span class="fw-semibold"> PM₁</span></li>' : ''}
+                                                ${value.PM25 !== undefined ? '<li><span class="text-success">●</span><span class="fw-semibold"> PM₂.₅</span></li>' : ''}
+                                                ${value.PM10 !== undefined ? '<li><span class="text-success">●</span><span class="fw-semibold"> PM₁₀</span></li>' : ''}
                                             </ul>
                                         </small>
                                     </div>
@@ -293,7 +293,7 @@ export function openSidePanelNebuleAir(
     // Utiliser le panelManager pour ouvrir le panneau
     panelManager.openPanel('nebuleair', data.sensorId, {
         pasDeTempsChart: pas_de_temps,
-        historiqueChart: historique,
+        historiqueChart: state.historiqueChart,
         mesuresArray: mesures,
         customDateRange: {
             start: null,
@@ -513,7 +513,7 @@ function createSeries(chart, root, pollutant, axes, data) {
             valueYField: 'value',
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
-                labelText: `${pollutant}: {valueY} µg/m³`,
+                labelText: `${formatPollutantName(pollutant)}: {valueY} µg/m³`,
             }),
         })
     );
@@ -533,43 +533,43 @@ function createSeries(chart, root, pollutant, axes, data) {
 }
 
 // Configuration de la légende
-function configureLegend(chart, root, allSeries, mesuresArray) {
-    const legend = chart.children.push(
-        am5.Legend.new(root, {
-            centerX: am5.percent(50),
-            x: am5.percent(50),
-            y: am5.percent(95),
-            layout: am5.GridLayout.new(root, {
-                maxColumns: 2,
-                fixedWidthGrid: true,
-            }),
-            paddingTop: 10,
-            paddingBottom: 10,
-            marginTop: 10,
-            marginBottom: 10,
-        })
-    );
+// function configureLegend(chart, root, allSeries, mesuresArray) {
+//     const legend = chart.children.push(
+//         am5.Legend.new(root, {
+//             centerX: am5.percent(50),
+//             x: am5.percent(50),
+//             y: am5.percent(95),
+//             layout: am5.GridLayout.new(root, {
+//                 maxColumns: 2,
+//                 fixedWidthGrid: true,
+//             }),
+//             paddingTop: 10,
+//             paddingBottom: 10,
+//             marginTop: 10,
+//             marginBottom: 10,
+//         })
+//     );
 
-    legend.itemContainers.template.events.on('click', function (ev) {
-        const clickedSeries = ev.target.dataItem.dataContext;
-        const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
+//     legend.itemContainers.template.events.on('click', function (ev) {
+//         const clickedSeries = ev.target.dataItem.dataContext;
+//         const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
 
-        if (seriesInfo) {
-            if (mesuresArray.includes(seriesInfo.compare)) {
-                seriesInfo.series.set('visible', false);
-                mesuresArray = mesuresArray.filter(
-                    (item) => item !== seriesInfo.compare
-                );
-            } else {
-                seriesInfo.series.set('visible', true);
-                mesuresArray.push(seriesInfo.compare);
-            }
-        }
-    });
+//         if (seriesInfo) {
+//             if (mesuresArray.includes(seriesInfo.compare)) {
+//                 seriesInfo.series.set('visible', false);
+//                 mesuresArray = mesuresArray.filter(
+//                     (item) => item !== seriesInfo.compare
+//                 );
+//             } else {
+//                 seriesInfo.series.set('visible', true);
+//                 mesuresArray.push(seriesInfo.compare);
+//             }
+//         }
+//     });
 
-    legend.data.setAll(chart.series.values);
-    return legend;
-}
+//     legend.data.setAll(chart.series.values);
+//     return legend;
+// }
 
 // Fonction principale de création du graphique
 function createNebuleAirChart(data, baseInterval, mesuresArray) {
@@ -603,7 +603,7 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
             );
 
         // Configuration de la légende
-        configureLegend(chart, window.amchart_root, allSeries, mesuresArray);
+        // configureLegend(chart, window.amchart_root, allSeries, mesuresArray);
 
         // Animation finale
         chart.appear(1000, 100);

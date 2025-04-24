@@ -1,16 +1,3 @@
-/*
-Récupération des données des micro stations
--> API ATMOSUD "OBSERVATIONS/CAPTEURS/DERNIERES"
--> Ou plutot "OBSERVATIONS/CAPTEURS/SITES"
-
-En réponse on a:
-
-valeur          valeur corrigée
-valeur_brute    valeur brute
-valeur_ref      valeur corrigée si existe sinon valeur brute
-
-*/
-
 // Récupération des données des micro-stations AtmoSud
 // Cette fonction charge les données des micro-stations AtmoSud et les affiche sur la carte
 
@@ -25,6 +12,7 @@ import {
     card1_text,
     card2_link,
     atmoMicroLayer,
+    formatPollutantName,
 } from '../app.js';
 
 import { isSourceActive } from './dataSourceManager.js';
@@ -41,99 +29,6 @@ var customDateRange = {
     start: null,
     end: null,
 };
-
-// Déclaration des variables pour les boutons d'historique
-let btn_historique_custom;
-let btn_historique_start_date;
-let btn_historique_end_date;
-let btn_historique_1h;
-let btn_historique_3h;
-let btn_historique_24h;
-let btn_historique_7d;
-let btn_historique_30d;
-let btn_historique_365d;
-let btn_pas_de_temps_2min;
-let btn_pas_de_temps_qh;
-let btn_pas_de_temps_h;
-let btn_pas_de_temps_d;
-let btn_poluant_pm1;
-let btn_poluant_pm25;
-let btn_poluant_pm10;
-let btn_poluant_no2;
-let btn_poluant_so2;
-let btn_poluant_o3;
-let btn_poluant_h2s;
-let btn_poluant_nh3;
-
-// Initialisation des boutons au chargement du DOM
-document.addEventListener('DOMContentLoaded', function () {
-    btn_historique_custom = document.getElementById('apply_date_range');
-    btn_historique_start_date = document.getElementById('start_date');
-    btn_historique_end_date = document.getElementById('end_date');
-    btn_historique_1h = document.getElementById('btn_historique_1h');
-    btn_historique_3h = document.getElementById('btn_historique_3h');
-    btn_historique_24h = document.getElementById('btn_historique_24h');
-    btn_historique_7d = document.getElementById('btn_historique_7d');
-    btn_historique_30d = document.getElementById('btn_historique_30d');
-    btn_historique_365d = document.getElementById('btn_historique_365d');
-    btn_pas_de_temps_2min = document.getElementById('btn_pas_de_temps_2min');
-    btn_pas_de_temps_qh = document.getElementById('btn_pas_de_temps_qh');
-    btn_pas_de_temps_h = document.getElementById('btn_pas_de_temps_h');
-    btn_pas_de_temps_d = document.getElementById('btn_pas_de_temps_d');
-    btn_poluant_pm1 = document.getElementById('btn_poluant_pm1');
-    btn_poluant_pm25 = document.getElementById('btn_poluant_pm25');
-    btn_poluant_pm10 = document.getElementById('btn_poluant_pm10');
-    btn_poluant_no2 = document.getElementById('btn_poluant_no2');
-    btn_poluant_so2 = document.getElementById('btn_poluant_so2');
-    btn_poluant_o3 = document.getElementById('btn_poluant_o3');
-    btn_poluant_h2s = document.getElementById('btn_poluant_h2s');
-    btn_poluant_nh3 = document.getElementById('btn_poluant_nh3');
-
-    // Configuration du bouton historique custom
-    if (btn_historique_custom) {
-        btn_historique_custom.onclick = (event) => {
-            if (!isSourceActive('atmo_micro')) return;
-
-            event.preventDefault();
-            const startDate = btn_historique_start_date.value;
-            const endDate = btn_historique_end_date.value;
-            const startTime = '00:00';
-            const endTime = '23:59';
-
-            if (startDate && startTime && endDate && endTime) {
-                const startDateTime = new Date(
-                    `${startDate}T${startTime}`
-                ).toISOString();
-                const endDateTime = new Date(
-                    `${endDate}T${endTime}`
-                ).toISOString();
-
-                if (
-                    customDateRange.start !== startDateTime ||
-                    customDateRange.end !== endDateTime
-                ) {
-                    customDateRange.start = startDateTime;
-                    customDateRange.end = endDateTime;
-                    panelManager.updateHistoriqueData(
-                        'atmo_micro',
-                        true,
-                        startDateTime,
-                        endDateTime
-                    );
-                }
-            } else {
-                createCustomToast({
-                    message:
-                        'Veuillez sélectionner une date et une heure de début et de fin.',
-                    type: 'warning',
-                    title: 'Attention',
-                    icon: 'exclamation-triangle',
-                    timer: 5000,
-                });
-            }
-        };
-    }
-});
 
 // Définition des constantes globales
 const POLLUTANT_COLORS = {
@@ -463,7 +358,7 @@ export async function loadAtmoSudMicroStation() {
                                 </small>
                                 <small class="text-muted">
                                     Polluants mesurés:<br>
-                                    ${value['variablesMesure'].map((polluant) => `<span class="text-success">●</span> ${polluant}`).join('<br>')}
+                                    ${value['variablesMesure'].map((polluant) => `<span class="text-success">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`).join('<br>')}
                                 </small>
                             </div>
                         </div>
@@ -732,6 +627,7 @@ export async function retreive_historiqueData_microStation(
 
         am5.ready(function () {
             const chartDiv = document.getElementById('chartdiv_sensor');
+
             if (!chartDiv) {
                 console.error("L'élément chartdiv_sensor n'existe plus");
                 return;
@@ -749,6 +645,7 @@ export async function retreive_historiqueData_microStation(
             }
 
             window.amchart_root = am5.Root.new('chartdiv_sensor');
+            window.amchart_root.locale = am5locales_fr_FR;
             let chart = createChart(window.amchart_root);
             const axes = configureAxes(
                 chart,
@@ -811,7 +708,7 @@ export async function retreive_historiqueData_microStation(
                 }
             });
 
-            configureLegend(chart, window.amchart_root, allSeries);
+            // configureLegend(chart, window.amchart_root, allSeries);
             chart.appear(1000, 100);
 
             am5plugins_exporting.Exporting.new(window.amchart_root, {
@@ -924,7 +821,7 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
             valueYField: 'value',
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
-                labelText: `${pollutant.toUpperCase()}: {valueY} µg/m³ (donnée ${type})`,
+                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (donnée ${type})`,
             }),
         })
     );
@@ -947,35 +844,35 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
 }
 
 // Configuration de la légende
-function configureLegend(chart, root, allSeries) {
-    const legend = chart.children.push(
-        am5.Legend.new(root, {
-            centerX: am5.percent(50),
-            x: am5.percent(50),
-            y: am5.percent(95),
-            layout: am5.GridLayout.new(root, {
-                maxColumns: 2,
-                fixedWidthGrid: true,
-            }),
-            paddingTop: 10,
-            paddingBottom: 10,
-            marginTop: 10,
-            marginBottom: 10,
-        })
-    );
+// function configureLegend(chart, root, allSeries) {
+//     const legend = chart.children.push(
+//         am5.Legend.new(root, {
+//             centerX: am5.percent(50),
+//             x: am5.percent(50),
+//             y: am5.percent(95),
+//             layout: am5.GridLayout.new(root, {
+//                 maxColumns: 2,
+//                 fixedWidthGrid: true,
+//             }),
+//             paddingTop: 10,
+//             paddingBottom: 10,
+//             marginTop: 10,
+//             marginBottom: 10,
+//         })
+//     );
 
-    legend.itemContainers.template.events.on('click', function (ev) {
-        const clickedSeries = ev.target.dataItem.dataContext;
-        const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
+//     legend.itemContainers.template.events.on('click', function (ev) {
+//         const clickedSeries = ev.target.dataItem.dataContext;
+//         const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
 
-        if (seriesInfo) {
-            seriesInfo.series.set('visible', !seriesInfo.series.get('visible'));
-        }
-    });
+//         if (seriesInfo) {
+//             seriesInfo.series.set('visible', !seriesInfo.series.get('visible'));
+//         }
+//     });
 
-    legend.data.setAll(chart.series.values);
-    return legend;
-}
+//     legend.data.setAll(chart.series.values);
+//     return legend;
+// }
 
 // Exporter les variables qui pourraient être nécessaires ailleurs
 export { pas_de_temps_chart, historique_chart, mesures_array };

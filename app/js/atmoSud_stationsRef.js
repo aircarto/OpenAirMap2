@@ -11,6 +11,7 @@ import {
     map,
     openSidePanelGeneric,
     atmoRefLayer,
+    formatPollutantName,
 } from '../app.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
@@ -28,7 +29,7 @@ const pollutantColors = {
 };
 
 // Variables locales au module
-const state = {
+var state = {
     pasDeTempsChart: '1h',
     pasDeTempsAtmo: '',
     pasDeTemps: '',
@@ -149,7 +150,7 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
             valueYField: 'value',
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
-                labelText: `${pollutant.toUpperCase()}: {valueY} µg/m³`,
+                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
             }),
         })
     );
@@ -171,35 +172,35 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
     };
 }
 
-function configureLegend(chart, root, allSeries) {
-    const legend = chart.children.push(
-        am5.Legend.new(root, {
-            centerX: am5.percent(50),
-            x: am5.percent(50),
-            y: am5.percent(95),
-            layout: am5.GridLayout.new(root, {
-                maxColumns: 2,
-                fixedWidthGrid: true,
-            }),
-            paddingTop: 10,
-            paddingBottom: 10,
-            marginTop: 10,
-            marginBottom: 10,
-        })
-    );
+// function configureLegend(chart, root, allSeries) {
+//     const legend = chart.children.push(
+//         am5.Legend.new(root, {
+//             centerX: am5.percent(50),
+//             x: am5.percent(50),
+//             y: am5.percent(95),
+//             layout: am5.GridLayout.new(root, {
+//                 maxColumns: 2,
+//                 fixedWidthGrid: true,
+//             }),
+//             paddingTop: 10,
+//             paddingBottom: 10,
+//             marginTop: 10,
+//             marginBottom: 10,
+//         })
+//     );
 
-    legend.itemContainers.template.events.on('click', function (ev) {
-        const clickedSeries = ev.target.dataItem.dataContext;
-        const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
+//     legend.itemContainers.template.events.on('click', function (ev) {
+//         const clickedSeries = ev.target.dataItem.dataContext;
+//         const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
 
-        if (seriesInfo) {
-            seriesInfo.series.set('visible', !seriesInfo.series.get('visible'));
-        }
-    });
+//         if (seriesInfo) {
+//             seriesInfo.series.set('visible', !seriesInfo.series.get('visible'));
+//         }
+//     });
 
-    legend.data.setAll(chart.series.values);
-    return legend;
-}
+//     legend.data.setAll(chart.series.values);
+//     return legend;
+// }
 
 /**
  * Fonction principale pour charger les stations de référence AtmoSud
@@ -760,14 +761,6 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
         'color: white; font-style: bold; background-color: green;padding: 2px'
     );
 
-    // Définition de l'historique par défaut en fonction du pas de temps
-    let historiqueChart = '3h';
-    if (state.pasDeTempsAtmo === 'horaire') {
-        historiqueChart = '24h';
-    } else if (state.pasDeTempsAtmo === 'journalière') {
-        historiqueChart = '30d';
-    }
-
     // Conversion du polluant pour l'API
     let polluantAPI = mesure[0];
     if (polluantAPI === 'pm25') {
@@ -788,7 +781,7 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
     // Utiliser le gestionnaire de panneau pour configurer les boutons
     panelManager.openPanel('atmo_ref', deviceId, {
         pasDeTempsAtmo: state.pasDeTempsAtmo,
-        historiqueChart: historiqueChart,
+        historiqueChart: state.historiqueChart,
         mesuresArray: [polluantAPI],
         pasDeTempsChart: state.pasDeTempsAtmo,
         pasDeTemps: state.pasDeTemps,
@@ -1034,7 +1027,7 @@ export function retreiveHistoriqueDataStationRef(
 
                 // Création du root element
                 window.amchart_root = am5.Root.new('chartdiv_sensor');
-
+                window.amchart_root.locale = am5locales_fr_FR;
                 // Création du graphique
                 let chart = createChart(window.amchart_root);
 
@@ -1090,7 +1083,7 @@ export function retreiveHistoriqueDataStationRef(
                 });
 
                 // Configuration de la légende
-                configureLegend(chart, window.amchart_root, allSeries);
+                // configureLegend(chart, window.amchart_root, allSeries);
 
                 // Animation
                 chart.appear(1000, 100);
@@ -1112,31 +1105,3 @@ export function retreiveHistoriqueDataStationRef(
             }
         });
 }
-
-// Initialisation des boutons au chargement du DOM
-document.addEventListener('DOMContentLoaded', function () {
-    // Initialisation des boutons
-    buttons.historique.custom = document.getElementById('apply_date_range');
-    buttons.historique.startDate = document.getElementById('start_date');
-    buttons.historique.endDate = document.getElementById('end_date');
-    buttons.historique['1h'] = document.getElementById('btn_historique_1h');
-    buttons.historique['3h'] = document.getElementById('btn_historique_3h');
-    buttons.historique['24h'] = document.getElementById('btn_historique_24h');
-    buttons.historique['7d'] = document.getElementById('btn_historique_7d');
-    buttons.historique['30d'] = document.getElementById('btn_historique_30d');
-    buttons.historique['365d'] = document.getElementById('btn_historique_365d');
-
-    buttons.pasDeTemps['2min'] = document.getElementById(
-        'btn_pas_de_temps_2min'
-    );
-    buttons.pasDeTemps['qh'] = document.getElementById('btn_pas_de_temps_qh');
-    buttons.pasDeTemps['h'] = document.getElementById('btn_pas_de_temps_h');
-    buttons.pasDeTemps['d'] = document.getElementById('btn_pas_de_temps_d');
-
-    buttons.polluants['pm1'] = document.getElementById('btn_poluant_pm1');
-    buttons.polluants['pm25'] = document.getElementById('btn_poluant_pm25');
-    buttons.polluants['pm10'] = document.getElementById('btn_poluant_pm10');
-    buttons.polluants['no2'] = document.getElementById('btn_poluant_no2');
-    buttons.polluants['so2'] = document.getElementById('btn_poluant_so2');
-    buttons.polluants['o3'] = document.getElementById('btn_poluant_o3');
-});
