@@ -15,6 +15,18 @@ import {
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
 
+// Définition des couleurs pour les polluants
+const pollutantColors = {
+    pm1: '#FF6B6B',
+    pm25: '#4ECDC4',
+    pm10: '#45B7D1',
+    no2: '#96CEB4',
+    o3: '#FFEEAD',
+    so2: '#D4A5A5',
+    h2s: '#9B59B6',
+    nh3: '#3498DB',
+};
+
 // Variables locales au module
 const state = {
     pasDeTempsChart: '1h',
@@ -55,8 +67,139 @@ const buttons = {
         no2: null,
         o3: null,
         so2: null,
+        h2s: null,
+        nh3: null,
     },
 };
+
+// Fonctions utilitaires pour la gestion d'amCharts
+function createChart(root) {
+    return root.container.children.push(
+        am5xy.XYChart.new(root, {
+            panX: false,
+            panY: false,
+            wheelX: 'panX',
+            wheelY: 'zoomX',
+            paddingLeft: 0,
+            paddingBottom: 100,
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 1,
+                fixedWidthGrid: true,
+            }),
+        })
+    );
+}
+
+function configureAxes(chart, root, baseInterval) {
+    const xAxis = chart.xAxes.push(
+        am5xy.DateAxis.new(root, {
+            maxDeviation: 0.2,
+            baseInterval: {
+                timeUnit: baseInterval.timeUnit,
+                count: baseInterval.count,
+            },
+            renderer: am5xy.AxisRendererX.new(root, {
+                minorGridEnabled: true,
+            }),
+            tooltip: am5.Tooltip.new(root, {}),
+            dateFormats: {
+                minute: 'HH:mm',
+                hour: 'HH:mm',
+                day: 'dd/MM HH:mm',
+            },
+            periodChangeDateFormats: {
+                minute: 'HH:mm',
+                hour: 'HH:mm',
+                day: 'dd/MM HH:mm',
+            },
+        })
+    );
+
+    const yAxis = chart.yAxes.push(
+        am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {}),
+            min: 0,
+        })
+    );
+
+    return { xAxis, yAxis };
+}
+
+function configureCursor(chart, root) {
+    const cursor = chart.set(
+        'cursor',
+        am5xy.XYCursor.new(root, {
+            behavior: 'zoomX',
+        })
+    );
+    cursor.lineY.set('visible', false);
+    return cursor;
+}
+
+function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
+    const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
+    const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
+    const color = pollutantColors[colorKey] || '#000000';
+
+    const series = chart.series.push(
+        am5xy.SmoothedXLineSeries.new(root, {
+            name: `${pollutant.toUpperCase()} (${type})`,
+            xAxis: axes.xAxis,
+            yAxis: axes.yAxis,
+            valueYField: 'value',
+            valueXField: 'date',
+            tooltip: am5.Tooltip.new(root, {
+                labelText: `${pollutant.toUpperCase()}: {valueY} µg/m³`,
+            }),
+        })
+    );
+
+    series.strokes.template.setAll({
+        strokeWidth: 2,
+        stroke: am5.color(color),
+        ...(type === 'raw' && { strokeDasharray: [10, 5] }),
+    });
+
+    series.data.setAll(data);
+    series.appear(1000);
+
+    return {
+        series,
+        name: pollutant,
+        compare: polluantCompare,
+        type,
+    };
+}
+
+function configureLegend(chart, root, allSeries) {
+    const legend = chart.children.push(
+        am5.Legend.new(root, {
+            centerX: am5.percent(50),
+            x: am5.percent(50),
+            y: am5.percent(95),
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 2,
+                fixedWidthGrid: true,
+            }),
+            paddingTop: 10,
+            paddingBottom: 10,
+            marginTop: 10,
+            marginBottom: 10,
+        })
+    );
+
+    legend.itemContainers.template.events.on('click', function (ev) {
+        const clickedSeries = ev.target.dataItem.dataContext;
+        const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
+
+        if (seriesInfo) {
+            seriesInfo.series.set('visible', !seriesInfo.series.get('visible'));
+        }
+    });
+
+    legend.data.setAll(chart.series.values);
+    return legend;
+}
 
 /**
  * Fonction principale pour charger les stations de référence AtmoSud
@@ -306,7 +449,7 @@ function createStationMarker(value, iconParam, stationData, mesure) {
         tooltip.className = 'custom-tooltip';
 
         // Récupération des polluants actifs
-        const polluantsActifs = [];
+        let polluantsActifs = [];
         if (stationData.variables) {
             Object.values(stationData.variables).forEach((variable) => {
                 if (variable.en_service) {
@@ -316,6 +459,43 @@ function createStationMarker(value, iconParam, stationData, mesure) {
         }
         value.polluantMesure = polluantsActifs;
 
+        polluantsActifs.forEach((polluant, index) => {
+            if (polluant === 'PM2.5') {
+                polluantsActifs[index] = 'PM25';
+            }
+        });
+
+        polluantsActifs = polluantsActifs.filter((polluant) =>
+            Object.keys(buttons.polluants).includes(polluant.toLowerCase())
+        );
+        polluantsActifs.forEach((polluant, index) => {
+            if (polluant === 'PM25') {
+                polluantsActifs[index] = 'PM2.5';
+            }
+            // Format pollutant names with consistent styling
+            polluantsActifs = polluantsActifs.map((polluant) => {
+                switch (polluant) {
+                    case 'PM1':
+                        return '<span class="fw-semibold">PM<sub>1</sub></span>';
+                    case 'PM2.5':
+                        return '<span class="fw-semibold">PM<sub>2.5</sub></span>';
+                    case 'PM10':
+                        return '<span class="fw-semibold">PM<sub>10</sub></span>';
+                    case 'NO2':
+                        return '<span class="fw-semibold">NO<sub>2</sub></span>';
+                    case 'SO2':
+                        return '<span class="fw-semibold">SO<sub>2</sub></span>';
+                    case 'O3':
+                        return '<span class="fw-semibold">O<sub>3</sub></span>';
+                    case 'H2S':
+                        return '<span class="fw-semibold">H<sub>2</sub>S</span>';
+                    case 'NH3':
+                        return '<span class="fw-semibold">NH<sub>3</sub></span>';
+                    default:
+                        return `<span class="fw-semibold">${polluant}</span>`;
+                }
+            });
+        });
         tooltip.innerHTML = `
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-2">
@@ -567,6 +747,13 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
         .getElementById('toggleSidePanel')
         .querySelector('i');
     closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
+    closeButton.parentElement.classList.remove('hidden');
+
+    const fullScreenButton = document
+        .getElementById('expandSidePanel')
+        .querySelector('i');
+    fullScreenButton.classList.replace('bi-expand', 'bi-compress');
+    fullScreenButton.parentElement.classList.remove('hidden');
 
     console.log(
         '%copenSidePanel_stationRef',
@@ -827,6 +1014,7 @@ export function retreiveHistoriqueDataStationRef(
             am5.ready(function () {
                 // Vérification que l'élément existe toujours
                 const chartDiv = document.getElementById('chartdiv_sensor');
+
                 if (!chartDiv) {
                     console.error("L'élément chartdiv_sensor n'existe plus");
                     return;
@@ -848,27 +1036,9 @@ export function retreiveHistoriqueDataStationRef(
                 window.amchart_root = am5.Root.new('chartdiv_sensor');
 
                 // Création du graphique
-                let chart = window.amchart_root.container.children.push(
-                    am5xy.XYChart.new(window.amchart_root, {
-                        panX: false,
-                        panY: false,
-                        wheelX: 'panX',
-                        wheelY: 'zoomX',
-                        paddingLeft: 0,
-                        paddingBottom: 100,
-                    })
-                );
+                let chart = createChart(window.amchart_root);
 
-                // Ajout du curseur
-                let cursor = chart.set(
-                    'cursor',
-                    am5xy.XYCursor.new(amchart_root, {
-                        behavior: 'zoomX',
-                    })
-                );
-                cursor.lineY.set('visible', false);
-
-                // Configuration de l'axe X avec gestion flexible des pas de temps
+                // Configuration des axes
                 let baseIntervalConfig = {
                     timeUnit: 'minute',
                     count: 1,
@@ -897,65 +1067,30 @@ export function retreiveHistoriqueDataStationRef(
                     };
                 }
 
-                let xAxis = chart.xAxes.push(
-                    am5xy.DateAxis.new(amchart_root, {
-                        maxDeviation: 0.2,
-                        baseInterval: baseIntervalConfig,
-                        renderer: am5xy.AxisRendererX.new(amchart_root, {
-                            minorGridEnabled: true,
-                        }),
-                        tooltip: am5.Tooltip.new(amchart_root, {}),
-                        dateFormats: {
-                            minute: 'HH:mm',
-                            hour: 'HH:mm',
-                            day: 'dd/MM HH:mm',
-                        },
-                        periodChangeDateFormats: {
-                            minute: 'HH:mm',
-                            hour: 'HH:mm',
-                            day: 'dd/MM HH:mm',
-                        },
-                    })
+                const axes = configureAxes(
+                    chart,
+                    window.amchart_root,
+                    baseIntervalConfig
                 );
 
-                // Configuration de l'axe Y
-                let yAxis = chart.yAxes.push(
-                    am5xy.ValueAxis.new(amchart_root, {
-                        renderer: am5xy.AxisRendererY.new(amchart_root, {}),
-                        min: 0,
-                    })
-                );
+                // Configuration du curseur
+                configureCursor(chart, window.amchart_root);
 
                 // Création des séries pour chaque polluant
+                const allSeries = [];
                 Object.keys(seriesData).forEach((polluant) => {
-                    let series = chart.series.push(
-                        am5xy.SmoothedXLineSeries.new(amchart_root, {
-                            name: seriesData[polluant].label,
-                            xAxis: xAxis,
-                            yAxis: yAxis,
-                            valueYField: 'value',
-                            valueXField: 'date',
-                            tooltip: am5.Tooltip.new(amchart_root, {
-                                labelText: '{name}: {valueY} µg/m³',
-                            }),
-                        })
+                    const series = createSeries(
+                        chart,
+                        window.amchart_root,
+                        polluant,
+                        axes,
+                        seriesData[polluant].data
                     );
-                    series.data.setAll(seriesData[polluant].data);
+                    allSeries.push(series);
                 });
 
-                // Ajout de la légende
-                let legend = chart.children.push(
-                    am5.Legend.new(amchart_root, {
-                        centerX: am5.percent(50),
-                        x: am5.percent(50),
-                        y: am5.percent(95),
-                        layout: am5.GridLayout.new(amchart_root, {
-                            maxColumns: 2,
-                            fixedWidthGrid: true,
-                        }),
-                    })
-                );
-                legend.data.setAll(chart.series.values);
+                // Configuration de la légende
+                configureLegend(chart, window.amchart_root, allSeries);
 
                 // Animation
                 chart.appear(1000, 100);

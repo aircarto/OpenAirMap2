@@ -272,6 +272,13 @@ export function openSidePanelNebuleAir(
         .getElementById('toggleSidePanel')
         .querySelector('i');
     closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
+    closeButton.parentElement.classList.remove('hidden');
+
+    const fullScreenButton = document
+        .getElementById('expandSidePanel')
+        .querySelector('i');
+    fullScreenButton.classList.replace('bi-expand', 'bi-compress');
+    fullScreenButton.parentElement.classList.remove('hidden');
 
     card1_img.src = 'img/nebuleair/NebuleAir_photo.png';
     card1_title.innerHTML = data.sensorId;
@@ -402,148 +409,14 @@ export function retreive_historiqueData_nebuleAir(
             }
 
             am5.ready(function () {
-                window.amchart_root = am5.Root.new('chartdiv_sensor');
-
-                var chart = amchart_root.container.children.push(
-                    am5xy.XYChart.new(amchart_root, {
-                        panX: false,
-                        panY: false,
-                        wheelX: 'panX',
-                        wheelY: 'zoomX',
-                        paddingLeft: 0,
-                        paddingBottom: 100,
-                        layout: am5.GridLayout.new(amchart_root, {
-                            maxColumns: 1,
-                            fixedWidthGrid: true,
-                        }),
-                    })
+                createNebuleAirChart(
+                    data,
+                    {
+                        timeUnit: baseInterval_timeUnit_local,
+                        count: baseInterval_count,
+                    },
+                    mesuresArray
                 );
-
-                var cursor = chart.set(
-                    'cursor',
-                    am5xy.XYCursor.new(amchart_root, {
-                        behavior: 'zoomX',
-                    })
-                );
-                cursor.lineY.set('visible', false);
-
-                var xAxis = chart.xAxes.push(
-                    am5xy.DateAxis.new(amchart_root, {
-                        maxDeviation: 0.2,
-                        baseInterval: {
-                            timeUnit: baseInterval_timeUnit_local,
-                            count: baseInterval_count,
-                        },
-                        renderer: am5xy.AxisRendererX.new(amchart_root, {
-                            minorGridEnabled: true,
-                        }),
-                        tooltip: am5.Tooltip.new(amchart_root, {}),
-                    })
-                );
-
-                var yAxis = chart.yAxes.push(
-                    am5xy.ValueAxis.new(amchart_root, {
-                        renderer: am5xy.AxisRendererY.new(amchart_root, {}),
-                        min: 0,
-                    })
-                );
-
-                let availablePollutants = [];
-
-                if (data.length > 0) {
-                    const firstDataPoint = data[0];
-                    if (firstDataPoint.PM1 !== undefined)
-                        availablePollutants.push('PM1');
-                    if (firstDataPoint.PM25 !== undefined)
-                        availablePollutants.push('PM2.5');
-                    if (firstDataPoint.PM10 !== undefined)
-                        availablePollutants.push('PM10');
-                }
-
-                let allSeries = [];
-                availablePollutants.forEach((pollutant) => {
-                    let polluantCompare = pollutant.toLowerCase();
-                    if (polluantCompare === 'pm2.5') {
-                        polluantCompare = 'pm25';
-                    }
-
-                    // Ne créer la série que si le polluant est dans mesuresArray
-                    if (mesuresArray.includes(polluantCompare)) {
-                        let dataPoints = data.map((e) => ({
-                            value: e[
-                                pollutant === 'PM2.5' ? 'PM25' : pollutant
-                            ],
-                            date: new Date(e.time).getTime(),
-                        }));
-
-                        let series = chart.series.push(
-                            am5xy.SmoothedXLineSeries.new(amchart_root, {
-                                name: pollutant,
-                                xAxis: xAxis,
-                                yAxis: yAxis,
-                                valueYField: 'value',
-                                valueXField: 'date',
-                                tooltip: am5.Tooltip.new(amchart_root, {
-                                    labelText: `${pollutant}: {valueY} µg/m³`,
-                                }),
-                            })
-                        );
-
-                        series.strokes.template.setAll({
-                            strokeWidth: 2,
-                        });
-
-                        series.data.setAll(dataPoints);
-                        series.appear(1000);
-
-                        allSeries.push({
-                            series: series,
-                            name: pollutant,
-                            compare: polluantCompare,
-                        });
-                    }
-                });
-
-                let legend = chart.children.push(
-                    am5.Legend.new(amchart_root, {
-                        centerX: am5.percent(50),
-                        x: am5.percent(50),
-                        y: am5.percent(95),
-                        layout: am5.GridLayout.new(amchart_root, {
-                            maxColumns: 2,
-                            fixedWidthGrid: true,
-                        }),
-                        paddingTop: 10,
-                        paddingBottom: 10,
-                        marginTop: 10,
-                        marginBottom: 10,
-                    })
-                );
-
-                legend.itemContainers.template.events.on(
-                    'click',
-                    function (ev) {
-                        const clickedSeries = ev.target.dataItem.dataContext;
-                        const seriesInfo = allSeries.find(
-                            (s) => s.series === clickedSeries
-                        );
-
-                        if (seriesInfo) {
-                            if (mesuresArray.includes(seriesInfo.compare)) {
-                                seriesInfo.series.set('visible', false);
-                                mesuresArray = mesuresArray.filter(
-                                    (item) => item !== seriesInfo.compare
-                                );
-                            } else {
-                                seriesInfo.series.set('visible', true);
-                                mesuresArray.push(seriesInfo.compare);
-                            }
-                        }
-                    }
-                );
-
-                legend.data.setAll(chart.series.values);
-                chart.appear(1000, 100);
             });
         },
         error: function (xhr, status, error) {
@@ -552,6 +425,192 @@ export function retreive_historiqueData_nebuleAir(
             console.error('Réponse:', xhr.responseText);
         },
     });
+}
+
+// Configuration du graphique principal
+function createChart(root) {
+    return root.container.children.push(
+        am5xy.XYChart.new(root, {
+            panX: false,
+            panY: false,
+            wheelX: 'panX',
+            wheelY: 'zoomX',
+            paddingLeft: 0,
+            paddingBottom: 100,
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 1,
+                fixedWidthGrid: true,
+            }),
+        })
+    );
+}
+
+// Configuration des axes
+function configureAxes(chart, root, baseInterval) {
+    const xAxis = chart.xAxes.push(
+        am5xy.DateAxis.new(root, {
+            maxDeviation: 0.2,
+            baseInterval: {
+                timeUnit: baseInterval.timeUnit,
+                count: baseInterval.count,
+            },
+            renderer: am5xy.AxisRendererX.new(root, {
+                minorGridEnabled: true,
+            }),
+            tooltip: am5.Tooltip.new(root, {}),
+        })
+    );
+
+    const yAxis = chart.yAxes.push(
+        am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {}),
+            min: 0,
+        })
+    );
+
+    return { xAxis, yAxis };
+}
+
+// Configuration du curseur
+function configureCursor(chart, root) {
+    const cursor = chart.set(
+        'cursor',
+        am5xy.XYCursor.new(root, {
+            behavior: 'zoomX',
+        })
+    );
+    cursor.lineY.set('visible', false);
+    return cursor;
+}
+
+// Détection des polluants disponibles
+function getAvailablePollutants(data) {
+    if (!data || data.length === 0) return [];
+
+    const firstDataPoint = data[0];
+    const pollutants = [];
+
+    if (firstDataPoint.PM1 !== undefined) pollutants.push('PM1');
+    if (firstDataPoint.PM25 !== undefined) pollutants.push('PM2.5');
+    if (firstDataPoint.PM10 !== undefined) pollutants.push('PM10');
+
+    return pollutants;
+}
+
+// Création d'une série pour un polluant
+function createSeries(chart, root, pollutant, axes, data) {
+    const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
+    const dataPoints = data.map((e) => ({
+        value: e[pollutant === 'PM2.5' ? 'PM25' : pollutant],
+        date: new Date(e.time).getTime(),
+    }));
+
+    const series = chart.series.push(
+        am5xy.SmoothedXLineSeries.new(root, {
+            name: pollutant,
+            xAxis: axes.xAxis,
+            yAxis: axes.yAxis,
+            valueYField: 'value',
+            valueXField: 'date',
+            tooltip: am5.Tooltip.new(root, {
+                labelText: `${pollutant}: {valueY} µg/m³`,
+            }),
+        })
+    );
+
+    series.strokes.template.setAll({
+        strokeWidth: 2,
+    });
+
+    series.data.setAll(dataPoints);
+    series.appear(1000);
+
+    return {
+        series,
+        name: pollutant,
+        compare: polluantCompare,
+    };
+}
+
+// Configuration de la légende
+function configureLegend(chart, root, allSeries, mesuresArray) {
+    const legend = chart.children.push(
+        am5.Legend.new(root, {
+            centerX: am5.percent(50),
+            x: am5.percent(50),
+            y: am5.percent(95),
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 2,
+                fixedWidthGrid: true,
+            }),
+            paddingTop: 10,
+            paddingBottom: 10,
+            marginTop: 10,
+            marginBottom: 10,
+        })
+    );
+
+    legend.itemContainers.template.events.on('click', function (ev) {
+        const clickedSeries = ev.target.dataItem.dataContext;
+        const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
+
+        if (seriesInfo) {
+            if (mesuresArray.includes(seriesInfo.compare)) {
+                seriesInfo.series.set('visible', false);
+                mesuresArray = mesuresArray.filter(
+                    (item) => item !== seriesInfo.compare
+                );
+            } else {
+                seriesInfo.series.set('visible', true);
+                mesuresArray.push(seriesInfo.compare);
+            }
+        }
+    });
+
+    legend.data.setAll(chart.series.values);
+    return legend;
+}
+
+// Fonction principale de création du graphique
+function createNebuleAirChart(data, baseInterval, mesuresArray) {
+    try {
+        // Initialisation
+        window.amchart_root = am5.Root.new('chartdiv_sensor');
+        window.amchart_root.locale = am5locales_fr_FR;
+
+        // Création du graphique
+        const chart = createChart(window.amchart_root);
+
+        // Configuration des axes
+        const axes = configureAxes(chart, window.amchart_root, baseInterval);
+
+        // Configuration du curseur
+        configureCursor(chart, window.amchart_root);
+
+        // Détection des polluants disponibles
+        const availablePollutants = getAvailablePollutants(data);
+
+        // Création des séries
+        const allSeries = availablePollutants
+            .filter((pollutant) => {
+                const polluantCompare = pollutant
+                    .toLowerCase()
+                    .replace('2.5', '25');
+                return mesuresArray.includes(polluantCompare);
+            })
+            .map((pollutant) =>
+                createSeries(chart, window.amchart_root, pollutant, axes, data)
+            );
+
+        // Configuration de la légende
+        configureLegend(chart, window.amchart_root, allSeries, mesuresArray);
+
+        // Animation finale
+        chart.appear(1000, 100);
+    } catch (error) {
+        console.error('Erreur lors de la création du graphique:', error);
+        // Gestion des erreurs à implémenter selon les besoins
+    }
 }
 
 export const { pasDeTempsChart, historiqueChart, mesuresArray } = state;

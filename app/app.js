@@ -1249,7 +1249,7 @@ for (let key in sources) {
                 button.classList.remove('active');
                 removeItemFromLocalStorageArray(sources_local, code);
                 clearLayer(code);
-                toastManager.sourceChanged(`Désactivation de ${name}`);
+                // toastManager.sourceChanged(`Désactivation de ${name}`);
             } else {
                 // Vérification des conditions pour afficher l'avertissement spécifique
                 const selectedTimeStep =
@@ -1279,9 +1279,7 @@ for (let key in sources) {
                     try {
                         // Ne pas activer la source dans ce cas
                         removeItemFromLocalStorageArray(sources_local, code);
-                        console.log(
-                            'AtmoSud Stations Ref ne sera pas activée pour ce pas de temps'
-                        );
+                        toastManager.atmoRefTimeStepWarning();
                     } catch (error) {
                         console.error(
                             "Erreur lors de l'affichage de la notification:",
@@ -1303,11 +1301,26 @@ for (let key in sources) {
                         icon: 'exclamation-triangle',
                         timer: 5000,
                     });
+                } else if (
+                    code === 'nebuleair' &&
+                    selectedTimeStep === 'instantane'
+                ) {
+                    console.log(
+                        'Désactivation de NebuleAir pour le pas de temps instantané'
+                    );
+                    removeItemFromLocalStorageArray(sources_local, code);
+                    createCustomToast({
+                        message: `La mesure NebuleAir n'est pas disponible pour le pas de temps instantané. Source désactivée.`,
+                        type: 'warning',
+                        title: 'Attention',
+                        icon: 'exclamation-triangle',
+                        timer: 5000,
+                    });
                 } else {
                     // Activer la source normalement pour les autres cas
                     button.classList.add('active');
                     addItemToLocalStorageArray(sources_local, code);
-                    toastManager.sourceChanged(`Activation de ${name}`);
+                    // toastManager.sourceChanged(`Activation de ${name}`);
                     loadSource(code);
                 }
             }
@@ -1462,6 +1475,40 @@ for (let key in pas_de_temps) {
                         );
                         if (atmoRefButton) {
                             atmoRefButton.classList.remove('active');
+                        }
+                    } catch (error) {
+                        console.error(
+                            "Debug - TimeStep change - Erreur lors de l'affichage de la notification:",
+                            error
+                        );
+                    }
+                }
+
+                if (
+                    code === 'instantane' &&
+                    activeSources.includes('nebuleair')
+                ) {
+                    try {
+                        createCustomToast({
+                            message: `La mesure NebuleAir n'est pas disponible pour le pas de temps instantané. Source désactivée.`,
+                            type: 'warning',
+                            title: 'Attention',
+                            icon: 'exclamation-triangle',
+                            timer: 5000,
+                        });
+                        removeItemFromLocalStorageArray(
+                            sources_local,
+                            'nebuleair'
+                        );
+                        clearLayer('nebuleair');
+                        // Mettre à jour l'affichage du bouton
+                        const nebuleairButton = Array.from(
+                            document.querySelectorAll(
+                                '#dropdown_sources button'
+                            )
+                        ).find((btn) => btn.textContent.trim() === 'NebuleAir');
+                        if (nebuleairButton) {
+                            nebuleairButton.classList.remove('active');
                         }
                     } catch (error) {
                         console.error(
@@ -1943,3 +1990,41 @@ function loadSource(source, isInitialLoad = false) {
         updateButtonDisplay();
     }, 500);
 }
+
+function updateToggleButtonVisibility() {
+    const toggleButton = document.getElementById('toggleSidePanel');
+    const fullScreenButton = document.getElementById('expandSidePanel');
+    if (window.globalSelectedDeviceId) {
+        toggleButton.classList.remove('hidden');
+        fullScreenButton.classList.remove('hidden');
+    } else {
+        toggleButton.classList.add('hidden');
+        fullScreenButton.classList.add('hidden');
+    }
+}
+
+// Mettre à jour la visibilité du bouton lors de la sélection d'un capteur
+document.addEventListener('DOMContentLoaded', function () {
+    // ... existing code ...
+
+    // Observer pour détecter les changements de globalSelectedDeviceId
+    const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            if (
+                mutation.type === 'attributes' &&
+                mutation.attributeName === 'data-selected-device'
+            ) {
+                updateToggleButtonVisibility();
+            }
+        });
+    });
+
+    // Observer le body pour les changements de data-selected-device
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['data-selected-device'],
+    });
+
+    // Initialiser la visibilité du bouton
+    updateToggleButtonVisibility();
+});

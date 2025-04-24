@@ -18,6 +18,8 @@ body {
     padding-right: 30px;
     padding-left: 30px;
     position: relative; /* Ensure the button is positioned relative to the map */
+    background-color: white;
+    padding: 20px;
 }
 
 #map {
@@ -317,4 +319,8 @@ body {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+.hidden {
+    display: none !important;
 }

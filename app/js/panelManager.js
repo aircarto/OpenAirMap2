@@ -103,6 +103,7 @@ class PanelManager {
             horaire: 'h',
             journalière: 'd',
             '2min': '2min',
+            brute: '2min',
         };
         return conversions[pasDeTemps] || pasDeTemps;
     }
@@ -161,7 +162,6 @@ class PanelManager {
                         const variablesMesure = deviceData.variablesMesure.map(
                             (v) => v.toUpperCase()
                         );
-                        console.log('Polluants mesurés:', variablesMesure);
 
                         const polluantMapping = {
                             pm1: 'PM1',
@@ -176,10 +176,6 @@ class PanelManager {
 
                         const polluantMesure = variablesMesure.includes(
                             polluantMapping[key]
-                        );
-                        console.log(
-                            `Polluant ${key} (${polluantMapping[key]}) mesuré:`,
-                            polluantMesure
                         );
 
                         this.buttons.pollutant[key].disabled = !polluantMesure;

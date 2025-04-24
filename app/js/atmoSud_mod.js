@@ -290,3 +290,5 @@ export function loadModIcair() {
         ).addTo(modelisationICAIRAtmoSud_layer);
     }
 }
+// si il est H entre +0 et +15 min En cas de pas de temps 15 min pour modélisation horaire on affiche l'heure précédente h23
+// si il est H entre +16 En cas de pas de temps 15 min pour modélisation horaire on affiche l'heure suivante h24

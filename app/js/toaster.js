@@ -27,7 +27,7 @@ const toastTypes = {
         icon: 'warning',
         title: 'Attention',
         background: '#f8bb86',
-        color: 'white',
+        color: 'black',
     },
     INFO: {
         icon: 'info',
@@ -81,13 +81,11 @@ export const toastManager = {
 
     // Notification de succès de chargement
     dataLoaded: function (source) {
-        console.log('Debug - dataLoaded - Source:', source);
         return createToast('Données chargées avec succès', 'success');
     },
 
     // Notification d'erreur de chargement
     dataError: function (source, error) {
-        console.log('Debug - dataError - Source:', source, 'Error:', error);
         return createToast('Erreur lors du chargement des données', 'error');
     },
 
@@ -140,49 +138,41 @@ export const toastManager = {
 
     // Notification pour le cas spécifique AtmoSud Micro-stations avec pas de temps 2min
     atmoMicroTimeStepWarning: () => {
-        console.log('Debug - atmoMicroTimeStepWarning appelée');
         const toast = createToast(
-            'Seuls les micro capteurs NebuleAir sont disponibles au pas de temps 2 minutes',
-            'warning',
+            'Pour la source donnée AtmoSud micro-station, uniquement les modéles NebuleAir sont disponibles au pas de temps 2 minutes',
+            'info',
             { timer: 5000 }
         );
-        console.log('Debug - Toast créé:', toast);
         return toast;
     },
 
     // Notification pour les stations de référence AtmoSud avec pas de temps 2min ou instantané
     atmoRefTimeStepWarning: () => {
-        console.log('Debug - atmoRefTimeStepWarning appelée');
         const toast = createToast(
-            'Les stations de référence AtmoSud ne sont pas disponibles aux pas de temps 2 minutes et instantané',
+            'Les stations de référence AtmoSud ne sont pas disponibles aux pas de temps 2 minutes et instantané. Source désactivée.',
             'warning',
             { timer: 5000 }
         );
-        console.log('Debug - Toast créé:', toast);
         return toast;
     },
 
     // Notification pour les micro stations AtmoSud avec le pas de temps journalier
     atmoMicroTimeStepDailyWarning: () => {
-        console.log('Debug - atmoMicroTimeStepDailyWarning appelée');
         const toast = createToast(
             'Les micro stations AtmoSud ne sont pas disponibles au pas de temps journalier',
             'warning',
             { timer: 5000 }
         );
-        console.log('Debug - Toast créé:', toast);
         return toast;
     },
 
     //Notification pour la modélisation PM1
     atmoModPm1Warning: () => {
-        console.log('Debug - atmoModPm1Warning appelée');
         const toast = createToast(
             "La modélisation PM1 n'est pas disponible",
             'warning',
             { timer: 5000 }
         );
-        console.log('Debug - Toast créé:', toast);
         return toast;
     },
 };
@@ -200,7 +190,6 @@ export function createCustomToast(options) {
         toast,
         html = true,
     } = options;
-    console.log('Debug - createCustomToast - Options:', options);
     return createToast(message, type, {
         ...defaultConfig,
         title: title || toastTypes[type.toUpperCase()].title,
