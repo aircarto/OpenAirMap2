@@ -3,8 +3,6 @@
 
 import {
     getArrayFromLocalStorage,
-    pasDeTempsLocal,
-    mesuresLocal,
     getColorCodeForValue,
     openSidePanelGeneric,
     card1_img,
@@ -60,7 +58,7 @@ export async function loadAtmoSudMicroStation() {
 
         // On récupère le pas de temps choisi par l'utilisateur
         // Le pas de temps c'est l'intervalle entre chaque mesure (ex: toutes les heures)
-        var pas_de_temps = getArrayFromLocalStorage(pasDeTempsLocal);
+        var pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
         var pas_de_temps_atmo = '';
 
         // On convertit le pas de temps en format compatible avec l'API AtmoSud
@@ -90,7 +88,7 @@ export async function loadAtmoSudMicroStation() {
         }
 
         // On récupère les polluants que l'utilisateur veut voir
-        var mesures = getArrayFromLocalStorage(mesuresLocal);
+        var mesures = getArrayFromLocalStorage('mesuresLocal');
         mesures_array = [...mesures];
         var mesures_atmo = mesures;
 
@@ -339,6 +337,10 @@ export async function loadAtmoSudMicroStation() {
             function highlightMarker() {
                 microStationMarker.setZIndexOffset(1000);
                 textMarker.setZIndexOffset(1000);
+                // console.log(
+                //     'value: ',
+                //     new Date(value['time']).toLocaleString()
+                // );
 
                 // On crée une infobulle
                 const tooltip = document.createElement('div');
@@ -645,6 +647,7 @@ export async function retreive_historiqueData_microStation(
             }
 
             window.amchart_root = am5.Root.new('chartdiv_sensor');
+
             window.amchart_root.locale = am5locales_fr_FR;
             let chart = createChart(window.amchart_root);
             const axes = configureAxes(
@@ -679,7 +682,6 @@ export async function retreive_historiqueData_microStation(
             const allSeries = [];
             Object.keys(seriesData).forEach((variable) => {
                 const colorKey = variable === 'pm2.5' ? 'pm25' : variable;
-                const color = POLLUTANT_COLORS[colorKey] || '#000000';
 
                 if (seriesData[variable].corrected.length > 0) {
                     allSeries.push(
@@ -842,43 +844,12 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
         type,
     };
 }
-
-// Configuration de la légende
-// function configureLegend(chart, root, allSeries) {
-//     const legend = chart.children.push(
-//         am5.Legend.new(root, {
-//             centerX: am5.percent(50),
-//             x: am5.percent(50),
-//             y: am5.percent(95),
-//             layout: am5.GridLayout.new(root, {
-//                 maxColumns: 2,
-//                 fixedWidthGrid: true,
-//             }),
-//             paddingTop: 10,
-//             paddingBottom: 10,
-//             marginTop: 10,
-//             marginBottom: 10,
-//         })
-//     );
-
-//     legend.itemContainers.template.events.on('click', function (ev) {
-//         const clickedSeries = ev.target.dataItem.dataContext;
-//         const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
-
-//         if (seriesInfo) {
-//             seriesInfo.series.set('visible', !seriesInfo.series.get('visible'));
-//         }
-//     });
-
-//     legend.data.setAll(chart.series.values);
-//     return legend;
-// }
-
 // Exporter les variables qui pourraient être nécessaires ailleurs
 export { pas_de_temps_chart, historique_chart, mesures_array };
 
 // Fonction utilitaire pour les appels API
 async function fetchAPI(url, options = {}) {
+    console.log('fetchAPI: ', url);
     try {
         const response = await fetch(url, {
             method: 'GET',

@@ -12,121 +12,92 @@ export const config = {
     boundNE: [44.5, 7.5],
 };
 
-const mesures = {
-    PM1: { name: 'PM1', code: 'pm1', activated: true },
-    'PM2.5': { name: 'PM2.5', code: 'pm25', activated: false },
-    PM10: { name: 'PM10', code: 'pm10', activated: false },
-    NO2: { name: 'NO<sub>2</sub>', code: 'no2', activated: false },
-    O3: { name: 'O<sub>3</sub>', code: 'o3', activated: false },
-    SO2: { name: 'SO<sub>2</sub>', code: 'so2', activated: false },
+export const mesures = {
+    pm1: { name: 'PM1', code: 'pm1', activated: true }, // Particules fines de diamètre inférieur à 1 µm
+    pm25: { name: 'PM2.5', code: 'pm25', activated: false }, // Particules fines de diamètre inférieur à 2.5 µm
+    pm10: { name: 'PM10', code: 'pm10', activated: false }, // Particules fines de diamètre inférieur à 10 µm
+    no2: { name: 'NO2', code: 'no2', activated: false }, // Dioxyde d'azote
+    so2: { name: 'SO2', code: 'so2', activated: false }, // Dioxyde de soufre
+    o3: { name: 'O3', code: 'o3', activated: false }, // Ozone
+    h2s: { name: 'H2S', code: 'h2s', activated: false }, // Sulfure d'hydrogène
+    nh3: { name: 'NH3', code: 'nh3', activated: false }, // Ammoniac
 };
 
-const sources = {
-    nebuleair: {
-        name: 'Capteurs NebuleAir',
-        code: 'nebuleair',
-        activated: false,
-    },
-    'sensor.community': {
-        name: 'Capteurs Sensor.Community',
+export const sources = {
+    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true }, // Capteurs citoyens NebuleAir
+    sensor_community: {
+        name: 'Sensor.Community',
         code: 'sensor_commmunity',
         activated: false,
-    },
-    purpleair: {
-        name: 'Capteurs PurpleAir',
-        code: 'purpleair',
-        activated: false,
-    },
-    microstation_atmosud: {
-        name: 'Micro-stations AtmoSud',
+    }, // Réseau de capteurs Sensor.Community
+    purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false }, // Capteurs PurpleAir
+    atmo_micro: {
+        name: 'AtmoSud µStations',
         code: 'atmo_micro',
         activated: true,
-    },
-    stationRef_atmosud: {
-        name: 'Stations de référence AtmoSud',
+    }, // Micro-stations AtmoSud
+    atmo_ref: {
+        name: 'AtmoSud Stations Ref',
         code: 'atmo_ref',
-        activated: false,
-    },
-    Mod_horaire_pm: {
-        name: 'Modélisation horaire PM AtmoSud',
-        code: 'mod_pm',
         activated: true,
-    },
-    Mod_horaire_icairh: {
-        name: 'Modélisation horaire ICAIRh AtmoSud',
-        code: 'icairh',
-        activated: false,
-    },
-    vents: { name: 'Vents', code: 'vents', activated: false },
-    mobileair: { name: 'MobileAir', code: 'mobileair', activated: false },
-    signalair: { name: "Signal'Air", code: 'signalair', activated: false },
+    }, // Stations de référence AtmoSud
+    mod_pm: { name: 'Modélisation', code: 'mod_pm', activated: true }, // Modélisation des particules fines
+    icairh: { name: 'ICAIR', code: 'icairh', activated: false }, // Modélisation ICAIR'H
+    signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir
+    mobileair: { name: 'MobileAir', code: 'mobileair', activated: false }, // Capteurs mobiles
 };
 
-const pas_de_temps = {
-    brute: { name: '2 minutes', code: '2min', activated: true },
-    'quart-horaire': { name: 'Quart-horaire', code: 'qh', activated: false },
-    horaire: { name: 'Horaire', code: 'h', activated: false },
-    journalier: { name: 'Journalier', code: 'd', activated: false },
+export const pas_de_temps = {
+    instantane: { name: 'Instantané', code: 'instantane', activated: false }, // Valeurs instantanées
+    deux_min: { name: '2 minutes', code: '2min', activated: true }, // Moyenne sur 2 minutes
+    quart_heure: { name: '15 minutes', code: 'qh', activated: false }, // Moyenne sur 15 minutes
+    heure: { name: 'Heure', code: 'h', activated: false }, // Moyenne horaire
+    jour: { name: 'Jour', code: 'd', activated: false }, // Moyenne journalière
+};
+// Configuration des seuils pour les particules fines PM1 et PM2.5
+export const seuils_PM1_PM25 = {
+    bon: { code: 'bon', min: 0, max: 10 }, // Qualité de l'air bonne (0-10 µg/m³)
+    moyen: { code: 'moyen', min: 11, max: 20 }, // Qualité de l'air moyenne (11-20 µg/m³)
+    degrade: { code: 'degrade', min: 21, max: 25 }, // Qualité de l'air dégradée (21-25 µg/m³)
+    mauvais: { code: 'mauvais', min: 26, max: 50 }, // Qualité de l'air mauvaise (26-50 µg/m³)
+    tres_mauvais: { code: 'tres_mauvais', min: 51, max: 75 }, // Qualité de l'air très mauvaise (51-75 µg/m³)
+    extr_mauvais: { code: 'extr_mauvais', min: 76, max: 999 }, // Qualité de l'air extrêmement mauvaise (>75 µg/m³)
 };
 
-const seuils_PM1_PM25 = {
-    bon: { code: 'bon', color_hex: '#79c5cc', min: 0, max: 10 },
-    moyen: { code: 'moyen', color_hex: '#64bca6', min: 11, max: 20 },
-    degrade: { code: 'degrade', color_hex: '#ebe95f', min: 21, max: 25 },
-    mauvais: { code: 'mauvais', color_hex: '#e85957', min: 26, max: 50 },
-    tres_mauvais: {
-        code: 'tres_mauvais',
-        color_hex: '#941f36',
-        min: 51,
-        max: 75,
-    },
-    extr_mauvais: {
-        code: 'extr_mauvais',
-        color_hex: '#89207d',
-        min: 76,
-        max: 99999,
-    },
+// Configuration des seuils pour les particules fines PM10
+export const seuils_PM10 = {
+    bon: { code: 'bon', min: 0, max: 20 }, // Qualité de l'air bonne (0-20 µg/m³)
+    moyen: { code: 'moyen', min: 21, max: 40 }, // Qualité de l'air moyenne (21-40 µg/m³)
+    degrade: { code: 'degrade', min: 41, max: 50 }, // Qualité de l'air dégradée (41-50 µg/m³)
+    mauvais: { code: 'mauvais', min: 51, max: 100 }, // Qualité de l'air mauvaise (51-100 µg/m³)
+    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 }, // Qualité de l'air très mauvaise (101-150 µg/m³)
+    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 999 }, // Qualité de l'air extrêmement mauvaise (>150 µg/m³)
 };
 
-const seuils_PM10 = {
-    bon: { code: 'bon', color_hex: '#79c5cc', min: 0, max: 20 },
-    moyen: { code: 'moyen', color_hex: '#64bca6', min: 21, max: 40 },
-    degrade: { code: 'degrade', color_hex: '#ebe95f', min: 41, max: 50 },
-    mauvais: { code: 'mauvais', color_hex: '#e85957', min: 51, max: 100 },
-    tres_mauvais: {
-        code: 'tres_mauvais',
-        color_hex: '#941f36',
-        min: 101,
-        max: 150,
-    },
-    extr_mauvais: {
-        code: 'extr_mauvais',
-        color_hex: '#89207d',
-        min: 151,
-        max: 99999,
-    },
+// Configuration des seuils pour le dioxyde d'azote (NO2) sur 24h
+export const seuils_NO2_24h = {
+    bon: { code: 'bon', min: 0, max: 40 }, // Qualité de l'air bonne (0-40 µg/m³)
+    moyen: { code: 'moyen', min: 41, max: 90 }, // Qualité de l'air moyenne (41-90 µg/m³)
+    degrade: { code: 'degrade', min: 91, max: 120 }, // Qualité de l'air dégradée (91-120 µg/m³)
+    mauvais: { code: 'mauvais', min: 121, max: 230 }, // Qualité de l'air mauvaise (121-230 µg/m³)
+    tres_mauvais: { code: 'tres_mauvais', min: 231, max: 340 }, // Qualité de l'air très mauvaise (231-340 µg/m³)
+    extr_mauvais: { code: 'extr_mauvais', min: 341, max: 999 }, // Qualité de l'air extrêmement mauvaise (>340 µg/m³)
 };
-const seuils_NO2_24h = {
-    bon: { code: 'bon', color_hex: '#79c5cc', min: 0, max: 20 },
-    moyen: { code: 'moyen', color_hex: '#64bca6', min: 21, max: 50 },
-    degrade: { code: 'degrade', color_hex: '#ebe95f', min: 51, max: 70 },
-    mauvais: { code: 'mauvais', color_hex: '#e85957', min: 71, max: 150 },
-    tres_mauvais: {
-        code: 'tres_mauvais',
-        color_hex: '#941f36',
-        min: 151,
-        max: 200,
-    },
-    extr_mauvais: {
-        code: 'extr_mauvais',
-        color_hex: '#89207d',
-        min: 201,
-        max: 99999,
-    },
+
+export const seuilsO3_24h = {
+    bon: { code: 'bon', min: 0, max: 100 },
+    moyen: { code: 'moyen', min: 101, max: 120 },
+    degrade: { code: 'degrade', min: 121, max: 140 },
+    mauvais: { code: 'mauvais', min: 141, max: 160 },
+    tres_mauvais: { code: 'tres_mauvais', min: 161, max: 180 },
+    extr_mauvais: { code: 'extr_mauvais', min: 181, max: 999 },
 };
-const delaisApiAtmoSud = {
-    // '2min': 180,
-    qh: 180,
-    h: 180,
-    d: 86400000,
+
+export const seuilsSO2_24h = {
+    bon: { code: 'bon', min: 0, max: 40 },
+    moyen: { code: 'moyen', min: 41, max: 80 },
+    degrade: { code: 'degrade', min: 81, max: 120 },
+    mauvais: { code: 'mauvais', min: 121, max: 160 },
+    tres_mauvais: { code: 'tres_mauvais', min: 161, max: 200 },
+    extr_mauvais: { code: 'extr_mauvais', min: 201, max: 999 },
 };

@@ -324,3 +324,212 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Styles modernes pour les boutons de polluants */
+#btn_polluants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+#btn_polluants .btn-check {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+#btn_polluants .btn {
+    position: relative;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #495057;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+#btn_polluants .btn:hover {
+    background-color: #f1f3f5;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#btn_polluants .btn-check:checked + .btn {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+#btn_polluants .btn-check:checked + .btn:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(13, 110, 253, 0.3);
+}
+
+#togglePollutants {
+    background-color: transparent;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+#togglePollutants:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+#togglePollutants i {
+    transition: transform 0.2s ease-in-out;
+}
+
+#togglePollutants[aria-expanded='true'] i {
+    transform: rotate(180deg);
+}
+
+/* Styles harmonisés pour les boutons d'historique et de pas de temps */
+.btn-group[role='group'] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.btn-group[role='group'] .btn-check {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.btn-group[role='group'] .btn {
+    position: relative;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #495057;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.btn-group[role='group'] .btn:hover {
+    background-color: #f1f3f5;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group[role='group'] .btn-check:checked + .btn {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+.btn-group[role='group'] .btn-check:checked + .btn:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(13, 110, 253, 0.3);
+}
+
+/* Style pour le bouton de plage de dates */
+[data-bs-toggle='collapse'] {
+    background-color: transparent;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    margin: 10px 0;
+}
+
+[data-bs-toggle='collapse']:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+[data-bs-toggle='collapse'] i {
+    margin-right: 8px;
+    transition: transform 0.2s ease-in-out;
+}
+
+[data-bs-toggle='collapse'][aria-expanded='true'] i {
+    transform: rotate(180deg);
+}
+
+/* Style pour le formulaire de plage de dates */
+#dateRangeForm {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+#dateRangeForm .form-label {
+    color: #495057;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+#dateRangeForm .form-control {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px 12px;
+    transition: all 0.2s ease-in-out;
+}
+
+#dateRangeForm .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+#apply_date_range {
+    margin-top: 15px;
+    padding: 8px 24px;
+    font-weight: 500;
+    background-color: #0d6efd;
+    border: none;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+#apply_date_range:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(13, 110, 253, 0.3);
+}
+
+.btn-group-title {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    margin-right: 0.75rem;
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-right: 2px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem 0 0 0.375rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

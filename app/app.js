@@ -209,9 +209,6 @@ export const mobileair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
 ); // Couche pour les capteurs MobileAir
 
-// Rendre la couche atmoRefLayer disponible globalement pour d'autres modules
-window.atmoRefLayer = atmoRefLayer;
-
 // Configuration des seuils pour les particules fines PM1 et PM2.5
 export const seuils_PM1_PM25 = {
     bon: { code: 'bon', min: 0, max: 10 }, // Qualité de l'air bonne (0-10 µg/m³)
@@ -934,48 +931,13 @@ export function getColorCodeForValue(value, pollutant) {
     return colorCode;
 }
 
-// Fonction pour charger les sources initiales au démarrage
-function loadInitialSources() {
-    const activeSources = getArrayFromLocalStorage(sources_local);
-    console.log('Sources actives au démarrage:', activeSources);
-
-    // Mise à jour de l'affichage des boutons
-    updateButtonDisplay();
-
-    // Chargement de chaque source active
-    const loadPromises = activeSources.map((source) => {
-        const sourceKey = Object.keys(sources).find(
-            (key) => sources[key].code === source
-        );
-        if (sourceKey) {
-            const button = Array.from(
-                document.querySelectorAll('#dropdown_sources button')
-            ).find((btn) => btn.textContent.trim() === sources[sourceKey].name);
-            if (button) {
-                button.classList.add('active');
-            }
-        }
-
-        return new Promise((resolve, reject) => {
-            try {
-                loadSource(source, true);
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        });
-    });
-    // Mise à jour finale de l'affichage
-    setTimeout(() => {
-        updateButtonDisplay();
-    }, 1000);
-}
-
 // Fonction pour mettre à jour l'affichage des boutons
 function updateButtonDisplay() {
     // Mise à jour du bouton des mesures
     const selectedMesure = getArrayFromLocalStorage(mesuresLocal)[0];
-
+    const selectedSource = getArrayFromLocalStorage(sources_local);
+    console.log('selectedSource :' + selectedSource);
+    console.log('selectedMesure :' + selectedMesure);
     const mesureName =
         mesures[
             Object.keys(mesures).find(
@@ -1054,7 +1016,7 @@ function updateButtonDisplay() {
                     );
                     removeItemFromLocalStorageArray(sources_local, sourceCode);
                     createCustomToast({
-                        message: `La mesure ${formatPollutantName(selectedMesure)} n'est pas disponible pour NebuleAir`,
+                        message: `La mesure ${formatPollutantName(selectedMesure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto`,
                         type: 'warning',
                         title: 'Attention',
                         icon: 'exclamation-triangle',
@@ -1085,6 +1047,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (expandButton && collapseButton) {
         expandButton.addEventListener('click', function () {
+            console.log('chart :', window.amchart_root);
             const sidePanel = document.getElementById('side-panel');
             const mapContainer = document.getElementById('map-container');
 
@@ -1095,6 +1058,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             expandButton.style.display = 'none';
             collapseButton.style.display = 'block';
+
+            if (window.amchart_root) {
+                setTimeout(() => {
+                    window.amchart_root.resize();
+                }, 300); // délai pour laisser le DOM finir l'animation / l'affichage
+            }
 
             if (map) {
                 map.invalidateSize();
@@ -1160,6 +1129,7 @@ for (let key in mesures) {
         }
         // Action quand on clique sur un polluant
         button.onclick = function () {
+            console.log('click sur :' + code);
             let check_array = getArrayFromLocalStorage(mesuresLocal);
             if (isValueInObject(check_array, code)) {
                 console.warn('on ne peut pas decocher');
@@ -1175,6 +1145,7 @@ for (let key in mesures) {
                         button.classList.remove('active');
                     });
                 });
+                console.log('mesure :' + code);
 
                 if (
                     code === 'nebuleair' &&
@@ -1191,9 +1162,9 @@ for (let key in mesures) {
                 addItemToLocalStorageArray(mesuresLocal, code);
                 button.classList.add('active');
                 // Mise à jour du texte du bouton principal
-                console.log('#########################');
-                console.log('name :' + name);
-                console.log('#########################');
+                // console.log('#########################');
+                // console.log('name :' + name);
+                // console.log('#########################');
                 document
                     .querySelector('#dropdown_mesures')
                     .closest('.dropdown')
@@ -1301,7 +1272,7 @@ for (let key in sources) {
                     );
                     removeItemFromLocalStorageArray(sources_local, code);
                     createCustomToast({
-                        message: `La mesure ${formatPollutantName(selectedMesure)} n'est pas disponible pour NebuleAir`,
+                        message: `Le polluant ${formatPollutantName(selectedMesure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto`,
                         type: 'warning',
                         title: 'Attention',
                         icon: 'exclamation-triangle',
@@ -1316,7 +1287,7 @@ for (let key in sources) {
                     );
                     removeItemFromLocalStorageArray(sources_local, code);
                     createCustomToast({
-                        message: `La mesure NebuleAir n'est pas disponible pour le pas de temps instantané. Source désactivée.`,
+                        message: `Les capteurs NebuleAir opérés par AirCarto ne sont pas disponibles pour le pas de temps instantané. Source désactivée.`,
                         type: 'warning',
                         title: 'Attention',
                         icon: 'exclamation-triangle',
@@ -1496,7 +1467,7 @@ for (let key in pas_de_temps) {
                 ) {
                     try {
                         createCustomToast({
-                            message: `La mesure NebuleAir n'est pas disponible pour le pas de temps instantané. Source désactivée.`,
+                            message: `Les capteurs NebuleAir opérés par AirCarto ne sont pas disponibles pour le pas de temps instantané. Source désactivée.`,
                             type: 'warning',
                             title: 'Attention',
                             icon: 'exclamation-triangle',

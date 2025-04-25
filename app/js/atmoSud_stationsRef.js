@@ -497,6 +497,7 @@ function createStationMarker(value, iconParam, stationData, mesure) {
                 }
             });
         });
+        // console.log('date', new Date(value.date_debut).toLocaleString());
         tooltip.innerHTML = `
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-2">
@@ -760,6 +761,66 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
         '%copenSidePanel_stationRef',
         'color: white; font-style: bold; background-color: green;padding: 2px'
     );
+
+    // Récupération des images de la station Ne fonctionne pas pour toutes les stations
+    const urlAtmoJsonAPI = `https://www.atmosud.org/jsonapi/taxonomy_term/station?filter[field_station_id_station]=${window.globalSelectedDeviceId}&include=field_station_pictures`;
+    console.log('URL originale:', urlAtmoJsonAPI);
+
+    // Utilisation de corsproxy.io avec un encodage correct pour développement
+    const proxyUrl = `https://corsproxy.io/?${urlAtmoJsonAPI}`;
+    console.log('URL avec proxy:', proxyUrl);
+
+    fetch(proxyUrl)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            console.log('Données reçues via proxy:', data);
+
+            // Récupération de l'URL de l'image de la station
+            if (data.included && data.included.length > 0) {
+                console.log('Images disponibles:', data.included);
+                const firstImage = data.included[0];
+
+                // Construction de l'URL de l'image
+                const imageUrl = `https://www.atmosud.org/sites/sud/files/medias/images/2022-04/${firstImage.attributes.name}`;
+
+                // Vérification de l'URL de l'image
+                const checkImage = (url) => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => resolve(true);
+                        img.onerror = () => resolve(false);
+                        img.src = url;
+                    });
+                };
+
+                // Mise à jour de l'image dans le panneau
+                const card1Img = document.getElementById('card1_img');
+                if (card1Img) {
+                    checkImage(imageUrl).then((isValid) => {
+                        if (isValid) {
+                            card1Img.src = imageUrl;
+                            console.log('Image mise à jour dans le panneau');
+                        } else {
+                            card1Img.src =
+                                'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+                            console.log('Image par défaut affichée');
+                        }
+                    });
+                } else {
+                    console.error('Élément card1_img non trouvé');
+                }
+            } else {
+                console.warn('Aucune image incluse dans la réponse');
+            }
+        })
+        .catch((error) => {
+            console.error('Erreur lors de la requête:', error);
+        });
 
     // Conversion du polluant pour l'API
     let polluantAPI = mesure[0];

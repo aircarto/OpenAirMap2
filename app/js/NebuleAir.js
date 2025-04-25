@@ -183,6 +183,11 @@ export function loadNebuleAir() {
                     function highlightMarker() {
                         nebuleAirMarker.setZIndexOffset(1000);
                         textMarker.setZIndexOffset(1000);
+                        // console.log('value: ', value);
+                        // console.log(
+                        //     'value: ',
+                        //     new Date(value.time).toLocaleString()
+                        // );
 
                         const tooltip = document.createElement('div');
                         tooltip.className = 'custom-tooltip';
