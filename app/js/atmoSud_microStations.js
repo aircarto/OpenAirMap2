@@ -1,20 +1,17 @@
 // Récupération des données des micro-stations AtmoSud
 // Cette fonction charge les données des micro-stations AtmoSud et les affiche sur la carte
 
+import { atmoMicroLayer } from '../app.js';
 import {
+    formatPollutantName,
     getArrayFromLocalStorage,
     getColorCodeForValue,
     openSidePanelGeneric,
-    card1_img,
-    card1_title,
-    card1_text,
-    card2_link,
-    atmoMicroLayer,
-    formatPollutantName,
-} from '../app.js';
-
+} from './utils.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
+import { startSpinner, stopSpinner } from './spinnerManager.js';
+import { API_atmoSud } from '../config.js';
 
 import { createCustomToast } from './toaster.js';
 
@@ -35,7 +32,10 @@ const POLLUTANT_COLORS = {
     pm10: '#33FF57',
     no2: '#A133FF',
 };
-
+const card1_img = document.getElementById('card1_img');
+const card1_title = document.getElementById('card1_title');
+const card1_text = document.getElementById('card1_text');
+const card2_link = document.getElementById('card2_link');
 /**
  * Cette fonction charge les micro-stations AtmoSud sur la carte
  * Elle fait plusieurs choses :
@@ -89,6 +89,12 @@ export async function loadAtmoSudMicroStation() {
 
         // On récupère les polluants que l'utilisateur veut voir
         var mesures = getArrayFromLocalStorage('mesuresLocal');
+        if (['so2', 'nh3', 'o3', 'h2s'].includes(mesures[0])) {
+            console.log('#########################');
+            console.log('mesure non supportée :' + mesures[0]);
+            console.log('#########################');
+            return;
+        }
         mesures_array = [...mesures];
         var mesures_atmo = mesures;
 
@@ -102,7 +108,7 @@ export async function loadAtmoSudMicroStation() {
 
         // On construit l'URL pour appeler l'API AtmoSud pour récupérer les dernieres mesures disponible
         let full_url_derniere = `
-            https://preprod-api.atmosud.org/observations/capteurs/mesures/dernieres?
+            ${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?
             format=json
             &download=false
             &valeur_brute=true
@@ -114,11 +120,12 @@ export async function loadAtmoSudMicroStation() {
 
         // On appelle l'API et on attend la réponse
         const data = await fetchAPI(full_url_derniere);
+        console.log(`${full_url_derniere} :`, data);
         isFetching = false; // On indique que le chargement est terminé
 
-        let fullUrlCapteurSite = `https://preprod-api.atmosud.org/observations/capteurs/sites?format=json`;
+        let fullUrlCapteurSite = `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?format=json`;
         let dataCapteurSite = await fetchAPI(fullUrlCapteurSite);
-        console.log('dataCapteurSite: ', dataCapteurSite);
+        console.log(`${fullUrlCapteurSite} : `, dataCapteurSite);
         // On vérifie que les données reçues sont bien un tableau
         if (!Array.isArray(data)) {
             throw new Error('Les données reçues ne sont pas au bon format');
@@ -439,7 +446,7 @@ export function openSidePanelMicroStation(
     fullScreenButton.classList.replace('bi-expand', 'bi-compress');
     fullScreenButton.parentElement.classList.remove('hidden');
 
-    console.log('data: ', data);
+    console.log('data capteur cliqué: ', data);
 
     // Mise à jour des informations de la carte
     card1_img.src = 'img/microStationsAtmoSud/microStationAtmoSud_default.png';
@@ -500,6 +507,9 @@ export async function retreive_historiqueData_microStation(
             );
             return;
         }
+
+        // Démarrage du spinner
+        startSpinner('Chargement des données historiques...');
 
         // Vérification de la présence d'un ID de capteur
         if (!sensorId) {
@@ -571,10 +581,9 @@ export async function retreive_historiqueData_microStation(
         }
 
         // Construction de l'URL complète pour l'appel API
-        const full_url = `https://api.atmosud.org/observations/capteurs/mesures?${params.toString()}`;
+        const full_url = `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures}?${params.toString()}`;
 
-        console.log('URL retreive_historiqueData_microStation', full_url);
-        console.log('Paramètres de la requête:', {
+        console.log('Paramètres de la requête à /capteurs/mesures:', {
             'Date de début': params.get('debut'),
             'Date de fin': params.get('fin'),
             'ID du site': params.get('id_site'),
@@ -712,7 +721,7 @@ export async function retreive_historiqueData_microStation(
 
             // configureLegend(chart, window.amchart_root, allSeries);
             chart.appear(1000, 100);
-
+            stopSpinner();
             am5plugins_exporting.Exporting.new(window.amchart_root, {
                 menu: am5plugins_exporting.ExportingMenu.new(
                     window.amchart_root,
@@ -727,6 +736,7 @@ export async function retreive_historiqueData_microStation(
             'Erreur dans retreive_historiqueData_microStation:',
             error
         );
+        stopSpinner();
         // Nettoyage en cas d'erreur
         if (window.amchart_root) {
             try {
@@ -849,7 +859,6 @@ export { pas_de_temps_chart, historique_chart, mesures_array };
 
 // Fonction utilitaire pour les appels API
 async function fetchAPI(url, options = {}) {
-    console.log('fetchAPI: ', url);
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -865,6 +874,7 @@ async function fetchAPI(url, options = {}) {
         // Validation des données
         if (!data) {
             throw new Error("Aucune donnée reçue de l'API");
+            stopSpinner();
         }
 
         return data;

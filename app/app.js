@@ -1,10 +1,22 @@
 // Import des modules nécessaires pour l'application
-import { config } from './js/config.js';
+import { config, mesures, sources, pas_de_temps } from './js/appConfig.js';
 import { loadNebuleAir, openSidePanelNebuleAir } from './js/NebuleAir.js';
 import {
     loadAtmoSudMicroStation,
     openSidePanelMicroStation,
 } from './js/atmoSud_microStations.js';
+import {
+    formatPollutantName,
+    getArrayFromLocalStorage,
+    saveArrayToLocalStorage,
+    addItemToLocalStorageArray,
+    removeItemFromLocalStorageArray,
+    getThresholdsForPollutant,
+    openSidePanelGeneric,
+    closeSidePanel,
+    // updateTimeDisplay,
+    // setupAutoRefresh,
+} from './js/utils.js';
 import { loadAtmoSudStationsRef } from './js/atmoSud_stationsRef.js';
 import { loadModPM, loadModIcair } from './js/atmoSud_mod.js';
 import { loadSignalAir } from './js/SignalAir.js';
@@ -209,100 +221,6 @@ export const mobileair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
 ); // Couche pour les capteurs MobileAir
 
-// Configuration des seuils pour les particules fines PM1 et PM2.5
-export const seuils_PM1_PM25 = {
-    bon: { code: 'bon', min: 0, max: 10 }, // Qualité de l'air bonne (0-10 µg/m³)
-    moyen: { code: 'moyen', min: 11, max: 20 }, // Qualité de l'air moyenne (11-20 µg/m³)
-    degrade: { code: 'degrade', min: 21, max: 25 }, // Qualité de l'air dégradée (21-25 µg/m³)
-    mauvais: { code: 'mauvais', min: 26, max: 50 }, // Qualité de l'air mauvaise (26-50 µg/m³)
-    tres_mauvais: { code: 'tres_mauvais', min: 51, max: 75 }, // Qualité de l'air très mauvaise (51-75 µg/m³)
-    extr_mauvais: { code: 'extr_mauvais', min: 76, max: 999 }, // Qualité de l'air extrêmement mauvaise (>75 µg/m³)
-};
-
-// Configuration des seuils pour les particules fines PM10
-export const seuils_PM10 = {
-    bon: { code: 'bon', min: 0, max: 20 }, // Qualité de l'air bonne (0-20 µg/m³)
-    moyen: { code: 'moyen', min: 21, max: 40 }, // Qualité de l'air moyenne (21-40 µg/m³)
-    degrade: { code: 'degrade', min: 41, max: 50 }, // Qualité de l'air dégradée (41-50 µg/m³)
-    mauvais: { code: 'mauvais', min: 51, max: 100 }, // Qualité de l'air mauvaise (51-100 µg/m³)
-    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 }, // Qualité de l'air très mauvaise (101-150 µg/m³)
-    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 999 }, // Qualité de l'air extrêmement mauvaise (>150 µg/m³)
-};
-
-// Configuration des seuils pour le dioxyde d'azote (NO2) sur 24h
-export const seuils_NO2_24h = {
-    bon: { code: 'bon', min: 0, max: 40 }, // Qualité de l'air bonne (0-40 µg/m³)
-    moyen: { code: 'moyen', min: 41, max: 90 }, // Qualité de l'air moyenne (41-90 µg/m³)
-    degrade: { code: 'degrade', min: 91, max: 120 }, // Qualité de l'air dégradée (91-120 µg/m³)
-    mauvais: { code: 'mauvais', min: 121, max: 230 }, // Qualité de l'air mauvaise (121-230 µg/m³)
-    tres_mauvais: { code: 'tres_mauvais', min: 231, max: 340 }, // Qualité de l'air très mauvaise (231-340 µg/m³)
-    extr_mauvais: { code: 'extr_mauvais', min: 341, max: 999 }, // Qualité de l'air extrêmement mauvaise (>340 µg/m³)
-};
-
-export const seuilsO3_24h = {
-    bon: { code: 'bon', min: 0, max: 100 },
-    moyen: { code: 'moyen', min: 101, max: 120 },
-    degrade: { code: 'degrade', min: 121, max: 140 },
-    mauvais: { code: 'mauvais', min: 141, max: 160 },
-    tres_mauvais: { code: 'tres_mauvais', min: 161, max: 180 },
-    extr_mauvais: { code: 'extr_mauvais', min: 181, max: 999 },
-};
-
-export const seuilsSO2_24h = {
-    bon: { code: 'bon', min: 0, max: 40 },
-    moyen: { code: 'moyen', min: 41, max: 80 },
-    degrade: { code: 'degrade', min: 81, max: 120 },
-    mauvais: { code: 'mauvais', min: 121, max: 160 },
-    tres_mauvais: { code: 'tres_mauvais', min: 161, max: 200 },
-    extr_mauvais: { code: 'extr_mauvais', min: 201, max: 999 },
-};
-
-// Configuration des mesures de polluants disponibles dans l'application
-export const mesures = {
-    pm1: { name: 'PM1', code: 'pm1', activated: true }, // Particules fines de diamètre inférieur à 1 µm
-    pm25: { name: 'PM2.5', code: 'pm25', activated: false }, // Particules fines de diamètre inférieur à 2.5 µm
-    pm10: { name: 'PM10', code: 'pm10', activated: false }, // Particules fines de diamètre inférieur à 10 µm
-    no2: { name: 'NO2', code: 'no2', activated: false }, // Dioxyde d'azote
-    so2: { name: 'SO2', code: 'so2', activated: false }, // Dioxyde de soufre
-    o3: { name: 'O3', code: 'o3', activated: false }, // Ozone
-    h2s: { name: 'H2S', code: 'h2s', activated: false }, // Sulfure d'hydrogène
-    nh3: { name: 'NH3', code: 'nh3', activated: false }, // Ammoniac
-};
-
-// Configuration des différentes sources de données disponibles
-export const sources = {
-    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true }, // Capteurs citoyens NebuleAir
-    sensor_community: {
-        name: 'Sensor.Community',
-        code: 'sensor_commmunity',
-        activated: false,
-    }, // Réseau de capteurs Sensor.Community
-    purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false }, // Capteurs PurpleAir
-    atmo_micro: {
-        name: 'AtmoSud µStations',
-        code: 'atmo_micro',
-        activated: true,
-    }, // Micro-stations AtmoSud
-    atmo_ref: {
-        name: 'AtmoSud Stations Ref',
-        code: 'atmo_ref',
-        activated: true,
-    }, // Stations de référence AtmoSud
-    mod_pm: { name: 'Modélisation', code: 'mod_pm', activated: true }, // Modélisation des particules fines
-    icairh: { name: 'ICAIR', code: 'icairh', activated: false }, // Modélisation ICAIR'H
-    signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir
-    mobileair: { name: 'MobileAir', code: 'mobileair', activated: false }, // Capteurs mobiles
-};
-
-// Configuration des pas de temps disponibles pour l'affichage des données
-export const pas_de_temps = {
-    instantane: { name: 'Instantané', code: 'instantane', activated: false }, // Valeurs instantanées
-    deux_min: { name: '2 minutes', code: '2min', activated: true }, // Moyenne sur 2 minutes
-    quart_heure: { name: '15 minutes', code: 'qh', activated: false }, // Moyenne sur 15 minutes
-    heure: { name: 'Heure', code: 'h', activated: false }, // Moyenne horaire
-    jour: { name: 'Jour', code: 'd', activated: false }, // Moyenne journalière
-};
-
 //Amcharts chart
 window.amchart_root = null;
 
@@ -327,109 +245,13 @@ export var dropdown_pas_de_temps = document.getElementById(
     'dropdown_pas_de_temps'
 );
 
-// Constantes pour les clés de stockage local
-export const mesuresLocal = 'mesuresLocal'; // Clé pour stocker les mesures sélectionnées
-export const sources_local = 'sources_local'; // Clé pour stocker les sources sélectionnées
-export const pasDeTempsLocal = 'pasDeTempsLocal'; // Clé pour stocker le pas de temps sélectionné
-
-// Fonction pour sauvegarder un tableau dans le stockage local
-export function saveArrayToLocalStorage(key, array) {
-    localStorage.setItem(key, JSON.stringify(array)); // Convertit le tableau en JSON et le stocke
-}
-
-// Fonction pour récupérer un tableau depuis le stockage local
-export function getArrayFromLocalStorage(key) {
-    const storedArray = localStorage.getItem(key); // Récupère la chaîne JSON
-    return storedArray ? JSON.parse(storedArray) : []; // Convertit en tableau ou retourne un tableau vide
-}
-
-// Fonction pour ajouter un élément à un tableau dans le stockage local
-export function addItemToLocalStorageArray(key, item) {
-    const array = getArrayFromLocalStorage(key);
-    // Vérifier si l'élément existe déjà dans le tableau
-    if (!array.includes(item)) {
-        array.push(item);
-        saveArrayToLocalStorage(key, array);
-        console.log(`Ajout de ${item} au localStorage pour la clé ${key}`);
-    } else {
-        console.log(
-            `${item} existe déjà dans le localStorage pour la clé ${key}`
-        );
-    }
-}
-
-// Fonction pour supprimer un élément d'un tableau dans le stockage local
-export function removeItemFromLocalStorageArray(key, item) {
-    const array = getArrayFromLocalStorage(key);
-    const index = array.indexOf(item);
-    if (index > -1) {
-        array.splice(index, 1);
-        saveArrayToLocalStorage(key, array);
-        console.log(
-            `Suppression de ${item} du localStorage pour la clé ${key}`
-        );
-    } else {
-        console.log(
-            `${item} n'existe pas dans le localStorage pour la clé ${key}`
-        );
-    }
-}
-
-// Fonction pour formater les noms de lieux
-export function formatString(str) {
-    // Remplacement des underscores par des espaces
-    let formattedStr = str.replace(/_/g, ' ');
-
-    // Définition des consonnes et voyelles pour le traitement
-    const consonants = 'bcdfghjklmnpqrstvwxz';
-    const uppercaseVowels = 'AEIOUYÀÁÂÄÆÈÉÊËÌÍÎÏÒÓÔÖŒÙÚÛÜÝ';
-
-    // Ajout d'une apostrophe entre une consonne et une voyelle en majuscule
-    formattedStr = formattedStr.replace(
-        new RegExp(
-            `([${consonants}${consonants.toUpperCase()}])([${uppercaseVowels}])`,
-            'g'
-        ),
-        "$1'$2"
-    );
-
-    // Ajout d'une apostrophe entre une consonne et une voyelle en minuscule si pas d'apostrophe précédemment ajoutée
-    formattedStr = formattedStr.replace(/([^'\s-])([A-Z])/g, '$1 $2');
-
-    // Suppression des espaces superflus en début et fin de chaîne
-    formattedStr.trim();
-    return formattedStr;
-}
-
-// Fonction pour formater les noms des polluants avec les indices en HTML
-export function formatPollutantName(name) {
-    // Vérification de la validité de l'entrée
-    if (!name || typeof name !== 'string') {
-        console.warn('formatPollutantName received non-string value:', name);
-        return String(name || '');
-    }
-
-    // Remplacement des formules chimiques par leur version avec caractères Unicode
-    return name
-        .replace(/PM10/g, 'PM₁₀') // Doit être avant PM1 pour éviter les conflits
-        .replace(/PM2.5/g, 'PM₂.₅')
-        .replace(/PM1/g, 'PM₁')
-        .replace(/NO2/g, 'NO₂') // Dioxyde d'azote
-        .replace(/NOx/g, 'NOₓ') // Oxydes d'azote
-        .replace(/SO2/g, 'SO₂') // Dioxyde de soufre
-        .replace(/O3/g, 'O₃') // Ozone
-        .replace(/CO2/g, 'CO₂') // Dioxyde de carbone
-        .replace(/H2S/g, 'H₂S') // Sulfure d'hydrogène
-        .replace(/NH3/g, 'NH₃'); // Ammoniac
-}
-
 // Fonction pour mettre à jour l'affichage de l'heure en fonction du pas de temps sélectionné
 function updateTimeDisplay() {
     const now = new Date(); // Récupération de la date et heure actuelles
     const horlogeButton = document.getElementById('button_horloge'); // Récupération du bouton horloge
 
     // Récupération du pas de temps actuellement sélectionné
-    const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
+    const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
 
     let displayText = ''; // Texte à afficher
 
@@ -515,7 +337,7 @@ function setupAutoRefresh() {
     }
 
     // Récupération du pas de temps actuel
-    const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
+    const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
 
     // Détermination de l'intervalle de rafraîchissement en millisecondes
     let refreshIntervalMs;
@@ -575,7 +397,7 @@ function setupAutoRefresh() {
         globalSelectedText = null;
 
         // Récupération et rafraîchissement des sources actives
-        const activeSources = getArrayFromLocalStorage(sources_local);
+        const activeSources = getArrayFromLocalStorage('sources_local');
         const refreshPromises = activeSources.map((source) => {
             clearLayer(source);
             return loadSource(source);
@@ -687,9 +509,9 @@ function findAndHighlightMarker(deviceId) {
                     ) {
                         openSidePanelNebuleAir(
                             layer.deviceData,
-                            getArrayFromLocalStorage(pasDeTempsLocal)[0],
+                            getArrayFromLocalStorage('pasDeTempsLocal')[0],
                             '24h',
-                            getArrayFromLocalStorage(mesuresLocal)[0]
+                            getArrayFromLocalStorage('mesuresLocal')[0]
                         );
                     }
 
@@ -750,7 +572,7 @@ function findAndHighlightMarker(deviceId) {
                         layer.deviceData
                     ) {
                         var pas_de_temps =
-                            getArrayFromLocalStorage(pasDeTempsLocal)[0];
+                            getArrayFromLocalStorage('pasDeTempsLocal')[0];
                         var pas_de_temps_atmo = '';
                         switch (pas_de_temps) {
                             case '2min':
@@ -767,7 +589,8 @@ function findAndHighlightMarker(deviceId) {
                                 break;
                         }
 
-                        var mesures = getArrayFromLocalStorage(mesuresLocal)[0];
+                        var mesures =
+                            getArrayFromLocalStorage('mesuresLocal')[0];
                         var mesures_atmo = mesures;
                         if (mesures === 'pm25') {
                             mesures_atmo = 'pm2.5';
@@ -800,13 +623,13 @@ function findAndHighlightMarker(deviceId) {
                 if (deviceIdStr.indexOf('nebuleair') >= 0) {
                     openSidePanelNebuleAir(
                         window.lastSelectedDeviceData,
-                        getArrayFromLocalStorage(pasDeTempsLocal)[0],
+                        getArrayFromLocalStorage('pasDeTempsLocal')[0],
                         '24h',
-                        getArrayFromLocalStorage(mesuresLocal)[0]
+                        getArrayFromLocalStorage('mesuresLocal')[0]
                     );
                 } else {
                     var pas_de_temps =
-                        getArrayFromLocalStorage(pasDeTempsLocal)[0];
+                        getArrayFromLocalStorage('pasDeTempsLocal')[0];
                     var pas_de_temps_atmo = '';
                     switch (pas_de_temps) {
                         case '2min':
@@ -823,7 +646,7 @@ function findAndHighlightMarker(deviceId) {
                             break;
                     }
 
-                    var mesures = getArrayFromLocalStorage(mesuresLocal)[0];
+                    var mesures = getArrayFromLocalStorage('mesuresLocal')[0];
                     var mesures_atmo = mesures;
                     if (mesures === 'pm25') {
                         mesures_atmo = 'pm2.5';
@@ -841,10 +664,10 @@ function findAndHighlightMarker(deviceId) {
     }, 1000);
 }
 
-// Fonction pour mettre à jour les boutons de seuil en fonction du polluant sélectionné
+// Fonction pour mettre à jour les boutons de seuil en fonction du polluant sélectionné ABA- fonction customTresholdButtons() à créer
 function updateThresholdButtons() {
     // Récupération du polluant actuellement sélectionné
-    const selectedPollutant = getArrayFromLocalStorage(mesuresLocal)[0];
+    const selectedPollutant = getArrayFromLocalStorage('mesuresLocal')[0];
 
     // Détermination des seuils à utiliser
     const thresholds = getThresholdsForPollutant(selectedPollutant);
@@ -897,51 +720,48 @@ function updateThresholdButtons() {
     });
 }
 
-// Fonction pour obtenir les seuils appropriés pour un polluant donné
-export function getThresholdsForPollutant(pollutant) {
-    if (pollutant === 'pm10') {
-        return seuils_PM10;
-    } else if (pollutant === 'no2') {
-        return seuils_NO2_24h;
-    } else if (pollutant === 'o3') {
-        return seuilsO3_24h;
-    } else if (pollutant === 'so2') {
-        return seuilsSO2_24h;
-    } else {
-        return seuils_PM1_PM25;
-    }
-}
+// // Fonction pour obtenir les seuils appropriés pour un polluant donné
+// export function getThresholdsForPollutant(pollutant) {
+//     if (pollutant === 'pm10') {
+//         return seuils_PM10;
+//     } else if (pollutant === 'no2') {
+//         return seuils_NO2_24h;
+//     } else if (pollutant === 'o3') {
+//         return seuilsO3_24h;
+//     } else if (pollutant === 'so2') {
+//         return seuilsSO2_24h;
+//     } else {
+//         return seuils_PM1_PM25;
+//     }
+// }
 
-// Fonction pour obtenir le code couleur en fonction de la valeur et du polluant
-export function getColorCodeForValue(value, pollutant) {
-    const thresholds = getThresholdsForPollutant(pollutant);
-    let colorCode = 'default';
-    const roundedValue = Math.round(parseFloat(value));
+// // Fonction pour obtenir le code couleur en fonction de la valeur et du polluant
+// export function getColorCodeForValue(value, pollutant) {
+//     const thresholds = getThresholdsForPollutant(pollutant);
+//     let colorCode = 'default';
+//     const roundedValue = Math.round(parseFloat(value));
 
-    for (let key in thresholds) {
-        const min = thresholds[key].min;
-        const max = thresholds[key].max;
+//     for (let key in thresholds) {
+//         const min = thresholds[key].min;
+//         const max = thresholds[key].max;
 
-        if (roundedValue >= min && roundedValue <= max) {
-            colorCode = thresholds[key].code;
-            break;
-        }
-    }
+//         if (roundedValue >= min && roundedValue <= max) {
+//             colorCode = thresholds[key].code;
+//             break;
+//         }
+//     }
 
-    return colorCode;
-}
+//     return colorCode;
+// }
 
 // Fonction pour mettre à jour l'affichage des boutons
 function updateButtonDisplay() {
-    // Mise à jour du bouton des mesures
-    const selectedMesure = getArrayFromLocalStorage(mesuresLocal)[0];
-    const selectedSource = getArrayFromLocalStorage(sources_local);
-    console.log('selectedSource :' + selectedSource);
-    console.log('selectedMesure :' + selectedMesure);
     const mesureName =
         mesures[
             Object.keys(mesures).find(
-                (key) => mesures[key].code === selectedMesure
+                (key) =>
+                    mesures[key].code ===
+                    getArrayFromLocalStorage('mesuresLocal')[0]
             )
         ].name;
     document
@@ -950,7 +770,7 @@ function updateButtonDisplay() {
         .querySelector('.selected-option').innerHTML = mesureName;
 
     // Mise à jour du bouton des pas de temps
-    const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
+    const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
 
     const timeStepName =
         pas_de_temps[
@@ -982,7 +802,7 @@ function updateButtonDisplay() {
         });
 
     // Mise à jour des classes active des boutons de sources
-    const activeSources = getArrayFromLocalStorage(sources_local);
+    const activeSources = getArrayFromLocalStorage('sources_local');
 
     document.querySelectorAll('#dropdown_sources button').forEach((button) => {
         button.classList.remove('active');
@@ -1009,14 +829,33 @@ function updateButtonDisplay() {
                     toastManager.atmoRefTimeStepWarning();
                 } else if (
                     sourceCode === 'nebuleair' &&
-                    !['pm1', 'pm25', 'pm10'].includes(selectedMesure)
+                    !['pm1', 'pm25', 'pm10'].includes(
+                        getArrayFromLocalStorage('mesuresLocal')[0]
+                    )
                 ) {
-                    console.log(
-                        'Désactivation de NebuleAir pour le polluant non supporté'
+                    removeItemFromLocalStorageArray(
+                        'sources_local',
+                        sourceCode
                     );
-                    removeItemFromLocalStorageArray(sources_local, sourceCode);
                     createCustomToast({
-                        message: `La mesure ${formatPollutantName(selectedMesure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto`,
+                        message: `La mesure ${formatPollutantName(getArrayFromLocalStorage('mesuresLocal')[0])} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto, <strong>désactivation de la source</strong>.`,
+                        type: 'warning',
+                        title: 'Attention',
+                        icon: 'exclamation-triangle',
+                        timer: 5000,
+                    });
+                } else if (
+                    sourceCode === 'atmo_micro' &&
+                    ['so2', 'nh3', 'o3', 'h2s'].includes(
+                        getArrayFromLocalStorage('mesuresLocal')[0]
+                    )
+                ) {
+                    removeItemFromLocalStorageArray(
+                        'sources_local',
+                        sourceCode
+                    );
+                    createCustomToast({
+                        message: `La mesure ${formatPollutantName(getArrayFromLocalStorage('mesuresLocal')[0])} n'est pas disponible pour les capteurs AtmoSud Micro-stations, <strong>désactivation de la source</strong>.`,
                         type: 'warning',
                         title: 'Attention',
                         icon: 'exclamation-triangle',
@@ -1030,10 +869,10 @@ function updateButtonDisplay() {
     });
 }
 
-// Initialisation au chargement de la page
+// Initialisation des boutons d'agrandissement/réduction du panneau latéral au chargement de la page
 document.addEventListener('DOMContentLoaded', function () {
     updateTimeDisplay();
-    setInterval(updateTimeDisplay, 60000); // Mise à jour de l'horloge toutes les minutes
+    // setInterval(updateTimeDisplay, 60000); // Mise à jour de l'horloge toutes les minutes
 
     setupAutoRefresh(); // Configuration du rafraîchissement automatique
     updateThresholdButtons(); // Mise à jour des boutons de seuil
@@ -1117,25 +956,24 @@ for (let key in mesures) {
         button.innerHTML = name;
         button.classList.add('dropdown-item');
         // Si le stockage local est vide, on sauvegarde la configuration initiale
-        if (isEmptyObject(getArrayFromLocalStorage(mesuresLocal))) {
+        if (isEmptyObject(getArrayFromLocalStorage('mesuresLocal'))) {
             if (activated) {
-                addItemToLocalStorageArray(mesuresLocal, code);
+                addItemToLocalStorageArray('mesuresLocal', code);
             }
         }
         // On vérifie si le code est déjà dans le stockage local
-        let check_array = getArrayFromLocalStorage(mesuresLocal);
+        let check_array = getArrayFromLocalStorage('mesuresLocal');
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
         }
         // Action quand on clique sur un polluant
         button.onclick = function () {
-            console.log('click sur :' + code);
-            let check_array = getArrayFromLocalStorage(mesuresLocal);
+            let check_array = getArrayFromLocalStorage('mesuresLocal');
             if (isValueInObject(check_array, code)) {
                 console.warn('on ne peut pas decocher');
             } else {
                 // On supprime les autres sélections
-                localStorage.removeItem(mesuresLocal);
+                localStorage.removeItem('mesuresLocal');
                 let listItems = document.querySelectorAll(
                     '#dropdown_mesures li'
                 );
@@ -1145,21 +983,8 @@ for (let key in mesures) {
                         button.classList.remove('active');
                     });
                 });
-                console.log('mesure :' + code);
-
-                if (
-                    code === 'nebuleair' &&
-                    getArrayFromLocalStorage(mesuresLocal).includes('no2')
-                ) {
-                    console.log('#########################');
-                    console.log('mesure :' + code);
-                    console.log(
-                        'source :' + getArrayFromLocalStorage(sources_local)
-                    );
-                    console.log('#########################');
-                }
                 // On active le nouveau choix
-                addItemToLocalStorageArray(mesuresLocal, code);
+                addItemToLocalStorageArray('mesuresLocal', code);
                 button.classList.add('active');
                 // Mise à jour du texte du bouton principal
                 // console.log('#########################');
@@ -1171,19 +996,9 @@ for (let key in mesures) {
                     .querySelector('.selected-option').innerHTML = name;
 
                 updateThresholdButtons();
-                // toastManager.pollutantChanged(name);
 
-                // Rechargement des données
-                console.log(
-                    'Changement du type de mesure: ' +
-                        getArrayFromLocalStorage(mesuresLocal)
-                );
-                console.log(
-                    'Necessite le renouvellement de: ' +
-                        getArrayFromLocalStorage(sources_local)
-                );
                 // Actualisation de chaque source active
-                for (let item of getArrayFromLocalStorage(sources_local)) {
+                for (let item of getArrayFromLocalStorage('sources_local')) {
                     clearLayer(item);
                     loadSource(item);
                 }
@@ -1204,58 +1019,67 @@ for (let key in sources) {
         let name = sources[key].name;
         let code = sources[key].code;
         let activated = sources[key].activated;
-        let selectedMesure = getArrayFromLocalStorage(mesuresLocal)[0];
         button.innerHTML = name;
         button.classList.add('dropdown-item');
         // Configuration initiale du stockage local
-        if (isEmptyObject(getArrayFromLocalStorage(sources_local))) {
+        if (isEmptyObject(getArrayFromLocalStorage('sources_local'))) {
             if (activated) {
-                addItemToLocalStorageArray(sources_local, code);
+                addItemToLocalStorageArray('sources_local', code);
             }
         }
         // Vérification si la source est déjà active
-        let check_array = getArrayFromLocalStorage(sources_local);
+        let check_array = getArrayFromLocalStorage('sources_local');
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
         }
         // Action lors du clic sur une source
         button.onclick = function () {
-            let check_array = getArrayFromLocalStorage(sources_local);
+            let check_array = getArrayFromLocalStorage('sources_local');
             if (isValueInObject(check_array, code)) {
                 // Désactiver la source
                 button.classList.remove('active');
-                removeItemFromLocalStorageArray(sources_local, code);
+                removeItemFromLocalStorageArray('sources_local', code);
                 clearLayer(code);
                 // toastManager.sourceChanged(`Désactivation de ${name}`);
             } else {
                 // Vérification des conditions pour afficher l'avertissement spécifique
                 const selectedTimeStep =
-                    getArrayFromLocalStorage(pasDeTempsLocal)[0];
+                    getArrayFromLocalStorage('pasDeTempsLocal')[0];
 
                 // Vérification pour AtmoSud Micro-stations
                 if (code === 'atmo_micro' && selectedTimeStep === '2min') {
-                    try {
-                        toastManager.atmoMicroTimeStepWarning();
-                        // Activer la source malgré l'avertissement
-                        button.classList.add('active');
-                        addItemToLocalStorageArray(sources_local, code);
-                        loadSource(code);
-                    } catch (error) {
-                        console.error(
-                            "Erreur lors de l'affichage de la notification:",
-                            error
-                        );
-                    }
-                }
-                // Vérification pour AtmoSud Stations de référence
-                else if (
+                    toastManager.atmoMicroTimeStepWarning();
+                    // Activer la source malgré l'avertissement
+                    button.classList.add('active');
+                    addItemToLocalStorageArray('sources_local', code);
+                    loadSource(code);
+                } else if (
+                    code === 'atmo_micro' &&
+                    !['pm1', 'pm25', 'pm10', 'no2'].includes(
+                        getArrayFromLocalStorage('mesuresLocal')[0]
+                    )
+                ) {
+                    console.log(
+                        'update button display :',
+                        `désactivation de ${code} pour le polluant : ${getArrayFromLocalStorage('mesuresLocal')[0]}`
+                    );
+                    removeItemFromLocalStorageArray('sources_local', code);
+                    createCustomToast({
+                        message: `La mesure ${formatPollutantName(getArrayFromLocalStorage('mesuresLocal')[0])} n'est pas disponible pour les capteurs AtmoSud Micro-stations`,
+                        type: 'warning',
+                        title: 'Attention',
+                        icon: 'exclamation-triangle',
+                        timer: 5000,
+                    });
+                    // Vérification pour AtmoSud Stations de référence
+                } else if (
                     code === 'atmo_ref' &&
                     (selectedTimeStep === '2min' ||
                         selectedTimeStep === 'instantane')
                 ) {
                     try {
                         // Ne pas activer la source dans ce cas
-                        removeItemFromLocalStorageArray(sources_local, code);
+                        removeItemFromLocalStorageArray('sources_local', code);
                         toastManager.atmoRefTimeStepWarning();
                     } catch (error) {
                         console.error(
@@ -1265,14 +1089,16 @@ for (let key in sources) {
                     }
                 } else if (
                     code === 'nebuleair' &&
-                    !['pm1', 'pm25', 'pm10'].includes(selectedMesure)
+                    !['pm1', 'pm25', 'pm10'].includes(
+                        getArrayFromLocalStorage('mesuresLocal')[0]
+                    )
                 ) {
                     console.log(
-                        'Désactivation de NebuleAir pour le polluant non supporté'
+                        `Désactivation de NebuleAir air carto pour ${getArrayFromLocalStorage('mesuresLocal')[0]}`
                     );
-                    removeItemFromLocalStorageArray(sources_local, code);
+                    removeItemFromLocalStorageArray('sources_local', code);
                     createCustomToast({
-                        message: `Le polluant ${formatPollutantName(selectedMesure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto`,
+                        message: `Le polluant ${formatPollutantName(getArrayFromLocalStorage('mesuresLocal')[0])} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto, désactivation de la source.`,
                         type: 'warning',
                         title: 'Attention',
                         icon: 'exclamation-triangle',
@@ -1285,7 +1111,7 @@ for (let key in sources) {
                     console.log(
                         'Désactivation de NebuleAir pour le pas de temps instantané'
                     );
-                    removeItemFromLocalStorageArray(sources_local, code);
+                    removeItemFromLocalStorageArray('sources_local', code);
                     createCustomToast({
                         message: `Les capteurs NebuleAir opérés par AirCarto ne sont pas disponibles pour le pas de temps instantané. Source désactivée.`,
                         type: 'warning',
@@ -1296,7 +1122,7 @@ for (let key in sources) {
                 } else {
                     // Activer la source normalement pour les autres cas
                     button.classList.add('active');
-                    addItemToLocalStorageArray(sources_local, code);
+                    addItemToLocalStorageArray('sources_local', code);
                     // toastManager.sourceChanged(`Activation de ${name}`);
                     loadSource(code);
                 }
@@ -1321,24 +1147,24 @@ for (let key in pas_de_temps) {
         button.innerHTML = name;
         button.classList.add('dropdown-item');
         // Configuration initiale du stockage local
-        if (isEmptyObject(getArrayFromLocalStorage(pasDeTempsLocal))) {
+        if (isEmptyObject(getArrayFromLocalStorage('pasDeTempsLocal'))) {
             if (activated) {
-                addItemToLocalStorageArray(pasDeTempsLocal, code);
+                addItemToLocalStorageArray('pasDeTempsLocal', code);
             }
         }
         // Vérification si le pas de temps est déjà actif
-        let check_array = getArrayFromLocalStorage(pasDeTempsLocal);
+        let check_array = getArrayFromLocalStorage('pasDeTempsLocal');
         if (isValueInObject(check_array, code)) {
             button.classList.add('active');
         }
         // action lors du clic sur un pas de temps
         button.onclick = function () {
-            let check_array = getArrayFromLocalStorage(pasDeTempsLocal);
+            let check_array = getArrayFromLocalStorage('pasDeTempsLocal');
             if (isValueInObject(check_array, code)) {
                 console.warn('on ne peut pas decocher');
             } else {
                 // Suppression des autres sélections
-                localStorage.removeItem(pasDeTempsLocal);
+                localStorage.removeItem('pasDeTempsLocal');
                 let listItems = document.querySelectorAll(
                     '#dropdown_pas_de_temps li'
                 );
@@ -1349,7 +1175,7 @@ for (let key in pas_de_temps) {
                     });
                 });
                 // Activation du nouveau pas de temps
-                addItemToLocalStorageArray(pasDeTempsLocal, code);
+                addItemToLocalStorageArray('pasDeTempsLocal', code);
                 button.classList.add('active');
                 // Mise à jour du texte du bouton principal
                 document
@@ -1358,9 +1184,9 @@ for (let key in pas_de_temps) {
                     .querySelector('.selected-option').innerHTML = name;
 
                 // Vérification des conditions pour afficher l'avertissement spécifique
-                const activeSources = getArrayFromLocalStorage(sources_local);
+                const activeSources = getArrayFromLocalStorage('sources_local');
 
-                // Vérification pour AtmoSud Micro-stations
+                // Gestion spécifique pour AtmoSud Micro-stations au pas de temps 2 minutes
                 if (code === '2min' && activeSources.includes('atmo_micro')) {
                     try {
                         const result = toastManager.atmoMicroTimeStepWarning();
@@ -1372,7 +1198,7 @@ for (let key in pas_de_temps) {
                     }
                 }
 
-                // Vérification pour AtmoSud Micro-stations
+                // Gestion spécifique pour AtmoSud Micro-stations au pas de temps journalier
                 if (code === 'd' && activeSources.includes('atmo_micro')) {
                     console.log(
                         "Debug - TimeStep change - Conditions remplies pour afficher l'avertissement AtmoSud Micro journalier"
@@ -1387,7 +1213,7 @@ for (let key in pas_de_temps) {
 
                         // Désactiver la source dans ce cas
                         removeItemFromLocalStorageArray(
-                            sources_local,
+                            'sources_local',
                             'atmo_micro'
                         );
                         clearLayer('atmo_micro');
@@ -1408,7 +1234,7 @@ for (let key in pas_de_temps) {
 
                         // Mettre à jour la liste des sources actives
                         let updatedActiveSources =
-                            getArrayFromLocalStorage(sources_local);
+                            getArrayFromLocalStorage('sources_local');
 
                         // Mettre à jour l'affichage des boutons
                         updateButtonDisplay();
@@ -1420,14 +1246,11 @@ for (let key in pas_de_temps) {
                     }
                 }
 
-                // Vérification pour AtmoSud Stations de référence
+                // Gestion spécifique pour AtmoSud Stations de référence au pas de temps 2 minutes ou instantané
                 if (
                     (code === '2min' || code === 'instantane') &&
                     activeSources.includes('atmo_ref')
                 ) {
-                    console.log(
-                        "Debug - TimeStep change - Conditions remplies pour afficher l'avertissement AtmoSud Ref"
-                    );
                     try {
                         const result = toastManager.atmoRefTimeStepWarning();
                         console.log(
@@ -1436,7 +1259,7 @@ for (let key in pas_de_temps) {
                         );
                         // Désactiver la source dans ce cas
                         removeItemFromLocalStorageArray(
-                            sources_local,
+                            'sources_local',
                             'atmo_ref'
                         );
                         clearLayer('atmo_ref');
@@ -1474,7 +1297,7 @@ for (let key in pas_de_temps) {
                             timer: 5000,
                         });
                         removeItemFromLocalStorageArray(
-                            sources_local,
+                            'sources_local',
                             'nebuleair'
                         );
                         clearLayer('nebuleair');
@@ -1498,14 +1321,10 @@ for (let key in pas_de_temps) {
                 // Mise à jour des données
                 console.log(
                     'Changement du pas de temps: ' +
-                        getArrayFromLocalStorage(pasDeTempsLocal)
-                );
-                console.log(
-                    'Necessite le renouvellement de: ' +
-                        getArrayFromLocalStorage(sources_local)
+                        getArrayFromLocalStorage('pasDeTempsLocal')
                 );
                 // Actualisation de chaque source active
-                for (let item of getArrayFromLocalStorage(sources_local)) {
+                for (let item of getArrayFromLocalStorage('sources_local')) {
                     clearLayer(item);
                     loadSource(item);
                 }
@@ -1526,7 +1345,7 @@ document.addEventListener('DOMContentLoaded', function () {
     resetLocalStorage();
 
     // Charger les sources initiales
-    const activeSources = getArrayFromLocalStorage(sources_local);
+    const activeSources = getArrayFromLocalStorage('sources_local');
     console.log('Sources actives au démarrage:', activeSources);
 
     // Mise à jour de l'affichage des boutons
@@ -1628,26 +1447,8 @@ setInterval(reload_layers, 9990000); //60000 -> 1min
 Sur un grand écran on veut un side panel moins large (col-lg) 
 que sur un petit écran (col) sinon il est trop fin
 */
-export function openSidePanelGeneric() {
-    //console.log("openSidePane_generic");
-    //side panel
-    // sur smartphone -> toute la place (col-12)
-    // sur ordi petit (sm) -> 6 colonnes
-    // sur grand écran (lg) -> 5 colonnes
-    sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
-    sidePanel.style.display = 'block';
-    //map
-    // sur smartphone -> disparait (col-0)
-    // sur ordi petit (sm) -> 6 colonnes
-    // sur grand écran (lg) -> 7 colonnes
-    mapContainer.classList.remove('col-12');
-    mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
-    mapContainer.style.paddingLeft = '10px';
-}
 
 export function openSidePanel_signalair(data, nuisance_type) {
-    console.log('data', data);
-    console.log('Opening side panel for SignalAir');
     card1_img.src = 'img/signalair/logoSignalAir.png';
     card1_title.innerHTML = 'Nuisance: ' + nuisance_type;
     card1_text.innerHTML = `
@@ -1680,16 +1481,6 @@ export function openSidePanel_signalair(data, nuisance_type) {
      `;
 
     openSidePanel_generic();
-}
-
-//CLOSE SIDE PANEL
-export function closeSidePanel() {
-    console.log('Closing side panel');
-    sidePanel.classList.remove('col-2', 'col-sm-4', 'col-lg-3');
-    sidePanel.style.display = 'none';
-    mapContainer.classList.remove('col-8', 'col-lg-9');
-    mapContainer.classList.add('col-12');
-    mapContainer.style.paddingLeft = '30px';
 }
 
 // Initialisation du conteneur device-info
@@ -1806,10 +1597,10 @@ document
 // Fonction pour réinitialiser le localStorage
 function resetLocalStorage() {
     // Vérifier si le localStorage est vide pour les sources
-    if (!localStorage.getItem(sources_local)) {
-        localStorage.removeItem(sources_local);
+    if (!localStorage.getItem('sources_local')) {
+        localStorage.removeItem('sources_local');
         // Réinitialiser avec les valeurs par défaut
-        saveArrayToLocalStorage(sources_local, [
+        saveArrayToLocalStorage('sources_local', [
             'nebuleair',
             'atmo_micro',
             'atmo_ref',
@@ -1817,15 +1608,15 @@ function resetLocalStorage() {
     }
 
     // Vérifier si le localStorage est vide pour les mesures
-    if (!localStorage.getItem(mesuresLocal)) {
-        localStorage.removeItem(mesuresLocal);
-        saveArrayToLocalStorage(mesuresLocal, ['pm1']);
+    if (!localStorage.getItem('mesuresLocal')) {
+        localStorage.removeItem('mesuresLocal');
+        saveArrayToLocalStorage('mesuresLocal', ['pm1']);
     }
 
     // Vérifier si le localStorage est vide pour les pas de temps
-    if (!localStorage.getItem(pasDeTempsLocal)) {
-        localStorage.removeItem(pasDeTempsLocal);
-        saveArrayToLocalStorage(pasDeTempsLocal, ['2min']);
+    if (!localStorage.getItem('pasDeTempsLocal')) {
+        localStorage.removeItem('pasDeTempsLocal');
+        saveArrayToLocalStorage('pasDeTempsLocal', ['2min']);
     }
 }
 
@@ -1842,7 +1633,7 @@ function handleTimeStepNotifications(selectedTimeStep, activeSources) {
             // Afficher la notification immédiatement
             toastManager.atmoMicroTimeStepDailyWarning();
             // Désactiver la source dans ce cas car pas de données journalières
-            removeItemFromLocalStorageArray(sources_local, 'atmo_micro');
+            removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
             clearLayer('atmo_micro');
             // Mettre à jour l'affichage du bouton
             const atmoMicroButton = Array.from(
@@ -1864,7 +1655,7 @@ function handleTimeStepNotifications(selectedTimeStep, activeSources) {
         // Afficher la notification immédiatement
         toastManager.atmoRefTimeStepWarning();
         // Désactiver la source dans ce cas
-        removeItemFromLocalStorageArray(sources_local, 'atmo_ref');
+        removeItemFromLocalStorageArray('sources_local', 'atmo_ref');
         clearLayer('atmo_ref');
         // Mettre à jour l'affichage du bouton
         const atmoRefButton = Array.from(
@@ -1878,8 +1669,8 @@ function handleTimeStepNotifications(selectedTimeStep, activeSources) {
 
 // Dans la fonction checkInitialConditions
 function checkInitialConditions() {
-    const activeSources = getArrayFromLocalStorage(sources_local);
-    const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
+    const activeSources = getArrayFromLocalStorage('sources_local');
+    const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
     handleTimeStepNotifications(selectedTimeStep, activeSources);
 }
 
@@ -1894,9 +1685,9 @@ function loadSource(source, isInitialLoad = false) {
     try {
         // Gestion de la désactivation automatique des sources mod_pm et icairh
         if (source === 'mod_pm' || source === 'icairh') {
-            const activeSources = getArrayFromLocalStorage(sources_local);
+            const activeSources = getArrayFromLocalStorage('sources_local');
             if (source === 'mod_pm' && activeSources.includes('icairh')) {
-                removeItemFromLocalStorageArray(sources_local, 'icairh');
+                removeItemFromLocalStorageArray('sources_local', 'icairh');
                 clearLayer('icairh');
                 // Mettre à jour l'affichage du bouton icairh
                 const icairButton = Array.from(
@@ -1909,7 +1700,7 @@ function loadSource(source, isInitialLoad = false) {
                 source === 'icairh' &&
                 activeSources.includes('mod_pm')
             ) {
-                removeItemFromLocalStorageArray(sources_local, 'mod_pm');
+                removeItemFromLocalStorageArray('sources_local', 'mod_pm');
                 clearLayer('mod_pm');
                 // Mettre à jour l'affichage du bouton mod_pm
                 const modButton = Array.from(
@@ -1938,7 +1729,7 @@ function loadSource(source, isInitialLoad = false) {
                 loadAtmoSudStationsRef();
                 break;
             case 'mod_pm':
-                loadModPM(getArrayFromLocalStorage(mesuresLocal)[0]);
+                loadModPM(getArrayFromLocalStorage('mesuresLocal')[0]);
                 break;
             case 'icairh':
                 loadModIcair();
@@ -1950,10 +1741,6 @@ function loadSource(source, isInitialLoad = false) {
                 loadMobileAir();
                 break;
         }
-        // On affiche la notification de succès pour les changements manuels
-        // if (!isInitialLoad) {
-        //     toastManager.dataLoaded(source);
-        // }
     } catch (error) {
         console.error(
             `Erreur lors du chargement de la source ${source}:`,
@@ -1967,7 +1754,7 @@ function loadSource(source, isInitialLoad = false) {
         updateButtonDisplay();
     }, 500);
 }
-
+// Fonction pour mettre à jour la visibilité des boutons (toggleSidePanel et expandSidePanel)
 function updateToggleButtonVisibility() {
     const toggleButton = document.getElementById('toggleSidePanel');
     const fullScreenButton = document.getElementById('expandSidePanel');
@@ -1980,10 +1767,8 @@ function updateToggleButtonVisibility() {
     }
 }
 
-// Mettre à jour la visibilité du bouton lors de la sélection d'un capteur
+// Eventlistener permettant de mettre à jour la visibilité des boutons (toggleSidePanel et expandSidePanel) lors de la sélection d'un capteur
 document.addEventListener('DOMContentLoaded', function () {
-    // ... existing code ...
-
     // Observer pour détecter les changements de globalSelectedDeviceId
     const observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {

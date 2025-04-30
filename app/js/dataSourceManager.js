@@ -3,7 +3,7 @@
  * Ce module gère l'état et les interactions entre les différentes sources de données
  */
 
-import { getArrayFromLocalStorage } from '../app.js';
+import { getArrayFromLocalStorage } from './utils.js';
 
 // État des sources de données
 let activeSources = [];

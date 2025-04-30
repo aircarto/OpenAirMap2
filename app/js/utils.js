@@ -1,264 +1,368 @@
-function formatMapData(data, pas_de_temps, polluant, source) {
-    let formattedData = [];
+import {
+    seuils_PM10,
+    seuils_NO2_24h,
+    seuilsO3_24h,
+    seuilsSO2_24h,
+    seuils_PM1_PM25,
+} from './appConfig.js';
 
-    if (source === 'nebuleair') {
-        // Format pour NebuleAir AirCarto
-        formattedData = data.map((device) => {
-            // Handle parameter names - check if using 2min format or with suffix
-            let mesure_maj = polluant.toUpperCase();
-            let paramName =
-                pas_de_temps === '2min'
-                    ? mesure_maj
-                    : `${mesure_maj}_${pas_de_temps}`;
+// Local storage utils
 
-            return {
-                id: device.sensorId,
-                latitude: device.latitude,
-                longitude: device.longitude,
-                valeur_brute: parseFloat(device[paramName]),
-                valeur_corrige: false, // NebuleAir doesn't seem to have corrected values
-                source: 'nebuleair',
-                mesure: polluant,
-                pas_de_temps: pas_de_temps,
-                plage_historique: '24h', // Default value, can be adjusted
-                marque: 'AirCarto', // Based on common knowledge, adjust if needed
-                modele: 'NebuleAir',
-                date_derniere_mesure: device.timeUTC || device.time || false,
-                id_campagne: false,
-                date_mise_en_service: false,
-                date_fin_de_service: false,
-                type_connexion: false,
-                type_alim: false,
-                proprietaire: false,
-                connected: device.connected,
-                iconPrefix: 'img/nebuleair/nebuleAir_',
-                rawDeviceData: device, // Store original data for side panel
-                openSidePanelFunction: (rawData, pdt, timespan, mes) => {
-                    openSidePanel_nebuleAir(rawData, pdt, timespan, mes);
-                },
-            };
+// Fonction pour sauvegarder un tableau dans le stockage local
+export function saveArrayToLocalStorage(key, array) {
+    localStorage.setItem(key, JSON.stringify(array)); // Convertit le tableau en JSON et le stocke
+}
+
+// Fonction pour récupérer un tableau depuis le stockage local
+export function getArrayFromLocalStorage(key) {
+    const storedArray = localStorage.getItem(key); // Récupère la chaîne JSON
+    return storedArray ? JSON.parse(storedArray) : []; // Convertit en tableau ou retourne un tableau vide
+}
+
+// Fonction pour ajouter un élément à un tableau dans le stockage local
+export function addItemToLocalStorageArray(key, item) {
+    const array = getArrayFromLocalStorage(key);
+    // Vérifier si l'élément existe déjà dans le tableau
+    if (!array.includes(item)) {
+        array.push(item);
+        saveArrayToLocalStorage(key, array);
+        console.log(`Ajout de ${item} au localStorage pour la clé ${key}`);
+    } else {
+        console.log(
+            `${item} existe déjà dans le localStorage pour la clé ${key}`
+        );
+    }
+}
+
+// Fonction pour supprimer un élément d'un tableau dans le stockage local
+export function removeItemFromLocalStorageArray(key, item) {
+    const array = getArrayFromLocalStorage(key);
+    const index = array.indexOf(item);
+    if (index > -1) {
+        array.splice(index, 1);
+        saveArrayToLocalStorage(key, array);
+        console.log(
+            `Suppression de ${item} du localStorage pour la clé ${key}`
+        );
+    } else {
+        console.log(
+            `${item} n'existe pas dans le localStorage pour la clé ${key}`
+        );
+    }
+}
+
+// String Formatting
+
+// Fonction pour formater les noms de lieux
+export function formatString(str) {
+    // Remplacement des underscores par des espaces
+    let formattedStr = str.replace(/_/g, ' ');
+
+    // Définition des consonnes et voyelles pour le traitement
+    const consonants = 'bcdfghjklmnpqrstvwxz';
+    const uppercaseVowels = 'AEIOUYÀÁÂÄÆÈÉÊËÌÍÎÏÒÓÔÖŒÙÚÛÜÝ';
+
+    // Ajout d'une apostrophe entre une consonne et une voyelle en majuscule
+    formattedStr = formattedStr.replace(
+        new RegExp(
+            `([${consonants}${consonants.toUpperCase()}])([${uppercaseVowels}])`,
+            'g'
+        ),
+        "$1'$2"
+    );
+
+    // Ajout d'une apostrophe entre une consonne et une voyelle en minuscule si pas d'apostrophe précédemment ajoutée
+    formattedStr = formattedStr.replace(/([^'\s-])([A-Z])/g, '$1 $2');
+
+    // Suppression des espaces superflus en début et fin de chaîne
+    formattedStr.trim();
+    return formattedStr;
+}
+
+// Fonction pour formater les noms des polluants avec les indices en HTML
+export function formatPollutantName(name) {
+    // Vérification de la validité de l'entrée
+    if (!name || typeof name !== 'string') {
+        console.warn('formatPollutantName received non-string value:', name);
+        return String(name || '');
+    }
+
+    // Remplacement des formules chimiques par leur version avec caractères Unicode
+    return name
+        .replace(/PM10/g, 'PM₁₀') // Doit être avant PM1 pour éviter les conflits
+        .replace(/PM2.5/g, 'PM₂.₅')
+        .replace(/PM1/g, 'PM₁')
+        .replace(/NO2/g, 'NO₂') // Dioxyde d'azote
+        .replace(/NOx/g, 'NOₓ') // Oxydes d'azote
+        .replace(/SO2/g, 'SO₂') // Dioxyde de soufre
+        .replace(/O3/g, 'O₃') // Ozone
+        .replace(/CO2/g, 'CO₂') // Dioxyde de carbone
+        .replace(/H2S/g, 'H₂S') // Sulfure d'hydrogène
+        .replace(/NH3/g, 'NH₃'); // Ammoniac
+}
+
+// Fonction de gestion d'horloge / Autorefresh
+
+export function updateTimeDisplay() {
+    const now = new Date(); // Récupération de la date et heure actuelles
+    const horlogeButton = document.getElementById('button_horloge'); // Récupération du bouton horloge
+
+    // Récupération du pas de temps actuellement sélectionné
+    const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
+
+    let displayText = ''; // Texte à afficher
+
+    switch (selectedTimeStep) {
+        case 'instantane':
+        case '2min':
+            // Affichage de l'heure actuelle pour le pas de temps de 2 minutes
+            displayText = now.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+            break;
+
+        case 'qh':
+            // Calcul du dernier quart d'heure terminé
+            const currentMinutes = now.getMinutes();
+            const lastQuarterHour = new Date(now);
+
+            // Détermination du dernier quart d'heure complet
+            if (currentMinutes < 15) {
+                // Si dans le premier quart, retour au dernier quart de l'heure précédente
+                lastQuarterHour.setHours(
+                    lastQuarterHour.getHours() - 1,
+                    45,
+                    0,
+                    0
+                );
+            } else if (currentMinutes < 30) {
+                // Entre 15-29 minutes, dernier quart était 0-15
+                lastQuarterHour.setMinutes(0, 0, 0);
+            } else if (currentMinutes < 45) {
+                // Entre 30-44 minutes, dernier quart était 15-30
+                lastQuarterHour.setMinutes(15, 0, 0);
+            } else {
+                // Entre 45-59 minutes, dernier quart était 30-45
+                lastQuarterHour.setMinutes(30, 0, 0);
+            }
+
+            const endOfLastQuarter = new Date(lastQuarterHour);
+            endOfLastQuarter.setMinutes(lastQuarterHour.getMinutes() + 15);
+
+            // Formatage de l'affichage avec l'intervalle de temps
+            displayText = `${lastQuarterHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${endOfLastQuarter.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+            break;
+
+        case 'h':
+            // Affichage de la dernière heure complète
+            const lastHour = new Date(now);
+            lastHour.setHours(lastHour.getHours() - 1, 0, 0, 0);
+            const nextHour = new Date(lastHour);
+            nextHour.setHours(lastHour.getHours() + 1);
+
+            displayText = `${lastHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - ${nextHour.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+            break;
+
+        case 'd':
+            // Affichage de la date d'hier
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            displayText = yesterday.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+            });
+            break;
+
+        default:
+            // Par défaut, affichage de l'heure actuelle
+            displayText = now.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+    }
+
+    horlogeButton.innerHTML = displayText; // Mise à jour de l'affichage
+}
+
+// Fonction pour configurer le rafraîchissement automatique des données
+export function setupAutoRefresh() {
+    // Nettoyage de tout intervalle de rafraîchissement existant
+    if (window.refreshInterval) {
+        clearInterval(window.refreshInterval);
+    }
+
+    // Récupération du pas de temps actuel
+    const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
+
+    // Détermination de l'intervalle de rafraîchissement en millisecondes
+    let refreshIntervalMs;
+    switch (selectedTimeStep) {
+        case 'instantane':
+        case '2min':
+            refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
+            break;
+        case 'qh':
+            refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
+            break;
+        case 'h':
+            refreshIntervalMs = 60 * 60 * 1000; // 1 heure
+            break;
+        case 'd':
+            refreshIntervalMs = 24 * 60 * 60 * 1000; // 1 jour
+            break;
+        default:
+            refreshIntervalMs = 5 * 60 * 1000; // Par défaut 5 minutes
+    }
+
+    console.log(
+        `Rafraîchissement automatique réglé sur ${refreshIntervalMs / 1000} secondes basé sur le pas de temps '${selectedTimeStep}'`
+    );
+
+    // Configuration de l'intervalle de rafraîchissement
+    window.refreshInterval = setInterval(() => {
+        // Vérification si un rafraîchissement est déjà en cours
+        if (window.isRefreshing) {
+            console.log('Un rafraîchissement est déjà en cours, attente...');
+            return;
+        }
+        window.isRefreshing = true;
+
+        console.log(
+            '⏰ Rafraîchissement automatique des données selon le pas de temps'
+        );
+
+        // Sauvegarde de l'état actuel avant le rafraîchissement
+        const currentDeviceId = globalSelectedDeviceId;
+        const sidePanelOpen =
+            document.getElementById('side-panel').style.display !== 'none';
+
+        // Sauvegarde des données actuelles de l'appareil si disponible
+        if (
+            currentDeviceId &&
+            window.deviceMarkers &&
+            window.deviceMarkers[currentDeviceId]
+        ) {
+            window.lastSelectedDeviceData =
+                window.deviceMarkers[currentDeviceId].data;
+        }
+
+        // Réinitialisation des marqueurs
+        window.deviceMarkers = {};
+        globalSelectedMarker = null;
+        globalSelectedText = null;
+
+        // Récupération et rafraîchissement des sources actives
+        const activeSources = getArrayFromLocalStorage(sources_local);
+        const refreshPromises = activeSources.map((source) => {
+            clearLayer(source);
+            return loadSource(source);
         });
-    } else if (source === 'atmosud_micro') {
-        // Format pour micro-stations AtmoSud
-        formattedData = data.map((device) => {
-            return {
-                id: device.id_site,
-                latitude: device.lat,
-                longitude: device.lon,
-                valeur_brute: parseFloat(device.valeur_brute),
-                valeur_corrige:
-                    device.valeur !== null ? parseFloat(device.valeur) : false,
-                source: 'atmosud_micro',
-                mesure: device.variable
-                    ? device.variable.toLowerCase()
-                    : polluant,
-                pas_de_temps: device.pas_de_temps
-                    ? device.pas_de_temps.toString()
-                    : pas_de_temps,
-                plage_historique: '24h', // Default value, can be adjusted
-                marque: device.marque_capteur || false,
-                modele: device.modele_capteur || false,
-                date_derniere_mesure: device.time || false,
-                id_campagne: false, // AtmoSud data appears not to have this field
-                date_mise_en_service: false,
-                date_fin_de_service: false,
-                type_connexion: false,
-                type_alim: false,
-                proprietaire: 'AtmoSud',
-                connected: true, // AtmoSud devices are considered connected if data is returned
-                iconPrefix: 'img/microStationsAtmoSud/microStationAtmoSud_',
-                rawDeviceData: device, // Store original data for side panel
-                openSidePanelFunction: (rawData, pdt, timespan, mes) => {
-                    openSidePanel_microStation(rawData, timespan, pdt, mes);
-                },
-            };
-        });
 
-        // Filter NebuleAir devices for 2min data if needed
-        if (pas_de_temps === '2min') {
-            formattedData = formattedData.filter(
-                (item) => item.modele === 'NebuleAir'
-            );
+        // Attente de la fin de tous les rafraîchissements
+        Promise.all(refreshPromises)
+            .then(() => {
+                // Mise à jour de l'affichage
+                updateTimeDisplay();
+                updateButtonDisplay();
+
+                // Restauration de l'état précédent si nécessaire
+                if (currentDeviceId && sidePanelOpen) {
+                    setTimeout(() => {
+                        findAndHighlightMarker(currentDeviceId);
+                    }, 1000);
+                }
+            })
+            .catch((error) => {
+                console.error('Erreur lors du rafraîchissement:', error);
+            })
+            .finally(() => {
+                window.isRefreshing = false;
+            });
+    }, refreshIntervalMs);
+}
+
+// Fonction pour obtenir les seuils appropriés pour un polluant donné
+export function getThresholdsForPollutant(pollutant) {
+    if (pollutant === 'pm10') {
+        return seuils_PM10;
+    } else if (pollutant === 'no2') {
+        return seuils_NO2_24h;
+    } else if (pollutant === 'o3') {
+        return seuilsO3_24h;
+    } else if (pollutant === 'so2') {
+        return seuilsSO2_24h;
+    } else {
+        return seuils_PM1_PM25;
+    }
+}
+
+// Fonction pour obtenir le code couleur en fonction de la valeur et du polluant
+export function getColorCodeForValue(value, pollutant) {
+    const thresholds = getThresholdsForPollutant(pollutant);
+    let colorCode = 'default';
+    const roundedValue = Math.round(parseFloat(value));
+
+    for (let key in thresholds) {
+        const min = thresholds[key].min;
+        const max = thresholds[key].max;
+
+        if (roundedValue >= min && roundedValue <= max) {
+            colorCode = thresholds[key].code;
+            break;
         }
     }
 
-    // Add color code based on pollution thresholds
-    formattedData.forEach((device) => {
-        // Set default icon
-        device.iconUrl = `${device.iconPrefix}default.png`;
-
-        if (device.connected) {
-            let roundedValue = Math.round(device.valeur_brute);
-
-            // Apply color coding by pollution level
-            if (
-                device.mesure === 'pm1' ||
-                device.mesure === 'pm25' ||
-                device.mesure === 'pm2.5'
-            ) {
-                for (let key in seuils_PM1_PM25) {
-                    let code = seuils_PM1_PM25[key].code;
-                    let min = seuils_PM1_PM25[key].min;
-                    let max = seuils_PM1_PM25[key].max;
-
-                    if (roundedValue >= min && roundedValue <= max) {
-                        device.iconUrl = `${device.iconPrefix}${code}.png`;
-                        break;
-                    }
-                }
-            } else if (device.mesure === 'pm10') {
-                for (let key in seuils_PM10) {
-                    let code = seuils_PM10[key].code;
-                    let min = seuils_PM10[key].min;
-                    let max = seuils_PM10[key].max;
-
-                    if (roundedValue >= min && roundedValue <= max) {
-                        device.iconUrl = `${device.iconPrefix}${code}.png`;
-                        break;
-                    }
-                }
-            }
-
-            // Calculate text size and position based on value
-            device.textSize = 32;
-            device.textXPosition = -10;
-            device.textYPosition = 38;
-
-            if (roundedValue >= 10) {
-                device.textSize = 25;
-                device.textXPosition = -5;
-                device.textYPosition = 32;
-            }
-
-            if (roundedValue >= 100) {
-                device.textSize = 20;
-                device.textXPosition = -4;
-                device.textYPosition = 26;
-            }
-        }
-    });
-
-    return formattedData;
+    return colorCode;
 }
 
-function format_graph_data(data, polluant_arr, source) {}
-
-function displayFormattedDataOnMap(formattedData, layer) {
-    // Clear existing markers from the layer
-    layer.clearLayers();
-
-    // Process each device and add markers
-    formattedData.forEach((device) => {
-        // Skip if not connected
-        if (!device.connected) return;
-
-        // Create the main icon marker
-        var icon_param = {
-            iconUrl: device.iconUrl,
-            iconSize: [50, 50],
-            iconAnchor: [5, 40],
-            popupAnchor: [0, -10],
-        };
-
-        var marker_icon = L.icon(icon_param);
-        let deviceMarker = L.marker([device.latitude, device.longitude], {
-            icon: marker_icon,
-        }).addTo(layer);
-
-        // Create text marker showing the value
-        let roundedValue = Math.round(device.valeur_brute);
-        var text_param = L.divIcon({
-            className: 'my-div-icon',
-            html:
-                '<div id="textDiv" style="font-size: ' +
-                device.textSize +
-                'px;">' +
-                roundedValue +
-                '</div>',
-            iconAnchor: [device.textXPosition, device.textYPosition],
-        });
-
-        let textMarker = L.marker([device.latitude, device.longitude], {
-            icon: text_param,
-        })
-            .on('click', function () {
-                // Handle marker selection
-                if (
-                    globalSelectedMarker &&
-                    globalSelectedMarker !== deviceMarker
-                ) {
-                    globalSelectedMarker.setZIndexOffset(0);
-                    globalSelectedMarker._icon.classList.remove(
-                        'marker-selected'
-                    );
-                }
-
-                if (globalSelectedText && globalSelectedText !== textMarker) {
-                    globalSelectedText.setZIndexOffset(0);
-                    globalSelectedText._icon.classList.remove(
-                        'marker-selected'
-                    );
-                }
-
-                // Highlight selected marker
-                deviceMarker.setZIndexOffset(1000);
-                textMarker.setZIndexOffset(1000);
-                deviceMarker._icon.classList.add('marker-selected');
-                textMarker._icon.classList.add('marker-selected');
-
-                // Update global references
-                globalSelectedMarker = deviceMarker;
-                globalSelectedText = textMarker;
-
-                console.log('Click on device: ' + device.id);
-
-                // Open appropriate side panel
-                if (device.source === 'nebuleair') {
-                    openSidePanel_nebuleAir(
-                        device.rawDeviceData,
-                        device.pas_de_temps,
-                        device.plage_historique,
-                        device.mesure
-                    );
-                } else if (device.source === 'atmosud_micro') {
-                    openSidePanel_microStation(
-                        device.rawDeviceData,
-                        device.plage_historique,
-                        device.pas_de_temps,
-                        device.mesure
-                    );
-                }
-            })
-            .addTo(layer);
-
-        // Add hover effect
-        function highlightMarker() {
-            deviceMarker.setZIndexOffset(1000);
-            textMarker.setZIndexOffset(1000);
-
-            // Show device info in tooltip
-            deviceInfo._div.querySelector('#device-name').textContent =
-                device.id;
-            deviceInfo._div.querySelector('#device-details').textContent =
-                `Type: ${device.modele}`;
-            deviceInfo._div.style.display = 'block';
-        }
-
-        function resetMarker() {
-            if (globalSelectedMarker !== deviceMarker) {
-                deviceMarker.setZIndexOffset(0);
-                textMarker.setZIndexOffset(0);
+// Fonction pour vérifier si une valeur est présente dans un objet
+export function isValueInObject(obj, value) {
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            if (obj[key] === value) {
+                return true;
             }
-            deviceInfo._div.style.display = 'none';
         }
+    }
+    return false;
+}
 
-        // Apply hover effects to both markers
-        deviceMarker
-            .on('mouseover', highlightMarker)
-            .on('mouseout', resetMarker);
-        textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
-    });
+// Fonction pour vérifier si un objet est vide
+export function isEmptyObject(obj) {
+    return Object.keys(obj).length === 0;
+}
+// Fonction pour ouvrir le side panel
+export function openSidePanelGeneric() {
+    //console.log("openSidePane_generic");
+    //side panel
+    // sur smartphone -> toute la place (col-12)
+    // sur ordi petit (sm) -> 6 colonnes
+    // sur grand écran (lg) -> 5 colonnes
+    const sidePanel = document.getElementById('side-panel');
+    const mapContainer = document.getElementById('map-container');
 
-    // Add the layer to the map
-    map.addLayer(layer);
+    sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
+    sidePanel.style.display = 'block';
+    //map
+    // sur smartphone -> disparait (col-0)
+    // sur ordi petit (sm) -> 6 colonnes
+    // sur grand écran (lg) -> 7 colonnes
+    mapContainer.classList.remove('col-12');
+    mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
+    mapContainer.style.paddingLeft = '10px';
+}
+
+//CLOSE SIDE PANEL
+export function closeSidePanel() {
+    const sidePanel = document.getElementById('side-panel');
+    const mapContainer = document.getElementById('map-container');
+
+    console.log('Closing side panel');
+    sidePanel.classList.remove('col-2', 'col-sm-4', 'col-lg-3');
+    sidePanel.style.display = 'none';
+    mapContainer.classList.remove('col-8', 'col-lg-9');
+    mapContainer.classList.add('col-12');
+    mapContainer.style.paddingLeft = '30px';
 }

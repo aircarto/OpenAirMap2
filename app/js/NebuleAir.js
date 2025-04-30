@@ -1,19 +1,18 @@
 // Récupération des données des capteurs NebuleAir
 // Cette fonction charge les données des capteurs NebuleAir et les affiche sur la carte
 
+import { nebuleairLayer } from '../app.js';
 import {
-    getArrayFromLocalStorage,
-    pasDeTempsLocal,
-    mesuresLocal,
-    getColorCodeForValue,
-    map,
-    openSidePanelGeneric,
-    nebuleairLayer,
-    seuils_PM10,
     formatPollutantName,
-} from '../app.js';
+    getArrayFromLocalStorage,
+    getColorCodeForValue,
+    openSidePanelGeneric,
+} from './utils.js';
+import { API_airCarto } from '../config.js';
+
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
+import { startSpinner, stopSpinner } from './spinnerManager.js';
 
 // Variables locales au module
 var state = {
@@ -29,8 +28,8 @@ var state = {
 // Fonction principale exportée
 export function loadNebuleAir() {
     nebuleairLayer.clearLayers();
-    var pas_de_temps = getArrayFromLocalStorage(pasDeTempsLocal);
-    var mesures = getArrayFromLocalStorage(mesuresLocal);
+    var pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
+    var mesures = getArrayFromLocalStorage('mesuresLocal');
 
     // Vérification si le polluant est supporté
     if (!['pm1', 'pm25', 'pm10'].includes(mesures[0])) {
@@ -51,7 +50,7 @@ export function loadNebuleAir() {
 
     $.ajax({
         method: 'GET',
-        url: 'https://api.aircarto.fr/capteurs/metadata?capteurType=NebuleAir',
+        url: `${API_airCarto.url_base}${API_airCarto.url_capteurs_metadata}?capteurType=NebuleAir`,
         success: function (data) {
             console.log('NebuleAir AirCarto : ', data);
             var displayed = data.filter((e) => e.displayMap == true);
@@ -64,30 +63,11 @@ export function loadNebuleAir() {
 
                 if (value.connected) {
                     icon_param.iconSize = [50, 50];
-                    if (mesures == 'pm1' || mesures == 'pm25') {
-                        let valueToCheck = value[mesure_maj_pas_de_temps];
-                        let colorCode = getColorCodeForValue(
-                            valueToCheck,
-                            mesures
-                        );
-                        if (colorCode !== 'default') {
-                            icon_param.iconUrl =
-                                'img/nebuleair/nebuleAir_' + colorCode + '.png';
-                        }
-                    }
-                    if (mesures == 'pm10') {
-                        for (let key in seuils_PM10) {
-                            let code = seuils_PM10[key].code;
-                            let min = seuils_PM10[key].min;
-                            let max = seuils_PM10[key].max;
-                            let value_rounded = Math.round(
-                                value[mesure_maj_pas_de_temps]
-                            );
-                            if (value_rounded >= min && value_rounded <= max) {
-                                icon_param.iconUrl =
-                                    'img/nebuleair/nebuleAir_' + code + '.png';
-                            }
-                        }
+                    let valueToCheck = value[mesure_maj_pas_de_temps];
+                    let colorCode = getColorCodeForValue(valueToCheck, mesures);
+                    if (colorCode !== 'default') {
+                        icon_param.iconUrl =
+                            'img/nebuleair/nebuleAir_' + colorCode + '.png';
                     }
                 }
 
@@ -253,7 +233,6 @@ export function loadNebuleAir() {
                         .on('mouseout', resetMarker);
                 }
             });
-            map.addLayer(nebuleairLayer);
         },
         error: function (xhr, status, error) {
             console.error('Error:', error);
@@ -342,6 +321,8 @@ export function retreive_historiqueData_nebuleAir(
         return;
     }
 
+    startSpinner('Chargement des données historiques...');
+
     const start = Date.now();
     const chartDiv = document.getElementById('chartdiv_sensor');
     if (!chartDiv) {
@@ -370,9 +351,9 @@ export function retreive_historiqueData_nebuleAir(
 
     var full_url;
     if (useCustomRange && custom_start && custom_end) {
-        full_url = `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=${custom_start}&end=${custom_end}&freq=${api_pas_de_temps}`;
+        full_url = `${API_airCarto.url_base}${API_airCarto.url_capteurs_data}?capteurID=${sensorId}&start=${custom_start}&end=${custom_end}&freq=${api_pas_de_temps}`;
     } else {
-        full_url = `https://api.aircarto.fr/capteurs/dataNebuleAir?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${api_pas_de_temps}`;
+        full_url = `${API_airCarto.url_base}${API_airCarto.url_capteurs_data}?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${api_pas_de_temps}`;
     }
 
     console.log("URL de l'API:", full_url);
@@ -425,6 +406,7 @@ export function retreive_historiqueData_nebuleAir(
             });
         },
         error: function (xhr, status, error) {
+            stopSpinner();
             console.error('Erreur lors de la récupération des données:', error);
             console.error('Status:', status);
             console.error('Réponse:', xhr.responseText);
@@ -525,6 +507,7 @@ function createSeries(chart, root, pollutant, axes, data) {
 
     series.strokes.template.setAll({
         strokeWidth: 2,
+        strokeDasharray: [10, 5],
     });
 
     series.data.setAll(dataPoints);
@@ -596,7 +579,7 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
         const availablePollutants = getAvailablePollutants(data);
 
         // Création des séries
-        const allSeries = availablePollutants
+        availablePollutants
             .filter((pollutant) => {
                 const polluantCompare = pollutant
                     .toLowerCase()
@@ -607,11 +590,9 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
                 createSeries(chart, window.amchart_root, pollutant, axes, data)
             );
 
-        // Configuration de la légende
-        // configureLegend(chart, window.amchart_root, allSeries, mesuresArray);
-
         // Animation finale
         chart.appear(1000, 100);
+        stopSpinner();
     } catch (error) {
         console.error('Erreur lors de la création du graphique:', error);
         // Gestion des erreurs à implémenter selon les besoins

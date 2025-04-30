@@ -3,18 +3,17 @@
  * Ce module gère l'affichage et l'interaction avec les stations de référence AtmoSud
  */
 
+import { atmoRefLayer } from '../app.js';
 import {
-    getArrayFromLocalStorage,
-    pasDeTempsLocal,
-    mesuresLocal,
-    getColorCodeForValue,
-    map,
-    openSidePanelGeneric,
-    atmoRefLayer,
     formatPollutantName,
-} from '../app.js';
+    getArrayFromLocalStorage,
+    getColorCodeForValue,
+    openSidePanelGeneric,
+} from './utils.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
+import { startSpinner, stopSpinner } from './spinnerManager.js';
+import { API_atmoSud } from '../config.js';
 
 // Définition des couleurs pour les polluants
 const pollutantColors = {
@@ -172,36 +171,6 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
     };
 }
 
-// function configureLegend(chart, root, allSeries) {
-//     const legend = chart.children.push(
-//         am5.Legend.new(root, {
-//             centerX: am5.percent(50),
-//             x: am5.percent(50),
-//             y: am5.percent(95),
-//             layout: am5.GridLayout.new(root, {
-//                 maxColumns: 2,
-//                 fixedWidthGrid: true,
-//             }),
-//             paddingTop: 10,
-//             paddingBottom: 10,
-//             marginTop: 10,
-//             marginBottom: 10,
-//         })
-//     );
-
-//     legend.itemContainers.template.events.on('click', function (ev) {
-//         const clickedSeries = ev.target.dataItem.dataContext;
-//         const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
-
-//         if (seriesInfo) {
-//             seriesInfo.series.set('visible', !seriesInfo.series.get('visible'));
-//         }
-//     });
-
-//     legend.data.setAll(chart.series.values);
-//     return legend;
-// }
-
 /**
  * Fonction principale pour charger les stations de référence AtmoSud
  * Récupère les données des stations et les affiche sur la carte
@@ -222,13 +191,13 @@ export function loadAtmoSudStationsRef() {
     window.atmoRefLayer.clearLayers();
 
     // S'assurer que la couche est sur la carte
-    if (!map.hasLayer(window.atmoRefLayer)) {
+    if (!window.atmoRefLayer) {
         console.log('Ajout de la couche atmoRefLayer à la carte...');
-        map.addLayer(window.atmoRefLayer);
+        window.atmoRefLayer = atmoRefLayer;
         console.log('Couche atmoRefLayer ajoutée à la carte');
     }
 
-    state.pasDeTemps = getArrayFromLocalStorage(pasDeTempsLocal);
+    state.pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
 
     // Conversion du pas de temps pour l'API AtmoSud
     switch (state.pasDeTemps[0]) {
@@ -247,7 +216,7 @@ export function loadAtmoSudStationsRef() {
     }
 
     // Récupération et conversion des mesures
-    const mesure = getArrayFromLocalStorage(mesuresLocal);
+    const mesure = getArrayFromLocalStorage('mesuresLocal');
     let mesureAtmo = mesure[0];
     if (mesure[0] === 'pm25') {
         mesureAtmo = 'pm2.5';
@@ -268,7 +237,7 @@ export function loadAtmoSudStationsRef() {
 
     // Construction de l'URL pour la première requête API
     const fullUrlStations = `
-        https://preprod-api.atmosud.org/observations/stations?
+        ${API_atmoSud.url_base}${API_atmoSud.url_stations}?
         format=json&
         nom_polluant=${mesureAtmo}&
         delais=${'64'}&
@@ -315,7 +284,7 @@ export function loadAtmoSudStationsRef() {
 
             // Construction de l'URL pour la deuxième requête API
             const fullUrlDerniere = `
-                https://preprod-api.atmosud.org/observations/stations/mesures/derniere?
+                ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
                 format=json&
                 nom_polluant=${mesureAtmo}&
                 temporalite=${state.pasDeTempsAtmo}&
@@ -378,9 +347,9 @@ export function loadAtmoSudStationsRef() {
             }
 
             // S'assurer que la couche est sur la carte
-            if (!map.hasLayer(window.atmoRefLayer)) {
+            if (!window.atmoRefLayer) {
                 console.log('Ajout de la couche atmoRefLayer à la carte...');
-                map.addLayer(window.atmoRefLayer);
+                window.atmoRefLayer = atmoRefLayer;
                 console.log('Couche atmoRefLayer ajoutée à la carte');
             }
         })
@@ -393,11 +362,11 @@ export function loadAtmoSudStationsRef() {
             ) {
                 createDefaultMarkers();
                 // S'assurer que la couche est sur la carte
-                if (!map.hasLayer(window.atmoRefLayer)) {
+                if (!window.atmoRefLayer) {
                     console.log(
                         'Ajout de la couche atmoRefLayer à la carte...'
                     );
-                    map.addLayer(window.atmoRefLayer);
+                    window.atmoRefLayer = atmoRefLayer;
                     console.log('Couche atmoRefLayer ajoutée à la carte');
                 }
             }
@@ -633,7 +602,7 @@ function setupMarkerEvents(stationMarker, textMarker, value, mesure) {
         openSidePanel_stationRef(
             value.id_station,
             value.nom_station,
-            getArrayFromLocalStorage(mesuresLocal)
+            getArrayFromLocalStorage('mesuresLocal')
         );
     };
 
@@ -725,7 +694,7 @@ function createDefaultMarkers() {
                 openSidePanel_stationRef(
                     station.id_station,
                     station.nom_station,
-                    getArrayFromLocalStorage(mesuresLocal)
+                    getArrayFromLocalStorage('mesuresLocal')
                 );
             });
 
@@ -763,7 +732,7 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
     );
 
     // Récupération des images de la station Ne fonctionne pas pour toutes les stations
-    const urlAtmoJsonAPI = `https://www.atmosud.org/jsonapi/taxonomy_term/station?filter[field_station_id_station]=${window.globalSelectedDeviceId}&include=field_station_pictures`;
+    const urlAtmoJsonAPI = `${API_atmoSud.url_base}${API_atmoSud.url_taxonomy_station}?filter[field_station_id_station]=${window.globalSelectedDeviceId}&include=field_station_pictures`;
     console.log('URL originale:', urlAtmoJsonAPI);
 
     // Utilisation de corsproxy.io avec un encodage correct pour développement
@@ -880,6 +849,9 @@ export function retreiveHistoriqueDataStationRef(
         return;
     }
 
+    // Démarrage du spinner
+    startSpinner('Chargement des données historiques...');
+
     console.log(
         '%cretreiveHistoriqueDataStationRef',
         'color: yellow; font-style: bold; background-color: brown;padding: 2px'
@@ -938,8 +910,7 @@ export function retreiveHistoriqueDataStationRef(
     }
 
     // Construction de l'URL avec les paramètres
-    let fullUrl =
-        `https://preprod-api.atmosud.org/observations/stations/mesures?
+    let fullUrl = `${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures}?
         format=json&
         station_id=${stationId}&
         nom_polluant=${state.mesuresArray.join(',')}&
@@ -993,6 +964,7 @@ export function retreiveHistoriqueDataStationRef(
 
             if (!data.mesures || data.mesures.length === 0) {
                 console.warn('Aucune donnée disponible');
+                stopSpinner();
                 return;
             }
 
@@ -1148,10 +1120,12 @@ export function retreiveHistoriqueDataStationRef(
 
                 // Animation
                 chart.appear(1000, 100);
+                stopSpinner();
             });
         })
         .catch((error) => {
             console.error('Erreur lors de la récupération des données:', error);
+            stopSpinner();
             // Nettoyage en cas d'erreur
             if (window.amchart_root) {
                 try {

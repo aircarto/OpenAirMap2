@@ -1,23 +1,14 @@
-/*
-Récupération des données des signalements
-
-https://www.signalair.eu/fr/flux/[format]/[id]/[date_deb]/[date_fin].
-
-Odeurs :gq1jrnp9
-Bruits : yq7b5jal
-Visuels : 28qg73y9
-Brûlages : yib5aa1n
-
-Par défaut on affiche les trois derniers jours
-
-*/
-
-import { map, signalair_layer, openSidePanelGeneric } from '../app.js';
-import { isSourceActive } from './dataSourceManager.js';
+import { map, signalair_layer } from '../app.js';
+import { openSidePanelGeneric } from './utils.js';
 
 // Configuration des types de signalements
 const signalair_json = {
-    odeur: { name: 'odeur', code: 'odeur', url: 'gq1jrnp9', img: 'odeur.png' },
+    odeur: {
+        name: 'odeur',
+        code: 'odeur',
+        url: 'gq1jrnp9',
+        img: 'odeur.png',
+    },
     bruits: {
         name: 'bruit',
         code: 'bruit',

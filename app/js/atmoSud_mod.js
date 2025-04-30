@@ -1,6 +1,5 @@
 import {
     modelisationPMAtmoSud_layer,
-    map,
     modelisationICAIRAtmoSud_layer,
 } from '../app.js';
 import { toastManager, createCustomToast } from './toaster.js';
@@ -228,10 +227,6 @@ export function loadModPM(compoundUpper) {
     // Vérification finale
     console.log('Vérification finale de la couche');
     console.log(
-        'La couche est-elle sur la carte?',
-        map.hasLayer(modelisationPMAtmoSud_layer)
-    );
-    console.log(
         'Nombre total de couches dans modelisationPMAtmoSud_layer:',
         modelisationPMAtmoSud_layer.getLayers().length
     );
@@ -242,8 +237,9 @@ export function loadModPM(compoundUpper) {
     // Ajustement de la vue de la carte pour s'assurer que la zone est visible
     const southWest = L.latLng(43.296482, 5.36978); // Centre de la région PACA
     const northEast = L.latLng(44.5, 7.5); // Coin nord-est de la région
-    map.fitBounds(L.latLngBounds(southWest, northEast));
+    // L'ajustement de la vue sera géré par le composant parent qui a accès à map
 }
+
 export function loadModIcair() {
     console.log(
         '%cloadModIcair',
@@ -290,5 +286,6 @@ export function loadModIcair() {
         ).addTo(modelisationICAIRAtmoSud_layer);
     }
 }
+
 // si il est H entre +0 et +15 min En cas de pas de temps 15 min pour modélisation horaire on affiche l'heure précédente h23
 // si il est H entre +16 En cas de pas de temps 15 min pour modélisation horaire on affiche l'heure suivante h24

@@ -119,14 +119,6 @@ class PanelManager {
     }
 
     openPanel(source, deviceId, data) {
-        console.log(
-            'Opening panel for source:',
-            source,
-            'deviceId:',
-            deviceId,
-            'data:',
-            data
-        );
         if (!isSourceActive(source)) {
             console.log('Source non active:', source);
             return;
@@ -139,7 +131,6 @@ class PanelManager {
 
         // Mise à jour de la source courante
         this.currentSource = source;
-        console.log('DATA: ', data);
 
         // Réinitialisation de l'état des boutons de polluants
         Object.keys(this.buttons.pollutant).forEach((key) => {
@@ -178,7 +169,6 @@ class PanelManager {
                         const polluantMesure = variablesMesure.includes(
                             polluantMapping[key]
                         );
-                        console.log('polluantMesure: ', polluantMesure);
                         this.buttons.pollutant[key].disabled = !polluantMesure;
                         this.buttons.pollutant[key].title = polluantMesure
                             ? ''
@@ -628,17 +618,6 @@ class PanelManager {
         startDateTime = null,
         endDateTime = null
     ) {
-        console.log(
-            'Mise à jour des données historiques pour la source:',
-            source,
-            {
-                useCustomRange,
-                startDateTime,
-                endDateTime,
-                state: this.state[source],
-            }
-        );
-
         if (!this.state[source]) {
             console.error('État invalide pour la source:', source);
             return;
