@@ -242,19 +242,28 @@ export async function loadAtmoSudMicroStation() {
             // On prépare l'affichage de la valeur
             let roundedvalue = Math.round(parseFloat(value['valeur_ref']));
             var textSize = 32;
-            var x_position = -10;
-            var y_position = 41;
+            var x_position = -12;
+            var y_position = 40;
+            var checkPosition = 'right: -15px;';
 
             // On ajuste la taille du texte selon la valeur
             if (roundedvalue >= 10) {
                 textSize = 25;
-                x_position = -5;
-                y_position = 32;
+                x_position = -12;
+                y_position = 35;
+                checkPosition = 'right: -12px;';
             }
             if (roundedvalue >= 100) {
                 textSize = 20;
-                x_position = -4;
-                y_position = 26;
+                x_position = -10;
+                y_position = 32;
+                checkPosition = 'right: -10px;';
+            }
+            if (roundedvalue >= 1000) {
+                textSize = 16;
+                x_position = -8;
+                y_position = 30;
+                checkPosition = 'right: -8px;';
             }
 
             // On crée le texte qui sera affiché sur le marqueur
@@ -263,10 +272,12 @@ export async function loadAtmoSudMicroStation() {
                 html:
                     '<div id="textDiv" style="font-size: ' +
                     textSize +
-                    'px; position: relative;">' +
+                    'px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%;">' +
                     roundedvalue +
                     (value['valeur'] !== null
-                        ? '<i class="bi bi-check-circle-fill" style="position: absolute; top: -10px; right: -15px; font-size: 12px; color: #28a745;"></i>'
+                        ? '<i class="bi bi-check-circle-fill" style="position: absolute; top: -10px; ' +
+                          checkPosition +
+                          ' font-size: 12px; color: #28a745;"></i>'
                         : '') +
                     '</div>',
                 iconAnchor: [x_position, y_position],

@@ -150,6 +150,7 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
+                // fillOpacity: 0.2,
             }),
         })
     );
@@ -1114,9 +1115,6 @@ export function retreiveHistoriqueDataStationRef(
                     );
                     allSeries.push(series);
                 });
-
-                // Configuration de la légende
-                // configureLegend(chart, window.amchart_root, allSeries);
 
                 // Animation
                 chart.appear(1000, 100);
