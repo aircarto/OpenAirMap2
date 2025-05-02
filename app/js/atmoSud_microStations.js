@@ -115,7 +115,6 @@ export async function loadAtmoSudMicroStation() {
             &type_capteur=true
             &variable=${mesures_atmo}
             &aggregation=${pas_de_temps_atmo}
-            &nb_dec=1
         `.replace(/\s+/g, '');
 
         // On appelle l'API et on attend la réponse
@@ -123,7 +122,12 @@ export async function loadAtmoSudMicroStation() {
         console.log(`${full_url_derniere} :`, data);
         isFetching = false; // On indique que le chargement est terminé
 
-        let fullUrlCapteurSite = `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?format=json`;
+        let fullUrlCapteurSite =
+            `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?
+            format=json
+            &variable=${mesures_atmo}
+            &actifs=181
+        `.replace(/\s+/g, '');
         let dataCapteurSite = await fetchAPI(fullUrlCapteurSite);
         console.log(`${fullUrlCapteurSite} : `, dataCapteurSite);
         // On vérifie que les données reçues sont bien un tableau
@@ -139,6 +143,7 @@ export async function loadAtmoSudMicroStation() {
             if (selectedPollutant === 'pm25') {
                 selectedPollutant = 'pm2.5';
             }
+            //ABA- Todo: Appliquer le marqueur par defaut initialement à tous les capteurs pour ensuite les modifier en fonction de la valeur mesurée comme pour les Stations de référence
             dataCapteurSite.forEach((capteur) => {
                 if (capteur.id_site === item.id_site) {
                     // Filter capteur.variables to only keep pollutants from allPollutants
@@ -856,7 +861,7 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
     series.strokes.template.setAll({
         strokeWidth: 2,
         stroke: am5.color(color),
-        ...(type === 'brute' && { strokeDasharray: [10, 5] }),
+        ...(type === 'brute' && { strokeDasharray: [5, 5] }),
     });
 
     series.data.setAll(data);
@@ -874,6 +879,7 @@ export { pas_de_temps_chart, historique_chart, mesures_array };
 
 // Fonction utilitaire pour les appels API
 async function fetchAPI(url, options = {}) {
+    startSpinner('Chargement des données...');
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -889,11 +895,12 @@ async function fetchAPI(url, options = {}) {
         // Validation des données
         if (!data) {
             throw new Error("Aucune donnée reçue de l'API");
-            stopSpinner();
         }
+        stopSpinner();
 
         return data;
     } catch (error) {
+        stopSpinner();
         console.error("Erreur lors de l'appel API:", error);
         showErrorNotification(error.message);
         throw error;

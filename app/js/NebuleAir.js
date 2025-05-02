@@ -517,7 +517,7 @@ function createSeries(chart, root, pollutant, axes, data) {
 
     series.strokes.template.setAll({
         strokeWidth: 2,
-        strokeDasharray: [10, 5],
+        strokeDasharray: [5, 5],
     });
 
     series.data.setAll(dataPoints);

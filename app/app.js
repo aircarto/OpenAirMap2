@@ -98,14 +98,6 @@ const baseLayers = {
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         pane: 'tilePane',
     }),
-    'Noir et blanc': L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        {
-            attribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            pane: 'tilePane',
-        }
-    ),
 };
 
 // Création d'un groupe pour les fonds de carte
@@ -767,7 +759,8 @@ function updateButtonDisplay() {
     document
         .querySelector('#dropdown_mesures')
         .closest('.dropdown')
-        .querySelector('.selected-option').innerHTML = mesureName;
+        .querySelector('.selected-option').innerHTML =
+        formatPollutantName(mesureName);
 
     // Mise à jour du bouton des pas de temps
     const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
