@@ -47,11 +47,11 @@ const card2_link = document.getElementById('card2_link');
 export async function loadAtmoSudMicroStation() {
     try {
         // On vérifie si un chargement est déjà en cours pour éviter les doublons
-        if (isFetching) {
-            console.log('Un chargement est déjà en cours, on attend...');
-            return;
-        }
-        isFetching = true; // On indique qu'un chargement commence
+        // if (isFetching) {
+        //     console.log('Un chargement est déjà en cours, on attend...');
+        //     return;
+        // }
+        // isFetching = true; // On indique qu'un chargement commence
 
         // On nettoie la carte en enlevant tous les marqueurs existants
         atmoMicroLayer.clearLayers();

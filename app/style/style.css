@@ -52,6 +52,7 @@ body {
     transform: translateX(
         -50%
     ); /* Adjust position to fully center the button */
+    background-color: transparent;
 
     bottom: 15px;
     z-index: 1000;
