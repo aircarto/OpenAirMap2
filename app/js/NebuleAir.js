@@ -445,12 +445,22 @@ function configureAxes(chart, root, baseInterval) {
                 minorGridEnabled: true,
             }),
             tooltip: am5.Tooltip.new(root, {}),
+            dateFormatter: {
+                format: function (date) {
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1)
+                        .toString()
+                        .padStart(2, '0');
+                    return `${day}/${month}`;
+                },
+            },
         })
     );
 
     const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {}),
+            numberFormat: `#.#  µg/m³`,
             min: 0,
         })
     );

@@ -90,7 +90,7 @@ function createChart(root) {
     );
 }
 
-function configureAxes(chart, root, baseInterval) {
+function configureAxes(chart, root, baseInterval, unite) {
     const xAxis = chart.xAxes.push(
         am5xy.DateAxis.new(root, {
             maxDeviation: 0.2,
@@ -102,15 +102,14 @@ function configureAxes(chart, root, baseInterval) {
                 minorGridEnabled: true,
             }),
             tooltip: am5.Tooltip.new(root, {}),
-            dateFormats: {
-                minute: 'HH:mm',
-                hour: 'HH:mm',
-                day: 'dd/MM HH:mm',
-            },
-            periodChangeDateFormats: {
-                minute: 'HH:mm',
-                hour: 'HH:mm',
-                day: 'dd/MM HH:mm',
+            dateFormatter: {
+                format: function (date) {
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1)
+                        .toString()
+                        .padStart(2, '0');
+                    return `${day}/${month}`;
+                },
             },
         })
     );
@@ -119,6 +118,7 @@ function configureAxes(chart, root, baseInterval) {
         am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {}),
             min: 0,
+            numberFormat: `#.#  ${unite}`,
         })
     );
 
@@ -974,6 +974,7 @@ export function retreiveHistoriqueDataStationRef(
 
             // Traitement des données
             data.mesures.forEach((item) => {
+                // console.log('item', item);
                 let nomPolluant;
                 const labelLower = item.label_polluant.toLowerCase();
 
@@ -1037,6 +1038,9 @@ export function retreiveHistoriqueDataStationRef(
                 seriesData[polluant].data.sort((a, b) => a.date - b.date);
             });
 
+            // Récupération de l'unité de mesure
+            let unite = data.mesures[0].unite;
+
             // Création du graphique
             am5.ready(function () {
                 // Vérification que l'élément existe toujours
@@ -1097,7 +1101,8 @@ export function retreiveHistoriqueDataStationRef(
                 const axes = configureAxes(
                     chart,
                     window.amchart_root,
-                    baseIntervalConfig
+                    baseIntervalConfig,
+                    unite
                 );
 
                 // Configuration du curseur

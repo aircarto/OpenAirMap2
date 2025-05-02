@@ -645,6 +645,9 @@ export async function retreive_historiqueData_microStation(
             };
         }
 
+        // Récupération de l'unité de mesure
+        let unite = data[0].unite;
+
         // Initialisation du graphique avec amCharts 5
 
         am5.ready(function () {
@@ -673,7 +676,8 @@ export async function retreive_historiqueData_microStation(
             const axes = configureAxes(
                 chart,
                 window.amchart_root,
-                baseIntervalConfig
+                baseIntervalConfig,
+                unite
             );
             configureCursor(chart, window.amchart_root);
 
@@ -783,7 +787,7 @@ function createChart(root) {
 }
 
 // Configuration des axes
-function configureAxes(chart, root, baseInterval) {
+function configureAxes(chart, root, baseInterval, unite) {
     const xAxis = chart.xAxes.push(
         am5xy.DateAxis.new(root, {
             maxDeviation: 0.2,
@@ -795,15 +799,14 @@ function configureAxes(chart, root, baseInterval) {
                 minorGridEnabled: true,
             }),
             tooltip: am5.Tooltip.new(root, {}),
-            dateFormats: {
-                minute: 'HH:mm',
-                hour: 'HH:mm',
-                day: 'dd/MM HH:mm',
-            },
-            periodChangeDateFormats: {
-                minute: 'HH:mm',
-                hour: 'HH:mm',
-                day: 'dd/MM HH:mm',
+            dateFormatter: {
+                format: function (date) {
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1)
+                        .toString()
+                        .padStart(2, '0');
+                    return `${day}/${month}`;
+                },
             },
         })
     );
@@ -811,6 +814,7 @@ function configureAxes(chart, root, baseInterval) {
     const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {}),
+            numberFormat: `#.#  ${unite}`,
             min: 0,
         })
     );
