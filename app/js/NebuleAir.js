@@ -1,7 +1,7 @@
 // Récupération des données des capteurs NebuleAir
 // Cette fonction charge les données des capteurs NebuleAir et les affiche sur la carte
 
-import { nebuleairLayer } from '../app.js';
+import { nebuleairLayer } from './layers.js';
 import {
     formatPollutantName,
     getArrayFromLocalStorage,

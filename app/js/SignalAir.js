@@ -1,4 +1,5 @@
-import { map, signalair_layer } from '../app.js';
+import { signalair_layer } from './layers.js';
+import { map } from './mapConfig.js';
 import { openSidePanelGeneric } from './utils.js';
 
 // Configuration des types de signalements

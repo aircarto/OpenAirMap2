@@ -4,6 +4,9 @@ import {
     seuilsO3_24h,
     seuilsSO2_24h,
     seuils_PM1_PM25,
+    sources,
+    mesures,
+    pas_de_temps,
 } from './appConfig.js';
 
 // Local storage utils
@@ -98,7 +101,8 @@ export function formatPollutantName(name) {
         .replace(/O3/g, 'O₃') // Ozone
         .replace(/CO2/g, 'CO₂') // Dioxyde de carbone
         .replace(/H2S/g, 'H₂S') // Sulfure d'hydrogène
-        .replace(/NH3/g, 'NH₃'); // Ammoniac
+        .replace(/NH3/g, 'NH₃') // Ammoniac
+        .replace(/C6H6/g, 'C₆H₆'); // Benzène
 }
 
 // Fonction de gestion d'horloge / Autorefresh
@@ -365,4 +369,36 @@ export function closeSidePanel() {
     mapContainer.classList.remove('col-8', 'col-lg-9');
     mapContainer.classList.add('col-12');
     mapContainer.style.paddingLeft = '30px';
+}
+
+/**
+ * Initialise les valeurs par défaut dans le localStorage
+ */
+export function initializeDefaultValues() {
+    // Initialiser les sources actives
+    if (!localStorage.getItem('sources_local')) {
+        const defaultSources = Object.values(sources)
+            .filter((source) => source.activated)
+            .map((source) => source.code);
+        localStorage.setItem('sources_local', JSON.stringify(defaultSources));
+    }
+
+    // Initialiser la mesure sélectionnée
+    if (!localStorage.getItem('mesuresLocal')) {
+        const defaultMeasure =
+            Object.values(mesures).find((measure) => measure.activated)?.code ||
+            'pm1';
+        localStorage.setItem('mesuresLocal', JSON.stringify([defaultMeasure]));
+    }
+
+    // Initialiser le pas de temps sélectionné
+    if (!localStorage.getItem('pasDeTempsLocal')) {
+        const defaultTimeStep =
+            Object.values(pas_de_temps).find((timeStep) => timeStep.activated)
+                ?.code || '2min';
+        localStorage.setItem(
+            'pasDeTempsLocal',
+            JSON.stringify([defaultTimeStep])
+        );
+    }
 }

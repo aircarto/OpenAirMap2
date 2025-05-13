@@ -3,7 +3,7 @@
  * Ce module gère l'affichage et l'interaction avec les stations de référence AtmoSud
  */
 
-import { atmoRefLayer } from '../app.js';
+import { atmoRefLayer } from './layers.js';
 import {
     formatPollutantName,
     getArrayFromLocalStorage,
@@ -283,12 +283,13 @@ export function loadAtmoSudStationsRef() {
             // Création des marqueurs par défaut pour toutes les stations actives
             createDefaultMarkers();
 
-            // Construction de l'URL pour la deuxième requête API
+            // Construction de l'URL pour la deuxième requête API   ABA- Delais 86 test pour Benzène
             const fullUrlDerniere = `
                 ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
                 format=json&
                 nom_polluant=${mesureAtmo}&
                 temporalite=${state.pasDeTempsAtmo}&
+                delais=${'86'}&
                 download=false
             `.replace(/\s+/g, '');
 
@@ -864,7 +865,7 @@ export function retreiveHistoriqueDataStationRef(
         mesuresArray,
         addMesure,
     });
-    const start = Date.now();
+    // const start = Date.now();
 
     // Nettoyage complet du graphique précédent
     const chartDiv = document.getElementById('chartdiv_sensor');
@@ -977,7 +978,6 @@ export function retreiveHistoriqueDataStationRef(
                 // console.log('item', item);
                 let nomPolluant;
                 const labelLower = item.label_polluant.toLowerCase();
-
                 if (
                     labelLower.includes('pm10') ||
                     labelLower.includes('particules en suspension <10 µm')
@@ -1008,6 +1008,16 @@ export function retreiveHistoriqueDataStationRef(
                     labelLower.includes('dioxyde de soufre')
                 ) {
                     nomPolluant = 'so2';
+                } else if (
+                    labelLower.includes('h2s') ||
+                    labelLower.includes('sulfure dhydrogène')
+                ) {
+                    nomPolluant = 'h2s';
+                } else if (
+                    labelLower.includes('c6h6') ||
+                    labelLower.includes('benzene')
+                ) {
+                    nomPolluant = 'c6h6';
                 }
 
                 if (nomPolluant && state.mesuresArray.includes(nomPolluant)) {

@@ -1,7 +1,7 @@
 // Récupération des données des micro-stations AtmoSud
 // Cette fonction charge les données des micro-stations AtmoSud et les affiche sur la carte
 
-import { atmoMicroLayer } from '../app.js';
+import { atmoMicroLayer } from './layers.js';
 import {
     formatPollutantName,
     getArrayFromLocalStorage,
@@ -89,7 +89,7 @@ export async function loadAtmoSudMicroStation() {
 
         // On récupère les polluants que l'utilisateur veut voir
         var mesures = getArrayFromLocalStorage('mesuresLocal');
-        if (['so2', 'nh3', 'o3', 'h2s'].includes(mesures[0])) {
+        if (['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(mesures[0])) {
             console.log('#########################');
             console.log('mesure non supportée :' + mesures[0]);
             console.log('#########################');

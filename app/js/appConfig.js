@@ -21,6 +21,7 @@ export const mesures = {
     o3: { name: 'O3', code: 'o3', activated: false }, // Ozone
     h2s: { name: 'H2S', code: 'h2s', activated: false }, // Sulfure d'hydrogène
     nh3: { name: 'NH3', code: 'nh3', activated: false }, // Ammoniac
+    c6h6: { name: 'C6H6', code: 'c6h6', activated: false }, // Benzène
 };
 
 export const sources = {

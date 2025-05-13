@@ -1,7 +1,7 @@
 import {
     modelisationPMAtmoSud_layer,
     modelisationICAIRAtmoSud_layer,
-} from '../app.js';
+} from './layers.js';
 import { toastManager, createCustomToast } from './toaster.js';
 
 // Définition de la projection EPSG:2154 (Lambert 93)
