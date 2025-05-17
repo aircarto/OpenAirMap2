@@ -17,17 +17,52 @@ export const card2_button = document.getElementById('card2_button');
 export const card2_link = document.getElementById('card2_link');
 export const mapContainer = document.getElementById('map-container');
 
+// Variables globales pour l'état du side panel
+let sidePanelState = {
+    isOpen: false,
+    isExpanded: false,
+};
+
+/**
+ * Met à jour l'état du panneau latéral
+ * @param {boolean} isOpen - Si le panneau est ouvert
+ * @param {boolean} isExpanded - Si le panneau est agrandi
+ */
+export function updatePanelState(isOpen, isExpanded) {
+    sidePanelState.isOpen = isOpen;
+    sidePanelState.isExpanded = isExpanded;
+    updateButtonsState();
+}
+
 /**
  * Ouvre le panneau latéral générique
  * Ajuste la mise en page du conteneur de la carte
  */
 export function openSidePanelGeneric() {
+    console.log('openSidePanelGeneric appelé');
+
+    // D'abord mettre à jour l'état
+    sidePanelState.isOpen = true;
+    sidePanelState.isExpanded = false;
+
+    // Ensuite appliquer les changements visuels
     sidePanel.style.display = 'block';
     mapContainer.classList.remove('col-12');
     mapContainer.classList.add('col-12', 'col-sm-6', 'col-lg-7');
     sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
     document.body.classList.add('side-panel-open');
-    map.invalidateSize();
+
+    // Forcer un reflow pour s'assurer que les dimensions sont calculées
+    sidePanel.offsetHeight;
+
+    // Mettre à jour les boutons
+    updateButtonsState();
+
+    // Utiliser setTimeout pour s'assurer que le DOM est mis à jour
+    setTimeout(() => {
+        updateButtonsPosition();
+        map.invalidateSize();
+    }, 0);
 }
 
 /**
@@ -35,12 +70,77 @@ export function openSidePanelGeneric() {
  * Restaure la mise en page du conteneur de la carte
  */
 export function closeSidePanel() {
+    console.log('closeSidePanel appelé');
+
+    // D'abord mettre à jour l'état
+    sidePanelState.isOpen = false;
+    sidePanelState.isExpanded = false;
+
+    // Ensuite appliquer les changements visuels
     sidePanel.style.display = 'none';
     mapContainer.classList.remove('col-12', 'col-sm-6', 'col-lg-7');
     mapContainer.classList.add('col-12');
-    sidePanel.classList.remove('col-12', 'col-sm-6', 'col-lg-5');
+    sidePanel.classList.remove('col-12', 'col-sm-6', 'col-lg-5', 'expanded');
     document.body.classList.remove('side-panel-open');
+
+    // Mettre à jour les boutons
+    updateButtonsState();
+    updateButtonsPosition();
+
     map.invalidateSize();
+}
+
+/**
+ * Met à jour l'état des boutons en fonction de l'état du panneau
+ */
+export function updateButtonsState() {
+    const toggleButton = document.getElementById('toggleSidePanel');
+    const collapseButton = document.getElementById('collapseSidePanel');
+    const reduceButton = document.getElementById('reduceSidePanel');
+
+    console.log('État du panneau:', {
+        isOpen: sidePanelState.isOpen,
+        isExpanded: sidePanelState.isExpanded,
+    });
+    console.log('Bouton collapse trouvé:', !!collapseButton);
+
+    if (toggleButton && collapseButton && reduceButton) {
+        if (!sidePanelState.isOpen) {
+            // Panneau fermé
+            toggleButton
+                .querySelector('i')
+                .classList.replace('bi-chevron-left', 'bi-chevron-right');
+            collapseButton.style.display = 'none';
+            reduceButton.style.display = 'none';
+        } else {
+            // Panneau ouvert
+            if (sidePanelState.isExpanded) {
+                console.log(
+                    'Configuration du bouton collapse pour le mode agrandi'
+                );
+                // Panneau agrandi - flèche vers la gauche pour réduire
+                toggleButton
+                    .querySelector('i')
+                    .classList.replace('bi-chevron-right', 'bi-chevron-left');
+                toggleButton.style.display = 'none';
+                collapseButton.style.display = 'none';
+                reduceButton.style.display = 'block';
+            } else {
+                // Panneau normal - flèche vers la droite pour agrandir
+                toggleButton
+                    .querySelector('i')
+                    .classList.replace('bi-chevron-left', 'bi-chevron-right');
+                toggleButton.style.display = 'block';
+                collapseButton.style.position = 'absolute';
+                collapseButton.style.right = '10px';
+                collapseButton.style.top = '50%';
+                collapseButton.style.transform = 'none';
+                collapseButton.style.zIndex = '1100';
+                collapseButton.style.display = 'block';
+                reduceButton.style.display = 'none';
+            }
+        }
+    }
 }
 
 /**
@@ -87,25 +187,54 @@ export function openSidePanel_signalair(data, nuisance_type) {
  * Initialise les boutons du panneau latéral
  */
 export function initializeSidePanelButtons() {
-    // Bouton d'agrandissement/réduction du panneau latéral
-    const expandButton = document.getElementById('expandSidePanel');
+    const toggleButton = document.getElementById('toggleSidePanel');
     const collapseButton = document.getElementById('collapseSidePanel');
+    const reduceButton = document.getElementById('reduceSidePanel');
 
-    if (expandButton && collapseButton) {
-        expandButton.addEventListener('click', function () {
-            console.log('chart :', window.amchart_root);
-            sidePanel.classList.add('expanded');
-            mapContainer.classList.add('map-collapsed');
-            sidePanel.style.display = 'block';
-            mapContainer.style.display = 'none';
+    console.log('Initialisation des boutons:', {
+        toggleButton: !!toggleButton,
+        collapseButton: !!collapseButton,
+        reduceButton: !!reduceButton,
+    });
 
-            expandButton.style.display = 'none';
-            collapseButton.style.display = 'block';
+    if (toggleButton && collapseButton && reduceButton) {
+        // Mettre à jour l'état initial des boutons
+        updateButtonsState();
 
-            if (window.amchart_root) {
+        toggleButton.addEventListener('click', function () {
+            console.log('Clic sur toggleButton');
+            // Mettre à jour l'état initial
+            sidePanelState.isOpen = sidePanel.style.display !== 'none';
+            sidePanelState.isExpanded =
+                sidePanel.classList.contains('expanded');
+
+            console.log('État après clic:', {
+                isOpen: sidePanelState.isOpen,
+                isExpanded: sidePanelState.isExpanded,
+            });
+
+            if (!sidePanelState.isOpen) {
+                // Ouvrir le panneau
+                openSidePanelGeneric();
+            } else if (!sidePanelState.isExpanded) {
+                console.log('Passage en mode agrandi');
+                // Agrandir le panneau
+                sidePanel.classList.add('expanded');
+                mapContainer.classList.add('map-collapsed');
+                mapContainer.style.display = 'none';
+                sidePanelState.isExpanded = true;
+
+                // Redimensionner le graphique si nécessaire
+                if (window.amchart_root) {
+                    setTimeout(() => {
+                        window.amchart_root.resize();
+                    }, 300);
+                }
+
+                // Forcer une mise à jour des boutons
                 setTimeout(() => {
-                    window.amchart_root.resize();
-                }, 300);
+                    updateButtonsState();
+                }, 100);
             }
 
             if (map) {
@@ -114,36 +243,44 @@ export function initializeSidePanelButtons() {
         });
 
         collapseButton.addEventListener('click', function () {
-            sidePanel.classList.remove('expanded');
-            mapContainer.classList.remove('map-collapsed');
-            sidePanel.style.display = 'block';
-            mapContainer.style.display = 'block';
+            console.log('Clic sur collapseButton');
+            if (sidePanelState.isExpanded) {
+                // Réduire le panneau
+                sidePanel.classList.remove('expanded');
+                mapContainer.classList.remove('map-collapsed');
+                mapContainer.style.display = 'block';
+                sidePanelState.isExpanded = false;
 
-            collapseButton.style.display = 'none';
-            expandButton.style.display = 'block';
+                updateButtonsState();
+            } else {
+                // Fermer le panneau
+                closeSidePanel();
+            }
 
             if (map) {
                 map.invalidateSize();
             }
         });
-    }
-}
 
-/**
- * Initialise le bouton de basculement du panneau latéral
- */
-export function initializeToggleButton() {
-    const toggleButton = document.getElementById('toggleSidePanel');
-    if (toggleButton) {
-        toggleButton.addEventListener('click', function () {
-            const icon = this.querySelector('i');
+        reduceButton.addEventListener('click', function () {
+            console.log('Clic sur reduceButton');
+            // Réduire le panneau
+            sidePanel.classList.remove('expanded');
+            mapContainer.classList.remove('map-collapsed');
+            mapContainer.style.display = 'block';
+            sidePanelState.isExpanded = false;
 
-            if (sidePanel.style.display === 'none') {
-                openSidePanelGeneric();
-                icon.classList.replace('bi-chevron-right', 'bi-chevron-left');
-            } else {
-                closeSidePanel();
-                icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
+            // Redimensionner le graphique si nécessaire
+            if (window.amchart_root) {
+                setTimeout(() => {
+                    window.amchart_root.resize();
+                }, 300);
+            }
+
+            updateButtonsState();
+
+            if (map) {
+                map.invalidateSize();
             }
         });
     }
@@ -170,19 +307,73 @@ export function initializeMobileCloseButton() {
  */
 export function updateToggleButtonVisibility() {
     const toggleButton = document.getElementById('toggleSidePanel');
-    const fullScreenButton = document.getElementById('expandSidePanel');
     if (window.globalSelectedDeviceId) {
         toggleButton.classList.remove('hidden');
-        fullScreenButton.classList.remove('hidden');
     } else {
         toggleButton.classList.add('hidden');
-        fullScreenButton.classList.add('hidden');
     }
 }
 
-// Initialisation de l'observateur pour la visibilité des boutons
+// Ajouter cette fonction pour gérer le positionnement des boutons
+function updateButtonsPosition() {
+    console.log('updateButtonsPosition appelé');
+    console.log('État actuel:', sidePanelState);
+    console.log('Style du sidePanel:', sidePanel.style.display);
+
+    const toggleButton = document.getElementById('toggleSidePanel');
+    const collapseButton = document.getElementById('collapseSidePanel');
+
+    if (toggleButton && collapseButton) {
+        // Attendre que le panneau soit visible et mesurable
+        if (sidePanel.style.display === 'block') {
+            // Utiliser getBoundingClientRect pour une mesure plus précise
+            const sidePanelRect = sidePanel.getBoundingClientRect();
+            console.log('Dimensions du sidePanel:', sidePanelRect);
+
+            // Positionner les boutons par rapport au panneau
+            const buttonPosition = sidePanelRect.right + 20;
+            console.log('Nouvelle position des boutons:', buttonPosition);
+
+            toggleButton.style.position = 'fixed';
+            collapseButton.style.position = 'fixed';
+            toggleButton.style.left = `${buttonPosition}px`;
+            collapseButton.style.left = `${buttonPosition}px`;
+        } else {
+            // Panneau fermé, positionner à gauche
+            toggleButton.style.position = 'fixed';
+            collapseButton.style.position = 'fixed';
+            toggleButton.style.left = '20px';
+            collapseButton.style.left = '20px';
+        }
+    }
+}
+
+// Modifier l'initialisation des observateurs
 document.addEventListener('DOMContentLoaded', function () {
-    const observer = new MutationObserver(function (mutations) {
+    console.log('DOMContentLoaded - Initialisation des observateurs');
+
+    // Observateur pour les changements de style du panneau latéral
+    const sidePanelObserver = new MutationObserver(function (mutations) {
+        console.log('Mutation détectée sur le sidePanel');
+        mutations.forEach(function (mutation) {
+            if (
+                mutation.type === 'attributes' &&
+                (mutation.attributeName === 'style' ||
+                    mutation.attributeName === 'class')
+            ) {
+                console.log('Changement détecté:', mutation.attributeName);
+                updateButtonsPosition();
+            }
+        });
+    });
+
+    sidePanelObserver.observe(sidePanel, {
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+    });
+
+    // Observateur existant pour data-selected-device
+    const deviceObserver = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
             if (
                 mutation.type === 'attributes' &&
@@ -193,10 +384,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    observer.observe(document.body, {
+    deviceObserver.observe(document.body, {
         attributes: true,
         attributeFilter: ['data-selected-device'],
     });
 
+    // Initialisation initiale
     updateToggleButtonVisibility();
+    updateButtonsPosition();
 });

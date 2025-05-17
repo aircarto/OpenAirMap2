@@ -2,6 +2,13 @@ import { isSourceActive } from './dataSourceManager.js';
 import { retreiveHistoriqueDataStationRef } from './atmoSud_stationsRef.js';
 import { retreive_historiqueData_microStation } from './atmoSud_microStations.js';
 import { retreive_historiqueData_nebuleAir } from './NebuleAir.js';
+import { updatePanelState } from './sidePanel.js';
+
+// Variables globales pour l'état du side panel
+let sidePanelState = {
+    isOpen: false,
+    isExpanded: false,
+};
 
 class PanelManager {
     constructor() {
@@ -105,6 +112,12 @@ class PanelManager {
             '2min': '2min',
             brute: '2min',
         };
+
+        // Gérer les pas de temps dynamiques (ex: "5min", "15min")
+        if (pasDeTemps.match(/^\d+min$/)) {
+            return pasDeTemps;
+        }
+
         return conversions[pasDeTemps] || pasDeTemps;
     }
 
@@ -115,6 +128,12 @@ class PanelManager {
             d: 'journalière',
             '2min': '2min',
         };
+
+        // Gérer les pas de temps dynamiques (ex: "5min", "15min")
+        if (buttonId.match(/^\d+min$/)) {
+            return buttonId;
+        }
+
         return conversions[buttonId] || buttonId;
     }
 
@@ -128,6 +147,9 @@ class PanelManager {
             console.error(`Source ${source} non définie dans l'état`);
             return;
         }
+
+        // Mise à jour de l'état du panneau
+        updatePanelState(true, false);
 
         // Mise à jour de la source courante
         this.currentSource = source;
@@ -711,6 +733,33 @@ class PanelManager {
                 this.buttons.pasDeTemps['2min'].disabled = true;
                 this.buttons.pasDeTemps['2min'].title =
                     'Pas de temps non disponible pour les stations de référence AtmoSud';
+            }
+        } else if (source === 'atmo_micro') {
+            const deviceData =
+                window.deviceMarkers?.[this.state[source].deviceId]?.data;
+            if (
+                deviceData &&
+                deviceData.pas_de_temps &&
+                this.buttons.pasDeTemps['2min']
+            ) {
+                const pasDeTempsEnSecondes = deviceData.pas_de_temps;
+                const pasDeTempsEnMinutes = Math.round(
+                    pasDeTempsEnSecondes / 60
+                );
+
+                // Mettre à jour le texte du label
+                const label = document.querySelector(
+                    'label[for="btn_pas_de_temps_2min"]'
+                );
+                if (label) {
+                    label.textContent = `${pasDeTempsEnMinutes} min`;
+                }
+
+                // Mettre à jour le pas de temps dans l'état si nécessaire
+                if (this.state[source].pasDeTempsChart === '2min') {
+                    this.state[source].pasDeTempsChart =
+                        `${pasDeTempsEnMinutes}min`;
+                }
             }
         }
     }

@@ -8,12 +8,12 @@ import {
     formatPollutantName,
     getArrayFromLocalStorage,
     getColorCodeForValue,
-    openSidePanelGeneric,
 } from './utils.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
 import { API_atmoSud } from '../config.js';
+import { openSidePanelGeneric } from './sidePanel.js';
 
 // Définition des couleurs pour les polluants
 const pollutantColors = {
@@ -32,7 +32,7 @@ var state = {
     pasDeTempsChart: '1h',
     pasDeTempsAtmo: '',
     pasDeTemps: '',
-    historiqueChart: '7d',
+    historiqueChart: '24h',
     mesuresArray: [],
     globalSelectedDeviceId: null,
     customDateRange: {
@@ -81,7 +81,7 @@ function createChart(root) {
             wheelX: 'panX',
             wheelY: 'zoomX',
             paddingLeft: 0,
-            paddingBottom: 100,
+            paddingBottom: 15,
             layout: am5.GridLayout.new(root, {
                 maxColumns: 1,
                 fixedWidthGrid: true,
@@ -150,7 +150,6 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
-                // fillOpacity: 0.2,
             }),
         })
     );
@@ -241,7 +240,7 @@ export function loadAtmoSudStationsRef() {
         ${API_atmoSud.url_base}${API_atmoSud.url_stations}?
         format=json&
         nom_polluant=${mesureAtmo}&
-        delais=${'64'}&
+        station_en_service=true&
         download=false&
         metadata=true
     `.replace(/\s+/g, '');
@@ -283,7 +282,7 @@ export function loadAtmoSudStationsRef() {
             // Création des marqueurs par défaut pour toutes les stations actives
             createDefaultMarkers();
 
-            // Construction de l'URL pour la deuxième requête API   ABA- Delais 86 test pour Benzène
+            // Construction de l'URL pour la deuxième requête API   ABA- Delais 86 test
             const fullUrlDerniere = `
                 ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
                 format=json&
@@ -331,8 +330,8 @@ export function loadAtmoSudStationsRef() {
                             'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
                         iconSize: [50, 50],
                         iconAnchor: [25, 25],
-                        popupAnchor: [0, -10],
-                        tooltipAnchor: [-50, -10],
+                        popupAnchor: [0, -25],
+                        tooltipAnchor: [0, -25],
                         className: value.id_station,
                     };
 
@@ -706,6 +705,56 @@ function createDefaultMarkers() {
 }
 
 /**
+ * Récupère l'image d'une station AtmoSud si disponible
+ * @param {string} stationId - ID de la station
+ * @returns {Promise<string>} URL de l'image de la station ou URL de l'image par défaut
+ */
+async function getStationImage(stationId) {
+    try {
+        // Construction de l'URL pour l'API AtmoSud (URL exacte de l'ancien code)
+        const urlAtmoJsonAPI = `https://www.atmosud.org/jsonapi/taxonomy_term/station?filter[field_station_id_station]=${stationId}&include=field_station_pictures`;
+        console.log('URL originale:', urlAtmoJsonAPI);
+
+        // Utilisation du proxy CORS (URL exacte de l'ancien code)
+        const proxyUrl = `https://corsproxy.io/?${urlAtmoJsonAPI}`;
+        console.log('URL avec proxy:', proxyUrl);
+
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Données reçues via proxy:', data);
+
+        // Vérification de la présence d'images
+        if (!data.included || data.included.length === 0) {
+            console.warn('Aucune image disponible pour la station');
+            return 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+        }
+
+        // Récupération de la première image (URL exacte de l'ancien code)
+        const firstImage = data.included[0];
+        const imageUrl = `https://www.atmosud.org/sites/sud/files/medias/images/2022-04/${firstImage.attributes.name}`;
+
+        // Vérification de la validité de l'URL de l'image
+        const isValid = await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = imageUrl;
+        });
+
+        return isValid
+            ? imageUrl
+            : 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+    } catch (error) {
+        console.error("Erreur lors de la récupération de l'image:", error);
+        return 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+    }
+}
+
+/**
  * Ouvre le panneau latéral pour une station
  * @param {string} deviceId - ID de la station
  * @param {string} station_name - Nom de la station
@@ -716,82 +765,31 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
         return;
     }
 
-    const closeButton = document
-        .getElementById('toggleSidePanel')
-        .querySelector('i');
-    closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
-    closeButton.parentElement.classList.remove('hidden');
-
-    const fullScreenButton = document
-        .getElementById('expandSidePanel')
-        .querySelector('i');
-    fullScreenButton.classList.replace('bi-expand', 'bi-compress');
-    fullScreenButton.parentElement.classList.remove('hidden');
-
     console.log(
         '%copenSidePanel_stationRef',
         'color: white; font-style: bold; background-color: green;padding: 2px'
     );
+    console.log('state.pasDeTemps: ', state.pasDeTemps);
+    if (state.pasDeTemps[0] === 'd') {
+        state.historiqueChart = '7d';
+    }
 
-    // Récupération des images de la station Ne fonctionne pas pour toutes les stations
-    const urlAtmoJsonAPI = `${API_atmoSud.url_base}${API_atmoSud.url_taxonomy_station}?filter[field_station_id_station]=${window.globalSelectedDeviceId}&include=field_station_pictures`;
-    console.log('URL originale:', urlAtmoJsonAPI);
-
-    // Utilisation de corsproxy.io avec un encodage correct pour développement
-    const proxyUrl = `https://corsproxy.io/?${urlAtmoJsonAPI}`;
-    console.log('URL avec proxy:', proxyUrl);
-
-    fetch(proxyUrl)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            console.log('Données reçues via proxy:', data);
-
-            // Récupération de l'URL de l'image de la station
-            if (data.included && data.included.length > 0) {
-                console.log('Images disponibles:', data.included);
-                const firstImage = data.included[0];
-
-                // Construction de l'URL de l'image
-                const imageUrl = `https://www.atmosud.org/sites/sud/files/medias/images/2022-04/${firstImage.attributes.name}`;
-
-                // Vérification de l'URL de l'image
-                const checkImage = (url) => {
-                    return new Promise((resolve) => {
-                        const img = new Image();
-                        img.onload = () => resolve(true);
-                        img.onerror = () => resolve(false);
-                        img.src = url;
-                    });
-                };
-
-                // Mise à jour de l'image dans le panneau
-                const card1Img = document.getElementById('card1_img');
-                if (card1Img) {
-                    checkImage(imageUrl).then((isValid) => {
-                        if (isValid) {
-                            card1Img.src = imageUrl;
-                            console.log('Image mise à jour dans le panneau');
-                        } else {
-                            card1Img.src =
-                                'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
-                            console.log('Image par défaut affichée');
-                        }
-                    });
-                } else {
-                    console.error('Élément card1_img non trouvé');
-                }
-            } else {
-                console.warn('Aucune image incluse dans la réponse');
-            }
-        })
-        .catch((error) => {
-            console.error('Erreur lors de la requête:', error);
-        });
+    // Récupération de l'image de la station
+    const card1Img = document.getElementById('card1_img');
+    if (card1Img) {
+        card1Img.src = 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+        getStationImage(window.globalSelectedDeviceId)
+            .then((imageUrl) => {
+                card1Img.src = imageUrl;
+                console.log('Image mise à jour dans le panneau');
+            })
+            .catch((error) => {
+                console.error(
+                    "Erreur lors de la mise à jour de l'image:",
+                    error
+                );
+            });
+    }
 
     // Conversion du polluant pour l'API
     let polluantAPI = mesure[0];
@@ -800,7 +798,6 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
     }
 
     // Mise à jour des informations de la carte
-    card1_img.src = 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
     card1_title.innerHTML = station_name;
     card1_subtitle.innerHTML = 'Station de référence AtmoSud';
     card1_text.innerHTML = '';

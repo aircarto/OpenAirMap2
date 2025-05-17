@@ -182,6 +182,21 @@ body {
         font-size: 0.75rem;
         padding: 0.2rem 0.4rem;
     }
+
+    .text-center.mt-2 .d-flex {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #togglePollutants,
+    #toggleYAxisCapping {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #yAxisMaxValue {
+        width: 100%;
+    }
 }
 
 @media (min-width: 577px) and (max-width: 768px) {
@@ -290,8 +305,8 @@ body {
 }
 
 @media (max-width: 768px) {
-    #side-panel #expandSidePanel {
-        right: 10px;
+    #side-panel #toggleSidePanel {
+        display: none;
     }
 }
 
@@ -378,6 +393,15 @@ body {
     box-shadow: 0 4px 6px rgba(13, 110, 253, 0.3);
 }
 
+/* Styles pour les contrôles du graphique */
+.text-center.mt-2 {
+    margin-bottom: 15px;
+}
+
+.text-center.mt-2 .d-flex {
+    flex-wrap: wrap;
+}
+
 #togglePollutants {
     background-color: transparent;
     border: 1px solid #dee2e6;
@@ -385,6 +409,9 @@ body {
     padding: 8px 16px;
     border-radius: 6px;
     transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 #togglePollutants:hover {
@@ -398,6 +425,57 @@ body {
 
 #togglePollutants[aria-expanded='true'] i {
     transform: rotate(180deg);
+}
+
+/* Styles pour le groupe de boutons de capping de l'axe Y */
+.btn-group[role='group'] {
+    display: flex;
+    align-items: center;
+}
+
+#toggleYAxisCapping {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: transparent;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    transition: all 0.2s ease-in-out;
+}
+
+#toggleYAxisCapping:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+#yAxisMaxValue {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+    width: 80px;
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease-in-out;
+}
+
+#toggleYAxisCapping.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+#yAxisMaxValue:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+#yAxisMaxValue:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    outline: none;
 }
 
 /* Styles harmonisés pour les boutons d'historique et de pas de temps */
@@ -533,4 +611,73 @@ body {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Styles pour les boutons de contrôle du side panel */
+#toggleSidePanel,
+#collapseSidePanel {
+    position: fixed !important;
+    background-color: white !important;
+    border: none !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.3s ease !important;
+    padding: 8px 12px !important;
+    border-radius: 50% !important;
+    z-index: 9999 !important;
+    display: block !important;
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+}
+
+#toggleSidePanel {
+    left: 20px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+#collapseSidePanel {
+    left: 20px !important;
+    top: calc(50% + 50px) !important;
+    transform: translateY(-50%) !important;
+}
+
+/* Quand le side panel est ouvert */
+body.side-panel-open #toggleSidePanel,
+body.side-panel-open #collapseSidePanel {
+    left: calc(
+        41.666667% + 20px
+    ) !important; /* col-lg-5 (41.666667%) + marge */
+}
+
+#toggleSidePanel i,
+#collapseSidePanel i {
+    font-size: 1.2rem !important;
+    color: #0d6efd !important;
+    line-height: 1 !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+#toggleSidePanel:hover,
+#collapseSidePanel:hover {
+    background-color: #f8f9fa !important;
+    transform: translateY(-50%) scale(1.1) !important;
+}
+
+#toggleSidePanel:active,
+#collapseSidePanel:active {
+    transform: translateY(-50%) scale(0.95) !important;
+}
+
+/* Ajuster la visibilité des boutons sur mobile */
+@media (max-width: 768px) {
+    #toggleSidePanel {
+        display: none !important;
+    }
+
+    #collapseSidePanel {
+        display: block !important;
+    }
 }

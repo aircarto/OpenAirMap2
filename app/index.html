@@ -66,29 +66,7 @@
         <nav class="navbar navbar-expand-lg fixed-top" id="nav-bar">
             <div class="container-fluid">
                 <a class="navbar-brand" href="#">OpenAirMap</a>
-                <button
-                    class="btn btn-outline-primary"
-                    id="expandSidePanel"
-                    style="
-                        margin-left: 10px;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                    "
-                >
-                    <i class="bi bi-arrows-fullscreen"></i>
-                </button>
-                <button
-                    class="btn btn-outline-primary"
-                    id="collapseSidePanel"
-                    style="
-                        margin-left: 10px;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        display: none;
-                    "
-                >
-                    <i class="bi bi-arrows-angle-contract"></i>
-                </button>
+
                 <button
                     class="navbar-toggler"
                     type="button"
@@ -209,57 +187,68 @@
                 >
                     <i class="bi bi-map"></i>
                 </button>
+                <button
+                    class="btn btn-outline-primary position-absolute m-3"
+                    id="reduceSidePanel"
+                    style="
+                        left: 20px;
+                        top: calc(50% + 100px);
+                        z-index: 1100;
+                        background-color: white;
+                        border: none;
+                        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                        transition: all 0.3s ease;
+                        padding: 8px 12px;
+                        border-radius: 50%;
+                        transform: translateY(-50%);
+                        display: none;
+                    "
+                >
+                    <i class="bi bi-chevron-left"></i>
+                </button>
                 <div
                     class="row ms-1 me-2"
                     style="margin-top: 50px; margin-bottom: 50px"
                 >
-                    <!-- CARD 1 : PHOTO -->
-                    <div class="col-sm-6 mb-3">
-                        <div class="card h-100" id="card1">
-                            <img
-                                id="card1_img"
-                                src=""
-                                class="card-img-top"
-                                alt="..."
-                            />
-                            <div class="card-body" id="card_1_body">
-                                <h5 class="card-title" id="card1_title"></h5>
-                                <h6
-                                    class="card-subtitle mb-2 text-body-secondary"
-                                    id="card1_subtitle"
-                                ></h6>
-                                <p class="card-text" id="card1_text"></p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- CARD 2: TEXT  -->
-                    <div class="col-sm-6 mb-3">
-                        <div class="card" id="card2">
-                            <div class="card-body">
-                                <h5 class="card-title" id="card2_title"></h5>
-                                <h6
-                                    class="card-subtitle mb-2 text-body-secondary"
-                                    id="card2_subtitle"
-                                ></h6>
-                                <p class="card-text" id="card2_text"></p>
-                                <a href="" id="card2_link"></a>
-                            </div>
-                        </div>
-                    </div>
                     <!-- CARD 3 : Graphs -->
                     <div class="col-sm-12">
                         <div class="card" id="card3">
                             <div class="card-body">
                                 <!-- Bouton pour afficher/masquer les polluants -->
                                 <div class="text-center mt-2">
-                                    <button
-                                        class="btn btn-outline-primary btn-sm"
-                                        type="button"
-                                        id="togglePollutants"
+                                    <div
+                                        class="d-flex justify-content-center align-items-center gap-3"
                                     >
-                                        <i class="bi bi-chevron-down"></i>
-                                        Afficher les polluants
-                                    </button>
+                                        <button
+                                            class="btn btn-outline-primary btn-sm"
+                                            type="button"
+                                            id="togglePollutants"
+                                        >
+                                            <i class="bi bi-chevron-down"></i>
+                                            Afficher les polluants
+                                        </button>
+                                        <div class="btn-group" role="group">
+                                            <button
+                                                class="btn btn-outline-secondary btn-sm"
+                                                id="toggleYAxisCapping"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                data-bs-title="Activer/désactiver la limite de l'axe Y"
+                                            >
+                                                <i class="bi bi-graph-up"></i>
+                                                Limiter axe Y
+                                            </button>
+                                            <input
+                                                type="number"
+                                                class="form-control form-control-sm"
+                                                id="yAxisMaxValue"
+                                                placeholder="Max"
+                                                style="width: 80px"
+                                                min="1"
+                                                value="90"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                                 <!-- Polluants -->
                                 <div
@@ -399,20 +388,6 @@
                                         <span class="btn-group-title"
                                             >Historique</span
                                         >
-
-                                        <input
-                                            type="radio"
-                                            class="btn-check"
-                                            name="btn_historique_1h"
-                                            id="btn_historique_1h"
-                                            autocomplete="off"
-                                        />
-                                        <label
-                                            class="btn btn-outline-primary"
-                                            for="btn_historique_1h"
-                                            >1 h</label
-                                        >
-
                                         <input
                                             type="radio"
                                             class="btn-check"
@@ -451,20 +426,6 @@
                                             for="btn_historique_7d"
                                             >7 j</label
                                         >
-
-                                        <input
-                                            type="radio"
-                                            class="btn-check"
-                                            name="btn_historique_30d"
-                                            id="btn_historique_30d"
-                                            autocomplete="off"
-                                        />
-                                        <label
-                                            class="btn btn-outline-primary"
-                                            for="btn_historique_30d"
-                                            >1 mois</label
-                                        >
-
                                         <input
                                             type="radio"
                                             class="btn-check"
@@ -611,17 +572,81 @@
                             </div>
                         </div>
                     </div>
+                    <!-- CARD 1 : PHOTO -->
+                    <div class="col-sm-6 mt-3">
+                        <div class="card h-100" id="card1">
+                            <img
+                                id="card1_img"
+                                src=""
+                                class="card-img-top"
+                                alt="..."
+                            />
+                            <div class="card-body" id="card_1_body">
+                                <h5 class="card-title" id="card1_title"></h5>
+                                <h6
+                                    class="card-subtitle mb-2 text-body-secondary"
+                                    id="card1_subtitle"
+                                ></h6>
+                                <p class="card-text" id="card1_text"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: TEXT  -->
+                    <div class="col-sm-6 mt-3">
+                        <div class="card" id="card2">
+                            <div class="card-body">
+                                <h5 class="card-title" id="card2_title"></h5>
+                                <h6
+                                    class="card-subtitle mb-2 text-body-secondary"
+                                    id="card2_subtitle"
+                                ></h6>
+                                <p class="card-text" id="card2_text"></p>
+                                <a href="" id="card2_link"></a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- MAP  -->
             <div class="col-12" id="map-container">
                 <button
-                    class="btn btn-outline-primary position-absolute m-3 hidden"
+                    class="btn btn-outline-primary position-absolute m-3"
                     id="toggleSidePanel"
-                    style="left: 10px; top: 50%; z-index: 1100"
+                    style="
+                        left: 20px;
+                        top: 50%;
+                        z-index: 1100;
+                        background-color: white;
+                        border: none;
+                        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                        transition: all 0.3s ease;
+                        padding: 8px 12px;
+                        border-radius: 50%;
+                        transform: translateY(-50%);
+                    "
                 >
                     <i class="bi bi-chevron-right"></i>
+                </button>
+                <button
+                    class="btn btn-outline-primary position-absolute m-3"
+                    id="collapseSidePanel"
+                    style="
+                        left: 20px;
+                        top: calc(50% + 50px);
+                        z-index: 1100;
+                        background-color: white;
+                        border: none;
+                        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                        transition: all 0.3s ease;
+                        padding: 8px 12px;
+                        border-radius: 50%;
+                        transform: translateY(-50%);
+                        display: none;
+                    "
+                >
+                    <i class="bi bi-chevron-left"></i>
                 </button>
                 <div id="map"></div>
 
@@ -683,16 +708,16 @@
                         data-bs-placement="bottom"
                         data-bs-title="51 à 75 &#181;g/m&#179;"
                     >
-                        Très Mauvais
+                        Très mauvais
                     </button>
                     <button
                         class="btn"
                         id="btn_extr_mauvais"
                         data-bs-toggle="tooltip"
                         data-bs-placement="bottom"
-                        data-bs-title=">75 &#181;g/m&#179;"
+                        data-bs-title="> 75 &#181;g/m&#179;"
                     >
-                        Extr. Mauvais
+                        Extrêmement mauvais
                     </button>
                 </div>
             </div>

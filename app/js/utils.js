@@ -337,26 +337,27 @@ export function isValueInObject(obj, value) {
 export function isEmptyObject(obj) {
     return Object.keys(obj).length === 0;
 }
-// Fonction pour ouvrir le side panel
-export function openSidePanelGeneric() {
-    //console.log("openSidePane_generic");
-    //side panel
-    // sur smartphone -> toute la place (col-12)
-    // sur ordi petit (sm) -> 6 colonnes
-    // sur grand écran (lg) -> 5 colonnes
-    const sidePanel = document.getElementById('side-panel');
-    const mapContainer = document.getElementById('map-container');
+// // Fonction pour ouvrir le side panel
+// export function openSidePanelGeneric() {
+//     console.log(sidePanelState);
+//     //console.log("openSidePane_generic");
+//     //side panel
+//     // sur smartphone -> toute la place (col-12)
+//     // sur ordi petit (sm) -> 6 colonnes
+//     // sur grand écran (lg) -> 5 colonnes
+//     const sidePanel = document.getElementById('side-panel');
+//     const mapContainer = document.getElementById('map-container');
 
-    sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
-    sidePanel.style.display = 'block';
-    //map
-    // sur smartphone -> disparait (col-0)
-    // sur ordi petit (sm) -> 6 colonnes
-    // sur grand écran (lg) -> 7 colonnes
-    mapContainer.classList.remove('col-12');
-    mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
-    mapContainer.style.paddingLeft = '10px';
-}
+//     sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
+//     sidePanel.style.display = 'block';
+//     //map
+//     // sur smartphone -> disparait (col-0)
+//     // sur ordi petit (sm) -> 6 colonnes
+//     // sur grand écran (lg) -> 7 colonnes
+//     mapContainer.classList.remove('col-12');
+//     mapContainer.classList.add('d-none', 'd-sm-block', 'col-sm-6', 'col-lg-7');
+//     mapContainer.style.paddingLeft = '10px';
+// }
 
 //CLOSE SIDE PANEL
 export function closeSidePanel() {

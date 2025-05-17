@@ -6,14 +6,13 @@ import {
     formatPollutantName,
     getArrayFromLocalStorage,
     getColorCodeForValue,
-    openSidePanelGeneric,
 } from './utils.js';
 import { API_airCarto } from '../config.js';
 
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
-
+import { openSidePanelGeneric } from './sidePanel.js';
 // Variables locales au module
 var state = {
     pasDeTempsChart: '1h',
@@ -252,17 +251,9 @@ export function openSidePanelNebuleAir(
         return;
     }
 
-    const closeButton = document
-        .getElementById('toggleSidePanel')
-        .querySelector('i');
-    closeButton.classList.replace('bi-chevron-right', 'bi-chevron-left');
-    closeButton.parentElement.classList.remove('hidden');
-
-    const fullScreenButton = document
-        .getElementById('expandSidePanel')
-        .querySelector('i');
-    fullScreenButton.classList.replace('bi-expand', 'bi-compress');
-    fullScreenButton.parentElement.classList.remove('hidden');
+    if (pas_de_temps === 'd') {
+        state.historiqueChart = '7d';
+    }
 
     card1_img.src = 'img/nebuleair/NebuleAir_photo.png';
     card1_title.innerHTML = data.sensorId;
@@ -423,7 +414,7 @@ function createChart(root) {
             wheelX: 'panX',
             wheelY: 'zoomX',
             paddingLeft: 0,
-            paddingBottom: 100,
+            paddingBottom: 15,
             layout: am5.GridLayout.new(root, {
                 maxColumns: 1,
                 fixedWidthGrid: true,

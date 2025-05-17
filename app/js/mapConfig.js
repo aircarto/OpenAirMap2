@@ -9,7 +9,7 @@ export const map = L.map('map', {
     zoom: config.zoomLevel,
     minZoom: config.minZoom,
     maxZoom: config.maxZoom,
-    renderer: L.canvas(),
+    renderer: L.svg(),
 });
 
 /**
@@ -32,16 +32,6 @@ export const baseLayers = {
             pane: 'tilePane',
         }
     ),
-    Terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution:
-            '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors',
-        pane: 'tilePane',
-    }),
-    Rues: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        pane: 'tilePane',
-    }),
 };
 
 /**

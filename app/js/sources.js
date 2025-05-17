@@ -12,6 +12,7 @@ import { loadAtmoSudMicroStation } from './atmoSud_microStations.js';
 import { loadAtmoSudStationsRef } from './atmoSud_stationsRef.js';
 import { loadModPM, loadModIcair } from './atmoSud_mod.js';
 import { loadSignalAir } from './SignalAir.js';
+import { loadSensorCommunity } from './sensorCommunity.js';
 // import { loadMobileAir } from './MobileAir.js';
 
 /**
@@ -45,6 +46,8 @@ export function loadSource(source, isInitialLoad = false) {
                 loadNebuleAir();
                 break;
             case 'sensor_commmunity':
+                loadSensorCommunity();
+                break;
             case 'purpleair':
                 // Ces sources ne sont pas encore implémentées
                 console.warn(

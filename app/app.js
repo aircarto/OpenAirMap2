@@ -14,7 +14,6 @@ import {
 } from './js/sources.js';
 import {
     initializeSidePanelButtons,
-    initializeToggleButton,
     initializeMobileCloseButton,
 } from './js/sidePanel.js';
 import { initializeDefaultValues } from './js/utils.js';
@@ -73,7 +72,6 @@ function initializeApp() {
 
     // Initialiser les contrôles du panneau latéral
     initializeSidePanelButtons();
-    initializeToggleButton();
     initializeMobileCloseButton();
 
     // Vérifier les conditions initiales des sources
