@@ -255,6 +255,30 @@ class PanelManager {
         this.state[source].deviceId = deviceId;
         Object.assign(this.state[source], data);
 
+        // Si nous avons des dates personnalisées, les formater correctement
+        if (
+            this.state[source].customDateRange.start &&
+            this.state[source].customDateRange.end
+        ) {
+            const startDate = new Date(
+                this.state[source].customDateRange.start
+            );
+            const endDate = new Date(this.state[source].customDateRange.end);
+
+            // Formater les dates selon la source
+            if (source === 'nebuleair') {
+                this.state[source].customDateRange.start =
+                    this.formatDateForNebuleAir(startDate);
+                this.state[source].customDateRange.end =
+                    this.formatDateForNebuleAir(endDate);
+            } else {
+                this.state[source].customDateRange.start =
+                    this.formatDateForAPI(startDate);
+                this.state[source].customDateRange.end =
+                    this.formatDateForAPI(endDate);
+            }
+        }
+
         this.initializeButtons();
         this.setupButtonHandlers();
         this.updateButtonStates(source);
@@ -527,26 +551,13 @@ class PanelManager {
                         let endDate = null;
 
                         if (useCustomRange) {
-                            // Formater les dates selon la source
-                            if (this.currentSource === 'nebuleair') {
-                                startDate = this.formatDateForNebuleAir(
-                                    this.state[this.currentSource]
-                                        .customDateRange.start
-                                );
-                                endDate = this.formatDateForNebuleAir(
-                                    this.state[this.currentSource]
-                                        .customDateRange.end
-                                );
-                            } else {
-                                startDate = this.formatDateForAPI(
-                                    this.state[this.currentSource]
-                                        .customDateRange.start
-                                );
-                                endDate = this.formatDateForAPI(
-                                    this.state[this.currentSource]
-                                        .customDateRange.end
-                                );
-                            }
+                            // Utiliser directement les dates formatées stockées dans l'état
+                            startDate =
+                                this.state[this.currentSource].customDateRange
+                                    .start;
+                            endDate =
+                                this.state[this.currentSource].customDateRange
+                                    .end;
                         }
 
                         this.updateHistoriqueData(
@@ -673,6 +684,26 @@ class PanelManager {
             pasDeTemps = conversions[pasDeTemps] || pasDeTemps;
         }
 
+        // Formater les dates si elles sont fournies
+        let formattedStartDate = null;
+        let formattedEndDate = null;
+
+        if (useCustomRange && startDateTime && endDateTime) {
+            if (source === 'nebuleair') {
+                formattedStartDate = this.formatDateForNebuleAir(
+                    new Date(startDateTime)
+                );
+                formattedEndDate = this.formatDateForNebuleAir(
+                    new Date(endDateTime)
+                );
+            } else {
+                formattedStartDate = this.formatDateForAPI(
+                    new Date(startDateTime)
+                );
+                formattedEndDate = this.formatDateForAPI(new Date(endDateTime));
+            }
+        }
+
         if (source === 'atmo_ref') {
             retreiveHistoriqueDataStationRef(
                 this.state[source].deviceId,
@@ -680,8 +711,8 @@ class PanelManager {
                 this.state[source].historiqueChart,
                 this.state[source].mesuresArray,
                 useCustomRange,
-                startDateTime,
-                endDateTime
+                formattedStartDate,
+                formattedEndDate
             );
         } else if (source === 'atmo_micro') {
             retreive_historiqueData_microStation(
@@ -690,8 +721,8 @@ class PanelManager {
                 this.state[source].historiqueChart,
                 this.state[source].mesuresArray,
                 useCustomRange,
-                startDateTime,
-                endDateTime
+                formattedStartDate,
+                formattedEndDate
             );
         } else if (source === 'nebuleair') {
             console.log(
@@ -702,12 +733,8 @@ class PanelManager {
                     historique: this.state[source].historiqueChart,
                     mesuresArray: this.state[source].mesuresArray,
                     useCustomRange,
-                    startDateTime: startDateTime
-                        ? this.formatDateForNebuleAir(new Date(startDateTime))
-                        : null,
-                    endDateTime: endDateTime
-                        ? this.formatDateForNebuleAir(new Date(endDateTime))
-                        : null,
+                    startDateTime: formattedStartDate,
+                    endDateTime: formattedEndDate,
                 }
             );
 
@@ -717,12 +744,8 @@ class PanelManager {
                 this.state[source].historiqueChart,
                 this.state[source].mesuresArray,
                 useCustomRange,
-                startDateTime
-                    ? this.formatDateForNebuleAir(new Date(startDateTime))
-                    : null,
-                endDateTime
-                    ? this.formatDateForNebuleAir(new Date(endDateTime))
-                    : null
+                formattedStartDate,
+                formattedEndDate
             );
         }
     }
@@ -821,23 +844,33 @@ class PanelManager {
             }
         );
 
+        // Formater les dates selon la source
+        let formattedStart, formattedEnd;
+        if (this.currentSource === 'nebuleair') {
+            formattedStart = this.formatDateForNebuleAir(start);
+            formattedEnd = this.formatDateForNebuleAir(end);
+        } else {
+            formattedStart = this.formatDateForAPI(start);
+            formattedEnd = this.formatDateForAPI(end);
+        }
+
         // Mettre à jour l'état avec la plage personnalisée
         this.state[this.currentSource].historiqueChart = 'custom';
-        this.state[this.currentSource].customDateRange.start = start;
-        this.state[this.currentSource].customDateRange.end = end;
+        this.state[this.currentSource].customDateRange.start = formattedStart;
+        this.state[this.currentSource].customDateRange.end = formattedEnd;
 
         console.log("Mise à jour de l'état avec la plage personnalisée:", {
             source: this.currentSource,
-            start: this.formatDateForAPI(start),
-            end: this.formatDateForAPI(end),
+            start: formattedStart,
+            end: formattedEnd,
         });
 
         // Appeler updateHistoriqueData avec la plage personnalisée
         this.updateHistoriqueData(
             this.currentSource,
             true,
-            this.formatDateForAPI(start),
-            this.formatDateForAPI(end)
+            formattedStart,
+            formattedEnd
         );
     }
 }

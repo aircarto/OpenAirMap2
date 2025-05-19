@@ -360,10 +360,6 @@ export async function loadAtmoSudMicroStation() {
                         : capteurInfo.variables.split(',').map((v) => v.trim());
                 }
 
-                // Formatage des polluants pour l'affichage
-                console.log('Polluants actifs:', polluantsActifs);
-                console.log('Mesures supportées:', supportedMesures);
-
                 // Créer un Set pour stocker les polluants uniques déjà traités
                 const processedPollutants = new Set();
 
@@ -389,9 +385,6 @@ export async function loadAtmoSudMicroStation() {
                             return false;
                         }
 
-                        console.log('Polluant original:', polluant);
-                        console.log('Polluant normalisé:', normalizedPolluant);
-
                         // Vérifier si le polluant est dans les mesures supportées
                         const isSupported = Object.values(
                             supportedMesures
@@ -401,7 +394,6 @@ export async function loadAtmoSudMicroStation() {
                             processedPollutants.add(normalizedPolluant);
                         }
 
-                        console.log('Est supporté:', isSupported);
                         return isSupported;
                     })
                     .map((polluant) => {
@@ -419,23 +411,23 @@ export async function loadAtmoSudMicroStation() {
 
                         switch (normalizedPolluant) {
                             case 'pm1':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">PM<sub>1</sub></span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>1</sub></span>';
                             case 'pm25':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>';
                             case 'pm10':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">PM<sub>10</sub></span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>10</sub></span>';
                             case 'no2':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">NO<sub>2</sub></span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">NO<sub>2</sub></span>';
                             case 'so2':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">SO<sub>2</sub></span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>';
                             case 'o3':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">O<sub>3</sub></span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>';
                             case 'h2s':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>';
                             case 'nh3':
-                                return '<span class="text-success">●</span> <span class="fw-semibold">NH<sub>3</sub></span>';
+                                return '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>';
                             default:
-                                return `<span class="text-success">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`;
+                                return `<span class="text-muted">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`;
                         }
                     });
 

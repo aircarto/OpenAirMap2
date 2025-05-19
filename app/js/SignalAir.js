@@ -63,27 +63,27 @@ export function loadSignalAir(startDate, endDate) {
 
         // Vérification spéciale pour le type visuel
         if (code === 'visuel') {
-            console.log(
-                `[SignalAir] Vérification de l'URL pour le type visuel`
-            );
+            // console.log(
+            //     `[SignalAir] Vérification de l'URL pour le type visuel`
+            // );
             // On essaie avec une période plus longue pour voir si c'est un problème de données
             full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/2025-01-01/${endDate}`;
-            console.log(`[SignalAir] URL modifiée pour visuel: ${full_url}`);
+            // console.log(`[SignalAir] URL modifiée pour visuel: ${full_url}`);
         } else {
             full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/${startDate}/${endDate}`;
-            console.log(`[SignalAir] URL pour ${code}: ${full_url}`);
+            // console.log(`[SignalAir] URL pour ${code}: ${full_url}`);
         }
 
         fetch(full_url)
             .then((response) => {
-                console.log(
-                    `[SignalAir] Statut de la réponse pour ${code}:`,
-                    response.status
-                );
-                console.log(
-                    `[SignalAir] Headers de la réponse pour ${code}:`,
-                    response.headers
-                );
+                // console.log(
+                //     `[SignalAir] Statut de la réponse pour ${code}:`,
+                //     response.status
+                // );
+                // console.log(
+                //     `[SignalAir] Headers de la réponse pour ${code}:`,
+                //     response.headers
+                // );
 
                 if (!response.ok) {
                     throw new Error(
@@ -94,30 +94,30 @@ export function loadSignalAir(startDate, endDate) {
                 return response.text();
             })
             .then((text) => {
-                console.log(
-                    `[SignalAir] Longueur de la réponse pour ${code}:`,
-                    text.length
-                );
+                // console.log(
+                //     `[SignalAir] Longueur de la réponse pour ${code}:`,
+                //     text.length
+                // );
 
                 // Si la réponse est vide, on considère qu'il n'y a pas de données
                 if (!text.trim()) {
-                    console.log(
-                        `[SignalAir] Pas de données disponibles pour ${code}`
-                    );
+                    // console.log(
+                    //     `[SignalAir] Pas de données disponibles pour ${code}`
+                    // );
                     return { type: 'FeatureCollection', features: [] };
                 }
 
-                console.log(
-                    `[SignalAir] Début de la réponse pour ${code}:`,
-                    text.substring(0, 100)
-                );
+                // console.log(
+                //     `[SignalAir] Début de la réponse pour ${code}:`,
+                //     text.substring(0, 100)
+                // );
 
                 try {
                     const parsedData = JSON.parse(text);
-                    console.log(
-                        `[SignalAir] Données parsées pour ${code}:`,
-                        parsedData
-                    );
+                    // console.log(
+                    //     `[SignalAir] Données parsées pour ${code}:`,
+                    //     parsedData
+                    // );
                     return parsedData;
                 } catch (e) {
                     console.error(
@@ -139,10 +139,10 @@ export function loadSignalAir(startDate, endDate) {
                     return;
                 }
 
-                console.log(
-                    `[SignalAir] Nombre de signalements trouvés pour ${code}:`,
-                    data.features.length
-                );
+                // console.log(
+                //     `[SignalAir] Nombre de signalements trouvés pour ${code}:`,
+                //     data.features.length
+                // );
 
                 data.features.forEach((feature) => {
                     const [long, lat] = feature.geometry.coordinates;
