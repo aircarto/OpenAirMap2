@@ -28,6 +28,7 @@ var state = {
 export function loadNebuleAir() {
     nebuleairLayer.clearLayers();
     var pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
+    console.log('pas_de_temps: ', pas_de_temps);
     var mesures = getArrayFromLocalStorage('mesuresLocal');
 
     // Vérification si le polluant est supporté
@@ -181,10 +182,10 @@ export function loadNebuleAir() {
                                         </small>
                                         <small class="text-muted">
                                             Polluants mesurés:
-                                            <ul class="list-unstyled ms-3 mb-0">
-                                                ${value.PM1 !== undefined ? '<li><span class="text-success">●</span><span class="fw-semibold"> PM₁</span></li>' : ''}
-                                                ${value.PM25 !== undefined ? '<li><span class="text-success">●</span><span class="fw-semibold"> PM₂.₅</span></li>' : ''}
-                                                ${value.PM10 !== undefined ? '<li><span class="text-success">●</span><span class="fw-semibold"> PM₁₀</span></li>' : ''}
+                                            <ul class="list-unstyled mb-0">
+                                                ${value.PM1 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₁</span></li>' : ''}
+                                                ${value.PM25 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₂.₅</span></li>' : ''}
+                                                ${value.PM10 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₁₀</span></li>' : ''}
                                             </ul>
                                         </small>
                                     </div>

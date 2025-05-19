@@ -1,5 +1,5 @@
 import { getArrayFromLocalStorage } from './utils.js';
-import { loadSource } from './sources.js';
+import { loadSource, updateButtonDisplay } from './sources.js';
 import { clearLayer } from './layers.js';
 import { toastManager } from './toaster.js';
 
@@ -19,6 +19,8 @@ export function startAutoRefresh() {
     let refreshIntervalMs;
     switch (selectedTimeStep) {
         case 'instantane':
+            refreshIntervalMs = 60 * 1000; // 60 secondes
+            break;
         case '2min':
             refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
             break;

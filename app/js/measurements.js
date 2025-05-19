@@ -8,7 +8,7 @@ import {
     getThresholdsForPollutant,
 } from './utils.js';
 import { clearLayer } from './layers.js';
-import { loadSource } from './sources.js';
+import { loadSource, updateButtonDisplay } from './sources.js';
 import { toastManager, createCustomToast } from './toaster.js';
 import { updateTimeDisplay, startAutoRefresh } from './autoRefresh.js';
 
@@ -90,7 +90,13 @@ export function handleTimeStepChange(timeStep) {
         activeSources.includes('atmo_ref') &&
         (timeStep === '2min' || timeStep === 'instantane')
     ) {
-        toastManager.atmoRefTimeStepWarning();
+        createCustomToast({
+            message: `Le pas de temps ${timeStep === 'instantane' ? 'instantané' : '2 minutes'} n'est pas disponible pour les stations de référence AtmoSud, <strong>désactivation de la source</strong>.`,
+            type: 'warning',
+            title: 'Attention',
+            icon: 'exclamation-triangle',
+            timer: 5000,
+        });
         removeItemFromLocalStorageArray('sources_local', 'atmo_ref');
         clearLayer('atmo_ref');
     }
@@ -114,6 +120,9 @@ export function handleTimeStepChange(timeStep) {
         clearLayer(source);
         loadSource(source);
     });
+
+    // Mise à jour de l'affichage des boutons
+    updateButtonDisplay();
 
     // Mise à jour de l'affichage
     updateTimeDisplay();

@@ -92,6 +92,28 @@ export function checkInitialConditions() {
     const activeSources = getArrayFromLocalStorage('sources_local');
     const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
 
+    // Vérifier d'abord les conditions de pas de temps sans notification
+    if (activeSources.includes('atmo_micro') && selectedTimeStep === 'd') {
+        removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
+        clearLayer('atmo_micro');
+    }
+
+    if (
+        activeSources.includes('atmo_ref') &&
+        (selectedTimeStep === '2min' || selectedTimeStep === 'instantane')
+    ) {
+        removeItemFromLocalStorageArray('sources_local', 'atmo_ref');
+        clearLayer('atmo_ref');
+    }
+
+    if (
+        activeSources.includes('nebuleair') &&
+        selectedTimeStep === 'instantane'
+    ) {
+        removeItemFromLocalStorageArray('sources_local', 'nebuleair');
+        clearLayer('nebuleair');
+    }
+
     // Charger les sources actives au démarrage
     if (activeSources && activeSources.length > 0) {
         activeSources.forEach((source) => {
@@ -99,37 +121,8 @@ export function checkInitialConditions() {
         });
     }
 
-    handleTimeStepNotifications(selectedTimeStep, activeSources);
-}
-
-/**
- * Gère les notifications liées aux pas de temps
- * @param {string} selectedTimeStep - Le pas de temps sélectionné
- * @param {Array} activeSources - Les sources actives
- */
-function handleTimeStepNotifications(selectedTimeStep, activeSources) {
-    // Vérification pour AtmoSud Micro-stations
-    if (activeSources.includes('atmo_micro')) {
-        if (selectedTimeStep === '2min') {
-            toastManager.atmoMicroTimeStepWarning();
-        } else if (selectedTimeStep === 'd') {
-            toastManager.atmoMicroTimeStepDailyWarning();
-            removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
-            clearLayer('atmo_micro');
-            updateButtonDisplay('atmo_micro', false);
-        }
-    }
-
-    // Vérification pour AtmoSud Stations de référence
-    if (
-        activeSources.includes('atmo_ref') &&
-        (selectedTimeStep === '2min' || selectedTimeStep === 'instantane')
-    ) {
-        toastManager.atmoRefTimeStepWarning();
-        removeItemFromLocalStorageArray('sources_local', 'atmo_ref');
-        clearLayer('atmo_ref');
-        updateButtonDisplay('atmo_ref', false);
-    }
+    // Mettre à jour l'affichage des boutons une seule fois à la fin
+    updateButtonDisplay();
 }
 
 /**
@@ -141,63 +134,60 @@ export function updateButtonDisplay() {
     const selectedMeasure = getArrayFromLocalStorage('mesuresLocal')[0];
 
     document.querySelectorAll('#dropdown_sources button').forEach((button) => {
-        button.classList.remove('active');
         const buttonCode = Object.keys(sources).find(
             (key) => sources[key].name === button.textContent.trim()
         );
 
-        if (buttonCode) {
-            const sourceCode = sources[buttonCode].code;
+        if (!buttonCode) return;
 
-            if (activeSources.includes(sourceCode)) {
-                // Vérification des conditions spécifiques
-                if (sourceCode === 'atmo_micro' && selectedTimeStep === 'd') {
-                    button.classList.remove('active');
-                    toastManager.atmoMicroTimeStepDailyWarning();
-                } else if (
-                    sourceCode === 'atmo_ref' &&
-                    (selectedTimeStep === '2min' ||
-                        selectedTimeStep === 'instantane')
-                ) {
-                    button.classList.remove('active');
-                    toastManager.atmoRefTimeStepWarning();
-                } else if (
-                    sourceCode === 'nebuleair' &&
-                    !['pm1', 'pm25', 'pm10'].includes(selectedMeasure)
-                ) {
-                    removeItemFromLocalStorageArray(
-                        'sources_local',
-                        sourceCode
-                    );
-                    createCustomToast({
-                        message: `La mesure ${formatPollutantName(selectedMeasure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto, <strong>désactivation de la source</strong>.`,
-                        type: 'warning',
-                        title: 'Attention',
-                        icon: 'exclamation-triangle',
-                        timer: 5000,
-                    });
-                } else if (
-                    sourceCode === 'atmo_micro' &&
-                    ['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(
-                        selectedMeasure
-                    )
-                ) {
-                    removeItemFromLocalStorageArray(
-                        'sources_local',
-                        sourceCode
-                    );
-                    createCustomToast({
-                        message: `La mesure ${formatPollutantName(selectedMeasure)} n'est pas disponible pour les capteurs AtmoSud Micro-stations, <strong>désactivation de la source</strong>.`,
-                        type: 'warning',
-                        title: 'Attention',
-                        icon: 'exclamation-triangle',
-                        timer: 5000,
-                    });
-                } else {
-                    button.classList.add('active');
-                }
-            }
+        const sourceCode = sources[buttonCode].code;
+
+        // Désactiver le bouton par défaut
+        button.classList.remove('active');
+
+        // Ne pas activer le bouton si la source n'est pas dans les sources actives
+        if (!activeSources.includes(sourceCode)) {
+            return;
         }
+
+        // Vérifications spécifiques pour chaque source
+        if (sourceCode === 'atmo_micro' && selectedTimeStep === 'd') {
+            toastManager.atmoMicroTimeStepDailyWarning();
+            return;
+        }
+
+        if (
+            sourceCode === 'nebuleair' &&
+            !['pm1', 'pm25', 'pm10'].includes(selectedMeasure)
+        ) {
+            removeItemFromLocalStorageArray('sources_local', sourceCode);
+            createCustomToast({
+                message: `La mesure ${formatPollutantName(selectedMeasure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto, <strong>désactivation de la source</strong>.`,
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
+            return;
+        }
+
+        if (
+            sourceCode === 'atmo_micro' &&
+            ['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(selectedMeasure)
+        ) {
+            removeItemFromLocalStorageArray('sources_local', sourceCode);
+            createCustomToast({
+                message: `La mesure ${formatPollutantName(selectedMeasure)} n'est pas disponible pour les capteurs AtmoSud Micro-stations, <strong>désactivation de la source</strong>.`,
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
+            return;
+        }
+
+        // Si toutes les conditions sont passées, activer le bouton
+        button.classList.add('active');
     });
 }
 
@@ -221,6 +211,40 @@ export function initializeSourceButtons() {
         // Ajouter l'événement de clic
         button.addEventListener('click', () => {
             const activeSources = getArrayFromLocalStorage('sources_local');
+            const selectedTimeStep =
+                getArrayFromLocalStorage('pasDeTempsLocal')[0];
+
+            // Vérification spéciale pour NebuleAir
+            if (
+                source.code === 'nebuleair' &&
+                selectedTimeStep === 'instantane'
+            ) {
+                createCustomToast({
+                    message: `Le pas de temps instantané n'est pas disponible pour les capteurs NebuleAir.`,
+                    type: 'warning',
+                    title: 'Attention',
+                    icon: 'exclamation-triangle',
+                    timer: 5000,
+                });
+                return;
+            }
+
+            // Vérification spéciale pour AtmoSud Stations de référence
+            if (
+                source.code === 'atmo_ref' &&
+                (selectedTimeStep === 'instantane' ||
+                    selectedTimeStep === '2min')
+            ) {
+                createCustomToast({
+                    message: `Le pas de temps ${selectedTimeStep === 'instantane' ? 'instantané' : '2 minutes'} n'est pas disponible pour les stations de référence AtmoSud.`,
+                    type: 'warning',
+                    title: 'Attention',
+                    icon: 'exclamation-triangle',
+                    timer: 5000,
+                });
+                return;
+            }
+
             if (activeSources.includes(source.code)) {
                 removeItemFromLocalStorageArray('sources_local', source.code);
                 clearLayer(source.code);

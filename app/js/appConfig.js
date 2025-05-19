@@ -26,12 +26,12 @@ export const mesures = {
 
 export const sources = {
     nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true }, // Capteurs citoyens NebuleAir
-    sensor_community: {
-        name: 'Sensor.Community',
-        code: 'sensor_commmunity',
-        activated: false,
-    }, // Réseau de capteurs Sensor.Community
-    purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false }, // Capteurs PurpleAir
+    // sensor_community: {
+    //     name: 'Sensor.Community',
+    //     code: 'sensor_commmunity',
+    //     activated: false,
+    // }, // Réseau de capteurs Sensor.Community
+    // purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false }, // Capteurs PurpleAir
     atmo_micro: {
         name: 'AtmoSud µStations',
         code: 'atmo_micro',
@@ -45,11 +45,11 @@ export const sources = {
     mod_pm: { name: 'Modélisation', code: 'mod_pm', activated: true }, // Modélisation des particules fines
     icairh: { name: 'ICAIR', code: 'icairh', activated: false }, // Modélisation ICAIR'H
     signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir
-    mobileair: { name: 'MobileAir', code: 'mobileair', activated: false }, // Capteurs mobiles
+    // mobileair: { name: 'MobileAir', code: 'mobileair', activated: false }, // Capteurs mobiles
 };
 
 export const pas_de_temps = {
-    instantane: { name: 'Instantané', code: 'instantane', activated: false }, // Valeurs instantanées
+    instantane: { name: 'Scan', code: 'instantane', activated: false }, // Valeurs instantanées
     deux_min: { name: '2 minutes', code: '2min', activated: true }, // Moyenne sur 2 minutes
     quart_heure: { name: '15 minutes', code: 'qh', activated: false }, // Moyenne sur 15 minutes
     heure: { name: 'Heure', code: 'h', activated: false }, // Moyenne horaire

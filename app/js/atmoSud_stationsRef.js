@@ -486,7 +486,7 @@ function createStationMarker(value, iconParam, stationData, mesure) {
                                 ${polluantsActifs
                                     .map(
                                         (polluant) =>
-                                            `<li><span class="text-success">●</span> ${polluant}</li>`
+                                            `<li><span class="text-muted">●</span> ${polluant}</li>`
                                     )
                                     .join('')}
                             </ul>
