@@ -15,447 +15,185 @@ import { openSidePanelGeneric } from './sidePanel.js';
 import { createCustomToast } from './toaster.js';
 import { mesures as supportedMesures } from './appConfig.js';
 
-// Variables locales au module
-var state = {
-    pasDeTempsChart: 'horaire',
-    pasDeTempsAtmo: '',
-    pasDeTemps: '',
-    historiqueChart: '24h',
-    mesuresArray: [],
-    globalSelectedDeviceId: null,
-    customDateRange: {
-        start: null,
-        end: null,
-    },
-};
-var isFetching = false; // Variable pour gérer l'état des appels API
-var isYAxisCapped = false; // Variable pour gérer l'état du capping de l'axe Y
-var yAxisMaxValue = 100; // Valeur maximale par défaut pour l'axe Y
-
-// Log pour vérifier l'import de mesures
-console.log('Mesures supportées importées:', supportedMesures);
-
-// Définition des constantes globales
+// Constantes
 const POLLUTANT_COLORS = {
     pm1: '#FF5733',
     'pm2.5': '#33A1FF',
     pm10: '#33FF57',
     no2: '#A133FF',
 };
+
+// Éléments DOM
 const card1_img = document.getElementById('card1_img');
 const card1_title = document.getElementById('card1_title');
 const card1_text = document.getElementById('card1_text');
 const card2_link = document.getElementById('card2_link');
+
+// État global
+const state = {
+    pasDeTempsChart: 'horaire',
+    pasDeTempsAtmo: '',
+    pasDeTemps: '',
+    historiqueChart: '24h',
+    mesuresArray: [],
+    selectedMarker: null,
+    selectedText: null,
+    selectedDeviceId: null,
+    customDateRange: {
+        start: null,
+        end: null,
+    },
+};
+
+// Variables de contrôle
+let isFetching = false;
+let isYAxisCapped = false;
+let yAxisMaxValue = 100;
+
+// Log pour vérifier l'import de mesures
+console.log('Mesures supportées importées:', supportedMesures);
+
 /**
- * Cette fonction charge les micro-stations AtmoSud sur la carte
- * Elle fait plusieurs choses :
- * 1. Vérifie qu'aucun autre chargement n'est en cours
- * 2. Récupère les paramètres de l'utilisateur (temps, mesures)
- * 3. Appelle l'API AtmoSud pour obtenir les données
- * 4. Affiche les stations sur la carte avec des marqueurs
+ * Fonctions principales pour la gestion des micro-stations
+ */
+
+/**
+ * Charge les micro-stations AtmoSud sur la carte
+ * @returns {Promise<void>}
  */
 export async function loadAtmoSudMicroStation() {
     try {
-        // On nettoie la carte en enlevant tous les marqueurs existants
         atmoMicroLayer.clearLayers();
+        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
+        const pas_de_temps_atmo = convertTimeStep(pas_de_temps[0]);
 
-        // On récupère le pas de temps choisi par l'utilisateur
-        var pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
-        var pas_de_temps_atmo = '';
+        if (pas_de_temps_atmo === 'd') return;
 
-        // On convertit le pas de temps en format compatible avec l'API AtmoSud
-        switch (pas_de_temps[0]) {
-            case 'instantane':
-                pas_de_temps_atmo = 'brute';
-                state.pasDeTempsChart = pas_de_temps_atmo;
-                break;
-            case '2min':
-                pas_de_temps_atmo = 'brute';
-                state.pasDeTempsChart = 'brute';
-                break;
-            case 'qh':
-                pas_de_temps_atmo = 'quart-horaire';
-                state.pasDeTempsChart = 'quart-horaire';
-                break;
-            case 'h':
-                pas_de_temps_atmo = 'horaire';
-                state.pasDeTempsChart = 'horaire';
-                break;
-            case 'd':
-                // Si c'est quotidien, on ne fait rien car c'est géré ailleurs
-                return;
-            default:
-                pas_de_temps_atmo = 'horaire';
-                state.pasDeTempsChart = 'horaire';
-        }
+        const mesures = getArrayFromLocalStorage('mesuresLocal');
+        if (!validateMesures(mesures[0])) return;
 
-        // On récupère les polluants que l'utilisateur veut voir
-        var mesures = getArrayFromLocalStorage('mesuresLocal');
-        if (['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(mesures[0])) {
-            console.log('#########################');
-            console.log('mesure non supportée :' + mesures[0]);
-            console.log('#########################');
-            return;
-        }
         state.mesuresArray = [...mesures];
-        var mesures_atmo = mesures;
+        const mesures_atmo = mesures[0] === 'pm25' ? ['pm2.5'] : mesures;
 
-        // Cas spécial pour PM2.5 qui s'écrit différemment dans l'API
-        if (mesures[0] === 'pm25') {
-            mesures_atmo = ['pm2.5'];
-        }
+        const dataCapteurSite = await fetchCapteurSites(mesures_atmo);
+        initializeMicroStationMarkers(dataCapteurSite);
 
-        // Liste de tous les polluants possibles
-        let allPollutants = ['pm1', 'pm2.5', 'pm10', 'no2'];
+        const data = await fetchDernieresMesures(
+            mesures_atmo,
+            pas_de_temps_atmo
+        );
+        if (!validateData(data)) return;
 
-        // Premier appel API pour récupérer tous les capteurs actifs depuis une semaine (168h)
-        let fullUrlCapteurSite =
-            `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?
-            format=json
-            &variable=${mesures_atmo}
-            &actifs=168
-        `.replace(/\s+/g, '');
-
-        let dataCapteurSite = await fetchAPI(fullUrlCapteurSite);
-        console.log(`${fullUrlCapteurSite} : `, dataCapteurSite);
-
-        // Initialisation de l'objet global pour les micro-stations
-        if (!window.microStationMarkers) {
-            window.microStationMarkers = {};
-        }
-
-        // On réinitialise window.microStationMarkers
-        window.microStationMarkers = {};
-
-        // On stocke d'abord tous les capteurs dans window.microStationMarkers
-        dataCapteurSite.forEach((capteur) => {
-            window.microStationMarkers[capteur.id_site] = {
-                data: capteur,
-                hasValue: false,
-                marker: null,
-                textMarker: null,
-            };
-        });
-
-        // Deuxième appel API pour récupérer les dernières mesures
-        let full_url_derniere = `
-            ${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?
-            format=json
-            &download=false
-            &valeur_brute=true
-            &type_capteur=true
-            &variable=${mesures_atmo}
-            &aggregation=${pas_de_temps_atmo}
-        `.replace(/\s+/g, '');
-
-        const data = await fetchAPI(full_url_derniere);
-        console.log(`${full_url_derniere} :`, data);
-
-        // On vérifie que les données reçues sont bien un tableau
-        if (!Array.isArray(data)) {
-            throw new Error('Les données reçues ne sont pas au bon format');
-        }
-
-        // Filtre supplémentaire pour le pas de temps de 2 minutes
-        let filteredData = data;
-        if (pas_de_temps[0] === '2min') {
-            filteredData = data.filter((item) => item.pas_de_temps === 120);
-        }
-
-        // On déduplique les mesures par id_site en gardant la plus récente
-        let uniqueMeasures = {};
-        filteredData.forEach((measure) => {
-            if (
-                !uniqueMeasures[measure.id_site] ||
-                new Date(measure.time) >
-                    new Date(uniqueMeasures[measure.id_site].time)
-            ) {
-                uniqueMeasures[measure.id_site] = measure;
-            }
-        });
-
-        // On convertit l'objet en tableau
-        filteredData = Object.values(uniqueMeasures);
-
-        // Si on n'a pas de données, on affiche un message d'avertissement
+        const filteredData = filterAndProcessData(data, pas_de_temps[0]);
         if (filteredData.length === 0) {
-            createCustomToast({
-                message:
-                    'Aucune donnée disponible pour les critères sélectionnés',
-                type: 'warning',
-                title: 'Attention',
-                icon: 'exclamation-triangle',
-                timer: 5000,
-            });
+            showNoDataWarning();
             return;
         }
 
-        // Pour chaque station dans les données filtrées
-        for (const value of filteredData) {
-            // On vérifie que les données sont complètes
-            if (!value || !value.id_site || !value.lat || !value.lon) {
-                console.warn('Données incomplètes pour un capteur:', value);
-                continue;
-            }
-
-            // On s'assure que l'entrée existe dans window.microStationMarkers
-            if (!window.microStationMarkers[value.id_site]) {
-                window.microStationMarkers[value.id_site] = {
-                    data: value,
-                    hasValue: false,
-                    marker: null,
-                    textMarker: null,
-                };
-            }
-
-            // On met à jour les données du capteur
-            window.microStationMarkers[value.id_site].data = value;
-            window.microStationMarkers[value.id_site].hasValue = true;
-
-            // On prépare l'icône du marqueur
-            var icon_param = {
-                iconUrl:
-                    'img/microStationsAtmoSud/microStationAtmoSud_default.png',
-                iconSize: [50, 50],
-                iconAnchor: [5, 40],
-                popupAnchor: [0, -10],
-                tooltipAnchor: [-50, -10],
-            };
-
-            // On détermine la couleur de l'icône selon la valeur mesurée
-            let valueToCheck = value['valeur_ref'];
-            let colorCode = getColorCodeForValue(valueToCheck, mesures[0]);
-
-            if (colorCode !== 'default') {
-                let iconColorCode = colorCode;
-                if (colorCode === 'tres_mauvais') {
-                    iconColorCode = 'tresMauvais';
-                } else if (colorCode === 'extr_mauvais') {
-                    iconColorCode = 'ExtrMauvais';
-                }
-                icon_param.iconUrl =
-                    'img/microStationsAtmoSud/microStationAtmoSud_' +
-                    iconColorCode +
-                    '.png';
-            }
-
-            // On crée le marqueur sur la carte
-            var microStation_icon = L.icon(icon_param);
-            let microStationMarker = L.marker([value['lat'], value['lon']], {
-                icon: microStation_icon,
-            }).addTo(atmoMicroLayer);
-
-            // On stocke des informations sur le marqueur
-            microStationMarker.deviceId = value['id_site'];
-            microStationMarker.deviceData = value;
-
-            // On met à jour le marqueur dans window.microStationMarkers
-            window.microStationMarkers[value['id_site']].marker =
-                microStationMarker;
-
-            // On prépare l'affichage de la valeur
-            let roundedvalue = Math.round(parseFloat(value['valeur_ref']));
-            var textSize = 32;
-            var x_position = -12;
-            var y_position = 40;
-            var checkPosition = 'right: -15px;';
-
-            // On ajuste la taille du texte selon la valeur
-            if (roundedvalue >= 10) {
-                textSize = 25;
-                x_position = -12;
-                y_position = 35;
-                checkPosition = 'right: -12px;';
-            }
-            if (roundedvalue >= 100) {
-                textSize = 20;
-                x_position = -10;
-                y_position = 32;
-                checkPosition = 'right: -10px;';
-            }
-            if (roundedvalue >= 1000) {
-                textSize = 16;
-                x_position = -8;
-                y_position = 30;
-                checkPosition = 'right: -8px;';
-            }
-
-            // On crée le texte qui sera affiché sur le marqueur
-            var text_param = L.divIcon({
-                className: 'my-div-icon',
-                html:
-                    '<div id="textDiv" style="font-size: ' +
-                    textSize +
-                    'px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%;">' +
-                    roundedvalue +
-                    (value['valeur'] !== null
-                        ? '<i class="bi bi-check-circle-fill" style="position: absolute; top: -10px; ' +
-                          checkPosition +
-                          ' font-size: 12px; color: #28a745;"></i>'
-                        : '') +
-                    '</div>',
-                iconAnchor: [x_position, y_position],
-                popupAnchor: [30, -60],
-            });
-
-            // On ajoute le texte sur la carte
-            let textMarker = L.marker([value['lat'], value['lon']], {
-                icon: text_param,
-            })
-                .on('click', () =>
-                    handleMarkerClick(
-                        microStationMarker,
-                        textMarker,
-                        value,
-                        pas_de_temps_atmo
-                    )
-                )
-                .addTo(atmoMicroLayer);
-
-            // On stocke des informations sur le texte
-            textMarker.deviceId = value['id_site'];
-            textMarker.deviceData = value;
-
-            // On met à jour le textMarker dans window.microStationMarkers
-            window.microStationMarkers[value['id_site']].textMarker =
-                textMarker;
-
-            // Ajout du champ polluantMesure aux données de la station
-            if (value.variables) {
-                value.polluantMesure = value.variables.map((v) =>
-                    v.toUpperCase()
-                );
-            } else {
-                value.polluantMesure = [];
-            }
-
-            // Fonction appelée quand on survole un marqueur
-            function highlightMarker() {
-                microStationMarker.setZIndexOffset(1000);
-                textMarker.setZIndexOffset(1000);
-
-                const tooltip = createTooltip(value, dataCapteurSite);
-                document.body.appendChild(tooltip);
-                microStationMarker.tooltip = tooltip;
-                textMarker.tooltip = tooltip;
-            }
-
-            // Fonction appelée quand on quitte un marqueur
-            function resetMarker() {
-                if (globalSelectedMarker !== microStationMarker) {
-                    microStationMarker.setZIndexOffset(0);
-                    textMarker.setZIndexOffset(0);
-                }
-
-                if (microStationMarker.tooltip) {
-                    microStationMarker.tooltip.remove();
-                    microStationMarker.tooltip = null;
-                    textMarker.tooltip = null;
-                }
-            }
-
-            // On ajoute les événements de survol aux marqueurs
-            microStationMarker
-                .on('mouseover', highlightMarker)
-                .on('mouseout', resetMarker);
-            textMarker
-                .on('mouseover', highlightMarker)
-                .on('mouseout', resetMarker);
-        }
-
-        // Création des marqueurs par défaut pour les capteurs sans mesure
-        Object.values(window.microStationMarkers).forEach((station) => {
-            if (!station.hasValue) {
-                const defaultMarker = L.marker(
-                    [station.data.lat, station.data.lon],
-                    {
-                        icon: L.icon({
-                            iconUrl:
-                                'img/microStationsAtmoSud/microStationAtmoSud_default.png',
-                            iconSize: [50, 50],
-                            iconAnchor: [5, 40],
-                            popupAnchor: [0, -10],
-                            tooltipAnchor: [-50, -10],
-                        }),
-                    }
-                ).addTo(atmoMicroLayer);
-
-                // On stocke des informations sur le marqueur
-                defaultMarker.deviceId = station.data.id_site;
-                defaultMarker.deviceData = station.data;
-
-                defaultMarker.on('click', () =>
-                    handleMarkerClick(
-                        defaultMarker,
-                        null,
-                        station.data,
-                        pas_de_temps_atmo
-                    )
-                );
-
-                defaultMarker.on('mouseover', () => {
-                    defaultMarker.setZIndexOffset(1000);
-                    const tooltip = createTooltip(
-                        station.data,
-                        dataCapteurSite
-                    );
-                    document.body.appendChild(tooltip);
-                    defaultMarker.tooltip = tooltip;
-                });
-
-                defaultMarker.on('mouseout', () => {
-                    if (globalSelectedMarker !== defaultMarker) {
-                        defaultMarker.setZIndexOffset(0);
-                    }
-                    if (defaultMarker.tooltip) {
-                        defaultMarker.tooltip.remove();
-                        defaultMarker.tooltip = null;
-                    }
-                });
-
-                station.marker = defaultMarker;
-            }
-        });
+        await processAndDisplayStations(
+            filteredData,
+            dataCapteurSite,
+            pas_de_temps_atmo
+        );
     } catch (error) {
-        // Si une erreur se produit, on l'affiche
-        console.error('Erreur dans loadAtmoSudMicroStation:', error);
-        showErrorNotification(error.message);
+        handleError('loadAtmoSudMicroStation', error);
     }
 }
 
 /**
- * Crée les marqueurs par défaut pour les micro-stations sans données
+ * Fonctions utilitaires pour la gestion des données
  */
 
-// Fonction pour ouvrir le panneau latéral avec les informations du capteur
+function convertTimeStep(pas_de_temps) {
+    const timeStepMap = {
+        instantane: 'brute',
+        '2min': 'brute',
+        qh: 'quart-horaire',
+        h: 'horaire',
+        d: 'd',
+    };
+
+    const converted = timeStepMap[pas_de_temps] || 'horaire';
+    state.pasDeTempsChart = converted;
+    return converted;
+}
+
+function validateMesures(mesure) {
+    if (['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(mesure)) {
+        console.warn('Mesure non supportée:', mesure);
+        return false;
+    }
+    return true;
+}
+
+async function fetchCapteurSites(mesures_atmo) {
+    const fullUrlCapteurSite =
+        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?format=json&variable=${mesures_atmo}&actifs=2880`.replace(
+            /\s+/g,
+            ''
+        );
+    return await fetchAPI(fullUrlCapteurSite);
+}
+
+async function fetchDernieresMesures(mesures_atmo, pas_de_temps_atmo) {
+    const full_url_derniere =
+        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps_atmo}`.replace(
+            /\s+/g,
+            ''
+        );
+    return await fetchAPI(full_url_derniere);
+}
+
+function validateData(data) {
+    if (!Array.isArray(data)) {
+        throw new Error('Les données reçues ne sont pas au bon format');
+    }
+    return true;
+}
+
+function filterAndProcessData(data, pas_de_temps) {
+    let filteredData = data;
+    if (pas_de_temps === '2min') {
+        filteredData = data.filter((item) => item.pas_de_temps === 120);
+    }
+
+    const uniqueMeasures = {};
+    filteredData.forEach((measure) => {
+        if (
+            !uniqueMeasures[measure.id_site] ||
+            new Date(measure.time) >
+                new Date(uniqueMeasures[measure.id_site].time)
+        ) {
+            uniqueMeasures[measure.id_site] = measure;
+        }
+    });
+
+    return Object.values(uniqueMeasures);
+}
+
+function showNoDataWarning() {
+    createCustomToast({
+        message: 'Aucune donnée disponible pour les critères sélectionnés',
+        type: 'warning',
+        title: 'Attention',
+        icon: 'exclamation-triangle',
+        timer: 5000,
+    });
+}
+
+/**
+ * Fonctions de gestion du panneau latéral
+ */
+
 export function openSidePanelMicroStation(
     data,
     pas_de_temps_atmo,
     historique,
     mesures_atmo
 ) {
-    if (!isSourceActive('atmo_micro')) {
-        return;
-    }
+    if (!isSourceActive('atmo_micro')) return;
 
-    console.log('data capteur cliqué: ', data);
-
-    // Mise à jour des informations de la carte
-    card1_img.src = 'img/microStationsAtmoSud/microStationAtmoSud_default.png';
-    card1_title.innerHTML = data.site_info
-        ? data.site_info.nom_site
-        : data.nom_site;
-    card1_subtitle.innerHTML =
-        'Micro-station AtmoSud - ' +
-        (data.site_info ? data.site_info.modele_capteur : data.modele_capteur);
-    card1_text.innerHTML = '';
-
-    card2_text.innerHTML =
-        "Les micro-stations sont des capteurs de mesure de la qualité de l'air déployés par AtmoSud pour compléter le réseau de stations de référence.";
-    card2_link.innerHTML = 'AtmoSud.org';
-    card2_link.href = 'https://www.atmosud.org';
-
-    // Utiliser le gestionnaire de panneau pour configurer les boutons
+    updateCardInfo(data);
     panelManager.openPanel('atmo_micro', data.id_site, {
         pasDeTempsAtmo: pas_de_temps_atmo,
         historiqueChart: historique,
@@ -466,6 +204,20 @@ export function openSidePanelMicroStation(
     });
 
     openSidePanelGeneric();
+}
+
+function updateCardInfo(data) {
+    card1_img.src = 'img/microStationsAtmoSud/microStationAtmoSud_default.png';
+    card1_title.innerHTML = data.site_info
+        ? data.site_info.nom_site
+        : data.nom_site;
+    card1_subtitle.innerHTML = `Micro-station AtmoSud - ${data.site_info ? data.site_info.modele_capteur : data.modele_capteur}`;
+    card1_text.innerHTML = '';
+
+    card2_text.innerHTML =
+        "Les micro-stations sont des capteurs de mesure de la qualité de l'air déployés par AtmoSud pour compléter le réseau de stations de référence.";
+    card2_link.innerHTML = 'AtmoSud.org';
+    card2_link.href = 'https://www.atmosud.org';
 }
 
 /**
@@ -835,12 +587,28 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
         type,
     };
 }
-// Exporter les variables qui pourraient être nécessaires ailleurs
-export { state };
 
-// Fonction utilitaire pour les appels API
+/**
+ * Fonctions de gestion des erreurs et des appels API
+ */
+
+function handleError(context, error) {
+    console.error(`Erreur dans ${context}:`, error);
+    showErrorNotification(error.message);
+    stopSpinner();
+}
+
+function showErrorNotification(message) {
+    createCustomToast({
+        message: message,
+        type: 'error',
+        title: 'Erreur',
+        icon: 'exclamation-circle',
+        timer: 5000,
+    });
+}
+
 async function fetchAPI(url, options = {}) {
-    startSpinner('Chargement des données...');
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -848,70 +616,47 @@ async function fetchAPI(url, options = {}) {
         });
 
         if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
+            throw new Error(
+                `Erreur HTTP: ${response.status} - ${response.statusText}`
+            );
         }
 
         const data = await response.json();
-
-        // Validation des données
         if (!data) {
             throw new Error("Aucune donnée reçue de l'API");
         }
-        stopSpinner();
 
         return data;
     } catch (error) {
-        stopSpinner();
         console.error("Erreur lors de l'appel API:", error);
-        showErrorNotification(error.message);
         throw error;
     }
 }
 
-// Fonction pour afficher les notifications d'erreur
-function showErrorNotification(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'alert alert-danger';
-    errorDiv.innerHTML = `
-        <h5>Erreur lors de la récupération des données</h5>
-        <p>${message}</p>
-        <p>Veuillez réessayer plus tard ou contacter l'administrateur.</p>
-    `;
-    errorDiv.style.position = 'absolute';
-    errorDiv.style.top = '10px';
-    errorDiv.style.left = '50%';
-    errorDiv.style.transform = 'translateX(-50%)';
-    errorDiv.style.zIndex = '1000';
-    document.body.appendChild(errorDiv);
-    setTimeout(() => {
-        errorDiv.remove();
-    }, 10000);
-}
+/**
+ * Fonctions de gestion du graphique
+ */
 
-// Fonction pour basculer le capping de l'axe Y
 export function toggleYAxisCapping() {
     isYAxisCapped = !isYAxisCapped;
+    updateYAxisMax();
+    return isYAxisCapped;
+}
+
+export function setYAxisMaxValue(value) {
+    yAxisMaxValue = value;
+    if (isYAxisCapped) {
+        updateYAxisMax();
+    }
+}
+
+function updateYAxisMax() {
     if (window.amchart_root) {
         const chart = window.amchart_root.container.children.getIndex(0);
         if (chart) {
             const yAxis = chart.yAxes.getIndex(0);
             if (yAxis) {
                 yAxis.set('max', isYAxisCapped ? yAxisMaxValue : undefined);
-            }
-        }
-    }
-    return isYAxisCapped;
-}
-
-// Fonction pour définir la valeur maximale de l'axe Y
-export function setYAxisMaxValue(value) {
-    yAxisMaxValue = value;
-    if (isYAxisCapped && window.amchart_root) {
-        const chart = window.amchart_root.container.children.getIndex(0);
-        if (chart) {
-            const yAxis = chart.yAxes.getIndex(0);
-            if (yAxis) {
-                yAxis.set('max', yAxisMaxValue);
             }
         }
     }
@@ -940,49 +685,299 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Fonction utilitaire pour gérer le clic sur un marqueur
+// Export des variables d'état
+export { state };
+
+/**
+ * Fonctions de gestion des marqueurs et des événements
+ */
+
+function initializeMicroStationMarkers(dataCapteurSite) {
+    if (!window.microStationMarkers) {
+        window.microStationMarkers = {};
+    }
+    window.microStationMarkers = {};
+
+    dataCapteurSite.forEach((capteur) => {
+        window.microStationMarkers[capteur.id_site] = {
+            data: capteur,
+            hasValue: false,
+            marker: null,
+            textMarker: null,
+        };
+    });
+}
+
+async function processAndDisplayStations(
+    filteredData,
+    dataCapteurSite,
+    pas_de_temps_atmo
+) {
+    for (const value of filteredData) {
+        if (!validateStationData(value)) continue;
+
+        updateStationMarker(value);
+        const { microStationMarker, textMarker } = createStationMarkers(value);
+        setupMarkerEvents(
+            microStationMarker,
+            textMarker,
+            value,
+            dataCapteurSite,
+            pas_de_temps_atmo
+        );
+    }
+
+    createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo);
+}
+
+function validateStationData(value) {
+    if (!value || !value.id_site || !value.lat || !value.lon) {
+        console.warn('Données incomplètes pour un capteur:', value);
+        return false;
+    }
+    return true;
+}
+
+function updateStationMarker(value) {
+    if (!window.microStationMarkers[value.id_site]) {
+        window.microStationMarkers[value.id_site] = {
+            data: value,
+            hasValue: false,
+            marker: null,
+            textMarker: null,
+        };
+    }
+    window.microStationMarkers[value.id_site].data = value;
+    window.microStationMarkers[value.id_site].hasValue = true;
+}
+
+function createStationMarkers(value) {
+    const icon_param = createMarkerIcon(value);
+    const microStationMarker = L.marker([value.lat, value.lon], {
+        icon: L.icon(icon_param),
+        zIndexOffset: 1000,
+    }).addTo(atmoMicroLayer);
+
+    microStationMarker.deviceId = value.id_site;
+    microStationMarker.deviceData = value;
+
+    const textMarker = createTextMarker(value);
+    textMarker.addTo(atmoMicroLayer);
+
+    // Lier les z-index des marqueurs
+    microStationMarker.on('add', () => {
+        const zIndex = microStationMarker.getZIndex();
+        textMarker.setZIndexOffset(zIndex);
+    });
+
+    window.microStationMarkers[value.id_site].marker = microStationMarker;
+    window.microStationMarkers[value.id_site].textMarker = textMarker;
+
+    return { microStationMarker, textMarker };
+}
+
+function createMarkerIcon(value) {
+    const icon_param = {
+        iconUrl: 'img/microStationsAtmoSud/microStationAtmoSud_default.png',
+        iconSize: [50, 50],
+        iconAnchor: [5, 40],
+        popupAnchor: [0, -10],
+        tooltipAnchor: [-50, -10],
+    };
+
+    const valueToCheck = value.valeur_ref;
+    const colorCode = getColorCodeForValue(valueToCheck, state.mesuresArray[0]);
+
+    if (colorCode !== 'default') {
+        const iconColorCode =
+            colorCode === 'tres_mauvais'
+                ? 'tresMauvais'
+                : colorCode === 'extr_mauvais'
+                  ? 'ExtrMauvais'
+                  : colorCode;
+        icon_param.iconUrl = `img/microStationsAtmoSud/microStationAtmoSud_${iconColorCode}.png`;
+    }
+
+    return icon_param;
+}
+
+function calculateTextParameters(value) {
+    let textSize = 32;
+    let x_position = 5;
+    let y_position = 42;
+    let checkPosition = 'right: 0px;';
+
+    if (value >= 1000) {
+        textSize = 24;
+        x_position = 2; // Ajusté pour les nombres à 4 chiffres
+        y_position = 35;
+        // checkPosition = 'right: -12px;';
+    } else if (value >= 100) {
+        textSize = 24;
+        x_position = 4; // Ajusté pour les nombres à 3 chiffres
+        y_position = 38;
+        // checkPosition = 'right: -14px;';
+    } else if (value >= 10) {
+        textSize = 26;
+        x_position = 8;
+        y_position = 42;
+        // checkPosition = 'right: -16px;';
+    }
+
+    return { textSize, x_position, y_position, checkPosition };
+}
+
+function createTextMarkerHTML(value, textSize, checkPosition, stationData) {
+    const hasValue = stationData.valeur !== null;
+    const checkIcon = hasValue
+        ? `<i class="bi bi-check-circle-fill" style="position: absolute; top: -10px; ${checkPosition} font-size: 14px; color: #28a745;"></i>`
+        : '';
+
+    return `<div id="textDiv" style="font-size: ${textSize}px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #333; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">
+        ${value}
+        ${checkIcon}
+    </div>`;
+}
+
+function createTextMarker(value) {
+    const roundedvalue = Math.round(parseFloat(value.valeur_ref));
+    const { textSize, x_position, y_position, checkPosition } =
+        calculateTextParameters(roundedvalue);
+
+    const text_param = L.divIcon({
+        className: 'my-div-icon',
+        html: createTextMarkerHTML(
+            roundedvalue,
+            textSize,
+            checkPosition,
+            value
+        ),
+        iconAnchor: [x_position, y_position],
+        popupAnchor: [30, -60],
+        iconSize: [50, 50],
+    });
+
+    const textMarker = L.marker([value.lat, value.lon], {
+        icon: text_param,
+        zIndexOffset: 1000,
+    });
+    textMarker.deviceId = value.id_site;
+    textMarker.deviceData = value;
+
+    return textMarker;
+}
+
+function setupMarkerEvents(
+    microStationMarker,
+    textMarker,
+    value,
+    dataCapteurSite,
+    pas_de_temps_atmo
+) {
+    const highlightMarker = () => {
+        const zIndex = 2000; // Valeur plus élevée pour le marqueur survolé
+        microStationMarker.setZIndexOffset(zIndex);
+        textMarker.setZIndexOffset(zIndex);
+        const tooltip = createTooltip(value, dataCapteurSite);
+        document.body.appendChild(tooltip);
+        microStationMarker.tooltip = tooltip;
+        textMarker.tooltip = tooltip;
+    };
+
+    const resetMarker = () => {
+        if (state.selectedMarker !== microStationMarker) {
+            const zIndex = 1000; // Retour à la valeur normale
+            microStationMarker.setZIndexOffset(zIndex);
+            textMarker.setZIndexOffset(zIndex);
+        }
+        if (microStationMarker.tooltip) {
+            microStationMarker.tooltip.remove();
+            microStationMarker.tooltip = null;
+            textMarker.tooltip = null;
+        }
+    };
+
+    microStationMarker
+        .on('mouseover', highlightMarker)
+        .on('mouseout', resetMarker);
+    textMarker
+        .on('mouseover', highlightMarker)
+        .on('mouseout', resetMarker)
+        .on('click', () =>
+            handleMarkerClick(
+                microStationMarker,
+                textMarker,
+                value,
+                pas_de_temps_atmo
+            )
+        );
+}
+
+function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
+    Object.values(window.microStationMarkers).forEach((station) => {
+        if (!station.hasValue) {
+            const defaultMarker = createDefaultMarker(
+                station.data,
+                dataCapteurSite,
+                pas_de_temps_atmo
+            );
+            station.marker = defaultMarker;
+        }
+    });
+}
+
+function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
+    const defaultMarker = L.marker([stationData.lat, stationData.lon], {
+        icon: L.icon({
+            iconUrl: 'img/microStationsAtmoSud/microStationAtmoSud_default.png',
+            iconSize: [50, 50],
+            iconAnchor: [5, 40],
+            popupAnchor: [0, -10],
+            tooltipAnchor: [-50, -10],
+        }),
+    }).addTo(atmoMicroLayer);
+
+    defaultMarker.deviceId = stationData.id_site;
+    defaultMarker.deviceData = stationData;
+
+    defaultMarker
+        .on('click', () =>
+            handleMarkerClick(
+                defaultMarker,
+                null,
+                stationData,
+                pas_de_temps_atmo
+            )
+        )
+        .on('mouseover', () => {
+            defaultMarker.setZIndexOffset(1000);
+            const tooltip = createTooltip(stationData, dataCapteurSite);
+            document.body.appendChild(tooltip);
+            defaultMarker.tooltip = tooltip;
+        })
+        .on('mouseout', () => {
+            if (state.selectedMarker !== defaultMarker) {
+                defaultMarker.setZIndexOffset(0);
+            }
+            if (defaultMarker.tooltip) {
+                defaultMarker.tooltip.remove();
+                defaultMarker.tooltip = null;
+            }
+        });
+
+    return defaultMarker;
+}
+
+/**
+ * Fonctions de gestion des tooltips et des clics
+ */
+
 function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
     console.log('click on micro station:', stationData.nom_site);
 
-    // On désélectionne le marqueur précédent s'il existe
-    if (
-        globalSelectedMarker &&
-        globalSelectedMarker !== marker &&
-        globalSelectedMarker._icon
-    ) {
-        globalSelectedMarker.setZIndexOffset(0);
-        globalSelectedMarker._icon.classList.remove('marker-selected');
-    }
-
-    if (
-        globalSelectedText &&
-        globalSelectedText !== textMarker &&
-        globalSelectedText._icon
-    ) {
-        globalSelectedText.setZIndexOffset(0);
-        globalSelectedText._icon.classList.remove('marker-selected');
-    }
-
-    // On met en surbrillance le nouveau marqueur
-    marker.setZIndexOffset(1000);
-    if (marker._icon) {
-        marker._icon.classList.add('marker-selected');
-    }
-    if (textMarker) {
-        textMarker.setZIndexOffset(1000);
-        if (textMarker._icon) {
-            textMarker._icon.classList.add('marker-selected');
-        }
-    }
-
-    // On met à jour les variables globales
-    globalSelectedMarker = marker;
-    globalSelectedText = textMarker;
-    globalSelectedDeviceId = stationData.id_site;
-    window.lastSelectedDeviceData = stationData;
-
-    // On ouvre le panneau latéral avec les détails
-    console.log('state: ', state);
+    resetPreviousMarker();
+    highlightNewMarker(marker, textMarker);
+    updateGlobalState(marker, textMarker, stationData);
     openSidePanelMicroStation(
         stationData,
         pas_de_temps_atmo,
@@ -991,45 +986,81 @@ function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
     );
 }
 
-// Fonction utilitaire pour créer un tooltip
+function resetPreviousMarker() {
+    if (state.selectedMarker && state.selectedMarker._icon) {
+        state.selectedMarker.setZIndexOffset(0);
+        state.selectedMarker._icon.classList.remove('marker-selected');
+    }
+
+    if (state.selectedText && state.selectedText._icon) {
+        state.selectedText.setZIndexOffset(0);
+        state.selectedText._icon.classList.remove('marker-selected');
+    }
+}
+
+function highlightNewMarker(marker, textMarker) {
+    marker.setZIndexOffset(1000);
+    if (marker._icon) {
+        marker._icon.classList.add('marker-selected');
+    }
+
+    if (textMarker) {
+        textMarker.setZIndexOffset(1000);
+        if (textMarker._icon) {
+            textMarker._icon.classList.add('marker-selected');
+        }
+    }
+}
+
+function updateGlobalState(marker, textMarker, stationData) {
+    state.selectedMarker = marker;
+    state.selectedText = textMarker;
+    state.selectedDeviceId = stationData.id_site;
+    window.lastSelectedDeviceData = stationData;
+}
+
 function createTooltip(stationData, dataCapteurSite) {
     const tooltip = document.createElement('div');
     tooltip.className = 'custom-tooltip';
 
-    // Récupération des polluants actifs
-    let polluantsActifs = [];
-    const capteurInfo = dataCapteurSite
-        ? dataCapteurSite.find(
-              (capteur) => capteur.id_site === stationData.id_site
-          )
-        : null;
+    const polluantsActifs = getActivePollutants(stationData, dataCapteurSite);
+    const formattedPollutants = formatPollutantsList(
+        polluantsActifs,
+        stationData
+    );
 
-    if (capteurInfo && capteurInfo.variables) {
-        polluantsActifs = Array.isArray(capteurInfo.variables)
+    tooltip.innerHTML = createTooltipHTML(stationData, formattedPollutants);
+    tooltip.style.cssText = getTooltipStyles();
+
+    return tooltip;
+}
+
+function getActivePollutants(stationData, dataCapteurSite) {
+    const capteurInfo = dataCapteurSite?.find(
+        (capteur) => capteur.id_site === stationData.id_site
+    );
+
+    if (capteurInfo?.variables) {
+        return Array.isArray(capteurInfo.variables)
             ? capteurInfo.variables
             : capteurInfo.variables.split(',').map((v) => v.trim());
-    } else if (stationData.variables) {
-        polluantsActifs = Array.isArray(stationData.variables)
+    }
+
+    if (stationData.variables) {
+        return Array.isArray(stationData.variables)
             ? stationData.variables
             : stationData.variables.split(',').map((v) => v.trim());
     }
 
-    // Créer un Set pour stocker les polluants uniques déjà traités
+    return [];
+}
+
+function formatPollutantsList(polluantsActifs, stationData) {
     const processedPollutants = new Set();
 
     const formattedPollutants = polluantsActifs
         .filter((polluant) => {
-            const polluantLower = polluant.toLowerCase();
-            let normalizedPolluant = polluantLower
-                .replace('pm2.5', 'pm25')
-                .replace('pm1.0', 'pm1')
-                .replace('pm10.0', 'pm10')
-                .replace('air pres.', '')
-                .replace('air temp.', '')
-                .replace('air hum.', '')
-                .replace(' nombre', '')
-                .trim();
-
+            const normalizedPolluant = normalizePollutantName(polluant);
             if (
                 !normalizedPolluant ||
                 processedPollutants.has(normalizedPolluant)
@@ -1047,46 +1078,49 @@ function createTooltip(stationData, dataCapteurSite) {
 
             return isSupported;
         })
-        .map((polluant) => {
-            const polluantLower = polluant.toLowerCase();
-            const normalizedPolluant = polluantLower
-                .replace('pm2.5', 'pm25')
-                .replace('pm1.0', 'pm1')
-                .replace('pm10.0', 'pm10')
-                .replace('air pres.', '')
-                .replace('air temp.', '')
-                .replace('air hum.', '')
-                .replace(' nombre', '')
-                .trim();
+        .map((polluant) => formatPollutantDisplay(polluant));
 
-            switch (normalizedPolluant) {
-                case 'pm1':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>1</sub></span>';
-                case 'pm25':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>';
-                case 'pm10':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>10</sub></span>';
-                case 'no2':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">NO<sub>2</sub></span>';
-                case 'so2':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>';
-                case 'o3':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>';
-                case 'h2s':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>';
-                case 'nh3':
-                    return '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>';
-                default:
-                    return `<span class="text-muted">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`;
-            }
-        });
-
-    // Mise à jour de polluantMesure avec les polluants normalisés
     stationData.polluantMesure = Array.from(processedPollutants).map((p) =>
         p.toUpperCase()
     );
+    return formattedPollutants;
+}
 
-    tooltip.innerHTML = `
+function normalizePollutantName(polluant) {
+    return polluant
+        .toLowerCase()
+        .replace('pm2.5', 'pm25')
+        .replace('pm1.0', 'pm1')
+        .replace('pm10.0', 'pm10')
+        .replace('air pres.', '')
+        .replace('air temp.', '')
+        .replace('air hum.', '')
+        .replace(' nombre', '')
+        .trim();
+}
+
+function formatPollutantDisplay(polluant) {
+    const normalizedPolluant = normalizePollutantName(polluant);
+
+    const pollutantFormats = {
+        pm1: '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>1</sub></span>',
+        pm25: '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>',
+        pm10: '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>10</sub></span>',
+        no2: '<span class="text-muted">●</span> <span class="fw-semibold">NO<sub>2</sub></span>',
+        so2: '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>',
+        o3: '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>',
+        h2s: '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>',
+        nh3: '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>',
+    };
+
+    return (
+        pollutantFormats[normalizedPolluant] ||
+        `<span class="text-muted">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`
+    );
+}
+
+function createTooltipHTML(stationData, formattedPollutants) {
+    return `
         <div class="card border-0 shadow-sm">
             <div class="card-body p-2">
                 <h6 class="card-title mb-1">${stationData.nom_site}</h6>
@@ -1113,8 +1147,10 @@ function createTooltip(stationData, dataCapteurSite) {
             </div>
         </div>
     `;
+}
 
-    tooltip.style.cssText = `
+function getTooltipStyles() {
+    return `
         position: fixed;
         z-index: 10000;
         pointer-events: none;
@@ -1127,6 +1163,4 @@ function createTooltip(stationData, dataCapteurSite) {
         transition: opacity 0.2s;
         opacity: 1;
     `;
-
-    return tooltip;
 }
