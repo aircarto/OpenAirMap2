@@ -98,12 +98,6 @@ export function updateButtonsState() {
     const collapseButton = document.getElementById('collapseSidePanel');
     const reduceButton = document.getElementById('reduceSidePanel');
 
-    console.log('État du panneau:', {
-        isOpen: sidePanelState.isOpen,
-        isExpanded: sidePanelState.isExpanded,
-    });
-    console.log('Bouton collapse trouvé:', !!collapseButton);
-
     if (toggleButton && collapseButton && reduceButton) {
         if (!sidePanelState.isOpen) {
             // Panneau fermé
@@ -115,9 +109,6 @@ export function updateButtonsState() {
         } else {
             // Panneau ouvert
             if (sidePanelState.isExpanded) {
-                console.log(
-                    'Configuration du bouton collapse pour le mode agrandi'
-                );
                 // Panneau agrandi - flèche vers la gauche pour réduire
                 toggleButton
                     .querySelector('i')
@@ -191,33 +182,20 @@ export function initializeSidePanelButtons() {
     const collapseButton = document.getElementById('collapseSidePanel');
     const reduceButton = document.getElementById('reduceSidePanel');
 
-    console.log('Initialisation des boutons:', {
-        toggleButton: !!toggleButton,
-        collapseButton: !!collapseButton,
-        reduceButton: !!reduceButton,
-    });
-
     if (toggleButton && collapseButton && reduceButton) {
         // Mettre à jour l'état initial des boutons
         updateButtonsState();
 
         toggleButton.addEventListener('click', function () {
-            console.log('Clic sur toggleButton');
             // Mettre à jour l'état initial
             sidePanelState.isOpen = sidePanel.style.display !== 'none';
             sidePanelState.isExpanded =
                 sidePanel.classList.contains('expanded');
 
-            console.log('État après clic:', {
-                isOpen: sidePanelState.isOpen,
-                isExpanded: sidePanelState.isExpanded,
-            });
-
             if (!sidePanelState.isOpen) {
                 // Ouvrir le panneau
                 openSidePanelGeneric();
             } else if (!sidePanelState.isExpanded) {
-                console.log('Passage en mode agrandi');
                 // Agrandir le panneau
                 sidePanel.classList.add('expanded');
                 mapContainer.classList.add('map-collapsed');
@@ -243,7 +221,6 @@ export function initializeSidePanelButtons() {
         });
 
         collapseButton.addEventListener('click', function () {
-            console.log('Clic sur collapseButton');
             if (sidePanelState.isExpanded) {
                 // Réduire le panneau
                 sidePanel.classList.remove('expanded');
@@ -263,7 +240,6 @@ export function initializeSidePanelButtons() {
         });
 
         reduceButton.addEventListener('click', function () {
-            console.log('Clic sur reduceButton');
             // Réduire le panneau
             sidePanel.classList.remove('expanded');
             mapContainer.classList.remove('map-collapsed');
@@ -316,10 +292,6 @@ export function updateToggleButtonVisibility() {
 
 // Ajouter cette fonction pour gérer le positionnement des boutons
 function updateButtonsPosition() {
-    console.log('updateButtonsPosition appelé');
-    console.log('État actuel:', sidePanelState);
-    console.log('Style du sidePanel:', sidePanel.style.display);
-
     const toggleButton = document.getElementById('toggleSidePanel');
     const collapseButton = document.getElementById('collapseSidePanel');
 
@@ -328,11 +300,9 @@ function updateButtonsPosition() {
         if (sidePanel.style.display === 'block') {
             // Utiliser getBoundingClientRect pour une mesure plus précise
             const sidePanelRect = sidePanel.getBoundingClientRect();
-            console.log('Dimensions du sidePanel:', sidePanelRect);
 
             // Positionner les boutons par rapport au panneau
             const buttonPosition = sidePanelRect.right + 20;
-            console.log('Nouvelle position des boutons:', buttonPosition);
 
             toggleButton.style.position = 'fixed';
             collapseButton.style.position = 'fixed';
@@ -350,18 +320,14 @@ function updateButtonsPosition() {
 
 // Modifier l'initialisation des observateurs
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOMContentLoaded - Initialisation des observateurs');
-
     // Observateur pour les changements de style du panneau latéral
     const sidePanelObserver = new MutationObserver(function (mutations) {
-        console.log('Mutation détectée sur le sidePanel');
         mutations.forEach(function (mutation) {
             if (
                 mutation.type === 'attributes' &&
                 (mutation.attributeName === 'style' ||
                     mutation.attributeName === 'class')
             ) {
-                console.log('Changement détecté:', mutation.attributeName);
                 updateButtonsPosition();
             }
         });

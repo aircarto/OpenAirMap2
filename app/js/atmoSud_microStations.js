@@ -334,6 +334,15 @@ export async function loadAtmoSudMicroStation() {
             textMarker.deviceId = value['id_site'];
             textMarker.deviceData = value;
 
+            // Ajout du champ polluantMesure aux données de la station
+            if (value.variables) {
+                value.polluantMesure = value.variables.map((v) =>
+                    v.toUpperCase()
+                );
+            } else {
+                value.polluantMesure = [];
+            }
+
             if (window.microStationMarkers[value['id_site']]) {
                 window.microStationMarkers[value['id_site']].textMarker =
                     textMarker;
@@ -430,6 +439,11 @@ export async function loadAtmoSudMicroStation() {
                                 return `<span class="text-muted">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`;
                         }
                     });
+
+                // Mise à jour de polluantMesure avec les polluants normalisés
+                value.polluantMesure = Array.from(processedPollutants).map(
+                    (p) => p.toUpperCase()
+                );
 
                 tooltip.innerHTML = `
                     <div class="card border-0 shadow-sm">
@@ -558,6 +572,16 @@ function createDefaultMarkers() {
                 globalSelectedMarker = defaultMarker;
                 globalSelectedText = null;
                 globalSelectedDeviceId = station.data.id_site;
+
+                // Ajout du champ polluantMesure aux données de la station
+                if (station.data.variables) {
+                    station.data.polluantMesure = station.data.variables.map(
+                        (v) => v.toUpperCase()
+                    );
+                } else {
+                    station.data.polluantMesure = [];
+                }
+
                 window.lastSelectedDeviceData = station.data;
 
                 console.log('Click on micro station: ' + station.data.id_site);

@@ -74,6 +74,7 @@ class PanelManager {
                 so2: null,
                 h2s: null,
                 nh3: null,
+                c6h6: null,
             },
         };
         this.currentSource = null;
@@ -170,31 +171,34 @@ class PanelManager {
                     }
                 } else if (source === 'atmo_micro') {
                     // Récupérer les données du capteur depuis window.deviceMarkers
-                    const deviceData = window.deviceMarkers?.[deviceId]?.data;
+                    const deviceData = window.lastSelectedDeviceData;
+                    console.log('deviceData: ', deviceData);
 
-                    if (deviceData && deviceData.variablesMesure) {
-                        const variablesMesure = deviceData.variablesMesure.map(
-                            (v) => v.toUpperCase()
-                        );
-
+                    if (deviceData && deviceData.polluantMesure) {
                         const polluantMapping = {
                             pm1: 'PM1',
-                            pm25: 'PM2.5',
+                            pm25: 'PM25',
                             pm10: 'PM10',
                             no2: 'NO2',
                             o3: 'O3',
                             so2: 'SO2',
                             h2s: 'H2S',
                             nh3: 'NH3',
+                            c6h6: 'C6H6',
                         };
 
-                        const polluantMesure = variablesMesure.includes(
-                            polluantMapping[key]
+                        Object.entries(this.buttons.pollutant).forEach(
+                            ([key, button]) => {
+                                const polluantMesure =
+                                    deviceData.polluantMesure.includes(
+                                        polluantMapping[key]
+                                    );
+                                button.disabled = !polluantMesure;
+                                button.title = polluantMesure
+                                    ? ''
+                                    : 'Polluant non mesuré par cette station';
+                            }
                         );
-                        this.buttons.pollutant[key].disabled = !polluantMesure;
-                        this.buttons.pollutant[key].title = polluantMesure
-                            ? ''
-                            : 'Polluant non mesuré par cette station';
                     } else {
                         console.log(
                             'Aucune donnée de polluants trouvée pour ce capteur'
@@ -205,6 +209,7 @@ class PanelManager {
                 } else if (source === 'atmo_ref') {
                     console.log('mesuresArray: ', data.mesuresArray);
                     const deviceData = window.lastSelectedDeviceData;
+                    console.log('deviceData: ', deviceData);
                     if (deviceData && deviceData.polluantMesure) {
                         const polluantMapping = {
                             pm1: 'PM1',
@@ -504,6 +509,9 @@ class PanelManager {
             no2: 'no2',
             o3: 'o3',
             so2: 'so2',
+            h2s: 'h2s',
+            nh3: 'nh3',
+            c6h6: 'c6h6',
         };
 
         Object.entries(polluants).forEach(([buttonId, pollutant]) => {
