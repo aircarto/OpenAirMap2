@@ -72,7 +72,7 @@ export const seuils_PM10 = {
     degrade: { code: 'degrade', min: 41, max: 50 }, // Qualité de l'air dégradée (41-50 µg/m³)
     mauvais: { code: 'mauvais', min: 51, max: 100 }, // Qualité de l'air mauvaise (51-100 µg/m³)
     tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 }, // Qualité de l'air très mauvaise (101-150 µg/m³)
-    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 999 }, // Qualité de l'air extrêmement mauvaise (>150 µg/m³)
+    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 10000 }, // Qualité de l'air extrêmement mauvaise (>150 µg/m³)
 };
 
 // Configuration des seuils pour le dioxyde d'azote (NO2) sur 24h

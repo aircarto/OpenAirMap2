@@ -238,6 +238,11 @@ export async function retreive_historiqueData_microStation(
     custom_start = null,
     custom_end = null
 ) {
+    for (let i = 0; i < mesures_array.length; i++) {
+        if (mesures_array[i] === 'pm25') {
+            mesures_array[i] = 'pm2.5';
+        }
+    }
     try {
         // Vérification que le capteur sélectionné est toujours le même
         let testSensorId = String(sensorId);
@@ -250,6 +255,7 @@ export async function retreive_historiqueData_microStation(
             );
             return;
         }
+
         // Démarrage du spinner
         startSpinner('Chargement des données historiques...');
 
@@ -324,6 +330,7 @@ export async function retreive_historiqueData_microStation(
 
         // Construction de l'URL complète pour l'appel API
         const full_url = `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures}?${params.toString()}`;
+        console.log("URL de l'API:", full_url); // Pour le débogage
 
         // Appel à l'API pour récupérer les données
         const data = await fetchAPI(full_url);
@@ -338,9 +345,9 @@ export async function retreive_historiqueData_microStation(
             timeUnit: 'minute',
             count: 1,
         };
-
+        //api.atmosud.org/observations/capteurs/mesures?id_site=1145&format=json&download=false&nb_dec=1&valeur_brute=true&variable=pm25&type_capteur=true&aggregation=horaire&d
         // Ajustement de l'intervalle en fonction du pas de temps
-        if (pas_de_temps === '2min') {
+        https: if (pas_de_temps === '2min') {
             baseIntervalConfig = {
                 timeUnit: 'minute',
                 count: 2,
@@ -469,6 +476,7 @@ export async function retreive_historiqueData_microStation(
             error
         );
         stopSpinner();
+        showErrorNotification(error.message);
         // Nettoyage en cas d'erreur
         if (window.amchart_root) {
             try {
@@ -481,7 +489,6 @@ export async function retreive_historiqueData_microStation(
             }
             window.amchart_root = undefined;
         }
-        showErrorNotification(error.message);
     }
 }
 
@@ -609,6 +616,7 @@ function showErrorNotification(message) {
 }
 
 async function fetchAPI(url, options = {}) {
+    startSpinner('Chargement des données...');
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -626,9 +634,12 @@ async function fetchAPI(url, options = {}) {
             throw new Error("Aucune donnée reçue de l'API");
         }
 
+        stopSpinner();
         return data;
     } catch (error) {
+        stopSpinner();
         console.error("Erreur lors de l'appel API:", error);
+        showErrorNotification(error.message);
         throw error;
     }
 }
@@ -808,14 +819,14 @@ function calculateTextParameters(value) {
     let checkPosition = 'right: 0px;';
 
     if (value >= 1000) {
-        textSize = 24;
-        x_position = 2; // Ajusté pour les nombres à 4 chiffres
-        y_position = 35;
+        textSize = 16;
+        x_position = 8; // Ajusté pour les nombres à 4 chiffres
+        y_position = 42;
         // checkPosition = 'right: -12px;';
     } else if (value >= 100) {
-        textSize = 24;
-        x_position = 4; // Ajusté pour les nombres à 3 chiffres
-        y_position = 38;
+        textSize = 20;
+        x_position = 6; // Ajusté pour les nombres à 3 chiffres
+        y_position = 42;
         // checkPosition = 'right: -14px;';
     } else if (value >= 10) {
         textSize = 26;
