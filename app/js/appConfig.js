@@ -25,23 +25,23 @@ export const mesures = {
 };
 
 export const sources = {
-    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true }, // Capteurs citoyens NebuleAir
     // sensor_community: {
     //     name: 'Sensor.Community',
     //     code: 'sensor_commmunity',
     //     activated: false,
     // }, // Réseau de capteurs Sensor.Community
     // purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false }, // Capteurs PurpleAir
-    atmo_micro: {
-        name: 'AtmoSud µStations',
-        code: 'atmo_micro',
-        activated: true,
-    }, // Micro-stations AtmoSud
     atmo_ref: {
-        name: 'AtmoSud Stations Ref',
+        name: 'Station de référence atmosud',
         code: 'atmo_ref',
         activated: true,
     }, // Stations de référence AtmoSud
+    atmo_micro: {
+        name: 'Miccrocapteurs qualifiés',
+        code: 'atmo_micro',
+        activated: true,
+    }, // Micro-stations AtmoSud
+    nebuleair: { name: 'NebuleAir', code: 'nebuleair', activated: true }, // Capteurs citoyens NebuleAir
     mod_pm: { name: 'Modélisation', code: 'mod_pm', activated: true }, // Modélisation des particules fines
     icairh: { name: 'ICAIR', code: 'icairh', activated: false }, // Modélisation ICAIR'H
     signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir

@@ -108,7 +108,36 @@ export async function loadAtmoSudMicroStation() {
         // Liste de tous les polluants possibles
         let allPollutants = ['pm1', 'pm2.5', 'pm10', 'no2'];
 
-        // On construit l'URL pour appeler l'API AtmoSud pour récupérer les dernieres mesures disponible
+        // Premier appel API pour récupérer tous les capteurs actifs depuis une semaine (168h)
+        let fullUrlCapteurSite =
+            `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?
+            format=json
+            &variable=${mesures_atmo}
+            &actifs=168
+        `.replace(/\s+/g, '');
+
+        let dataCapteurSite = await fetchAPI(fullUrlCapteurSite);
+        console.log(`${fullUrlCapteurSite} : `, dataCapteurSite);
+
+        // Initialisation de l'objet global pour les micro-stations
+        if (!window.microStationMarkers) {
+            window.microStationMarkers = {};
+        }
+
+        // On réinitialise window.microStationMarkers
+        window.microStationMarkers = {};
+
+        // On stocke d'abord tous les capteurs dans window.microStationMarkers
+        dataCapteurSite.forEach((capteur) => {
+            window.microStationMarkers[capteur.id_site] = {
+                data: capteur,
+                hasValue: false,
+                marker: null,
+                textMarker: null,
+            };
+        });
+
+        // Deuxième appel API pour récupérer les dernières mesures
         let full_url_derniere = `
             ${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?
             format=json
@@ -119,47 +148,34 @@ export async function loadAtmoSudMicroStation() {
             &aggregation=${pas_de_temps_atmo}
         `.replace(/\s+/g, '');
 
-        // On appelle l'API et on attend la réponse
         const data = await fetchAPI(full_url_derniere);
         console.log(`${full_url_derniere} :`, data);
-
-        let fullUrlCapteurSite =
-            `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?
-            format=json
-            &variable=${mesures_atmo}
-            &actifs=181
-        `.replace(/\s+/g, '');
-        let dataCapteurSite = await fetchAPI(fullUrlCapteurSite);
-        console.log(`${fullUrlCapteurSite} : `, dataCapteurSite);
 
         // On vérifie que les données reçues sont bien un tableau
         if (!Array.isArray(data)) {
             throw new Error('Les données reçues ne sont pas au bon format');
         }
 
-        // Initialisation de l'objet global pour les micro-stations
-        if (!window.microStationMarkers) {
-            window.microStationMarkers = {};
-        }
-
-        // Création des marqueurs par défaut pour toutes les stations
-        dataCapteurSite.forEach((capteur) => {
-            if (!window.microStationMarkers[capteur.id_site]) {
-                window.microStationMarkers[capteur.id_site] = {
-                    data: capteur,
-                    hasValue: false,
-                };
-            }
-        });
-
-        // Création des marqueurs par défaut
-        createDefaultMarkers();
-
         // Filtre supplémentaire pour le pas de temps de 2 minutes
         let filteredData = data;
         if (pas_de_temps[0] === '2min') {
             filteredData = data.filter((item) => item.pas_de_temps === 120);
         }
+
+        // On déduplique les mesures par id_site en gardant la plus récente
+        let uniqueMeasures = {};
+        filteredData.forEach((measure) => {
+            if (
+                !uniqueMeasures[measure.id_site] ||
+                new Date(measure.time) >
+                    new Date(uniqueMeasures[measure.id_site].time)
+            ) {
+                uniqueMeasures[measure.id_site] = measure;
+            }
+        });
+
+        // On convertit l'objet en tableau
+        filteredData = Object.values(uniqueMeasures);
 
         // Si on n'a pas de données, on affiche un message d'avertissement
         if (filteredData.length === 0) {
@@ -181,6 +197,20 @@ export async function loadAtmoSudMicroStation() {
                 console.warn('Données incomplètes pour un capteur:', value);
                 continue;
             }
+
+            // On s'assure que l'entrée existe dans window.microStationMarkers
+            if (!window.microStationMarkers[value.id_site]) {
+                window.microStationMarkers[value.id_site] = {
+                    data: value,
+                    hasValue: false,
+                    marker: null,
+                    textMarker: null,
+                };
+            }
+
+            // On met à jour les données du capteur
+            window.microStationMarkers[value.id_site].data = value;
+            window.microStationMarkers[value.id_site].hasValue = true;
 
             // On prépare l'icône du marqueur
             var icon_param = {
@@ -219,12 +249,9 @@ export async function loadAtmoSudMicroStation() {
             microStationMarker.deviceId = value['id_site'];
             microStationMarker.deviceData = value;
 
-            // On garde une référence à tous les marqueurs
-            window.microStationMarkers[value['id_site']] = {
-                marker: microStationMarker,
-                data: value,
-                hasValue: true,
-            };
+            // On met à jour le marqueur dans window.microStationMarkers
+            window.microStationMarkers[value['id_site']].marker =
+                microStationMarker;
 
             // On prépare l'affichage de la valeur
             let roundedvalue = Math.round(parseFloat(value['valeur_ref']));
@@ -275,64 +302,23 @@ export async function loadAtmoSudMicroStation() {
             let textMarker = L.marker([value['lat'], value['lon']], {
                 icon: text_param,
             })
-                .on('click', function () {
-                    // Quand on clique sur un marqueur
-                    console.log('click on micro station:', value['nom_site']);
-
-                    // On désélectionne le marqueur précédent s'il existe
-                    if (
-                        globalSelectedMarker &&
-                        globalSelectedMarker !== microStationMarker &&
-                        globalSelectedMarker._icon
-                    ) {
-                        globalSelectedMarker.setZIndexOffset(0);
-                        globalSelectedMarker._icon.classList.remove(
-                            'marker-selected'
-                        );
-                    }
-
-                    if (
-                        globalSelectedText &&
-                        globalSelectedText !== textMarker &&
-                        globalSelectedText._icon
-                    ) {
-                        globalSelectedText.setZIndexOffset(0);
-                        globalSelectedText._icon.classList.remove(
-                            'marker-selected'
-                        );
-                    }
-
-                    // On met en surbrillance le nouveau marqueur
-                    microStationMarker.setZIndexOffset(1000);
-                    textMarker.setZIndexOffset(1000);
-                    if (microStationMarker._icon) {
-                        microStationMarker._icon.classList.add(
-                            'marker-selected'
-                        );
-                    }
-                    if (textMarker._icon) {
-                        textMarker._icon.classList.add('marker-selected');
-                    }
-
-                    // On met à jour les variables globales
-                    globalSelectedMarker = microStationMarker;
-                    globalSelectedText = textMarker;
-                    globalSelectedDeviceId = value['id_site'];
-                    window.lastSelectedDeviceData = value;
-
-                    // On ouvre le panneau latéral avec les détails
-                    openSidePanelMicroStation(
+                .on('click', () =>
+                    handleMarkerClick(
+                        microStationMarker,
+                        textMarker,
                         value,
-                        pas_de_temps_atmo,
-                        state.historiqueChart,
-                        mesures_atmo
-                    );
-                })
+                        pas_de_temps_atmo
+                    )
+                )
                 .addTo(atmoMicroLayer);
 
             // On stocke des informations sur le texte
             textMarker.deviceId = value['id_site'];
             textMarker.deviceData = value;
+
+            // On met à jour le textMarker dans window.microStationMarkers
+            window.microStationMarkers[value['id_site']].textMarker =
+                textMarker;
 
             // Ajout du champ polluantMesure aux données de la station
             if (value.variables) {
@@ -343,146 +329,12 @@ export async function loadAtmoSudMicroStation() {
                 value.polluantMesure = [];
             }
 
-            if (window.microStationMarkers[value['id_site']]) {
-                window.microStationMarkers[value['id_site']].textMarker =
-                    textMarker;
-            }
-
             // Fonction appelée quand on survole un marqueur
             function highlightMarker() {
                 microStationMarker.setZIndexOffset(1000);
                 textMarker.setZIndexOffset(1000);
 
-                // On crée une infobulle
-                const tooltip = document.createElement('div');
-                tooltip.className = 'custom-tooltip';
-
-                // Récupération des polluants actifs depuis dataCapteurSite
-                let polluantsActifs = [];
-                const capteurInfo = dataCapteurSite.find(
-                    (capteur) => capteur.id_site === value.id_site
-                );
-
-                if (capteurInfo && capteurInfo.variables) {
-                    polluantsActifs = Array.isArray(capteurInfo.variables)
-                        ? capteurInfo.variables
-                        : capteurInfo.variables.split(',').map((v) => v.trim());
-                }
-
-                // Créer un Set pour stocker les polluants uniques déjà traités
-                const processedPollutants = new Set();
-
-                const formattedPollutants = polluantsActifs
-                    .filter((polluant) => {
-                        const polluantLower = polluant.toLowerCase();
-                        // Normalisation du format du polluant
-                        let normalizedPolluant = polluantLower
-                            .replace('pm2.5', 'pm25')
-                            .replace('pm1.0', 'pm1')
-                            .replace('pm10.0', 'pm10')
-                            .replace('air pres.', '')
-                            .replace('air temp.', '')
-                            .replace('air hum.', '')
-                            .replace(' nombre', '')
-                            .trim();
-
-                        // Si le polluant est vide après normalisation ou déjà traité, on le rejette
-                        if (
-                            !normalizedPolluant ||
-                            processedPollutants.has(normalizedPolluant)
-                        ) {
-                            return false;
-                        }
-
-                        // Vérifier si le polluant est dans les mesures supportées
-                        const isSupported = Object.values(
-                            supportedMesures
-                        ).some((mesure) => mesure.code === normalizedPolluant);
-
-                        if (isSupported) {
-                            processedPollutants.add(normalizedPolluant);
-                        }
-
-                        return isSupported;
-                    })
-                    .map((polluant) => {
-                        const polluantLower = polluant.toLowerCase();
-                        // Normalisation pour l'affichage
-                        const normalizedPolluant = polluantLower
-                            .replace('pm2.5', 'pm25')
-                            .replace('pm1.0', 'pm1')
-                            .replace('pm10.0', 'pm10')
-                            .replace('air pres.', '')
-                            .replace('air temp.', '')
-                            .replace('air hum.', '')
-                            .replace(' nombre', '')
-                            .trim();
-
-                        switch (normalizedPolluant) {
-                            case 'pm1':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>1</sub></span>';
-                            case 'pm25':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>';
-                            case 'pm10':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>10</sub></span>';
-                            case 'no2':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">NO<sub>2</sub></span>';
-                            case 'so2':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>';
-                            case 'o3':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>';
-                            case 'h2s':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>';
-                            case 'nh3':
-                                return '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>';
-                            default:
-                                return `<span class="text-muted">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`;
-                        }
-                    });
-
-                // Mise à jour de polluantMesure avec les polluants normalisés
-                value.polluantMesure = Array.from(processedPollutants).map(
-                    (p) => p.toUpperCase()
-                );
-
-                tooltip.innerHTML = `
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-2">
-                            <h6 class="card-title mb-1">${value['nom_site']}</h6>
-                            <div class="d-flex flex-column">
-                                <small class="text-muted mb-1">
-                                    <i class="bi bi-clock me-1"></i>
-                                    Dernière mise à jour: ${new Date(value['time']).toLocaleString()}
-                                </small>
-                                <small class="text-muted mb-1">
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    ${value['modele_capteur']} - ${value['marque_capteur']}
-                                </small>
-                                <small class="text-muted">
-                                    Polluants mesurés:<br>
-                                    ${formattedPollutants.join('<br>')}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                // On positionne l'infobulle
-                tooltip.style.cssText = `
-                    position: fixed;
-                    z-index: 10000;
-                    pointer-events: none;
-                    bottom: 20px;
-                    right: 20px;
-                    background-color: white;
-                    padding: 10px;
-                    border-radius: 5px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                    transition: opacity 0.2s;
-                    opacity: 1;
-                `;
-
-                // On ajoute l'infobulle à la page
+                const tooltip = createTooltip(value, dataCapteurSite);
                 document.body.appendChild(tooltip);
                 microStationMarker.tooltip = tooltip;
                 textMarker.tooltip = tooltip;
@@ -510,6 +362,60 @@ export async function loadAtmoSudMicroStation() {
                 .on('mouseover', highlightMarker)
                 .on('mouseout', resetMarker);
         }
+
+        // Création des marqueurs par défaut pour les capteurs sans mesure
+        Object.values(window.microStationMarkers).forEach((station) => {
+            if (!station.hasValue) {
+                const defaultMarker = L.marker(
+                    [station.data.lat, station.data.lon],
+                    {
+                        icon: L.icon({
+                            iconUrl:
+                                'img/microStationsAtmoSud/microStationAtmoSud_default.png',
+                            iconSize: [50, 50],
+                            iconAnchor: [5, 40],
+                            popupAnchor: [0, -10],
+                            tooltipAnchor: [-50, -10],
+                        }),
+                    }
+                ).addTo(atmoMicroLayer);
+
+                // On stocke des informations sur le marqueur
+                defaultMarker.deviceId = station.data.id_site;
+                defaultMarker.deviceData = station.data;
+
+                defaultMarker.on('click', () =>
+                    handleMarkerClick(
+                        defaultMarker,
+                        null,
+                        station.data,
+                        pas_de_temps_atmo
+                    )
+                );
+
+                defaultMarker.on('mouseover', () => {
+                    defaultMarker.setZIndexOffset(1000);
+                    const tooltip = createTooltip(
+                        station.data,
+                        dataCapteurSite
+                    );
+                    document.body.appendChild(tooltip);
+                    defaultMarker.tooltip = tooltip;
+                });
+
+                defaultMarker.on('mouseout', () => {
+                    if (globalSelectedMarker !== defaultMarker) {
+                        defaultMarker.setZIndexOffset(0);
+                    }
+                    if (defaultMarker.tooltip) {
+                        defaultMarker.tooltip.remove();
+                        defaultMarker.tooltip = null;
+                    }
+                });
+
+                station.marker = defaultMarker;
+            }
+        });
     } catch (error) {
         // Si une erreur se produit, on l'affiche
         console.error('Erreur dans loadAtmoSudMicroStation:', error);
@@ -520,84 +426,6 @@ export async function loadAtmoSudMicroStation() {
 /**
  * Crée les marqueurs par défaut pour les micro-stations sans données
  */
-function createDefaultMarkers() {
-    // Vérifier si window.microStationMarkers existe, sinon l'initialiser
-    if (!window.microStationMarkers) {
-        window.microStationMarkers = {};
-    }
-
-    // Créer des marqueurs par défaut pour toutes les stations actives
-    Object.values(window.microStationMarkers).forEach((station) => {
-        // Ne pas créer de marqueur par défaut si la station a déjà des données
-        if (!station.marker) {
-            const defaultMarker = L.marker(
-                [station.data.lat, station.data.lon],
-                {
-                    icon: L.icon({
-                        iconUrl:
-                            'img/microStationsAtmoSud/microStationAtmoSud_default.png',
-                        iconSize: [50, 50],
-                        iconAnchor: [5, 40],
-                        popupAnchor: [0, -10],
-                        tooltipAnchor: [-50, -10],
-                    }),
-                }
-            );
-
-            // Ajout du marqueur à la couche
-            atmoMicroLayer.addLayer(defaultMarker);
-
-            defaultMarker.on('click', () => {
-                if (
-                    globalSelectedMarker &&
-                    globalSelectedMarker !== defaultMarker
-                ) {
-                    globalSelectedMarker.setZIndexOffset(0);
-                    if (globalSelectedMarker._icon) {
-                        globalSelectedMarker._icon.classList.remove(
-                            'marker-selected'
-                        );
-                    }
-                }
-
-                if (globalSelectedText) {
-                    globalSelectedText.setZIndexOffset(0);
-                    if (globalSelectedText._icon) {
-                        globalSelectedText._icon.classList.remove(
-                            'marker-selected'
-                        );
-                    }
-                }
-
-                globalSelectedMarker = defaultMarker;
-                globalSelectedText = null;
-                globalSelectedDeviceId = station.data.id_site;
-
-                // Ajout du champ polluantMesure aux données de la station
-                if (station.data.variables) {
-                    station.data.polluantMesure = station.data.variables.map(
-                        (v) => v.toUpperCase()
-                    );
-                } else {
-                    station.data.polluantMesure = [];
-                }
-
-                window.lastSelectedDeviceData = station.data;
-
-                console.log('Click on micro station: ' + station.data.id_site);
-                openSidePanelMicroStation(
-                    station.data,
-                    state.pasDeTempsAtmo,
-                    state.historiqueChart,
-                    state.mesuresArray
-                );
-            });
-
-            window.microStationMarkers[station.data.id_site].marker =
-                defaultMarker;
-        }
-    });
-}
 
 // Fonction pour ouvrir le panneau latéral avec les informations du capteur
 export function openSidePanelMicroStation(
@@ -655,7 +483,6 @@ export async function retreive_historiqueData_microStation(
     pas_de_temps,
     historique,
     mesures_array,
-    add_mesure = false,
     custom_start = null,
     custom_end = null
 ) {
@@ -671,7 +498,6 @@ export async function retreive_historiqueData_microStation(
             );
             return;
         }
-
         // Démarrage du spinner
         startSpinner('Chargement des données historiques...');
 
@@ -1113,3 +939,194 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// Fonction utilitaire pour gérer le clic sur un marqueur
+function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
+    console.log('click on micro station:', stationData.nom_site);
+
+    // On désélectionne le marqueur précédent s'il existe
+    if (
+        globalSelectedMarker &&
+        globalSelectedMarker !== marker &&
+        globalSelectedMarker._icon
+    ) {
+        globalSelectedMarker.setZIndexOffset(0);
+        globalSelectedMarker._icon.classList.remove('marker-selected');
+    }
+
+    if (
+        globalSelectedText &&
+        globalSelectedText !== textMarker &&
+        globalSelectedText._icon
+    ) {
+        globalSelectedText.setZIndexOffset(0);
+        globalSelectedText._icon.classList.remove('marker-selected');
+    }
+
+    // On met en surbrillance le nouveau marqueur
+    marker.setZIndexOffset(1000);
+    if (marker._icon) {
+        marker._icon.classList.add('marker-selected');
+    }
+    if (textMarker) {
+        textMarker.setZIndexOffset(1000);
+        if (textMarker._icon) {
+            textMarker._icon.classList.add('marker-selected');
+        }
+    }
+
+    // On met à jour les variables globales
+    globalSelectedMarker = marker;
+    globalSelectedText = textMarker;
+    globalSelectedDeviceId = stationData.id_site;
+    window.lastSelectedDeviceData = stationData;
+
+    // On ouvre le panneau latéral avec les détails
+    console.log('state: ', state);
+    openSidePanelMicroStation(
+        stationData,
+        pas_de_temps_atmo,
+        state.historiqueChart,
+        state.mesuresArray
+    );
+}
+
+// Fonction utilitaire pour créer un tooltip
+function createTooltip(stationData, dataCapteurSite) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'custom-tooltip';
+
+    // Récupération des polluants actifs
+    let polluantsActifs = [];
+    const capteurInfo = dataCapteurSite
+        ? dataCapteurSite.find(
+              (capteur) => capteur.id_site === stationData.id_site
+          )
+        : null;
+
+    if (capteurInfo && capteurInfo.variables) {
+        polluantsActifs = Array.isArray(capteurInfo.variables)
+            ? capteurInfo.variables
+            : capteurInfo.variables.split(',').map((v) => v.trim());
+    } else if (stationData.variables) {
+        polluantsActifs = Array.isArray(stationData.variables)
+            ? stationData.variables
+            : stationData.variables.split(',').map((v) => v.trim());
+    }
+
+    // Créer un Set pour stocker les polluants uniques déjà traités
+    const processedPollutants = new Set();
+
+    const formattedPollutants = polluantsActifs
+        .filter((polluant) => {
+            const polluantLower = polluant.toLowerCase();
+            let normalizedPolluant = polluantLower
+                .replace('pm2.5', 'pm25')
+                .replace('pm1.0', 'pm1')
+                .replace('pm10.0', 'pm10')
+                .replace('air pres.', '')
+                .replace('air temp.', '')
+                .replace('air hum.', '')
+                .replace(' nombre', '')
+                .trim();
+
+            if (
+                !normalizedPolluant ||
+                processedPollutants.has(normalizedPolluant)
+            ) {
+                return false;
+            }
+
+            const isSupported = Object.values(supportedMesures).some(
+                (mesure) => mesure.code === normalizedPolluant
+            );
+
+            if (isSupported) {
+                processedPollutants.add(normalizedPolluant);
+            }
+
+            return isSupported;
+        })
+        .map((polluant) => {
+            const polluantLower = polluant.toLowerCase();
+            const normalizedPolluant = polluantLower
+                .replace('pm2.5', 'pm25')
+                .replace('pm1.0', 'pm1')
+                .replace('pm10.0', 'pm10')
+                .replace('air pres.', '')
+                .replace('air temp.', '')
+                .replace('air hum.', '')
+                .replace(' nombre', '')
+                .trim();
+
+            switch (normalizedPolluant) {
+                case 'pm1':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>1</sub></span>';
+                case 'pm25':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>';
+                case 'pm10':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>10</sub></span>';
+                case 'no2':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">NO<sub>2</sub></span>';
+                case 'so2':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>';
+                case 'o3':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>';
+                case 'h2s':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>';
+                case 'nh3':
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>';
+                default:
+                    return `<span class="text-muted">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`;
+            }
+        });
+
+    // Mise à jour de polluantMesure avec les polluants normalisés
+    stationData.polluantMesure = Array.from(processedPollutants).map((p) =>
+        p.toUpperCase()
+    );
+
+    tooltip.innerHTML = `
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-2">
+                <h6 class="card-title mb-1">${stationData.nom_site}</h6>
+                <div class="d-flex flex-column">
+                    ${
+                        stationData.time
+                            ? `
+                        <small class="text-muted mb-1">
+                            <i class="bi bi-clock me-1"></i>
+                            Dernière mise à jour: ${new Date(stationData.time).toLocaleString()}
+                        </small>
+                    `
+                            : ''
+                    }
+                    <small class="text-muted mb-1">
+                        <i class="bi bi-info-circle me-1"></i>
+                        ${stationData.modele_capteur || ''} - ${stationData.marque_capteur || ''}
+                    </small>
+                    <small class="text-muted">
+                        Polluants mesurés:<br>
+                        ${formattedPollutants.join('<br>')}
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+
+    tooltip.style.cssText = `
+        position: fixed;
+        z-index: 10000;
+        pointer-events: none;
+        bottom: 20px;
+        right: 20px;
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: opacity 0.2s;
+        opacity: 1;
+    `;
+
+    return tooltip;
+}

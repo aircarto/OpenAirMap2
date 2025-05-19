@@ -172,7 +172,6 @@ class PanelManager {
                 } else if (source === 'atmo_micro') {
                     // Récupérer les données du capteur depuis window.deviceMarkers
                     const deviceData = window.lastSelectedDeviceData;
-                    console.log('deviceData: ', deviceData);
 
                     if (deviceData && deviceData.polluantMesure) {
                         const polluantMapping = {
@@ -723,6 +722,7 @@ class PanelManager {
                 formattedEndDate
             );
         } else if (source === 'atmo_micro') {
+            console.log(this.state[source]);
             retreive_historiqueData_microStation(
                 this.state[source].deviceId,
                 this.state[source].pasDeTempsChart,
