@@ -1,3 +1,4 @@
+// ??? à voir
 const colorsJSON = `{
     "colors": ["#4FF0E6", "#51CCAA", "#EDE663", "#ED5E58", "#881B33", "#74287D"]
 }`;

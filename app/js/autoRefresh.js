@@ -1,3 +1,6 @@
+/*
+Relance les loads de data pour les points et leur valeurs
+*/
 import { getArrayFromLocalStorage } from './utils.js';
 import { loadSource, updateButtonDisplay } from './sources.js';
 import { clearLayer } from './layers.js';

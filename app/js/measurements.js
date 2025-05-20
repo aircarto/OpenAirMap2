@@ -1,3 +1,5 @@
+// Gestion du menu sur la top bar (polluants et pas de temps)
+// note. ne concerne pas les sources de données
 import { mesures, pas_de_temps } from './appConfig.js';
 import {
     getArrayFromLocalStorage,

@@ -1,3 +1,5 @@
+//Gestion de l'ouverture et de la fermeture du panneau latéral
+
 import { map } from './mapConfig.js';
 
 /**
@@ -91,6 +93,7 @@ export function closeSidePanel() {
 }
 
 /**
+ * Bouton d'ouverture et de fermeture du panneau latéral
  * Met à jour l'état des boutons en fonction de l'état du panneau
  */
 export function updateButtonsState() {
@@ -175,7 +178,7 @@ export function openSidePanel_signalair(data, nuisance_type) {
 }
 
 /**
- * Initialise les boutons du panneau latéral
+ * Initialise les boutons d'ouverture et de fermeture panneau latéral
  */
 export function initializeSidePanelButtons() {
     const toggleButton = document.getElementById('toggleSidePanel');

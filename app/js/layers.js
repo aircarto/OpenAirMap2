@@ -1,3 +1,5 @@
+// Declaration des différentes couches de la carte
+
 import { map } from './mapConfig.js';
 import { getArrayFromLocalStorage } from './utils.js';
 import { openSidePanelNebuleAir } from './NebuleAir.js';

@@ -1,3 +1,4 @@
+//Gestion des sources de données depuis la top bar
 import { sources } from './appConfig.js';
 import {
     getArrayFromLocalStorage,

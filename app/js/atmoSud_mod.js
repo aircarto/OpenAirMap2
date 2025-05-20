@@ -1,3 +1,9 @@
+/*
+Affichage des cartes de modélisation
+Principalement les cartes d'AmtoSud
+-> rasters WMS
+*/
+
 import {
     modelisationPMAtmoSud_layer,
     modelisationICAIRAtmoSud_layer,
@@ -39,6 +45,7 @@ export function logActiveLayers() {
 
 /**
  * Charge la couche de modélisation des PM sur la carte
+ * Vient chercher les données sur le serveur WMS d'AtmoSud (geoserver ou azurh)
  * @param {string} compoundUpper - Le polluant à afficher (PM1, PM25, PM10)
  */
 export function loadModPM(compoundUpper) {

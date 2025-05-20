@@ -1,6 +1,7 @@
 /**
  * Gestionnaire centralisé des sources de données
  * Ce module gère l'état et les interactions entre les différentes sources de données
+ * Pour la gestion des données non dispo pour un pas de temps donné
  */
 
 import { getArrayFromLocalStorage } from './utils.js';

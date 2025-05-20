@@ -1,4 +1,4 @@
-// Configuration par défaut des toasters
+// Configuration par défaut des toasters (notifications)
 const defaultConfig = {
     position: 'top',
     timer: 3000,

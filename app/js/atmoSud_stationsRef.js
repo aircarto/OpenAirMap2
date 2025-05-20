@@ -172,8 +172,10 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
 }
 
 /**
- * Fonction principale pour charger les stations de référence AtmoSud
+ * Fonction principale pour charger les infos des stations de référence AtmoSud
  * Récupère les données des stations et les affiche sur la carte
+ * Call depuis l'API
+ * trigger createStationMarker pour la création des points sur la carte
  */
 export function loadAtmoSudStationsRef() {
     console.log(
@@ -376,6 +378,7 @@ export function loadAtmoSudStationsRef() {
 
 /**
  * Crée un marqueur pour une station avec des données
+ * avec un "clic listener" pour ouvrir le panneau latéral
  * @param {Object} value - Données de la station
  * @param {Object} iconParam - Paramètres de l'icône
  * @param {Object} stationData - Données de la station
@@ -552,7 +555,8 @@ function createStationMarker(value, iconParam, stationData, mesure) {
 }
 
 /**
- * Configure les événements pour les marqueurs
+ * Configure les événements pour les marqueurs (clic event)
+ * pour ouvrir le side  panel
  * @param {Object} stationMarker - Marqueur de la station
  * @param {Object} textMarker - Marqueur de texte
  * @param {Object} value - Données de la station
@@ -821,7 +825,9 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
 }
 
 /**
- * Récupère les données historiques d'une station
+ * Récupère les données historiques d'une station de référence AtmoSud
+ * Fabrication du charts
+ * Source -> API AtmoSud
  * @param {string} stationId - ID de la station
  * @param {string} pasDeTemps - Pas de temps
  * @param {string} historique - Période historique

@@ -1,3 +1,6 @@
+// les URLs utilisées dans l'application 
+// Call API
+
 export const API_atmoSud = {
     url_base: 'https://api.atmosud.org',
     // url_base: '172.16.13.182:8080',

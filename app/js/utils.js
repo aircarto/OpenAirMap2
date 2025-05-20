@@ -1,3 +1,7 @@
+//Gestiond du local storage 
+// formattage des polluants
+// couleurs des points en fonction des seuils
+
 import {
     seuils_PM10,
     seuils_NO2_24h,

@@ -1,3 +1,7 @@
+//layout présent dans index.html (id="side-panel")
+// script pour adapter le comportement du panneau latéral en fonction des inputs utilisateurs
+// en focntion du type d'appareil sélectionnés (station reference, micro-station ou NebuleAir)
+
 import { isSourceActive } from './dataSourceManager.js';
 import { retreiveHistoriqueDataStationRef } from './atmoSud_stationsRef.js';
 import { retreive_historiqueData_microStation } from './atmoSud_microStations.js';
@@ -138,6 +142,14 @@ class PanelManager {
         return conversions[buttonId] || buttonId;
     }
 
+
+    /*
+    Déclaration de la fonction openPanel
+    ouverture du panel en fonction
+    source -> source de données (atmo_ref, atmo_micro, nebuleair)
+    deviceId -> identifiant de l'appareil
+    data -> qui vient de la configuration (pasDeTempsAtmo, hitorique, mesure, etc...)
+    */
     openPanel(source, deviceId, data) {
         if (!isSourceActive(source)) {
             console.log('Source non active:', source);

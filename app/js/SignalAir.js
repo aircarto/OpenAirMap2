@@ -226,7 +226,7 @@ export function loadSignalAir(startDate, endDate) {
 }
 
 /**
- * Crée et injecte la div de sélection de dates
+ * Crée et injecte la div de sélection de dates dans le side panel (pour l'instant)
  */
 function createDateRangeSelector() {
     const dateRangeDiv = document.createElement('div');
