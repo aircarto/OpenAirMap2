@@ -658,6 +658,136 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
         icon: textParam,
     });
 
+    // Ajout des fonctions de survol
+    function highlightMarker() {
+        stationMarker.setZIndexOffset(1000);
+        textMarker.setZIndexOffset(1000);
+
+        // Création d'un tooltip personnalisé avec Bootstrap
+        const tooltip = document.createElement('div');
+        tooltip.className = 'custom-tooltip';
+
+        // Récupération des polluants actifs
+        let polluantsActifs = [];
+        if (stationData.variables) {
+            Object.values(stationData.variables).forEach((variable) => {
+                if (variable.en_service) {
+                    polluantsActifs.push(variable.label);
+                }
+            });
+        }
+        value.polluantMesure = polluantsActifs;
+
+        polluantsActifs.forEach((polluant, index) => {
+            if (polluant === 'PM2.5') {
+                polluantsActifs[index] = 'PM25';
+            }
+        });
+
+        polluantsActifs = polluantsActifs.filter((polluant) =>
+            Object.keys(supportedMesures).includes(polluant.toLowerCase())
+        );
+
+        polluantsActifs.forEach((polluant, index) => {
+            if (polluant === 'PM25') {
+                polluantsActifs[index] = 'PM2.5';
+            }
+        });
+
+        // Format pollutant names with consistent styling
+        polluantsActifs = polluantsActifs.map((polluant) => {
+            switch (polluant) {
+                case 'PM1':
+                    return '<span class="fw-semibold">PM<sub>1</sub></span>';
+                case 'PM2.5':
+                    return '<span class="fw-semibold">PM<sub>2.5</sub></span>';
+                case 'PM10':
+                    return '<span class="fw-semibold">PM<sub>10</sub></span>';
+                case 'NO2':
+                    return '<span class="fw-semibold">NO<sub>2</sub></span>';
+                case 'SO2':
+                    return '<span class="fw-semibold">SO<sub>2</sub></span>';
+                case 'O3':
+                    return '<span class="fw-semibold">O<sub>3</sub></span>';
+                case 'H2S':
+                    return '<span class="fw-semibold">H<sub>2</sub>S</span>';
+                case 'NH3':
+                    return '<span class="fw-semibold">NH<sub>3</sub></span>';
+                default:
+                    return `<span class="fw-semibold">${polluant}</span>`;
+            }
+        });
+
+        tooltip.innerHTML = `
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-2">
+                    <h6 class="card-title mb-1">${stationData.nom_station}</h6>
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">
+                            <i class="bi bi-geo-alt me-1"></i>
+                            ${stationData.latitude.toFixed(4)}, ${stationData.longitude.toFixed(4)}
+                        </small>
+                        <small class="text-muted">
+                            Dernière mise à jour: ${new Date(value.date_debut).toLocaleString()}
+                        </small>
+                        <small class="text-muted">
+                            Polluants mesurés:
+                            <ul class="list-unstyled ms-3 mb-0">
+                                ${polluantsActifs
+                                    .map(
+                                        (polluant) =>
+                                            `<li><span class="text-muted">●</span> ${polluant}</li>`
+                                    )
+                                    .join('')}
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Style du tooltip
+        tooltip.style.cssText = `
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: opacity 0.2s;
+            opacity: 1;
+        `;
+
+        // Ajout du tooltip directement au body pour éviter les problèmes de z-index
+        document.body.appendChild(tooltip);
+
+        // Stockage de la référence du tooltip
+        stationMarker.tooltip = tooltip;
+        textMarker.tooltip = tooltip;
+    }
+
+    function resetMarker() {
+        // Ne pas réinitialiser si c'est le marqueur sélectionné
+        if (refMarkerState.selectedMarker !== stationMarker) {
+            stationMarker.setZIndexOffset(0);
+            textMarker.setZIndexOffset(0);
+        }
+
+        // Suppression du tooltip
+        if (stationMarker.tooltip) {
+            stationMarker.tooltip.remove();
+            stationMarker.tooltip = null;
+            textMarker.tooltip = null;
+        }
+    }
+
+    // Application des effets de survol aux deux marqueurs
+    stationMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
+    textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
+
     setupRefMarkerEvents(stationMarker, textMarker, value, mesure);
     window.stationMarkers[value.id_station] = {
         marker: stationMarker,
@@ -666,6 +796,7 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
         hasValue: true,
     };
 
+    // Ajout des marqueurs à la couche
     window.atmoRefLayer.addLayer(stationMarker);
     window.atmoRefLayer.addLayer(textMarker);
 }
@@ -776,6 +907,131 @@ export function createRefDefaultMarkers() {
                     }),
                 }
             );
+
+            // Ajout des fonctions de survol
+            function highlightMarker() {
+                defaultMarker.setZIndexOffset(1000);
+
+                // Création d'un tooltip personnalisé avec Bootstrap
+                const tooltip = document.createElement('div');
+                tooltip.className = 'custom-tooltip';
+
+                // Récupération des polluants actifs
+                let polluantsActifs = [];
+                if (station.variables) {
+                    Object.values(station.variables).forEach((variable) => {
+                        if (variable.en_service) {
+                            polluantsActifs.push(variable.label);
+                        }
+                    });
+                }
+
+                polluantsActifs.forEach((polluant, index) => {
+                    if (polluant === 'PM2.5') {
+                        polluantsActifs[index] = 'PM25';
+                    }
+                });
+
+                polluantsActifs = polluantsActifs.filter((polluant) =>
+                    Object.keys(supportedMesures).includes(
+                        polluant.toLowerCase()
+                    )
+                );
+
+                polluantsActifs.forEach((polluant, index) => {
+                    if (polluant === 'PM25') {
+                        polluantsActifs[index] = 'PM2.5';
+                    }
+                });
+
+                // Format pollutant names with consistent styling
+                polluantsActifs = polluantsActifs.map((polluant) => {
+                    switch (polluant) {
+                        case 'PM1':
+                            return '<span class="fw-semibold">PM<sub>1</sub></span>';
+                        case 'PM2.5':
+                            return '<span class="fw-semibold">PM<sub>2.5</sub></span>';
+                        case 'PM10':
+                            return '<span class="fw-semibold">PM<sub>10</sub></span>';
+                        case 'NO2':
+                            return '<span class="fw-semibold">NO<sub>2</sub></span>';
+                        case 'SO2':
+                            return '<span class="fw-semibold">SO<sub>2</sub></span>';
+                        case 'O3':
+                            return '<span class="fw-semibold">O<sub>3</sub></span>';
+                        case 'H2S':
+                            return '<span class="fw-semibold">H<sub>2</sub>S</span>';
+                        case 'NH3':
+                            return '<span class="fw-semibold">NH<sub>3</sub></span>';
+                        default:
+                            return `<span class="fw-semibold">${polluant}</span>`;
+                    }
+                });
+
+                tooltip.innerHTML = `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">${station.nom_station}</h6>
+                            <div class="d-flex flex-column">
+                                <small class="text-muted mb-1">
+                                    <i class="bi bi-geo-alt me-1"></i>
+                                    ${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}
+                                </small>
+                                <small class="text-muted">
+                                    Polluants mesurés:
+                                    <ul class="list-unstyled ms-3 mb-0">
+                                        ${polluantsActifs
+                                            .map(
+                                                (polluant) =>
+                                                    `<li><span class="text-muted">●</span> ${polluant}</li>`
+                                            )
+                                            .join('')}
+                                    </ul>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Style du tooltip
+                tooltip.style.cssText = `
+                    position: fixed;
+                    z-index: 10000;
+                    pointer-events: none;
+                    bottom: 20px;
+                    right: 20px;
+                    background-color: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    transition: opacity 0.2s;
+                    opacity: 1;
+                `;
+
+                // Ajout du tooltip directement au body pour éviter les problèmes de z-index
+                document.body.appendChild(tooltip);
+
+                // Stockage de la référence du tooltip
+                defaultMarker.tooltip = tooltip;
+            }
+
+            function resetMarker() {
+                // Ne pas réinitialiser si c'est le marqueur sélectionné
+                if (refMarkerState.selectedMarker !== defaultMarker) {
+                    defaultMarker.setZIndexOffset(0);
+                }
+
+                // Suppression du tooltip
+                if (defaultMarker.tooltip) {
+                    defaultMarker.tooltip.remove();
+                    defaultMarker.tooltip = null;
+                }
+            }
+
+            // Application des effets de survol
+            defaultMarker
+                .on('mouseover', highlightMarker)
+                .on('mouseout', resetMarker);
 
             window.atmoRefLayer.addLayer(defaultMarker);
 
