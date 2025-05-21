@@ -48,7 +48,7 @@ const state = {
 // Variables de contrôle
 let isFetching = false;
 let isYAxisCapped = false;
-let yAxisMaxValue = 100;
+let yAxisMaxValue = 90;
 
 // Log pour vérifier l'import de mesures
 console.log('Mesures supportées importées:', supportedMesures);
@@ -136,11 +136,28 @@ async function fetchCapteurSites(mesures_atmo) {
 }
 
 async function fetchDernieresMesures(mesures_atmo, pas_de_temps_atmo) {
+    console.log('################################');
+    console.log('pas_de_temps_atmo', pas_de_temps_atmo);
+    console.log('################################');
+    let delais = '';
+    if (pas_de_temps_atmo === 'horaire') {
+        delais = '64';
+    } else if (pas_de_temps_atmo === 'quart-horaire') {
+        delais = '19';
+    } else if (pas_de_temps_atmo === 'brute') {
+        delais = '181';
+    }
     const full_url_derniere =
-        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps_atmo}`.replace(
+        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps_atmo}&delais=${delais}`.replace(
             /\s+/g,
             ''
         );
+    // let capteurs_mesures_dernieres = await fetchAPI(full_url_derniere);
+    // for (let i = 0; i < capteurs_mesures_dernieres.length; i++) {
+    //     if (capteurs_mesures_dernieres[i].modele_capteur != 'NebuleAir') {
+    //         console.log(capteurs_mesures_dernieres[i].modele_capteur);
+    //     }
+    // }
     return await fetchAPI(full_url_derniere);
 }
 
@@ -156,7 +173,6 @@ function filterAndProcessData(data, pas_de_temps) {
     if (pas_de_temps === '2min') {
         filteredData = data.filter((item) => item.pas_de_temps === 120);
     }
-
     const uniqueMeasures = {};
     filteredData.forEach((measure) => {
         if (
@@ -238,6 +254,11 @@ export async function retreive_historiqueData_microStation(
     custom_start = null,
     custom_end = null
 ) {
+    console.log('################################');
+    console.log('custom_start', custom_start);
+    console.log('custom_end', custom_end);
+    console.log('################################');
+
     for (let i = 0; i < mesures_array.length; i++) {
         if (mesures_array[i] === 'pm25') {
             mesures_array[i] = 'pm2.5';
@@ -538,9 +559,21 @@ function configureAxes(chart, root, baseInterval, unite) {
     const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {}),
-            numberFormat: `#.#  ${unite}`,
+            numberFormat: '#.#',
             min: 0,
             max: isYAxisCapped ? yAxisMaxValue : undefined,
+        })
+    );
+
+    // Ajouter le label après la création de l'axe
+    yAxis.children.unshift(
+        am5.Label.new(root, {
+            text: unite,
+            rotation: -90,
+            y: am5.p50,
+            centerX: am5.p50,
+            centerY: am5.p50,
+            fontWeight: '500',
         })
     );
 
@@ -925,14 +958,29 @@ function setupMarkerEvents(
 }
 
 function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
+    const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
+
     Object.values(window.microStationMarkers).forEach((station) => {
         if (!station.hasValue) {
-            const defaultMarker = createDefaultMarker(
-                station.data,
-                dataCapteurSite,
-                pas_de_temps_atmo
-            );
-            station.marker = defaultMarker;
+            // Pour le pas de temps 2min, on n'affiche que les capteurs NebuleAir
+            if (pas_de_temps[0] === '2min') {
+                if (station.data.modele_capteur === 'NebuleAir') {
+                    const defaultMarker = createDefaultMarker(
+                        station.data,
+                        dataCapteurSite,
+                        pas_de_temps_atmo
+                    );
+                    station.marker = defaultMarker;
+                }
+            } else {
+                // Pour les autres pas de temps, on garde le comportement actuel
+                const defaultMarker = createDefaultMarker(
+                    station.data,
+                    dataCapteurSite,
+                    pas_de_temps_atmo
+                );
+                station.marker = defaultMarker;
+            }
         }
     });
 }

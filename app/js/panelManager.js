@@ -52,11 +52,9 @@ class PanelManager {
                 custom: null,
                 startDate: null,
                 endDate: null,
-                '1h': null,
                 '3h': null,
                 '24h': null,
                 '7d': null,
-                '30d': null,
                 '365d': null,
             },
             pasDeTemps: {
@@ -431,6 +429,19 @@ class PanelManager {
                         this.state[this.currentSource].customDateRange.end =
                             null;
 
+                        // Fermer le formulaire de plage de dates
+                        const dateRangeForm =
+                            document.getElementById('dateRangeForm');
+                        if (dateRangeForm) {
+                            const bsCollapse = new bootstrap.Collapse(
+                                dateRangeForm,
+                                {
+                                    toggle: false,
+                                }
+                            );
+                            bsCollapse.hide();
+                        }
+
                         // Appeler updateHistoriqueData avec l'état mis à jour
                         this.updateHistoriqueData(this.currentSource);
                     });
@@ -717,18 +728,20 @@ class PanelManager {
                 this.state[source].pasDeTempsChart,
                 this.state[source].historiqueChart,
                 this.state[source].mesuresArray,
-                useCustomRange,
                 formattedStartDate,
                 formattedEndDate
             );
         } else if (source === 'atmo_micro') {
             console.log(this.state[source]);
+            console.log('################################');
+            console.log('formattedStartDate', formattedStartDate);
+            console.log('formattedEndDate', formattedEndDate);
+            console.log('################################');
             retreive_historiqueData_microStation(
                 this.state[source].deviceId,
                 this.state[source].pasDeTempsChart,
                 this.state[source].historiqueChart,
                 this.state[source].mesuresArray,
-                useCustomRange,
                 formattedStartDate,
                 formattedEndDate
             );

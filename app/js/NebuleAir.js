@@ -24,6 +24,34 @@ var state = {
     },
 };
 
+let isYAxisCapped = false;
+let yAxisMaxValue = 90;
+
+export function toggleYAxisCapping() {
+    isYAxisCapped = !isYAxisCapped;
+    updateYAxisMax();
+    return isYAxisCapped;
+}
+
+export function setYAxisMaxValue(value) {
+    yAxisMaxValue = value;
+    if (isYAxisCapped) {
+        updateYAxisMax();
+    }
+}
+
+function updateYAxisMax() {
+    if (window.amchart_root) {
+        const chart = window.amchart_root.container.children.getIndex(0);
+        if (chart) {
+            const yAxis = chart.yAxes.getIndex(0);
+            if (yAxis) {
+                yAxis.set('max', isYAxisCapped ? yAxisMaxValue : undefined);
+            }
+        }
+    }
+}
+
 // Fonction principale exportée
 export function loadNebuleAir() {
     nebuleairLayer.clearLayers();
@@ -426,6 +454,7 @@ function createChart(root) {
 
 // Configuration des axes
 function configureAxes(chart, root, baseInterval) {
+    const unite = 'µg/m³';
     const xAxis = chart.xAxes.push(
         am5xy.DateAxis.new(root, {
             maxDeviation: 0.2,
@@ -452,8 +481,21 @@ function configureAxes(chart, root, baseInterval) {
     const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {}),
-            numberFormat: `#.#  µg/m³`,
+            numberFormat: `#.#`,
             min: 0,
+            max: isYAxisCapped ? yAxisMaxValue : undefined,
+        })
+    );
+
+    // Ajouter le label après la création de l'axe
+    yAxis.children.unshift(
+        am5.Label.new(root, {
+            text: unite,
+            rotation: -90,
+            y: am5.p50,
+            centerX: am5.p50,
+            centerY: am5.p50,
+            fontWeight: '500',
         })
     );
 

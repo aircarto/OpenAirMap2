@@ -72,6 +72,34 @@ const buttons = {
     },
 };
 
+let isYAxisCapped = false;
+let yAxisMaxValue = 90;
+
+export function toggleYAxisCapping() {
+    isYAxisCapped = !isYAxisCapped;
+    updateYAxisMax();
+    return isYAxisCapped;
+}
+
+export function setYAxisMaxValue(value) {
+    yAxisMaxValue = value;
+    if (isYAxisCapped) {
+        updateYAxisMax();
+    }
+}
+
+function updateYAxisMax() {
+    if (window.amchart_root) {
+        const chart = window.amchart_root.container.children.getIndex(0);
+        if (chart) {
+            const yAxis = chart.yAxes.getIndex(0);
+            if (yAxis) {
+                yAxis.set('max', isYAxisCapped ? yAxisMaxValue : undefined);
+            }
+        }
+    }
+}
+
 // Fonctions utilitaires pour la gestion d'amCharts
 function createChart(root) {
     return root.container.children.push(
@@ -118,7 +146,19 @@ function configureAxes(chart, root, baseInterval, unite) {
         am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {}),
             min: 0,
-            numberFormat: `#.#  ${unite}`,
+            max: isYAxisCapped ? yAxisMaxValue : undefined,
+            numberFormat: `#.# `,
+        })
+    );
+    // Ajouter le label après la création de l'axe
+    yAxis.children.unshift(
+        am5.Label.new(root, {
+            text: unite,
+            rotation: -90,
+            y: am5.p50,
+            centerX: am5.p50,
+            centerY: am5.p50,
+            fontWeight: '500',
         })
     );
 
@@ -860,7 +900,8 @@ export function retreiveHistoriqueDataStationRef(
         pasDeTemps,
         historique,
         mesuresArray,
-        addMesure,
+        customStart,
+        customEnd,
     });
     // const start = Date.now();
 
