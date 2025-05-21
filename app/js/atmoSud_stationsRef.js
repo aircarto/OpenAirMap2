@@ -473,7 +473,7 @@ export function loadAtmoSudStationsRef() {
                         iconUrl:
                             'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
                         iconSize: [50, 50],
-                        iconAnchor: [25, 25],
+                        iconAnchor: [5, 40],
                         popupAnchor: [0, -25],
                         tooltipAnchor: [0, -25],
                         className: value.id_station,
