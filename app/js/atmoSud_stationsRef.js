@@ -19,18 +19,7 @@ import {
     createRefDefaultMarkers,
     refMarkerState,
 } from './markerManager.js';
-
-// Définition des couleurs pour les polluants
-const pollutantColors = {
-    pm1: '#FF6B6B',
-    pm25: '#4ECDC4',
-    pm10: '#45B7D1',
-    no2: '#96CEB4',
-    o3: '#FFEEAD',
-    so2: '#D4A5A5',
-    h2s: '#9B59B6',
-    nh3: '#3498DB',
-};
+import { POLLUTANT_COLORS } from './appConfig.js';
 
 // Variables locales au module
 var state = {
@@ -119,24 +108,27 @@ function createChart(root, stationName) {
                 maxColumns: 1,
                 fixedWidthGrid: true,
             }),
+            colors: {
+                colors: [],
+            },
         })
     );
 
-        // ➕ Ajout du titre du graphique
-        chart.children.unshift(
-            am5.Label.new(root, {
-                text: `Données de la station ${stationName}`, // <-- Titre personnalisé
-                fontSize: 20,
-                fontWeight: "500",
-                textAlign: "center",
-                x: am5.p50,
-                centerX: am5.p50,
-                paddingTop: 10,
-                paddingBottom: 10,
-            })
-        );
+    // ➕ Ajout du titre du graphique
+    chart.children.unshift(
+        am5.Label.new(root, {
+            text: `Données de la station ${stationName}`,
+            fontSize: 20,
+            fontWeight: '500',
+            textAlign: 'center',
+            x: am5.p50,
+            centerX: am5.p50,
+            paddingTop: 10,
+            paddingBottom: 10,
+        })
+    );
 
-        return chart;
+    return chart;
 }
 
 function configureAxes(chart, root, baseInterval, unite) {
@@ -197,121 +189,98 @@ function configureCursor(chart, root) {
     return cursor;
 }
 
-// function createSeries(chart, root, pollutant, axes, data,) {
-//     console.log(data)
-//     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
-//     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
-//     const color = pollutantColors[colorKey] || '#000000';
-
-//     const series = chart.series.push(
-//         am5xy.SmoothedXLineSeries.new(root, {
-//             name: `${pollutant.toUpperCase()}`,
-//             xAxis: axes.xAxis,
-//             yAxis: axes.yAxis,
-//             valueYField: 'value',
-//             valueXField: 'date',
-//             tooltip: am5.Tooltip.new(root, {
-//                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
-//             }),
-//         })
-//     );
-
-//     series.strokes.template.setAll({
-//         strokeWidth: 2,
-//         stroke: am5.color(color),
-//     });
-
-//     series.data.setAll(data);
-//     series.appear(1000);
-
-//     return {
-//         series,
-//         name: pollutant,
-//         compare: polluantCompare,
-//     };
-// }
-
 function createSeries(chart, root, pollutant, axes, data) {
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
-    const color = pollutantColors[colorKey] || '#000000';
+    const color = POLLUTANT_COLORS[colorKey] || '#000000';
 
-    const validatedData = data.filter(item => item.validated);
-    const nonValidatedData = data.filter(item => !item.validated);
+    const validatedData = data.filter((item) => item.validated);
+    const nonValidatedData = data.filter((item) => !item.validated);
 
-    function createStyledSeries(name, seriesData, dashed = false) {
-        const series = chart.series.push(
-            am5xy.SmoothedXLineSeries.new(root, {
-                name: name,
-                xAxis: axes.xAxis,
-                yAxis: axes.yAxis,
-                valueYField: 'value',
-                valueXField: 'date',
-                tooltip: am5.Tooltip.new(root, {
-                    labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
-                }),
-            })
-        );
-
-        series.strokes.template.setAll({
-            strokeWidth: 2,
+    const series = chart.series.push(
+        am5xy.SmoothedXLineSeries.new(root, {
+            name: `${pollutant.toUpperCase()} (Validée)`,
+            xAxis: axes.xAxis,
+            yAxis: axes.yAxis,
+            valueYField: 'value',
+            valueXField: 'date',
+            tooltip: am5.Tooltip.new(root, {
+                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (Validée)`,
+            }),
+            // Forcer l'utilisation de notre couleur
+            fill: am5.color(color),
             stroke: am5.color(color),
-            strokeDasharray: dashed ? [5, 5] : null,
-        });
+        })
+    );
 
-        series.data.setAll(seriesData);
-        series.appear(1000);
+    series.strokes.template.setAll({
+        strokeWidth: 2,
+        stroke: am5.color(color),
+    });
 
-        return series;
-    }
+    series.data.setAll(validatedData);
+    series.appear(1000);
 
-    const solidSeries = createStyledSeries(`${pollutant.toUpperCase()} (Validée)`, validatedData, false);
-    const dashedSeries = createStyledSeries(`${pollutant.toUpperCase()} (Pas encore validée)`, nonValidatedData, true);
+    // Création de la série pour les données non validées
+    const nonValidatedSeries = chart.series.push(
+        am5xy.SmoothedXLineSeries.new(root, {
+            name: `${pollutant.toUpperCase()} (Non validée)`,
+            xAxis: axes.xAxis,
+            yAxis: axes.yAxis,
+            valueYField: 'value',
+            valueXField: 'date',
+            tooltip: am5.Tooltip.new(root, {
+                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (Non validée)`,
+            }),
+            // Forcer l'utilisation de notre couleur
+            fill: am5.color(color),
+            stroke: am5.color(color),
+        })
+    );
+
+    nonValidatedSeries.strokes.template.setAll({
+        strokeWidth: 2,
+        stroke: am5.color(color),
+        strokeDasharray: [5, 5],
+    });
+
+    nonValidatedSeries.data.setAll(nonValidatedData);
+    nonValidatedSeries.appear(1000);
 
     return {
-        validatedSeries: solidSeries,
-        estimatedSeries: dashedSeries,
+        series: [series, nonValidatedSeries],
         name: pollutant,
         compare: polluantCompare,
     };
 }
 
-
 function configureLegend(chart, root, allSeries, mesuresArray) {
-    // Crée un conteneur vertical : graphique + légende
-    const mainContainer = chart.root.container.children.push(
-        am5.Container.new(root, {
-            layout: root.verticalLayout,
-            width: am5.percent(100),
-            height: am5.percent(100),
+    const legend = chart.children.push(
+        am5.Legend.new(root, {
+            centerX: am5.percent(50),
+            x: am5.percent(50),
+            y: am5.percent(95),
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 5,
+                fixedWidthGrid: true,
+            }),
+            paddingTop: 10,
+            paddingBottom: 10,
+            marginBottom: 10,
         })
     );
 
-    // Déplace le chart dans le conteneur principal
-    mainContainer.children.push(chart);
-
-    // Crée la légende
-    const legend = am5.Legend.new(root, {
-        centerX: am5.percent(50),
-        x: am5.percent(50),
-        layout: am5.GridLayout.new(root, {
-            maxColumns: 3, // Plus mobile-friendly
-            fixedWidthGrid: true,
-        }),
-        paddingTop: 10,
-        paddingBottom: 10,
-        width: am5.percent(100), // Prend toute la largeur
+    // Ajout de toutes les séries à la légende
+    allSeries.forEach((seriesGroup) => {
+        if (Array.isArray(seriesGroup.series)) {
+            seriesGroup.series.forEach((series) => {
+                legend.data.push(series);
+            });
+        }
     });
-
-    // Ajoute la légende *sous* le chart
-    mainContainer.children.push(legend);
-
-    // Connecte la légende aux séries
-    legend.data.setAll(chart.series.values);
 
     return legend;
 }
-
 
 /**
  * Fonction principale pour charger les infos des stations de référence AtmoSud
@@ -788,7 +757,6 @@ export function retreiveHistoriqueDataStationRef(
             // Initialisation des données pour le graphique
             let seriesData = {};
 
-
             // Traitement des données
             data.mesures.forEach((item) => {
                 // console.log('item', item);
@@ -847,7 +815,8 @@ export function retreiveHistoriqueDataStationRef(
                         seriesData[nomPolluant].data.push({
                             value: item.valeur,
                             date: new Date(item.date_debut).getTime(),
-                            validated: item.validation === "validée" ? true : false
+                            validated:
+                                item.validation === 'validée' ? true : false,
                         });
                     }
                 } else {
@@ -945,12 +914,17 @@ export function retreiveHistoriqueDataStationRef(
                         window.amchart_root,
                         polluant,
                         axes,
-                        seriesData[polluant].data,
+                        seriesData[polluant].data
                     );
                     allSeries.push(series);
                 });
 
-                configureLegend(chart, window.amchart_root, allSeries, mesuresArray);
+                configureLegend(
+                    chart,
+                    window.amchart_root,
+                    allSeries,
+                    mesuresArray
+                );
 
                 // Animation
                 chart.appear(1000, 100);

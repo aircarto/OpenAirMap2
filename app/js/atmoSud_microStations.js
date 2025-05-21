@@ -17,14 +17,9 @@ import {
     initializeMicroStationMarkers,
     processAndDisplayStations,
 } from './markerManager.js';
+import { POLLUTANT_COLORS } from './appConfig.js';
 
 // Constantes
-const POLLUTANT_COLORS = {
-    pm1: '#FF5733',
-    'pm2.5': '#33A1FF',
-    pm10: '#33FF57',
-    no2: '#A133FF',
-};
 
 // Éléments DOM
 const card1_img = document.getElementById('card1_img');
@@ -349,7 +344,7 @@ export async function retreive_historiqueData_microStation(
 
         // Appel à l'API pour récupérer les données
         const data = await fetchAPI(full_url);
-        console.log(data)
+        console.log(data);
 
         // Vérification de la validité des données reçues
         if (!data || !Array.isArray(data)) {
@@ -388,7 +383,7 @@ export async function retreive_historiqueData_microStation(
         // Récupération de l'unité de mesure
         let unite = data[0].unite;
         let sensorName = data[0].nom_site;
-        console.log("Nom du capteur:", sensorName);
+        console.log('Nom du capteur:', sensorName);
 
         // Initialisation du graphique avec amCharts 5
         am5.ready(function () {
@@ -531,8 +526,8 @@ function createChart(root, sensorName) {
         am5.Label.new(root, {
             text: `Données du capteur ${sensorName}`, // <-- Titre personnalisé
             fontSize: 20,
-            fontWeight: "500",
-            textAlign: "center",
+            fontWeight: '500',
+            textAlign: 'center',
             x: am5.p50,
             centerX: am5.p50,
             paddingTop: 10,
@@ -542,8 +537,6 @@ function createChart(root, sensorName) {
 
     return chart;
 }
-
-
 
 // Configuration des axes
 function configureAxes(chart, root, baseInterval, unite) {
@@ -622,6 +615,8 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
             tooltip: am5.Tooltip.new(root, {
                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (donnée ${type})`,
             }),
+            fill: am5.color(color),
+            stroke: am5.color(color),
         })
     );
 

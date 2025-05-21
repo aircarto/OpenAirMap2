@@ -102,3 +102,15 @@ export const seuilsSO2_24h = {
     tres_mauvais: { code: 'tres_mauvais', min: 161, max: 200 },
     extr_mauvais: { code: 'extr_mauvais', min: 201, max: 999 },
 };
+
+// Définition des couleurs pour les polluants dans les graphiques
+export const POLLUTANT_COLORS = {
+    pm1: '#b7cee5', // Bleu très clair
+    pm25: '#66b2ff', // Bleu clair/moyen
+    pm10: '#0066cc', // Bleu foncé
+    no2: '#A133FF',
+    o3: '#FFEEAD',
+    so2: '#D4A5A5',
+    h2s: '#9B59B6',
+    nh3: '#3498DB',
+};

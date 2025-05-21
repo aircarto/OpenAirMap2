@@ -13,6 +13,7 @@ import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
 import { openSidePanelGeneric } from './sidePanel.js';
+import { POLLUTANT_COLORS } from './appConfig.js';
 // Variables locales au module
 var state = {
     pasDeTempsChart: '1h',
@@ -76,13 +77,19 @@ export function loadNebuleAir() {
         mesure_maj_pas_de_temps = mesure_majuscule + '_' + pas_de_temps_String;
     }
 
-    $.ajax({
-        method: 'GET',
-        url: `${API_airCarto.url_base}${API_airCarto.url_capteurs_metadata}?capteurType=NebuleAir`,
-        success: function (data) {
+    fetch(
+        `${API_airCarto.url_base}${API_airCarto.url_capteurs_metadata}?capteurType=NebuleAir`
+    )
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
             console.log('NebuleAir AirCarto : ', data);
-            var displayed = data.filter((e) => e.displayMap == true);
-            $.each(displayed, function (key, value) {
+            const displayed = data.filter((e) => e.displayMap == true);
+            displayed.forEach((value) => {
                 var icon_param = {
                     iconUrl: 'img/nebuleair/nebuleAir_default.png',
                     iconSize: [40, 40],
@@ -191,11 +198,6 @@ export function loadNebuleAir() {
                     function highlightMarker() {
                         nebuleAirMarker.setZIndexOffset(1000);
                         textMarker.setZIndexOffset(1000);
-                        // console.log('value: ', value);
-                        // console.log(
-                        //     'value: ',
-                        //     new Date(value.time).toLocaleString()
-                        // );
 
                         const tooltip = document.createElement('div');
                         tooltip.className = 'custom-tooltip';
@@ -261,13 +263,10 @@ export function loadNebuleAir() {
                         .on('mouseout', resetMarker);
                 }
             });
-        },
-        error: function (xhr, status, error) {
+        })
+        .catch((error) => {
             console.error('Error:', error);
-            console.error('Status:', status);
-            console.error('Response:', xhr.responseText);
-        },
-    });
+        });
 }
 
 export function openSidePanelNebuleAir(
@@ -378,10 +377,14 @@ export function retreive_historiqueData_nebuleAir(
 
     console.log("URL de l'API:", full_url);
 
-    $.ajax({
-        method: 'GET',
-        url: full_url,
-        success: function (data) {
+    fetch(full_url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
             console.log(`Données récupérées en ${requestTimer} secondes`);
@@ -424,14 +427,11 @@ export function retreive_historiqueData_nebuleAir(
                     mesuresArray
                 );
             });
-        },
-        error: function (xhr, status, error) {
+        })
+        .catch((error) => {
             stopSpinner();
             console.error('Erreur lors de la récupération des données:', error);
-            console.error('Status:', status);
-            console.error('Réponse:', xhr.responseText);
-        },
-    });
+        });
 }
 
 // Configuration du graphique principal
@@ -455,8 +455,8 @@ function createChart(root, sensorName) {
         am5.Label.new(root, {
             text: `Données du capteur ${sensorName}`, // <-- Titre personnalisé
             fontSize: 20,
-            fontWeight: "500",
-            textAlign: "center",
+            fontWeight: '500',
+            textAlign: 'center',
             x: am5.p50,
             centerX: am5.p50,
             paddingTop: 10,
@@ -546,6 +546,9 @@ function getAvailablePollutants(data) {
 // Création d'une série pour un polluant
 function createSeries(chart, root, pollutant, axes, data) {
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
+    const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
+    const color = POLLUTANT_COLORS[colorKey] || '#000000';
+
     const dataPoints = data.map((e) => ({
         value: e[pollutant === 'PM2.5' ? 'PM25' : pollutant],
         date: new Date(e.time).getTime(),
@@ -561,11 +564,14 @@ function createSeries(chart, root, pollutant, axes, data) {
             tooltip: am5.Tooltip.new(root, {
                 labelText: `${formatPollutantName(pollutant)}: {valueY} µg/m³`,
             }),
+            fill: am5.color(color),
+            stroke: am5.color(color),
         })
     );
 
     series.strokes.template.setAll({
         strokeWidth: 2,
+        stroke: am5.color(color),
         strokeDasharray: [5, 5],
     });
 
@@ -607,7 +613,7 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
         window.amchart_root = am5.Root.new('chartdiv_sensor');
         window.amchart_root.locale = am5locales_fr_FR;
 
-        const sensorName = data[0].sensorId
+        const sensorName = data[0].sensorId;
 
         // Création du graphique
         const chart = createChart(window.amchart_root, sensorName);
@@ -634,7 +640,12 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
             );
 
         // Configuration de la légende
-        configureLegend(chart, window.amchart_root, availablePollutants, mesuresArray);
+        configureLegend(
+            chart,
+            window.amchart_root,
+            availablePollutants,
+            mesuresArray
+        );
         // Animation finale
         chart.appear(1000, 100);
         stopSpinner();
