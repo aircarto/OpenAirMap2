@@ -14,6 +14,11 @@ import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
 import { API_atmoSud } from '../config.js';
 import { openSidePanelGeneric } from './sidePanel.js';
+import {
+    createRefStationMarker,
+    createRefDefaultMarkers,
+    refMarkerState,
+} from './markerManager.js';
 
 // Définition des couleurs pour les polluants
 const pollutantColors = {
@@ -320,9 +325,9 @@ export function loadAtmoSudStationsRef() {
             console.log('Nombre de stations actives:', stationsActives);
 
             // Création des marqueurs par défaut pour toutes les stations actives
-            createDefaultMarkers();
+            createRefDefaultMarkers();
 
-            // Construction de l'URL pour la deuxième requête API   ABA- Delais 86 test
+            // Construction de l'URL pour la deuxième requête API
             const fullUrlDerniere = `
                 ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
                 format=json&
@@ -383,7 +388,12 @@ export function loadAtmoSudStationsRef() {
                         iconParam.iconUrl = `img/stationsRefAtmoSud/refStationAtmoSud_${colorCode}.png`;
                     }
 
-                    createStationMarker(value, iconParam, stationData, mesure);
+                    createRefStationMarker(
+                        value,
+                        iconParam,
+                        stationData,
+                        mesure
+                    );
                 });
             }
 
@@ -401,7 +411,7 @@ export function loadAtmoSudStationsRef() {
                 window.stationMarkers &&
                 Object.keys(window.stationMarkers).length > 0
             ) {
-                createDefaultMarkers();
+                createRefDefaultMarkers();
                 // S'assurer que la couche est sur la carte
                 if (!window.atmoRefLayer) {
                     console.log(
@@ -412,336 +422,6 @@ export function loadAtmoSudStationsRef() {
                 }
             }
         });
-}
-
-/**
- * Crée un marqueur pour une station avec des données
- * @param {Object} value - Données de la station
- * @param {Object} iconParam - Paramètres de l'icône
- * @param {Object} stationData - Données de la station
- * @param {Array} mesure - Mesures sélectionnées
- */
-function createStationMarker(value, iconParam, stationData, mesure) {
-    // Supprimer le marqueur par défaut s'il existe
-    if (window.stationMarkers[value.id_station]?.marker) {
-        window.atmoRefLayer.removeLayer(
-            window.stationMarkers[value.id_station].marker
-        );
-    }
-
-    const stationMarker = L.marker(
-        [stationData.latitude, stationData.longitude],
-        {
-            icon: L.icon(iconParam),
-        }
-    );
-
-    const textSize = getTextSize(value.valeur);
-    const textPosition = getTextPosition(value.valeur);
-
-    const textParam = L.divIcon({
-        className: 'my-div-icon',
-        html: `<div id="textDiv" style="font-size: ${textSize}px; text-align: center; width: 50px; margin-left: -25px;">${Math.round(value.valeur)}</div>`,
-        iconAnchor: textPosition,
-        popupAnchor: [30, -60],
-    });
-
-    const textMarker = L.marker([stationData.latitude, stationData.longitude], {
-        icon: textParam,
-    });
-
-    // Ajout des fonctions de survol
-    function highlightMarker() {
-        stationMarker.setZIndexOffset(1000);
-        textMarker.setZIndexOffset(1000);
-
-        // Création d'un tooltip personnalisé avec Bootstrap
-        const tooltip = document.createElement('div');
-        tooltip.className = 'custom-tooltip';
-
-        // Récupération des polluants actifs
-        let polluantsActifs = [];
-        if (stationData.variables) {
-            Object.values(stationData.variables).forEach((variable) => {
-                if (variable.en_service) {
-                    polluantsActifs.push(variable.label);
-                }
-            });
-        }
-        value.polluantMesure = polluantsActifs;
-
-        polluantsActifs.forEach((polluant, index) => {
-            if (polluant === 'PM2.5') {
-                polluantsActifs[index] = 'PM25';
-            }
-        });
-
-        polluantsActifs = polluantsActifs.filter((polluant) =>
-            Object.keys(buttons.polluants).includes(polluant.toLowerCase())
-        );
-        polluantsActifs.forEach((polluant, index) => {
-            if (polluant === 'PM25') {
-                polluantsActifs[index] = 'PM2.5';
-            }
-            // Format pollutant names with consistent styling
-            polluantsActifs = polluantsActifs.map((polluant) => {
-                switch (polluant) {
-                    case 'PM1':
-                        return '<span class="fw-semibold">PM<sub>1</sub></span>';
-                    case 'PM2.5':
-                        return '<span class="fw-semibold">PM<sub>2.5</sub></span>';
-                    case 'PM10':
-                        return '<span class="fw-semibold">PM<sub>10</sub></span>';
-                    case 'NO2':
-                        return '<span class="fw-semibold">NO<sub>2</sub></span>';
-                    case 'SO2':
-                        return '<span class="fw-semibold">SO<sub>2</sub></span>';
-                    case 'O3':
-                        return '<span class="fw-semibold">O<sub>3</sub></span>';
-                    case 'H2S':
-                        return '<span class="fw-semibold">H<sub>2</sub>S</span>';
-                    case 'NH3':
-                        return '<span class="fw-semibold">NH<sub>3</sub></span>';
-                    default:
-                        return `<span class="fw-semibold">${polluant}</span>`;
-                }
-            });
-        });
-        // console.log('date', new Date(value.date_debut).toLocaleString());
-        tooltip.innerHTML = `
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-2">
-                    <h6 class="card-title mb-1">${stationData.nom_station}</h6>
-                    <div class="d-flex flex-column">
-                        <small class="text-muted mb-1">
-                            <i class="bi bi-geo-alt me-1"></i>
-                            ${stationData.latitude.toFixed(4)}, ${stationData.longitude.toFixed(4)}
-                        </small>
-                        <small class="text-muted">
-                            Dernière mise à jour: ${new Date(value.date_debut).toLocaleString()}
-                        </small>
-                        <small class="text-muted">
-                            Polluants mesurés:
-                            <ul class="list-unstyled ms-3 mb-0">
-                                ${polluantsActifs
-                                    .map(
-                                        (polluant) =>
-                                            `<li><span class="text-muted">●</span> ${polluant}</li>`
-                                    )
-                                    .join('')}
-                            </ul>
-                        </small>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Style du tooltip
-        tooltip.style.cssText = `
-            position: fixed;
-            z-index: 10000;
-            pointer-events: none;
-            bottom: 20px;
-            right: 20px;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: opacity 0.2s;
-            opacity: 1;
-        `;
-
-        // Ajout du tooltip directement au body pour éviter les problèmes de z-index
-        document.body.appendChild(tooltip);
-
-        // Stockage de la référence du tooltip
-        stationMarker.tooltip = tooltip;
-        textMarker.tooltip = tooltip;
-    }
-
-    function resetMarker() {
-        // Ne pas réinitialiser si c'est le marqueur sélectionné
-        if (state.globalSelectedMarker !== stationMarker) {
-            stationMarker.setZIndexOffset(0);
-            textMarker.setZIndexOffset(0);
-        }
-
-        // Suppression du tooltip
-        if (stationMarker.tooltip) {
-            stationMarker.tooltip.remove();
-            stationMarker.tooltip = null;
-            textMarker.tooltip = null;
-        }
-    }
-
-    // Application des effets de survol aux deux marqueurs
-    stationMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
-    textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
-
-    setupMarkerEvents(stationMarker, textMarker, value, mesure);
-    window.stationMarkers[value.id_station] = {
-        marker: stationMarker,
-        textMarker: textMarker,
-        data: stationData,
-        hasValue: true,
-    };
-
-    // Ajout des marqueurs à la couche
-    window.atmoRefLayer.addLayer(stationMarker);
-    window.atmoRefLayer.addLayer(textMarker);
-}
-
-/**
- * Configure les événements pour les marqueurs
- * @param {Object} stationMarker - Marqueur de la station
- * @param {Object} textMarker - Marqueur de texte
- * @param {Object} value - Données de la station
- * @param {Array} mesure - Mesures sélectionnées
- */
-function setupMarkerEvents(stationMarker, textMarker, value, mesure) {
-    const clickHandler = () => {
-        if (
-            state.globalSelectedMarker &&
-            state.globalSelectedMarker !== stationMarker
-        ) {
-            state.globalSelectedMarker.setZIndexOffset(0);
-            if (state.globalSelectedMarker._icon) {
-                state.globalSelectedMarker._icon.classList.remove(
-                    'marker-selected'
-                );
-            }
-        }
-
-        if (
-            state.globalSelectedText &&
-            state.globalSelectedText !== textMarker
-        ) {
-            state.globalSelectedText.setZIndexOffset(0);
-            if (state.globalSelectedText._icon) {
-                state.globalSelectedText._icon.classList.remove(
-                    'marker-selected'
-                );
-            }
-        }
-
-        stationMarker.setZIndexOffset(1000);
-        textMarker.setZIndexOffset(1000);
-        if (stationMarker._icon) {
-            stationMarker._icon.classList.add('marker-selected');
-        }
-        if (textMarker._icon) {
-            textMarker._icon.classList.add('marker-selected');
-        }
-
-        state.globalSelectedMarker = stationMarker;
-        state.globalSelectedText = textMarker;
-        window.globalSelectedDeviceId = value.id_station;
-        window.lastSelectedDeviceData = value;
-        state.lastSelectedStationData = value;
-
-        console.log('Click on station: ' + value.id_station);
-        openSidePanel_stationRef(
-            value.id_station,
-            value.nom_station,
-            getArrayFromLocalStorage('mesuresLocal')
-        );
-    };
-
-    stationMarker.on('click', clickHandler);
-    textMarker.on('click', clickHandler);
-}
-
-/**
- * Détermine la taille du texte en fonction de la valeur
- * @param {number} valeur - Valeur du polluant
- * @returns {number} Taille du texte
- */
-function getTextSize(valeur) {
-    if (valeur >= 100) return 20;
-    if (valeur >= 10) return 25;
-    return 32;
-}
-
-/**
- * Détermine la position du texte en fonction de la valeur
- * @param {number} valeur - Valeur du polluant
- * @returns {Array} Position [x, y]
- */
-function getTextPosition(valeur) {
-    if (valeur >= 100) return [0, 25]; // Centré pour 3 chiffres
-    if (valeur >= 10) return [0, 25]; // Centré pour 2 chiffres
-    return [0, 25]; // Centré pour 1 chiffre
-}
-
-/**
- * Crée les marqueurs par défaut pour les stations sans données
- */
-function createDefaultMarkers() {
-    // Vérifier si window.stationsRef existe, sinon l'initialiser
-    if (!window.stationsRef) {
-        window.stationsRef = [];
-    }
-
-    // Créer des marqueurs par défaut pour toutes les stations actives
-    window.stationsRef.forEach((station) => {
-        // Ne pas créer de marqueur par défaut si la station a déjà des données
-        if (!window.stationMarkers[station.id_station]?.marker) {
-            const defaultMarker = L.marker(
-                [station.latitude, station.longitude],
-                {
-                    icon: L.icon({
-                        iconUrl:
-                            'img/stationsRefAtmoSud/refStationAtmoSud_default.png',
-                        iconSize: [50, 50],
-                        iconAnchor: [25, 25],
-                        popupAnchor: [0, -10],
-                        tooltipAnchor: [-50, -10],
-                        className: station.id_station,
-                    }),
-                }
-            );
-
-            // Ajout du marqueur à la couche
-            window.atmoRefLayer.addLayer(defaultMarker);
-
-            defaultMarker.on('click', () => {
-                if (
-                    state.globalSelectedMarker &&
-                    state.globalSelectedMarker !== defaultMarker
-                ) {
-                    state.globalSelectedMarker.setZIndexOffset(0);
-                    if (state.globalSelectedMarker._icon) {
-                        state.globalSelectedMarker._icon.classList.remove(
-                            'marker-selected'
-                        );
-                    }
-                }
-
-                if (state.globalSelectedText) {
-                    state.globalSelectedText.setZIndexOffset(0);
-                    if (state.globalSelectedText._icon) {
-                        state.globalSelectedText._icon.classList.remove(
-                            'marker-selected'
-                        );
-                    }
-                }
-
-                state.globalSelectedMarker = defaultMarker;
-                state.globalSelectedText = null;
-                window.globalSelectedDeviceId = station.id_station;
-                state.lastSelectedStationData = station;
-
-                console.log('Click on station: ' + station.id_station);
-                openSidePanel_stationRef(
-                    station.id_station,
-                    station.nom_station,
-                    getArrayFromLocalStorage('mesuresLocal')
-                );
-            });
-
-            window.stationMarkers[station.id_station].marker = defaultMarker;
-        }
-    });
 }
 
 /**
