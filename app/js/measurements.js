@@ -3,7 +3,6 @@
 import { mesures, pas_de_temps } from './appConfig.js';
 import {
     getArrayFromLocalStorage,
-    saveArrayToLocalStorage,
     addItemToLocalStorageArray,
     removeItemFromLocalStorageArray,
     formatPollutantName,

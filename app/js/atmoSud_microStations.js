@@ -14,6 +14,10 @@ import { API_atmoSud } from '../config.js';
 import { openSidePanelGeneric } from './sidePanel.js';
 import { createCustomToast } from './toaster.js';
 import { mesures as supportedMesures } from './appConfig.js';
+import {
+    initializeMicroStationMarkers,
+    processAndDisplayStations,
+} from './markerManager.js';
 
 // Constantes
 const POLLUTANT_COLORS = {
@@ -48,10 +52,7 @@ const state = {
 // Variables de contrôle
 let isFetching = false;
 let isYAxisCapped = false;
-let yAxisMaxValue = 100;
-
-// Log pour vérifier l'import de mesures
-console.log('Mesures supportées importées:', supportedMesures);
+let yAxisMaxValue = 90;
 
 /**
  * Fonctions principales pour la gestion des micro-stations
@@ -136,8 +137,19 @@ async function fetchCapteurSites(mesures_atmo) {
 }
 
 async function fetchDernieresMesures(mesures_atmo, pas_de_temps_atmo) {
+    console.log('################################');
+    console.log('pas_de_temps_atmo', pas_de_temps_atmo);
+    console.log('################################');
+    let delais = '';
+    if (pas_de_temps_atmo === 'horaire') {
+        delais = '64';
+    } else if (pas_de_temps_atmo === 'quart-horaire') {
+        delais = '19';
+    } else if (pas_de_temps_atmo === 'brute') {
+        delais = '181';
+    }
     const full_url_derniere =
-        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps_atmo}`.replace(
+        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps_atmo}&delais=${delais}`.replace(
             /\s+/g,
             ''
         );
@@ -156,7 +168,6 @@ function filterAndProcessData(data, pas_de_temps) {
     if (pas_de_temps === '2min') {
         filteredData = data.filter((item) => item.pas_de_temps === 120);
     }
-
     const uniqueMeasures = {};
     filteredData.forEach((measure) => {
         if (
@@ -238,6 +249,11 @@ export async function retreive_historiqueData_microStation(
     custom_start = null,
     custom_end = null
 ) {
+    console.log('################################');
+    console.log('custom_start', custom_start);
+    console.log('custom_end', custom_end);
+    console.log('################################');
+
     for (let i = 0; i < mesures_array.length; i++) {
         if (mesures_array[i] === 'pm25') {
             mesures_array[i] = 'pm2.5';
@@ -345,9 +361,9 @@ export async function retreive_historiqueData_microStation(
             timeUnit: 'minute',
             count: 1,
         };
-        //api.atmosud.org/observations/capteurs/mesures?id_site=1145&format=json&download=false&nb_dec=1&valeur_brute=true&variable=pm25&type_capteur=true&aggregation=horaire&d
+
         // Ajustement de l'intervalle en fonction du pas de temps
-        https: if (pas_de_temps === '2min') {
+        if (pas_de_temps === '2min') {
             baseIntervalConfig = {
                 timeUnit: 'minute',
                 count: 2,
@@ -373,7 +389,6 @@ export async function retreive_historiqueData_microStation(
         let unite = data[0].unite;
 
         // Initialisation du graphique avec amCharts 5
-
         am5.ready(function () {
             const chartDiv = document.getElementById('chartdiv_sensor');
 
@@ -458,7 +473,6 @@ export async function retreive_historiqueData_microStation(
                 }
             });
 
-            // configureLegend(chart, window.amchart_root, allSeries);
             chart.appear(1000, 100);
             stopSpinner();
             am5plugins_exporting.Exporting.new(window.amchart_root, {
@@ -538,9 +552,21 @@ function configureAxes(chart, root, baseInterval, unite) {
     const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
             renderer: am5xy.AxisRendererY.new(root, {}),
-            numberFormat: `#.#  ${unite}`,
+            numberFormat: '#.#',
             min: 0,
             max: isYAxisCapped ? yAxisMaxValue : undefined,
+        })
+    );
+
+    // Ajouter le label après la création de l'axe
+    yAxis.children.unshift(
+        am5.Label.new(root, {
+            text: unite,
+            rotation: -90,
+            y: am5.p50,
+            centerX: am5.p50,
+            centerY: am5.p50,
+            fontWeight: '500',
         })
     );
 
@@ -698,480 +724,3 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Export des variables d'état
 export { state };
-
-/**
- * Fonctions de gestion des marqueurs et des événements
- */
-
-function initializeMicroStationMarkers(dataCapteurSite) {
-    if (!window.microStationMarkers) {
-        window.microStationMarkers = {};
-    }
-    window.microStationMarkers = {};
-
-    dataCapteurSite.forEach((capteur) => {
-        window.microStationMarkers[capteur.id_site] = {
-            data: capteur,
-            hasValue: false,
-            marker: null,
-            textMarker: null,
-        };
-    });
-}
-
-async function processAndDisplayStations(
-    filteredData,
-    dataCapteurSite,
-    pas_de_temps_atmo
-) {
-    for (const value of filteredData) {
-        if (!validateStationData(value)) continue;
-
-        updateStationMarker(value);
-        const { microStationMarker, textMarker } = createStationMarkers(value);
-        setupMarkerEvents(
-            microStationMarker,
-            textMarker,
-            value,
-            dataCapteurSite,
-            pas_de_temps_atmo
-        );
-    }
-
-    createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo);
-}
-
-function validateStationData(value) {
-    if (!value || !value.id_site || !value.lat || !value.lon) {
-        console.warn('Données incomplètes pour un capteur:', value);
-        return false;
-    }
-    return true;
-}
-
-function updateStationMarker(value) {
-    if (!window.microStationMarkers[value.id_site]) {
-        window.microStationMarkers[value.id_site] = {
-            data: value,
-            hasValue: false,
-            marker: null,
-            textMarker: null,
-        };
-    }
-    window.microStationMarkers[value.id_site].data = value;
-    window.microStationMarkers[value.id_site].hasValue = true;
-}
-
-function createStationMarkers(value) {
-    const icon_param = createMarkerIcon(value);
-    const microStationMarker = L.marker([value.lat, value.lon], {
-        icon: L.icon(icon_param),
-        zIndexOffset: 1000,
-    }).addTo(atmoMicroLayer);
-
-    microStationMarker.deviceId = value.id_site;
-    microStationMarker.deviceData = value;
-
-    const textMarker = createTextMarker(value);
-    textMarker.addTo(atmoMicroLayer);
-
-    // Lier les z-index des marqueurs
-    microStationMarker.on('add', () => {
-        const zIndex = microStationMarker.getZIndex();
-        textMarker.setZIndexOffset(zIndex);
-    });
-
-    window.microStationMarkers[value.id_site].marker = microStationMarker;
-    window.microStationMarkers[value.id_site].textMarker = textMarker;
-
-    return { microStationMarker, textMarker };
-}
-
-function createMarkerIcon(value) {
-    const icon_param = {
-        iconUrl: 'img/microStationsAtmoSud/microStationAtmoSud_default.png',
-        iconSize: [50, 50],
-        iconAnchor: [5, 40],
-        popupAnchor: [0, -10],
-        tooltipAnchor: [-50, -10],
-    };
-
-    const valueToCheck = value.valeur_ref;
-    const colorCode = getColorCodeForValue(valueToCheck, state.mesuresArray[0]);
-
-    if (colorCode !== 'default') {
-        const iconColorCode =
-            colorCode === 'tres_mauvais'
-                ? 'tresMauvais'
-                : colorCode === 'extr_mauvais'
-                  ? 'ExtrMauvais'
-                  : colorCode;
-        icon_param.iconUrl = `img/microStationsAtmoSud/microStationAtmoSud_${iconColorCode}.png`;
-    }
-
-    return icon_param;
-}
-
-function calculateTextParameters(value) {
-    let textSize = 32;
-    let x_position = 5;
-    let y_position = 42;
-    let checkPosition = 'right: 0px;';
-
-    if (value >= 1000) {
-        textSize = 16;
-        x_position = 8; // Ajusté pour les nombres à 4 chiffres
-        y_position = 42;
-        // checkPosition = 'right: -12px;';
-    } else if (value >= 100) {
-        textSize = 20;
-        x_position = 6; // Ajusté pour les nombres à 3 chiffres
-        y_position = 42;
-        // checkPosition = 'right: -14px;';
-    } else if (value >= 10) {
-        textSize = 26;
-        x_position = 8;
-        y_position = 42;
-        // checkPosition = 'right: -16px;';
-    }
-
-    return { textSize, x_position, y_position, checkPosition };
-}
-
-function createTextMarkerHTML(value, textSize, checkPosition, stationData) {
-    const hasValue = stationData.valeur !== null;
-    const checkIcon = hasValue
-        ? `<i class="bi bi-check-circle-fill" style="position: absolute; top: -10px; ${checkPosition} font-size: 14px; color: #28a745;"></i>`
-        : '';
-
-    return `<div id="textDiv" style="font-size: ${textSize}px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #333; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">
-        ${value}
-        ${checkIcon}
-    </div>`;
-}
-
-function createTextMarker(value) {
-    const roundedvalue = Math.round(parseFloat(value.valeur_ref));
-    const { textSize, x_position, y_position, checkPosition } =
-        calculateTextParameters(roundedvalue);
-
-    const text_param = L.divIcon({
-        className: 'my-div-icon',
-        html: createTextMarkerHTML(
-            roundedvalue,
-            textSize,
-            checkPosition,
-            value
-        ),
-        iconAnchor: [x_position, y_position],
-        popupAnchor: [30, -60],
-        iconSize: [50, 50],
-    });
-
-    const textMarker = L.marker([value.lat, value.lon], {
-        icon: text_param,
-        zIndexOffset: 1000,
-    });
-    textMarker.deviceId = value.id_site;
-    textMarker.deviceData = value;
-
-    return textMarker;
-}
-
-function setupMarkerEvents(
-    microStationMarker,
-    textMarker,
-    value,
-    dataCapteurSite,
-    pas_de_temps_atmo
-) {
-    const highlightMarker = () => {
-        const zIndex = 2000; // Valeur plus élevée pour le marqueur survolé
-        microStationMarker.setZIndexOffset(zIndex);
-        textMarker.setZIndexOffset(zIndex);
-        const tooltip = createTooltip(value, dataCapteurSite);
-        document.body.appendChild(tooltip);
-        microStationMarker.tooltip = tooltip;
-        textMarker.tooltip = tooltip;
-    };
-
-    const resetMarker = () => {
-        if (state.selectedMarker !== microStationMarker) {
-            const zIndex = 1000; // Retour à la valeur normale
-            microStationMarker.setZIndexOffset(zIndex);
-            textMarker.setZIndexOffset(zIndex);
-        }
-        if (microStationMarker.tooltip) {
-            microStationMarker.tooltip.remove();
-            microStationMarker.tooltip = null;
-            textMarker.tooltip = null;
-        }
-    };
-
-    microStationMarker
-        .on('mouseover', highlightMarker)
-        .on('mouseout', resetMarker);
-    textMarker
-        .on('mouseover', highlightMarker)
-        .on('mouseout', resetMarker)
-        .on('click', () =>
-            handleMarkerClick(
-                microStationMarker,
-                textMarker,
-                value,
-                pas_de_temps_atmo
-            )
-        );
-}
-
-function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
-    Object.values(window.microStationMarkers).forEach((station) => {
-        if (!station.hasValue) {
-            const defaultMarker = createDefaultMarker(
-                station.data,
-                dataCapteurSite,
-                pas_de_temps_atmo
-            );
-            station.marker = defaultMarker;
-        }
-    });
-}
-
-function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
-    const defaultMarker = L.marker([stationData.lat, stationData.lon], {
-        icon: L.icon({
-            iconUrl: 'img/microStationsAtmoSud/microStationAtmoSud_default.png',
-            iconSize: [50, 50],
-            iconAnchor: [5, 40],
-            popupAnchor: [0, -10],
-            tooltipAnchor: [-50, -10],
-        }),
-    }).addTo(atmoMicroLayer);
-
-    defaultMarker.deviceId = stationData.id_site;
-    defaultMarker.deviceData = stationData;
-
-    defaultMarker
-        .on('click', () =>
-            handleMarkerClick(
-                defaultMarker,
-                null,
-                stationData,
-                pas_de_temps_atmo
-            )
-        )
-        .on('mouseover', () => {
-            defaultMarker.setZIndexOffset(1000);
-            const tooltip = createTooltip(stationData, dataCapteurSite);
-            document.body.appendChild(tooltip);
-            defaultMarker.tooltip = tooltip;
-        })
-        .on('mouseout', () => {
-            if (state.selectedMarker !== defaultMarker) {
-                defaultMarker.setZIndexOffset(0);
-            }
-            if (defaultMarker.tooltip) {
-                defaultMarker.tooltip.remove();
-                defaultMarker.tooltip = null;
-            }
-        });
-
-    return defaultMarker;
-}
-
-/**
- * Fonctions de gestion des tooltips et des clics
- */
-
-function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
-    console.log('click on micro station:', stationData.nom_site);
-
-    resetPreviousMarker();
-    highlightNewMarker(marker, textMarker);
-    updateGlobalState(marker, textMarker, stationData);
-    openSidePanelMicroStation(
-        stationData,
-        pas_de_temps_atmo,
-        state.historiqueChart,
-        state.mesuresArray
-    );
-}
-
-function resetPreviousMarker() {
-    if (state.selectedMarker && state.selectedMarker._icon) {
-        state.selectedMarker.setZIndexOffset(0);
-        state.selectedMarker._icon.classList.remove('marker-selected');
-    }
-
-    if (state.selectedText && state.selectedText._icon) {
-        state.selectedText.setZIndexOffset(0);
-        state.selectedText._icon.classList.remove('marker-selected');
-    }
-}
-
-function highlightNewMarker(marker, textMarker) {
-    marker.setZIndexOffset(1000);
-    if (marker._icon) {
-        marker._icon.classList.add('marker-selected');
-    }
-
-    if (textMarker) {
-        textMarker.setZIndexOffset(1000);
-        if (textMarker._icon) {
-            textMarker._icon.classList.add('marker-selected');
-        }
-    }
-}
-
-function updateGlobalState(marker, textMarker, stationData) {
-    state.selectedMarker = marker;
-    state.selectedText = textMarker;
-    state.selectedDeviceId = stationData.id_site;
-    window.lastSelectedDeviceData = stationData;
-}
-
-function createTooltip(stationData, dataCapteurSite) {
-    const tooltip = document.createElement('div');
-    tooltip.className = 'custom-tooltip';
-
-    const polluantsActifs = getActivePollutants(stationData, dataCapteurSite);
-    const formattedPollutants = formatPollutantsList(
-        polluantsActifs,
-        stationData
-    );
-
-    tooltip.innerHTML = createTooltipHTML(stationData, formattedPollutants);
-    tooltip.style.cssText = getTooltipStyles();
-
-    return tooltip;
-}
-
-function getActivePollutants(stationData, dataCapteurSite) {
-    const capteurInfo = dataCapteurSite?.find(
-        (capteur) => capteur.id_site === stationData.id_site
-    );
-
-    if (capteurInfo?.variables) {
-        return Array.isArray(capteurInfo.variables)
-            ? capteurInfo.variables
-            : capteurInfo.variables.split(',').map((v) => v.trim());
-    }
-
-    if (stationData.variables) {
-        return Array.isArray(stationData.variables)
-            ? stationData.variables
-            : stationData.variables.split(',').map((v) => v.trim());
-    }
-
-    return [];
-}
-
-function formatPollutantsList(polluantsActifs, stationData) {
-    const processedPollutants = new Set();
-
-    const formattedPollutants = polluantsActifs
-        .filter((polluant) => {
-            const normalizedPolluant = normalizePollutantName(polluant);
-            if (
-                !normalizedPolluant ||
-                processedPollutants.has(normalizedPolluant)
-            ) {
-                return false;
-            }
-
-            const isSupported = Object.values(supportedMesures).some(
-                (mesure) => mesure.code === normalizedPolluant
-            );
-
-            if (isSupported) {
-                processedPollutants.add(normalizedPolluant);
-            }
-
-            return isSupported;
-        })
-        .map((polluant) => formatPollutantDisplay(polluant));
-
-    stationData.polluantMesure = Array.from(processedPollutants).map((p) =>
-        p.toUpperCase()
-    );
-    return formattedPollutants;
-}
-
-function normalizePollutantName(polluant) {
-    return polluant
-        .toLowerCase()
-        .replace('pm2.5', 'pm25')
-        .replace('pm1.0', 'pm1')
-        .replace('pm10.0', 'pm10')
-        .replace('air pres.', '')
-        .replace('air temp.', '')
-        .replace('air hum.', '')
-        .replace(' nombre', '')
-        .trim();
-}
-
-function formatPollutantDisplay(polluant) {
-    const normalizedPolluant = normalizePollutantName(polluant);
-
-    const pollutantFormats = {
-        pm1: '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>1</sub></span>',
-        pm25: '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>',
-        pm10: '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>10</sub></span>',
-        no2: '<span class="text-muted">●</span> <span class="fw-semibold">NO<sub>2</sub></span>',
-        so2: '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>',
-        o3: '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>',
-        h2s: '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>',
-        nh3: '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>',
-    };
-
-    return (
-        pollutantFormats[normalizedPolluant] ||
-        `<span class="text-muted">●</span> <span class="fw-semibold">${formatPollutantName(polluant)}</span>`
-    );
-}
-
-function createTooltipHTML(stationData, formattedPollutants) {
-    return `
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-2">
-                <h6 class="card-title mb-1">${stationData.nom_site}</h6>
-                <div class="d-flex flex-column">
-                    ${
-                        stationData.time
-                            ? `
-                        <small class="text-muted mb-1">
-                            <i class="bi bi-clock me-1"></i>
-                            Dernière mise à jour: ${new Date(stationData.time).toLocaleString()}
-                        </small>
-                    `
-                            : ''
-                    }
-                    <small class="text-muted mb-1">
-                        <i class="bi bi-info-circle me-1"></i>
-                        ${stationData.modele_capteur || ''} - ${stationData.marque_capteur || ''}
-                    </small>
-                    <small class="text-muted">
-                        Polluants mesurés:<br>
-                        ${formattedPollutants.join('<br>')}
-                    </small>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function getTooltipStyles() {
-    return `
-        position: fixed;
-        z-index: 10000;
-        pointer-events: none;
-        bottom: 20px;
-        right: 20px;
-        background-color: white;
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: opacity 0.2s;
-        opacity: 1;
-    `;
-}
