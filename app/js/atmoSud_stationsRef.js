@@ -106,21 +106,37 @@ function updateYAxisMax() {
 }
 
 // Fonctions utilitaires pour la gestion d'amCharts
-function createChart(root) {
-    return root.container.children.push(
+function createChart(root, stationName) {
+    const chart = root.container.children.push(
         am5xy.XYChart.new(root, {
             panX: false,
             panY: false,
             wheelX: 'panX',
             wheelY: 'zoomX',
             paddingLeft: 0,
-            paddingBottom: 15,
+            paddingBottom: 25,
             layout: am5.GridLayout.new(root, {
                 maxColumns: 1,
                 fixedWidthGrid: true,
             }),
         })
     );
+
+        // ➕ Ajout du titre du graphique
+        chart.children.unshift(
+            am5.Label.new(root, {
+                text: `Données de la station ${stationName}`, // <-- Titre personnalisé
+                fontSize: 20,
+                fontWeight: "500",
+                textAlign: "center",
+                x: am5.p50,
+                centerX: am5.p50,
+                paddingTop: 10,
+                paddingBottom: 10,
+            })
+        );
+
+        return chart;
 }
 
 function configureAxes(chart, root, baseInterval, unite) {
@@ -181,40 +197,121 @@ function configureCursor(chart, root) {
     return cursor;
 }
 
-function createSeries(chart, root, pollutant, axes, data, type = 'corrected') {
+// function createSeries(chart, root, pollutant, axes, data,) {
+//     console.log(data)
+//     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
+//     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
+//     const color = pollutantColors[colorKey] || '#000000';
+
+//     const series = chart.series.push(
+//         am5xy.SmoothedXLineSeries.new(root, {
+//             name: `${pollutant.toUpperCase()}`,
+//             xAxis: axes.xAxis,
+//             yAxis: axes.yAxis,
+//             valueYField: 'value',
+//             valueXField: 'date',
+//             tooltip: am5.Tooltip.new(root, {
+//                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
+//             }),
+//         })
+//     );
+
+//     series.strokes.template.setAll({
+//         strokeWidth: 2,
+//         stroke: am5.color(color),
+//     });
+
+//     series.data.setAll(data);
+//     series.appear(1000);
+
+//     return {
+//         series,
+//         name: pollutant,
+//         compare: polluantCompare,
+//     };
+// }
+
+function createSeries(chart, root, pollutant, axes, data) {
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
     const color = pollutantColors[colorKey] || '#000000';
 
-    const series = chart.series.push(
-        am5xy.SmoothedXLineSeries.new(root, {
-            name: `${pollutant.toUpperCase()} (${type})`,
-            xAxis: axes.xAxis,
-            yAxis: axes.yAxis,
-            valueYField: 'value',
-            valueXField: 'date',
-            tooltip: am5.Tooltip.new(root, {
-                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
-            }),
+    const validatedData = data.filter(item => item.validated);
+    const nonValidatedData = data.filter(item => !item.validated);
+
+    function createStyledSeries(name, seriesData, dashed = false) {
+        const series = chart.series.push(
+            am5xy.SmoothedXLineSeries.new(root, {
+                name: name,
+                xAxis: axes.xAxis,
+                yAxis: axes.yAxis,
+                valueYField: 'value',
+                valueXField: 'date',
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³`,
+                }),
+            })
+        );
+
+        series.strokes.template.setAll({
+            strokeWidth: 2,
+            stroke: am5.color(color),
+            strokeDasharray: dashed ? [5, 5] : null,
+        });
+
+        series.data.setAll(seriesData);
+        series.appear(1000);
+
+        return series;
+    }
+
+    const solidSeries = createStyledSeries(`${pollutant.toUpperCase()} (Validée)`, validatedData, false);
+    const dashedSeries = createStyledSeries(`${pollutant.toUpperCase()} (Pas encore validée)`, nonValidatedData, true);
+
+    return {
+        validatedSeries: solidSeries,
+        estimatedSeries: dashedSeries,
+        name: pollutant,
+        compare: polluantCompare,
+    };
+}
+
+
+function configureLegend(chart, root, allSeries, mesuresArray) {
+    // Crée un conteneur vertical : graphique + légende
+    const mainContainer = chart.root.container.children.push(
+        am5.Container.new(root, {
+            layout: root.verticalLayout,
+            width: am5.percent(100),
+            height: am5.percent(100),
         })
     );
 
-    series.strokes.template.setAll({
-        strokeWidth: 2,
-        stroke: am5.color(color),
-        ...(type === 'raw' && { strokeDasharray: [10, 5] }),
+    // Déplace le chart dans le conteneur principal
+    mainContainer.children.push(chart);
+
+    // Crée la légende
+    const legend = am5.Legend.new(root, {
+        centerX: am5.percent(50),
+        x: am5.percent(50),
+        layout: am5.GridLayout.new(root, {
+            maxColumns: 3, // Plus mobile-friendly
+            fixedWidthGrid: true,
+        }),
+        paddingTop: 10,
+        paddingBottom: 10,
+        width: am5.percent(100), // Prend toute la largeur
     });
 
-    series.data.setAll(data);
-    series.appear(1000);
+    // Ajoute la légende *sous* le chart
+    mainContainer.children.push(legend);
 
-    return {
-        series,
-        name: pollutant,
-        compare: polluantCompare,
-        type,
-    };
+    // Connecte la légende aux séries
+    legend.data.setAll(chart.series.values);
+
+    return legend;
 }
+
 
 /**
  * Fonction principale pour charger les infos des stations de référence AtmoSud
@@ -435,11 +532,9 @@ async function getStationImage(stationId) {
     try {
         // Construction de l'URL pour l'API AtmoSud (URL exacte de l'ancien code)
         const urlAtmoJsonAPI = `https://www.atmosud.org/jsonapi/taxonomy_term/station?filter[field_station_id_station]=${stationId}&include=field_station_pictures`;
-        console.log('URL originale:', urlAtmoJsonAPI);
 
         // Utilisation du proxy CORS (URL exacte de l'ancien code)
         const proxyUrl = `https://corsproxy.io/?${urlAtmoJsonAPI}`;
-        console.log('URL avec proxy:', proxyUrl);
 
         const response = await fetch(proxyUrl);
         if (!response.ok) {
@@ -447,7 +542,6 @@ async function getStationImage(stationId) {
         }
 
         const data = await response.json();
-        console.log('Données reçues via proxy:', data);
 
         // Vérification de la présence d'images
         if (!data.included || data.included.length === 0) {
@@ -491,7 +585,6 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
         '%copenSidePanel_stationRef',
         'color: white; font-style: bold; background-color: green;padding: 2px'
     );
-    console.log('state.pasDeTemps: ', state.pasDeTemps);
     if (state.pasDeTemps[0] === 'd') {
         state.historiqueChart = '7d';
     }
@@ -695,6 +788,7 @@ export function retreiveHistoriqueDataStationRef(
             // Initialisation des données pour le graphique
             let seriesData = {};
 
+
             // Traitement des données
             data.mesures.forEach((item) => {
                 // console.log('item', item);
@@ -753,6 +847,7 @@ export function retreiveHistoriqueDataStationRef(
                         seriesData[nomPolluant].data.push({
                             value: item.valeur,
                             date: new Date(item.date_debut).getTime(),
+                            validated: item.validation === "validée" ? true : false
                         });
                     }
                 } else {
@@ -772,6 +867,8 @@ export function retreiveHistoriqueDataStationRef(
 
             // Récupération de l'unité de mesure
             let unite = data.mesures[0].unite;
+
+            let stationName = data.mesures[0].nom_station;
 
             // Création du graphique
             am5.ready(function () {
@@ -799,7 +896,7 @@ export function retreiveHistoriqueDataStationRef(
                 window.amchart_root = am5.Root.new('chartdiv_sensor');
                 window.amchart_root.locale = am5locales_fr_FR;
                 // Création du graphique
-                let chart = createChart(window.amchart_root);
+                let chart = createChart(window.amchart_root, stationName);
 
                 // Configuration des axes
                 let baseIntervalConfig = {
@@ -848,10 +945,12 @@ export function retreiveHistoriqueDataStationRef(
                         window.amchart_root,
                         polluant,
                         axes,
-                        seriesData[polluant].data
+                        seriesData[polluant].data,
                     );
                     allSeries.push(series);
                 });
+
+                configureLegend(chart, window.amchart_root, allSeries, mesuresArray);
 
                 // Animation
                 chart.appear(1000, 100);

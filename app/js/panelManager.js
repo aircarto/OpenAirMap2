@@ -216,9 +216,7 @@ class PanelManager {
                         this.buttons.pollutant[key].title = '';
                     }
                 } else if (source === 'atmo_ref') {
-                    console.log('mesuresArray: ', data.mesuresArray);
                     const deviceData = window.lastSelectedDeviceData;
-                    console.log('deviceData: ', deviceData);
                     if (deviceData && deviceData.polluantMesure) {
                         const polluantMapping = {
                             pm1: 'PM1',

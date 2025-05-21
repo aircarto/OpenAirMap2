@@ -13,7 +13,6 @@ import { startSpinner, stopSpinner } from './spinnerManager.js';
 import { API_atmoSud } from '../config.js';
 import { openSidePanelGeneric } from './sidePanel.js';
 import { createCustomToast } from './toaster.js';
-import { mesures as supportedMesures } from './appConfig.js';
 import {
     initializeMicroStationMarkers,
     processAndDisplayStations,
@@ -350,6 +349,7 @@ export async function retreive_historiqueData_microStation(
 
         // Appel à l'API pour récupérer les données
         const data = await fetchAPI(full_url);
+        console.log(data)
 
         // Vérification de la validité des données reçues
         if (!data || !Array.isArray(data)) {
@@ -387,6 +387,8 @@ export async function retreive_historiqueData_microStation(
 
         // Récupération de l'unité de mesure
         let unite = data[0].unite;
+        let sensorName = data[0].nom_site;
+        console.log("Nom du capteur:", sensorName);
 
         // Initialisation du graphique avec amCharts 5
         am5.ready(function () {
@@ -411,7 +413,7 @@ export async function retreive_historiqueData_microStation(
             window.amchart_root = am5.Root.new('chartdiv_sensor');
 
             window.amchart_root.locale = am5locales_fr_FR;
-            let chart = createChart(window.amchart_root);
+            let chart = createChart(window.amchart_root, sensorName);
             const axes = configureAxes(
                 chart,
                 window.amchart_root,
@@ -473,6 +475,8 @@ export async function retreive_historiqueData_microStation(
                 }
             });
 
+            configureLegend(chart, window.amchart_root, allSeries);
+
             chart.appear(1000, 100);
             stopSpinner();
             am5plugins_exporting.Exporting.new(window.amchart_root, {
@@ -506,23 +510,40 @@ export async function retreive_historiqueData_microStation(
     }
 }
 
-// Configuration du graphique principal
-function createChart(root) {
-    return root.container.children.push(
+function createChart(root, sensorName) {
+    const chart = root.container.children.push(
         am5xy.XYChart.new(root, {
             panX: false,
             panY: false,
             wheelX: 'panX',
             wheelY: 'zoomX',
             paddingLeft: 0,
-            paddingBottom: 15,
+            paddingBottom: 25,
             layout: am5.GridLayout.new(root, {
                 maxColumns: 1,
                 fixedWidthGrid: true,
             }),
         })
     );
+
+    // ➕ Ajout du titre du graphique
+    chart.children.unshift(
+        am5.Label.new(root, {
+            text: `Données du capteur ${sensorName}`, // <-- Titre personnalisé
+            fontSize: 20,
+            fontWeight: "500",
+            textAlign: "center",
+            x: am5.p50,
+            centerX: am5.p50,
+            paddingTop: 10,
+            paddingBottom: 10,
+        })
+    );
+
+    return chart;
 }
+
+
 
 // Configuration des axes
 function configureAxes(chart, root, baseInterval, unite) {
@@ -619,6 +640,26 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
         compare: polluantCompare,
         type,
     };
+}
+
+function configureLegend(chart, root, allSeries, mesuresArray) {
+    const legend = chart.children.push(
+        am5.Legend.new(root, {
+            centerX: am5.percent(50),
+            x: am5.percent(50),
+            y: am5.percent(95),
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 5,
+                fixedWidthGrid: true,
+            }),
+            paddingTop: 10,
+            paddingBottom: 10,
+            marginBottom: 10,
+        })
+    );
+
+    legend.data.setAll(chart.series.values);
+    return legend;
 }
 
 /**

@@ -435,21 +435,36 @@ export function retreive_historiqueData_nebuleAir(
 }
 
 // Configuration du graphique principal
-function createChart(root) {
-    return root.container.children.push(
+function createChart(root, sensorName) {
+    const chart = root.container.children.push(
         am5xy.XYChart.new(root, {
             panX: false,
             panY: false,
             wheelX: 'panX',
             wheelY: 'zoomX',
             paddingLeft: 0,
-            paddingBottom: 15,
+            paddingBottom: 25,
             layout: am5.GridLayout.new(root, {
                 maxColumns: 1,
                 fixedWidthGrid: true,
             }),
         })
     );
+
+    chart.children.unshift(
+        am5.Label.new(root, {
+            text: `Données du capteur ${sensorName}`, // <-- Titre personnalisé
+            fontSize: 20,
+            fontWeight: "500",
+            textAlign: "center",
+            x: am5.p50,
+            centerX: am5.p50,
+            paddingTop: 10,
+            // paddingBottom: 10,
+        })
+    );
+
+    return chart;
 }
 
 // Configuration des axes
@@ -565,43 +580,25 @@ function createSeries(chart, root, pollutant, axes, data) {
 }
 
 // Configuration de la légende
-// function configureLegend(chart, root, allSeries, mesuresArray) {
-//     const legend = chart.children.push(
-//         am5.Legend.new(root, {
-//             centerX: am5.percent(50),
-//             x: am5.percent(50),
-//             y: am5.percent(95),
-//             layout: am5.GridLayout.new(root, {
-//                 maxColumns: 2,
-//                 fixedWidthGrid: true,
-//             }),
-//             paddingTop: 10,
-//             paddingBottom: 10,
-//             marginTop: 10,
-//             marginBottom: 10,
-//         })
-//     );
+function configureLegend(chart, root, allSeries, mesuresArray) {
+    const legend = chart.children.push(
+        am5.Legend.new(root, {
+            centerX: am5.percent(50),
+            x: am5.percent(50),
+            y: am5.percent(95),
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 5,
+                fixedWidthGrid: true,
+            }),
+            paddingTop: 10,
+            paddingBottom: 10,
+            marginBottom: 10,
+        })
+    );
 
-//     legend.itemContainers.template.events.on('click', function (ev) {
-//         const clickedSeries = ev.target.dataItem.dataContext;
-//         const seriesInfo = allSeries.find((s) => s.series === clickedSeries);
-
-//         if (seriesInfo) {
-//             if (mesuresArray.includes(seriesInfo.compare)) {
-//                 seriesInfo.series.set('visible', false);
-//                 mesuresArray = mesuresArray.filter(
-//                     (item) => item !== seriesInfo.compare
-//                 );
-//             } else {
-//                 seriesInfo.series.set('visible', true);
-//                 mesuresArray.push(seriesInfo.compare);
-//             }
-//         }
-//     });
-
-//     legend.data.setAll(chart.series.values);
-//     return legend;
-// }
+    legend.data.setAll(chart.series.values);
+    return legend;
+}
 
 // Fonction principale de création du graphique
 function createNebuleAirChart(data, baseInterval, mesuresArray) {
@@ -610,8 +607,10 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
         window.amchart_root = am5.Root.new('chartdiv_sensor');
         window.amchart_root.locale = am5locales_fr_FR;
 
+        const sensorName = data[0].sensorId
+
         // Création du graphique
-        const chart = createChart(window.amchart_root);
+        const chart = createChart(window.amchart_root, sensorName);
 
         // Configuration des axes
         const axes = configureAxes(chart, window.amchart_root, baseInterval);
@@ -634,12 +633,13 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
                 createSeries(chart, window.amchart_root, pollutant, axes, data)
             );
 
+        // Configuration de la légende
+        configureLegend(chart, window.amchart_root, availablePollutants, mesuresArray);
         // Animation finale
         chart.appear(1000, 100);
         stopSpinner();
     } catch (error) {
         console.error('Erreur lors de la création du graphique:', error);
-        // Gestion des erreurs à implémenter selon les besoins
     }
 }
 
