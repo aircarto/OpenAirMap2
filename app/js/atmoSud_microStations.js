@@ -131,9 +131,6 @@ async function fetchCapteurSites(mesures_atmo) {
 }
 
 async function fetchDernieresMesures(mesures_atmo, pas_de_temps_atmo) {
-    console.log('################################');
-    console.log('pas_de_temps_atmo', pas_de_temps_atmo);
-    console.log('################################');
     let delais = '';
     if (pas_de_temps_atmo === 'horaire') {
         delais = '64';
@@ -199,6 +196,21 @@ export function openSidePanelMicroStation(
     if (!isSourceActive('atmo_micro')) return;
 
     updateCardInfo(data);
+    console.log('openSidePanelMicroStation');
+    console.log('data: ', data);
+    console.log('pas_de_temps_atmo: ', pas_de_temps_atmo);
+    console.log('historique: ', historique);
+    console.log('mesures_atmo: ', mesures_atmo);
+    if (pas_de_temps_atmo === 'quart-horaire') {
+        pas_de_temps_atmo = 'qh';
+    } else if (pas_de_temps_atmo === 'journalière') {
+        pas_de_temps_atmo = 'd';
+    } else if (pas_de_temps_atmo === 'instantanée') {
+        pas_de_temps_atmo = 'brute';
+    } else if (pas_de_temps_atmo === 'horaire') {
+        pas_de_temps_atmo = 'h';
+    }
+
     panelManager.openPanel('atmo_micro', data.id_site, {
         pasDeTempsAtmo: pas_de_temps_atmo,
         historiqueChart: historique,
@@ -243,11 +255,15 @@ export async function retreive_historiqueData_microStation(
     custom_start = null,
     custom_end = null
 ) {
-    console.log('################################');
-    console.log('custom_start', custom_start);
-    console.log('custom_end', custom_end);
-    console.log('################################');
-
+    console.log('retreive_historiqueData_microStation');
+    console.log('pas_de_temps: ', pas_de_temps);
+    if (pas_de_temps === 'qh') {
+        pas_de_temps = 'quart-horaire';
+    } else if (pas_de_temps === 'h') {
+        pas_de_temps = 'horaire';
+    } else if (pas_de_temps === 'd') {
+        pas_de_temps = 'journalier';
+    }
     for (let i = 0; i < mesures_array.length; i++) {
         if (mesures_array[i] === 'pm25') {
             mesures_array[i] = 'pm2.5';
@@ -340,11 +356,9 @@ export async function retreive_historiqueData_microStation(
 
         // Construction de l'URL complète pour l'appel API
         const full_url = `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures}?${params.toString()}`;
-        console.log("URL de l'API:", full_url); // Pour le débogage
 
         // Appel à l'API pour récupérer les données
         const data = await fetchAPI(full_url);
-        console.log(data);
 
         // Vérification de la validité des données reçues
         if (!data || !Array.isArray(data)) {
@@ -383,7 +397,6 @@ export async function retreive_historiqueData_microStation(
         // Récupération de l'unité de mesure
         let unite = data[0].unite;
         let sensorName = data[0].nom_site;
-        console.log('Nom du capteur:', sensorName);
 
         // Initialisation du graphique avec amCharts 5
         am5.ready(function () {

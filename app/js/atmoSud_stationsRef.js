@@ -565,7 +565,7 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
         getStationImage(window.globalSelectedDeviceId)
             .then((imageUrl) => {
                 card1Img.src = imageUrl;
-                console.log('Image mise à jour dans le panneau');
+                // console.log('Image mise à jour dans le panneau');
             })
             .catch((error) => {
                 console.error(
@@ -637,18 +637,18 @@ export function retreiveHistoriqueDataStationRef(
     // Démarrage du spinner
     startSpinner('Chargement des données historiques...');
 
-    console.log(
-        '%cretreiveHistoriqueDataStationRef',
-        'color: yellow; font-style: bold; background-color: brown;padding: 2px'
-    );
-    console.log('Paramètres:', {
-        stationId,
-        pasDeTemps,
-        historique,
-        mesuresArray,
-        customStart,
-        customEnd,
-    });
+    // console.log(
+    //     '%cretreiveHistoriqueDataStationRef',
+    //     'color: yellow; font-style: bold; background-color: brown;padding: 2px'
+    // );
+    // console.log('Paramètres:', {
+    //     stationId,
+    //     pasDeTemps,
+    //     historique,
+    //     mesuresArray,
+    //     customStart,
+    //     customEnd,
+    // });
     // const start = Date.now();
 
     // Nettoyage complet du graphique précédent
@@ -746,7 +746,7 @@ export function retreiveHistoriqueDataStationRef(
             return response.json();
         })
         .then((data) => {
-            console.log('Données reçues:', data);
+            // console.log('Données reçues:', data);
 
             if (!data.mesures || data.mesures.length === 0) {
                 console.warn('Aucune donnée disponible');

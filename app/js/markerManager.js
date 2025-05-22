@@ -252,10 +252,6 @@ function setupMarkerEvents(
     pas_de_temps_atmo
 ) {
     const highlightMarker = () => {
-        console.log("#######################")
-        console.log("highlightMarker")
-        console.log("#######################")
-
         const zIndex = 2000;
         microStationMarker.setZIndexOffset(zIndex);
         textMarker.setZIndexOffset(zIndex);
@@ -266,9 +262,6 @@ function setupMarkerEvents(
     };
 
     const resetMarker = () => {
-        console.log("#######################")
-        console.log("resetMarker")
-        console.log("#######################")
         if (state.selectedMarker !== microStationMarker) {
             const zIndex = 1000;
             microStationMarker.setZIndexOffset(zIndex);
@@ -305,7 +298,6 @@ function setupMarkerEvents(
  * @param {string} pas_de_temps_atmo - Pas de temps Atmo
  */
 function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
-
     const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
 
     Object.values(window.microStationMarkers).forEach((station) => {
@@ -557,7 +549,6 @@ function normalizePollutantName(polluant) {
  * @returns {string} - HTML formaté
  */
 function formatPollutantDisplay(polluant) {
-
     const normalizedPolluant = normalizePollutantName(polluant);
 
     const pollutantFormats = {
@@ -634,9 +625,9 @@ function getTooltipStyles() {
 }
 
 /**############################################################################
- *                    MARQUEURS STATION DE REFERENCE ATMOSUD 
+ *                    MARQUEURS STATION DE REFERENCE ATMOSUD
  * ############################################################################
-*/
+ */
 
 /**
  * Crée un marqueur pour une station de référence atmosud
@@ -895,8 +886,8 @@ function getRefTextSize(valeur) {
  */
 function getRefTextPosition(valeur) {
     if (valeur > 99.4) return [-20, 37];
-    if (valeur > 9.4) return [-20, 37];
-    return [-20, 37];
+    if (valeur > 9.4) return [-19, 37];
+    return [-20, 39];
 }
 
 /**

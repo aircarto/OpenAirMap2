@@ -275,6 +275,7 @@ export function openSidePanelNebuleAir(
     historique,
     mesures
 ) {
+    console.log(data);
     if (!isSourceActive('nebuleair')) {
         return;
     }
@@ -545,7 +546,7 @@ function getAvailablePollutants(data) {
 
 // Création d'une série pour un polluant
 function createSeries(chart, root, pollutant, axes, data) {
-    console.log(data)
+    console.log(data);
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
     const color = POLLUTANT_COLORS[colorKey] || '#000000';
