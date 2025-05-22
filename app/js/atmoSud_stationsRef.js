@@ -198,7 +198,7 @@ function createSeries(chart, root, pollutant, axes, data) {
     const nonValidatedData = data.filter((item) => !item.validated);
 
     const series = chart.series.push(
-        am5xy.SmoothedXLineSeries.new(root, {
+        am5xy.LineSeries.new(root, {
             name: `${pollutant.toUpperCase()} (Validée)`,
             xAxis: axes.xAxis,
             yAxis: axes.yAxis,
@@ -207,9 +207,9 @@ function createSeries(chart, root, pollutant, axes, data) {
             tooltip: am5.Tooltip.new(root, {
                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (Validée)`,
             }),
-            // Forcer l'utilisation de notre couleur
             fill: am5.color(color),
             stroke: am5.color(color),
+            connect: false,
         })
     );
 
@@ -223,7 +223,7 @@ function createSeries(chart, root, pollutant, axes, data) {
 
     // Création de la série pour les données non validées
     const nonValidatedSeries = chart.series.push(
-        am5xy.SmoothedXLineSeries.new(root, {
+        am5xy.LineSeries.new(root, {
             name: `${pollutant.toUpperCase()} (Non validée)`,
             xAxis: axes.xAxis,
             yAxis: axes.yAxis,
@@ -232,9 +232,9 @@ function createSeries(chart, root, pollutant, axes, data) {
             tooltip: am5.Tooltip.new(root, {
                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (Non validée)`,
             }),
-            // Forcer l'utilisation de notre couleur
             fill: am5.color(color),
             stroke: am5.color(color),
+            connect: false,
         })
     );
 

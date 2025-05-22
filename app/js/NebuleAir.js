@@ -557,7 +557,7 @@ function createSeries(chart, root, pollutant, axes, data) {
     }));
 
     const series = chart.series.push(
-        am5xy.SmoothedXLineSeries.new(root, {
+        am5xy.LineSeries.new(root, {
             name: pollutant,
             xAxis: axes.xAxis,
             yAxis: axes.yAxis,
@@ -568,6 +568,7 @@ function createSeries(chart, root, pollutant, axes, data) {
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
+            connect: false,
         })
     );
 

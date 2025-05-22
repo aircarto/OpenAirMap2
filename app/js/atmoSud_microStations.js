@@ -614,12 +614,19 @@ function configureCursor(chart, root) {
 
 // Création d'une série pour un polluant
 function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
+    console.log('createSeries');
+    console.log('pollutant: ', pollutant);
+    console.log('axes: ', axes);
+    console.log('data: ', data);
+    console.log('type: ', type);
+    console.log('#######################');
+
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
     const color = POLLUTANT_COLORS[colorKey] || '#000000';
 
     const series = chart.series.push(
-        am5xy.SmoothedXLineSeries.new(root, {
+        am5xy.LineSeries.new(root, {
             name: `${pollutant.toUpperCase()} (${type})`,
             xAxis: axes.xAxis,
             yAxis: axes.yAxis,
@@ -630,6 +637,7 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
+            connect: false,
         })
     );
 
