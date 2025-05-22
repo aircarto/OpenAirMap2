@@ -86,7 +86,7 @@ class PanelManager {
             this.initializeButtons();
             this.setupButtonHandlers();
 
-            // Ajouter un écouteur pour le collapse
+            //Ecouteur pour le collapse du dateRangeForm
             const dateRangeForm = document.getElementById('dateRangeForm');
             if (dateRangeForm) {
                 dateRangeForm.addEventListener('shown.bs.collapse', () => {

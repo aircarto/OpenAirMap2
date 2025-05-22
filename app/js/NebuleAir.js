@@ -443,7 +443,7 @@ function createChart(root, sensorName) {
             wheelX: 'panX',
             wheelY: 'zoomX',
             paddingLeft: 0,
-            paddingBottom: 25,
+            paddingBottom: 50,
             layout: am5.GridLayout.new(root, {
                 maxColumns: 1,
                 fixedWidthGrid: true,
@@ -545,6 +545,7 @@ function getAvailablePollutants(data) {
 
 // Création d'une série pour un polluant
 function createSeries(chart, root, pollutant, axes, data) {
+    console.log(data)
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
     const color = POLLUTANT_COLORS[colorKey] || '#000000';

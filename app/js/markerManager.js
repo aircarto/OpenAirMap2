@@ -19,7 +19,7 @@ const refMarkerState = {
 };
 
 /**
- * Initialise les marqueurs pour les micro-stations
+ * Initialise les marqueurs pour les microstations AtmoSud
  * @param {Array} dataCapteurSite - Données des capteurs
  */
 export function initializeMicroStationMarkers(dataCapteurSite) {
@@ -39,7 +39,7 @@ export function initializeMicroStationMarkers(dataCapteurSite) {
 }
 
 /**
- * Traite et affiche les stations sur la carte
+ * Traite et affiche les stations sur la carte microstation atmosud
  * @param {Array} filteredData - Données filtrées des stations
  * @param {Array} dataCapteurSite - Données des capteurs
  * @param {string} pas_de_temps_atmo - Pas de temps Atmo
@@ -67,7 +67,7 @@ export async function processAndDisplayStations(
 }
 
 /**
- * Valide les données d'une station
+ * Valide les données d'une station microstation atmosud
  * @param {Object} value - Données de la station
  * @returns {boolean}
  */
@@ -80,7 +80,7 @@ function validateStationData(value) {
 }
 
 /**
- * Met à jour les données d'un marqueur de station
+ * Met à jour les données d'un marqueur de station microstation atmosud
  * @param {Object} value - Données de la station
  */
 function updateStationMarker(value) {
@@ -97,7 +97,7 @@ function updateStationMarker(value) {
 }
 
 /**
- * Crée les marqueurs pour une station
+ * Crée les marqueurs pour un microcapteur atmosud
  * @param {Object} value - Données de la station
  * @returns {Object} - Marqueurs créés
  */
@@ -126,7 +126,7 @@ function createStationMarkers(value) {
 }
 
 /**
- * Crée l'icône pour un marqueur
+ * Crée l'icône pour un marqueur microstation atmosud
  * @param {Object} value - Données de la station
  * @returns {Object} - Paramètres de l'icône
  */
@@ -156,7 +156,7 @@ function createMarkerIcon(value) {
 }
 
 /**
- * Calcule les paramètres de texte pour un marqueur
+ * Calcule les paramètres de texte pour un marqueur microstation atmosud
  * @param {number} value - Valeur à afficher
  * @returns {Object} - Paramètres de texte
  */
@@ -197,7 +197,7 @@ function createTextMarkerHTML(value, textSize, checkPosition, stationData) {
         ? `<i class="bi bi-check-circle-fill" style="position: absolute; top: -10px; ${checkPosition} font-size: 14px; color: #28a745;"></i>`
         : '';
 
-    return `<div id="textDiv" style="font-size: ${textSize}px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #333; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">
+    return `<div id="textDiv" style="font-size: ${textSize}px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #333;">
         ${value}
         ${checkIcon}
     </div>`;
@@ -252,6 +252,10 @@ function setupMarkerEvents(
     pas_de_temps_atmo
 ) {
     const highlightMarker = () => {
+        console.log("#######################")
+        console.log("highlightMarker")
+        console.log("#######################")
+
         const zIndex = 2000;
         microStationMarker.setZIndexOffset(zIndex);
         textMarker.setZIndexOffset(zIndex);
@@ -262,6 +266,9 @@ function setupMarkerEvents(
     };
 
     const resetMarker = () => {
+        console.log("#######################")
+        console.log("resetMarker")
+        console.log("#######################")
         if (state.selectedMarker !== microStationMarker) {
             const zIndex = 1000;
             microStationMarker.setZIndexOffset(zIndex);
@@ -292,10 +299,13 @@ function setupMarkerEvents(
 
 /**
  * Crée les marqueurs par défaut
+ * condition spécifique pour capteur type nebuleair et pas de temps 2min
+ * trigger createDefaultMarker function
  * @param {Array} dataCapteurSite - Données des capteurs
  * @param {string} pas_de_temps_atmo - Pas de temps Atmo
  */
 function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
+
     const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
 
     Object.values(window.microStationMarkers).forEach((station) => {
@@ -322,9 +332,9 @@ function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
 }
 
 /**
- * Crée un marqueur par défaut
- * @param {Object} stationData - Données de la station
- * @param {Array} dataCapteurSite - Données des capteurs
+ * Crée un marqueur par défaut microstation atmosud
+ * @param {Object} stationData - Capteurs pour lequel on crée le marqueur
+ * @param {Array} dataCapteurSite - Liste des capteurs
  * @param {string} pas_de_temps_atmo - Pas de temps Atmo
  * @returns {L.Marker} - Marqueur créé
  */
@@ -371,7 +381,7 @@ function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
 }
 
 /**
- * Gère le clic sur un marqueur
+ * Gère le clic sur un marqueur microstation atmosud
  * @param {L.Marker} marker - Marqueur cliqué
  * @param {L.Marker} textMarker - Marqueur de texte
  * @param {Object} stationData - Données de la station
@@ -392,7 +402,7 @@ function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
 }
 
 /**
- * Réinitialise le marqueur précédemment sélectionné
+ * Réinitialise le marqueur précédemment sélectionné pour microstation atmosud
  */
 function resetPreviousMarker() {
     if (state.selectedMarker && state.selectedMarker._icon) {
@@ -407,7 +417,7 @@ function resetPreviousMarker() {
 }
 
 /**
- * Met en évidence un nouveau marqueur
+ * Met en évidence un nouveau marqueur pour microstation atmosud
  * @param {L.Marker} marker - Marqueur à mettre en évidence
  * @param {L.Marker} textMarker - Marqueur de texte à mettre en évidence
  */
@@ -426,7 +436,7 @@ function highlightNewMarker(marker, textMarker) {
 }
 
 /**
- * Met à jour l'état global
+ * Met à jour l'état global pour microstation atmosud
  * @param {L.Marker} marker - Marqueur sélectionné
  * @param {L.Marker} textMarker - Marqueur de texte sélectionné
  * @param {Object} stationData - Données de la station
@@ -439,7 +449,7 @@ function updateGlobalState(marker, textMarker, stationData) {
 }
 
 /**
- * Crée un tooltip pour une station
+ * Crée un tooltip pour un microcapteur atmosud
  * @param {Object} stationData - Données de la station
  * @param {Array} dataCapteurSite - Données des capteurs
  * @returns {HTMLElement} - Élément tooltip
@@ -461,7 +471,7 @@ function createTooltip(stationData, dataCapteurSite) {
 }
 
 /**
- * Récupère les polluants actifs pour une station
+ * Récupère les polluants actifs pour un microcapteur atmosud
  * @param {Object} stationData - Données de la station
  * @param {Array} dataCapteurSite - Données des capteurs
  * @returns {Array} - Liste des polluants actifs
@@ -487,7 +497,7 @@ function getActivePollutants(stationData, dataCapteurSite) {
 }
 
 /**
- * Formate la liste des polluants
+ * Formate la liste des polluants pour un microcapteur atmosud
  * @param {Array} polluantsActifs - Liste des polluants actifs
  * @param {Object} stationData - Données de la station
  * @returns {Array} - Liste des polluants formatés
@@ -524,7 +534,7 @@ function formatPollutantsList(polluantsActifs, stationData) {
 }
 
 /**
- * Normalise le nom d'un polluant
+ * Normalise le nom d'un polluant pour un microcapteur atmosud
  * @param {string} polluant - Nom du polluant
  * @returns {string} - Nom normalisé
  */
@@ -542,11 +552,12 @@ function normalizePollutantName(polluant) {
 }
 
 /**
- * Formate l'affichage d'un polluant
+ * Formate l'affichage d'un polluant pour un microcapteur atmosud
  * @param {string} polluant - Nom du polluant
  * @returns {string} - HTML formaté
  */
 function formatPollutantDisplay(polluant) {
+
     const normalizedPolluant = normalizePollutantName(polluant);
 
     const pollutantFormats = {
@@ -622,8 +633,13 @@ function getTooltipStyles() {
     `;
 }
 
+/**############################################################################
+ *                    MARQUEURS STATION DE REFERENCE ATMOSUD 
+ * ############################################################################
+*/
+
 /**
- * Crée un marqueur pour une station de référence
+ * Crée un marqueur pour une station de référence atmosud
  * @param {Object} value - Données de la station
  * @param {Object} iconParam - Paramètres de l'icône
  * @param {Object} stationData - Données de la station
@@ -802,7 +818,7 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
 }
 
 /**
- * Configure les événements pour les marqueurs de référence
+ * Configure les événements pour les marqueurs de station de référence atmosud
  * @param {Object} stationMarker - Marqueur de la station
  * @param {Object} textMarker - Marqueur de texte
  * @param {Object} value - Données de la station
@@ -862,29 +878,29 @@ function setupRefMarkerEvents(stationMarker, textMarker, value, mesure) {
 }
 
 /**
- * Détermine la taille du texte pour les marqueurs de référence
+ * Détermine la taille du texte pour les marqueurs de référence atmosud
  * @param {number} valeur - Valeur du polluant
  * @returns {number} Taille du texte
  */
 function getRefTextSize(valeur) {
-    if (valeur > 99.4) return 24;
+    if (valeur > 99.4) return 22;
     if (valeur > 9.4) return 28;
     return 32;
 }
 
 /**
- * Détermine la position du texte pour les marqueurs de référence
+ * Détermine la position du texte pour les marqueurs de référence atmosud
  * @param {number} valeur - Valeur du polluant
  * @returns {Array} Position [x, y]
  */
 function getRefTextPosition(valeur) {
-    if (valeur > 99.4) return [-17, 37];
-    if (valeur > 9.4) return [-17, 37];
+    if (valeur > 99.4) return [-20, 37];
+    if (valeur > 9.4) return [-20, 37];
     return [-20, 37];
 }
 
 /**
- * Crée les marqueurs par défaut pour les stations de référence
+ * Crée les marqueurs par défaut pour les stations de référence atmosud
  */
 export function createRefDefaultMarkers() {
     if (!window.stationsRef) {

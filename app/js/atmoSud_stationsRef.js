@@ -103,7 +103,7 @@ function createChart(root, stationName) {
             wheelX: 'panX',
             wheelY: 'zoomX',
             paddingLeft: 0,
-            paddingBottom: 25,
+            paddingBottom: 50,
             layout: am5.GridLayout.new(root, {
                 maxColumns: 1,
                 fixedWidthGrid: true,
