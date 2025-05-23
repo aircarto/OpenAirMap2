@@ -31,8 +31,6 @@ export class ButtonManager {
     }
 
     initializeButtons() {
-        console.log('initializeButtons');
-        console.log('buttons: ', this.buttons);
         this.buttons.historique.custom =
             document.getElementById('apply_date_range');
         this.buttons.historique.startDate =
@@ -57,20 +55,10 @@ export class ButtonManager {
     }
 
     getButton(type, id) {
-        console.log('getButton');
-        console.log('type: ', type);
-        console.log('id: ', id);
-        console.log('buttons: ', this.buttons);
-        console.log(this.buttons[type]);
         return this.buttons[type]?.[id];
     }
 
     setButtonState(type, id, checked) {
-        console.log('setButtonState');
-        console.log('type: ', type);
-        console.log('id: ', id);
-        console.log('checked: ', checked);
-        console.log('buttons: ', this.buttons);
         const button = this.getButton(type, id);
         console.log('button: ', button);
         if (button) {
@@ -80,11 +68,6 @@ export class ButtonManager {
     }
 
     setButtonDisabled(type, id, disabled, title = '') {
-        console.log('setButtonDisabled');
-        console.log('type: ', type);
-        console.log('id: ', id);
-        console.log('disabled: ', disabled);
-        console.log('title: ', title);
         const button = this.getButton(type, id);
         if (button) {
             button.disabled = disabled;

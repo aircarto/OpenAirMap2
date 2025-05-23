@@ -37,7 +37,7 @@ export const sources = {
         activated: true,
     }, // Stations de référence AtmoSud
     atmo_micro: {
-        name: 'Miccrocapteurs qualifiés',
+        name: 'Microcapteurs qualifiés',
         code: 'atmo_micro',
         activated: true,
     }, // Micro-stations AtmoSud

@@ -45,14 +45,6 @@ export class DataRetriever {
         startDateTime = null,
         endDateTime = null
     ) {
-        console.log('#######################');
-        console.log('retrieveData');
-        console.log('source: ', source);
-        console.log('state: ', state);
-        console.log('useCustomRange: ', useCustomRange);
-        console.log('startDateTime: ', startDateTime);
-        console.log('endDateTime: ', endDateTime);
-        console.log('#######################');
         if (!this.chartDiv) {
             console.error('Élément chartdiv_sensor non trouvé');
             return;

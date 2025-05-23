@@ -35,24 +35,12 @@ export class PanelStateManager {
     }
 
     updateSourceState(source, updates) {
-        console.log('#######################');
-        console.log('updateSourceState');
-        console.log('source: ', source);
-        console.log('updates: ', updates);
-        console.log('state: ', this.state);
-        console.log('#######################');
         if (this.state[source]) {
             Object.assign(this.state[source], updates);
         }
     }
 
     updateMesuresArray(source, mesures) {
-        console.log('#######################');
-        console.log('updateMesuresArray');
-        console.log('source: ', source);
-        console.log('mesures: ', mesures);
-        console.log('state: ', this.state);
-        console.log('#######################');
         if (this.state[source]) {
             this.state[source].mesuresArray = mesures;
         }

@@ -58,12 +58,6 @@ class PanelManager {
                         if (!source) return;
 
                         const state = this.stateManager.getSourceState(source);
-                        console.log('#######################');
-                        console.log('setupHistoriqueButtonHandlers');
-                        console.log('source: ', source);
-                        console.log('state: ', state);
-                        console.log('id: ', id);
-                        console.log('#######################');
                         if (state.historiqueChart === id) return;
 
                         this.buttonManager.resetButtonStates('historique');
@@ -229,9 +223,7 @@ class PanelManager {
         console.log('deviceId: ', deviceId);
         console.log('data: ', data);
         console.log('#######################');
-        const selectedDevice = window.lastSelectedDevice;
-        console.log('selectedDevice: ', selectedDevice);
-        console.log('#######################');
+
         if (!isSourceActive(source)) {
             console.log('Source non active:', source);
             return;
@@ -363,10 +355,6 @@ class PanelManager {
     }
 
     handlePollutantButtons(source) {
-        console.log('handlePollutantButtons');
-        console.log('source: ', source);
-        console.log('#######################');
-
         // Liste de tous les polluants possibles
         const allPollutants = {
             pm1: 'PM1',

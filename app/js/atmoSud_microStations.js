@@ -634,10 +634,20 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
                 labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (donnée ${type})`,
+                pointerOrientation: 'horizontal',
+                getFillFromSprite: false,
+                getStrokeFromSprite: false,
+                background: am5.Rectangle.new(root, {
+                    fill: am5.color(color),
+                    fillOpacity: 0.4,
+                }),
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
-            connect: false,
+            connect: true,
+            minBulletDistance: 10,
+            tensionX: 0.8,
+            tensionY: 0.8,
         })
     );
 
