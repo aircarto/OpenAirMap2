@@ -15,6 +15,7 @@ export class ButtonManager {
                 qh: null,
                 h: null,
                 d: null,
+                scan: null,
             },
             pollutant: {
                 pm1: null,
@@ -43,8 +44,11 @@ export class ButtonManager {
                 document.getElementById(buttonId);
         });
 
-        Object.keys(this.buttons.pasDeTemps).forEach((key) => {
-            const buttonId = `btn_pas_de_temps_${key.replace('-', '')}`;
+        this.buttons.pasDeTemps.scan = document.getElementById(
+            'btn_pas_de_temps_scan'
+        );
+        ['qh', 'h', 'd'].forEach((key) => {
+            const buttonId = `btn_pas_de_temps_${key}`;
             this.buttons.pasDeTemps[key] = document.getElementById(buttonId);
         });
 

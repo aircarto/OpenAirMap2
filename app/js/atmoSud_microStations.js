@@ -464,7 +464,8 @@ export async function retreive_historiqueData_microStation(
                             variable,
                             axes,
                             seriesData[variable].corrected,
-                            'corrigée'
+                            'corrigée',
+                            unite
                         )
                     );
                 }
@@ -477,7 +478,8 @@ export async function retreive_historiqueData_microStation(
                             variable,
                             axes,
                             seriesData[variable].raw,
-                            'brute'
+                            'brute',
+                            unite
                         )
                     );
                 }
@@ -613,7 +615,15 @@ function configureCursor(chart, root) {
 }
 
 // Création d'une série pour un polluant
-function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
+function createSeries(
+    chart,
+    root,
+    pollutant,
+    axes,
+    data,
+    type = 'corrigée',
+    unite
+) {
     console.log('createSeries');
     console.log('pollutant: ', pollutant);
     console.log('axes: ', axes);
@@ -633,7 +643,7 @@ function createSeries(chart, root, pollutant, axes, data, type = 'corrigée') {
             valueYField: 'value',
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
-                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (donnée ${type})`,
+                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} ${unite} (donnée ${type})`,
                 pointerOrientation: 'horizontal',
                 getFillFromSprite: false,
                 getStrokeFromSprite: false,
@@ -672,8 +682,8 @@ function configureLegend(chart, root, allSeries, mesuresArray) {
     const legend = chart.children.push(
         am5.Legend.new(root, {
             centerX: am5.percent(50),
-            x: am5.percent(50),
-            y: am5.percent(95),
+            x: am5.percent(60),
+            y: am5.percent(20),
             layout: am5.GridLayout.new(root, {
                 maxColumns: 5,
                 fixedWidthGrid: true,

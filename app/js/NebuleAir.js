@@ -317,6 +317,9 @@ export function retreive_historiqueData_nebuleAir(
     custom_start = null,
     custom_end = null
 ) {
+    if (pas_de_temps === 'brute') {
+        pas_de_temps = '2m';
+    }
     console.log(
         'Début de retreive_historiqueData_nebuleAir avec les paramètres:',
         {
@@ -593,10 +596,10 @@ function configureLegend(chart, root, allSeries, mesuresArray) {
     const legend = chart.children.push(
         am5.Legend.new(root, {
             centerX: am5.percent(50),
-            x: am5.percent(50),
-            y: am5.percent(95),
+            x: am5.percent(60),
+            y: am5.percent(20),
             layout: am5.GridLayout.new(root, {
-                maxColumns: 5,
+                maxColumns: 3,
                 fixedWidthGrid: true,
             }),
             paddingTop: 10,

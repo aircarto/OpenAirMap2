@@ -189,7 +189,7 @@ function configureCursor(chart, root) {
     return cursor;
 }
 
-function createSeries(chart, root, pollutant, axes, data) {
+function createSeries(chart, root, pollutant, axes, data, unite) {
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
     const color = POLLUTANT_COLORS[colorKey] || '#000000';
@@ -205,7 +205,7 @@ function createSeries(chart, root, pollutant, axes, data) {
             valueYField: 'value',
             valueXField: 'date',
             tooltip: am5.Tooltip.new(root, {
-                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} µg/m³ (Validée)`,
+                labelText: `${formatPollutantName(pollutant.toUpperCase())}: {valueY} ${unite} (Validée)`,
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
@@ -258,10 +258,10 @@ function configureLegend(chart, root, allSeries, mesuresArray) {
     const legend = chart.children.push(
         am5.Legend.new(root, {
             centerX: am5.percent(50),
-            x: am5.percent(50),
-            y: am5.percent(95),
+            x: am5.percent(60),
+            y: am5.percent(20),
             layout: am5.GridLayout.new(root, {
-                maxColumns: 5,
+                maxColumns: 3,
                 fixedWidthGrid: true,
             }),
             paddingTop: 10,
@@ -914,7 +914,8 @@ export function retreiveHistoriqueDataStationRef(
                         window.amchart_root,
                         polluant,
                         axes,
-                        seriesData[polluant].data
+                        seriesData[polluant].data,
+                        unite
                     );
                     allSeries.push(series);
                 });

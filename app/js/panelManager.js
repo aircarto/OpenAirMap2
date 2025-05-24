@@ -322,10 +322,21 @@ class PanelManager {
     }
 
     handleAtmoSudSpecificButtons(source) {
+        // Réinitialiser l'état de tous les boutons de pas de temps
+        Object.keys(this.buttonManager.buttons.pasDeTemps).forEach(
+            (buttonId) => {
+                this.buttonManager.setButtonDisabled(
+                    'pasDeTemps',
+                    buttonId,
+                    false
+                );
+            }
+        );
+
         if (source === 'atmo_ref') {
             this.buttonManager.setButtonDisabled(
                 'pasDeTemps',
-                '2min',
+                'scan',
                 true,
                 'Pas de temps non disponible pour les stations de référence AtmoSud'
             );
@@ -336,19 +347,30 @@ class PanelManager {
                 true,
                 'pas de temps non disponible pour les micro-stations AtmoSud'
             );
-            const deviceData =
-                window.deviceMarkers?.[
-                    this.stateManager.getSourceState(source).deviceId
-                ]?.data;
+            const deviceData = window.lastSelectedDeviceData;
             if (deviceData?.pas_de_temps) {
                 const pasDeTempsEnMinutes = Math.round(
                     deviceData.pas_de_temps / 60
                 );
                 const label = document.querySelector(
-                    'label[for="btn_pas_de_temps_2min"]'
+                    'label[for="btn_pas_de_temps_scan"]'
                 );
                 if (label) {
-                    label.textContent = `${pasDeTempsEnMinutes} min`;
+                    // On réinitialise d'abord le texte du label
+                    label.textContent = 'scan';
+                    // Puis on ajoute le pas de temps en minutes
+                    label.textContent += ` ${pasDeTempsEnMinutes} min`;
+                }
+
+                // On coche le bouton scan si le pas de temps est brute
+                const state = this.stateManager.getSourceState(source);
+                if (state?.pasDeTempsChart === 'brute') {
+                    const scanButton = document.getElementById(
+                        'btn_pas_de_temps_scan'
+                    );
+                    if (scanButton) {
+                        scanButton.checked = true;
+                    }
                 }
             }
         }
@@ -408,6 +430,7 @@ class PanelManager {
             horaire: 'h',
             journalière: 'd',
             '2min': '2min',
+            brute: 'scan',
         };
         return conversions[pasDeTemps] || pasDeTemps;
     }
@@ -418,6 +441,7 @@ class PanelManager {
             h: 'horaire',
             d: 'journalière',
             '2min': '2min',
+            scan: 'brute',
         };
         return conversions[buttonId] || buttonId;
     }
