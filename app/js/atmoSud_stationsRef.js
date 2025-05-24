@@ -592,6 +592,7 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
     card2_link.href = 'https://www.atmosud.org';
 
     // Utiliser le gestionnaire de panneau pour configurer les boutons
+    console.log('customDateRange', state.customDateRange);
     panelManager.openPanel('atmo_ref', deviceId, {
         pasDeTempsAtmo: state.pasDeTempsAtmo,
         historiqueChart: state.historiqueChart,

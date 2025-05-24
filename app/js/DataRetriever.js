@@ -66,6 +66,7 @@ export class DataRetriever {
                     state.pasDeTempsChart,
                     state.historiqueChart,
                     state.mesuresArray,
+                    false,
                     startDateTime,
                     endDateTime
                 );

@@ -11,7 +11,7 @@ export class PanelStateManager {
     createDefaultSourceState() {
         return {
             deviceId: null,
-            historiqueChart: '1j',
+            historiqueChart: '24h',
             mesuresArray: [],
             pasDeTempsChart: '1h',
             pasDeTemps: '1h',
