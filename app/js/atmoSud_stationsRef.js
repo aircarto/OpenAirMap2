@@ -515,12 +515,13 @@ async function getStationImage(stationId) {
         // Vérification de la présence d'images
         if (!data.included || data.included.length === 0) {
             console.warn('Aucune image disponible pour la station');
-            return 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+            return 'img/stationsRefAtmoSud/station_default.png';
         }
 
         // Récupération de la première image (URL exacte de l'ancien code)
         const firstImage = data.included[0];
         const imageUrl = `https://www.atmosud.org/sites/sud/files/medias/images/2022-04/${firstImage.attributes.name}`;
+        const imageUrl2 = `https://www.atmosud.org/sites/sud/files/medias/images/2022-05/${firstImage.attributes.name}`;
 
         // Vérification de la validité de l'URL de l'image
         const isValid = await new Promise((resolve) => {
@@ -530,12 +531,40 @@ async function getStationImage(stationId) {
             img.src = imageUrl;
         });
 
-        return isValid
-            ? imageUrl
-            : 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+        if (!isValid) {
+            const isValid2 = await new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = imageUrl2;
+            });
+
+            if (!isValid2) {
+                console.log(
+                    '%cgetStationImage',
+                    'color: white; font-style: bold; background-color: green;padding: 2px'
+                );
+                console.log('URL de l\'image de la station:', imageUrl);
+                console.log('URL de l\'image de la station 2:', imageUrl2);
+                console.log('Image validée:', isValid);
+                console.log('Image validée 2:', isValid2);
+                return 'img/stationsRefAtmoSud/station_default.png';
+            }
+
+            return imageUrl2;
+        }
+
+        console.log(
+            '%cgetStationImage',
+            'color: white; font-style: bold; background-color: green;padding: 2px'
+        );
+        console.log('URL de l\'image de la station:', imageUrl);
+        console.log('Image validée:', isValid);
+
+        return imageUrl;
     } catch (error) {
         console.error("Erreur lors de la récupération de l'image:", error);
-        return 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
+        return 'img/stationsRefAtmoSud/station_default.png';
     }
 }
 
