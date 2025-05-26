@@ -204,63 +204,130 @@ export function initializeSourceButtons() {
 
     // Créer un bouton pour chaque source
     Object.values(sources).forEach((source) => {
-        console.log(source)
-        const button = document.createElement('button');
-        button.className = 'dropdown-item';
-        button.textContent = source.name;
-        button.dataset.source = source.code;
+        if (source.isGroup) {
+            // Créer le groupe
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'dropdown-group';
 
-        // Ajouter l'événement de clic
-        button.addEventListener('click', () => {
-            const activeSources = getArrayFromLocalStorage('sources_local');
-            const selectedTimeStep =
-                getArrayFromLocalStorage('pasDeTempsLocal')[0];
+            // Bouton principal du groupe
+            const groupButton = document.createElement('button');
+            groupButton.className = 'dropdown-item group-header';
+            groupButton.textContent = source.name;
+            groupButton.dataset.source = source.code;
 
-            // Vérification spéciale pour NebuleAir
-            if (
-                source.code === 'nebuleair' &&
-                selectedTimeStep === 'instantane'
-            ) {
-                createCustomToast({
-                    message: `Le pas de temps instantané n'est pas disponible pour les capteurs NebuleAir.`,
-                    type: 'warning',
-                    title: 'Attention',
-                    icon: 'exclamation-triangle',
-                    timer: 5000,
+            // Sous-menu pour les sources du groupe
+            const subMenu = document.createElement('div');
+            subMenu.className = 'dropdown-submenu';
+
+            // Ajouter les sous-sources
+            Object.values(source.subSources).forEach((subSource) => {
+                const subButton = document.createElement('button');
+                subButton.className = 'dropdown-item sub-item';
+                subButton.textContent = subSource.name;
+                subButton.dataset.source = subSource.code;
+
+                // Gestionnaire d'événements pour les sous-sources
+                subButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    handleSourceClick(subSource, subButton);
                 });
-                return;
-            }
 
-            // Vérification spéciale pour AtmoSud Stations de référence
-            if (
-                source.code === 'atmo_ref' &&
-                (selectedTimeStep === 'instantane' ||
-                    selectedTimeStep === '2min')
-            ) {
-                createCustomToast({
-                    message: `Le pas de temps ${selectedTimeStep === 'instantane' ? 'instantané' : '2 minutes'} n'est pas disponible pour les stations de référence AtmoSud.`,
-                    type: 'warning',
-                    title: 'Attention',
-                    icon: 'exclamation-triangle',
-                    timer: 5000,
-                });
-                return;
-            }
+                subMenu.appendChild(subButton);
+            });
 
-            if (activeSources.includes(source.code)) {
-                removeItemFromLocalStorageArray('sources_local', source.code);
-                clearLayer(source.code);
-                button.classList.remove('active');
-            } else {
-                addItemToLocalStorageArray('sources_local', source.code);
-                loadSource(source.code);
-                button.classList.add('active');
-            }
-        });
+            // Gestionnaire d'événements pour le groupe
+            // groupButton.addEventListener('click', () => {
+            //     const activeSources = getArrayFromLocalStorage('sources_local');
+            //     const allSubSourcesActive = Object.values(
+            //         source.subSources
+            //     ).every((subSource) => activeSources.includes(subSource.code));
 
-        dropdownSources.appendChild(button);
+            //     if (allSubSourcesActive) {
+            //         // Désactiver toutes les sous-sources
+            //         Object.values(source.subSources).forEach((subSource) => {
+            //             removeItemFromLocalStorageArray(
+            //                 'sources_local',
+            //                 subSource.code
+            //             );
+            //             clearLayer(subSource.code);
+            //         });
+            //     } else {
+            //         // Activer toutes les sous-sources
+            //         Object.values(source.subSources).forEach((subSource) => {
+            //             if (!activeSources.includes(subSource.code)) {
+            //                 addItemToLocalStorageArray(
+            //                     'sources_local',
+            //                     subSource.code
+            //                 );
+            //                 loadSource(subSource.code);
+            //             }
+            //         });
+            //     }
+            //     updateButtonDisplay();
+            // });
+
+            groupDiv.appendChild(groupButton);
+            groupDiv.appendChild(subMenu);
+            dropdownSources.appendChild(groupDiv);
+        } else {
+            // Source normale
+            const button = document.createElement('button');
+            button.className = 'dropdown-item';
+            button.textContent = source.name;
+            button.dataset.source = source.code;
+
+            button.addEventListener('click', () => {
+                handleSourceClick(source, button);
+            });
+
+            dropdownSources.appendChild(button);
+        }
     });
 
     // Mettre à jour l'affichage des boutons
+    updateButtonDisplay();
+}
+
+function handleSourceClick(source, button) {
+    const activeSources = getArrayFromLocalStorage('sources_local');
+    const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+
+    // Vérification spéciale pour NebuleAir
+    if (source.code === 'nebuleair' && selectedTimeStep === 'instantane') {
+        createCustomToast({
+            message: `Le pas de temps instantané n'est pas disponible pour les capteurs NebuleAir.`,
+            type: 'warning',
+            title: 'Attention',
+            icon: 'exclamation-triangle',
+            timer: 5000,
+        });
+        return;
+    }
+
+    // Vérification spéciale pour AtmoSud Stations de référence
+    if (
+        source.code === 'atmo_ref' &&
+        (selectedTimeStep === 'instantane' || selectedTimeStep === '2min')
+    ) {
+        createCustomToast({
+            message: `Le pas de temps ${selectedTimeStep === 'instantane' ? 'instantané' : '2 minutes'} n'est pas disponible pour les stations de référence AtmoSud.`,
+            type: 'warning',
+            title: 'Attention',
+            icon: 'exclamation-triangle',
+            timer: 5000,
+        });
+        return;
+    }
+
+    if (activeSources.includes(source.code)) {
+        removeItemFromLocalStorageArray('sources_local', source.code);
+        clearLayer(source.code);
+        button.classList.remove('active');
+    } else {
+        addItemToLocalStorageArray('sources_local', source.code);
+        loadSource(source.code);
+        button.classList.add('active');
+    }
+
     updateButtonDisplay();
 }

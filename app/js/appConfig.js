@@ -25,12 +25,6 @@ export const mesures = {
 };
 
 export const sources = {
-    // sensor_community: {
-    //     name: 'Sensor.Community',
-    //     code: 'sensor_commmunity',
-    //     activated: false,
-    // }, // Réseau de capteurs Sensor.Community
-    // purpleair: { name: 'PurpleAir', code: 'purpleair', activated: false }, // Capteurs PurpleAir
     atmo_ref: {
         name: 'Station de référence atmosud',
         code: 'atmo_ref',
@@ -41,16 +35,37 @@ export const sources = {
         code: 'atmo_micro',
         activated: true,
     }, // Micro-stations AtmoSud
-    nebuleair: { name: 'Autre Capteurs communautaires', code: 'nebuleair', activated: false }, // Capteurs citoyens NebuleAir
+    communautaire: {
+        name: 'Autres capteurs communautaires',
+        code: 'communautaire',
+        activated: false,
+        isGroup: true,
+        subSources: {
+            nebuleair: {
+                name: 'NebuleAir',
+                code: 'nebuleair',
+                activated: false,
+            },
+            sensor_community: {
+                name: 'Sensor.Community',
+                code: 'sensor_community',
+                activated: false,
+            },
+            purpleair: {
+                name: 'PurpleAir',
+                code: 'purpleair',
+                activated: false,
+            },
+        },
+    },
     mod_pm: { name: 'Modélisation', code: 'mod_pm', activated: false }, // Modélisation des particules fines
     icairh: { name: 'ICAIR', code: 'icairh', activated: false }, // Modélisation ICAIR'H
     signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir
-    // mobileair: { name: 'MobileAir', code: 'mobileair', activated: false }, // Capteurs mobiles
 };
 
 export const pas_de_temps = {
     instantane: { name: 'Scan', code: 'instantane', activated: false }, // Valeurs instantanées
-    deux_min: { name: '<= 2 minutes', code: '2min', activated: false }, // Moyenne sur 2 minutes
+    deux_min: { name: '≤ 2 minutes', code: '2min', activated: false }, // Moyenne sur 2 minutes
     quart_heure: { name: '15 minutes', code: 'qh', activated: false }, // Moyenne sur 15 minutes
     heure: { name: 'Heure', code: 'h', activated: true }, // Moyenne horaire
     jour: { name: 'Jour', code: 'd', activated: false }, // Moyenne journalière

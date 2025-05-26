@@ -1,0 +1,114 @@
+.dropdown-group {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-submenu {
+    display: none;
+    width: 100%;
+    background-color: rgba(248, 249, 250, 0.8);
+    border-left: 2px solid #6c757d;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Position du sous-menu sur desktop */
+@media (min-width: 768px) {
+    .dropdown-submenu {
+        left: 100%;
+        top: 0;
+    }
+}
+
+/* Position du sous-menu sur mobile */
+@media (max-width: 767px) {
+    .dropdown-submenu {
+        left: 0;
+        top: 100%;
+        width: 100%;
+    }
+
+    .dropdown-item.sub-item {
+        padding-left: 2rem;
+    }
+}
+
+.dropdown-group:hover .dropdown-submenu {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    color: #495057;
+    font-size: 0.95rem;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #212529;
+}
+
+.dropdown-item.group-header {
+    position: relative;
+    padding-right: 2rem;
+    font-weight: 600;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdown-item.group-header::after {
+    content: '›';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+    color: #6c757d;
+}
+
+.dropdown-group:hover .dropdown-item.group-header::after {
+    transform: translateY(-50%) rotate(90deg);
+}
+
+.dropdown-item.sub-item {
+    padding-left: 2rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.dropdown-item.sub-item:hover {
+    background-color: rgba(108, 117, 125, 0.05);
+    color: #495057;
+}
+
+.dropdown-item.active {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+/* Amélioration de l'accessibilité tactile sur mobile */
+@media (max-width: 767px) {
+    .dropdown-item {
+        padding: 0.85rem 1rem;
+    }
+
+    .dropdown-item.group-header {
+        font-size: 1rem;
+    }
+
+    .dropdown-item.sub-item {
+        font-size: 0.95rem;
+    }
+}
