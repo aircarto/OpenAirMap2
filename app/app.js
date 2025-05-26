@@ -12,6 +12,7 @@ import {
     updateButtonDisplay,
     initializeSourceButtons,
 } from './js/sources.js';
+import { initializeModelisationButtons } from './js/modelisations.js';
 import {
     initializeSidePanelButtons,
     initializeMobileCloseButton,
@@ -66,6 +67,9 @@ function initializeApp() {
 
     // Initialiser les boutons des sources
     initializeSourceButtons();
+
+    // Initialiser les boutons des modélisations
+    initializeModelisationButtons();
 
     // Initialiser le contrôle de rafraîchissement
     initializeRefreshControl();

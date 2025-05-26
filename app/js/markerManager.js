@@ -192,13 +192,6 @@ function calculateTextParameters(value) {
  * @returns {string} - HTML du marqueur
  */
 function createTextMarkerHTML(value, textSize, checkPosition, stationData) {
-    console.log(
-        'createTextMarkerHTML',
-        value,
-        textSize,
-        checkPosition,
-        stationData
-    );
     const hasValue = stationData.valeur !== null;
     const checkIcon = hasValue
         ? `<i class="bi bi-shield-check" style="position: absolute; top: -8px; ${checkPosition}; font-size: 16px; color: #28a745; text-shadow: 0 0 2px rgba(0,0,0,0.3);"></i>`

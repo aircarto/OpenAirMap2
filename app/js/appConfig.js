@@ -58,9 +58,22 @@ export const sources = {
             },
         },
     },
-    mod_pm: { name: 'Modélisation', code: 'mod_pm', activated: false }, // Modélisation des particules fines
-    icairh: { name: 'ICAIR', code: 'icairh', activated: false }, // Modélisation ICAIR'H
     signalair: { name: 'SignalAir', code: 'signalair', activated: false }, // Capteurs SignalAir
+};
+
+export const modelisations = {
+    mod_pm: {
+        name: 'Modélisation',
+        code: 'mod_pm',
+        activated: false,
+        description: 'Carte de modélisation',
+    },
+    icairh: {
+        name: "ICAIR'H",
+        code: 'icairh',
+        activated: false,
+        description: "Modélisation ICAIR'H",
+    },
 };
 
 export const pas_de_temps = {
