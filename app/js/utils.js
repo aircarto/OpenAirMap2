@@ -4,9 +4,9 @@
 
 import {
     seuils_PM10,
-    seuils_NO2_24h,
-    seuilsO3_24h,
-    seuilsSO2_24h,
+    seuils_NO2,
+    seuilsO3,
+    seuilsSO2,
     seuils_PM1_PM25,
     sources,
     mesures,
@@ -296,11 +296,11 @@ export function getThresholdsForPollutant(pollutant) {
     if (pollutant === 'pm10') {
         return seuils_PM10;
     } else if (pollutant === 'no2') {
-        return seuils_NO2_24h;
+        return seuils_NO2;
     } else if (pollutant === 'o3') {
-        return seuilsO3_24h;
+        return seuilsO3;
     } else if (pollutant === 'so2') {
-        return seuilsSO2_24h;
+        return seuilsSO2;
     } else {
         return seuils_PM1_PM25;
     }
