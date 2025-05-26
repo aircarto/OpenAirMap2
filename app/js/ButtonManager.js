@@ -11,7 +11,7 @@ export class ButtonManager {
                 '365d': null,
             },
             pasDeTemps: {
-                '2min': null,
+                scan: null,
                 qh: null,
                 h: null,
                 d: null,
@@ -64,9 +64,7 @@ export class ButtonManager {
 
     setButtonState(type, id, checked) {
         const button = this.getButton(type, id);
-        console.log('button: ', button);
         if (button) {
-            console.log('button.checked: ', button.checked);
             button.checked = checked;
         }
     }

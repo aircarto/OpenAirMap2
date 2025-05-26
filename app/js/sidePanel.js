@@ -41,7 +41,6 @@ export function updatePanelState(isOpen, isExpanded) {
  * Ajuste la mise en page du conteneur de la carte
  */
 export function openSidePanelGeneric() {
-    console.log('openSidePanelGeneric appelé');
 
     // D'abord mettre à jour l'état
     sidePanelState.isOpen = true;
@@ -72,7 +71,6 @@ export function openSidePanelGeneric() {
  * Restaure la mise en page du conteneur de la carte
  */
 export function closeSidePanel() {
-    console.log('closeSidePanel appelé');
 
     // D'abord mettre à jour l'état
     sidePanelState.isOpen = false;

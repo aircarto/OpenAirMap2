@@ -209,7 +209,7 @@ function createSeries(chart, root, pollutant, axes, data, unite) {
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
-            connect: false,
+            connect: true,
         })
     );
 
@@ -234,7 +234,7 @@ function createSeries(chart, root, pollutant, axes, data, unite) {
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
-            connect: false,
+            connect: true,
         })
     );
 
@@ -369,12 +369,12 @@ export function loadAtmoSudStationsRef() {
         .then((data) => {
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
-            console.log('full_url_stations', fullUrlStations);
-            console.log(
-                `Data gathered in %c${requestTimer} sec`,
-                'color: red;'
-            );
-            console.log('Stations:', data.stations);
+            // console.log('full_url_stations', fullUrlStations);
+            // console.log(
+            //     `Data gathered in %c${requestTimer} sec`,
+            //     'color: red;'
+            // );
+            // console.log('Stations:', data.stations);
 
             // Traitement des stations actives
             let stationsActives = 0;
@@ -390,7 +390,7 @@ export function loadAtmoSudStationsRef() {
                     stationsActives++;
                 }
             });
-            console.log('Nombre de stations actives:', stationsActives);
+            // console.log('Nombre de stations actives:', stationsActives);
 
             // Création des marqueurs par défaut pour toutes les stations actives
             createRefDefaultMarkers();
@@ -422,12 +422,12 @@ export function loadAtmoSudStationsRef() {
 
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
-            console.log('full url derniere: ' + fullUrlDerniere);
-            console.log(
-                `Data gathered in %c${requestTimer} sec`,
-                'color: red;'
-            );
-            console.log('Station ayant renvoyé mesure/derniere', data);
+            // console.log('full url derniere: ' + fullUrlDerniere);
+            // console.log(
+            //     `Data gathered in %c${requestTimer} sec`,
+            //     'color: red;'
+            // );
+            // console.log('Station ayant renvoyé mesure/derniere', data);
 
             // Traitement des données de mesure
             if (data.mesures && data.mesures.length > 0) {

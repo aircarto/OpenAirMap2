@@ -24,26 +24,24 @@ export function handleMapZoom() {
  * Gère le clic sur la carte
  * @param {Event} e - L'événement de clic
  */
-export function handleMapClick(e) {
-    // Ne rien faire si le clic est sur un marqueur
-    if (e.originalEvent.target.classList.contains('leaflet-marker-icon')) {
-        return;
-    }
+// export function handleMapClick(e) {
+//     // Ne rien faire si le clic est sur un marqueur
+//     if (e.originalEvent.target.classList.contains('leaflet-marker-icon')) {
+//         return;
+//     }
 
-    // Ne rien faire si le clic est sur le panneau latéral
-    const sidePanel = document.getElementById('side-panel');
-    if (sidePanel && sidePanel.contains(e.originalEvent.target)) {
-        return;
-    }
+//     // Ne rien faire si le clic est sur le panneau latéral
+//     const sidePanel = document.getElementById('side-panel');
+//     if (sidePanel && sidePanel.contains(e.originalEvent.target)) {
+//         return;
+//     }
 
-    // Ne rien faire si le clic est sur un contrôle de la carte
-    if (e.originalEvent.target.closest('.leaflet-control')) {
-        return;
-    }
+//     // Ne rien faire si le clic est sur un contrôle de la carte
+//     if (e.originalEvent.target.closest('.leaflet-control')) {
+//         return;
+//     }
 
-    // Si on arrive ici, c'est un clic sur la carte elle-même
-    // On peut ajouter ici d'autres actions spécifiques au clic sur la carte si nécessaire
-}
+// }
 
 /**
  * Initialise les événements de la carte
@@ -51,7 +49,7 @@ export function handleMapClick(e) {
 export function initializeMapEvents() {
     map.on('moveend', handleMapMove);
     map.on('zoomend', handleMapZoom);
-    map.on('click', handleMapClick);
+    // map.on('click', handleMapClick);
 }
 
 /**

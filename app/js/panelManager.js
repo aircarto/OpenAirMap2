@@ -90,13 +90,8 @@ class PanelManager {
     }
 
     setupPasDeTempsButtonHandlers() {
-        console.log('setupPasDeTempsButtonHandlers');
-        console.log('buttons: ', this.buttonManager.buttons.pasDeTemps);
         const source = this.stateManager.getCurrentSource();
-        console.log('source: ', source);
         const state = this.stateManager.getSourceState(source);
-        console.log('state: ', state);
-        console.log('#######################');
         Object.entries(this.buttonManager.buttons.pasDeTemps).forEach(
             ([id, button]) => {
                 if (button) {
@@ -234,7 +229,7 @@ class PanelManager {
         this.stateManager.updateSourceState(source, { deviceId, ...data });
 
         this.updateButtonStates(source);
-        this.handleAtmoSudSpecificButtons(source);
+        this.handleSpecificButtons(source);
         this.handlePollutantButtons(source);
         this.updateHistoriqueData(source);
     }
@@ -321,7 +316,7 @@ class PanelManager {
         });
     }
 
-    handleAtmoSudSpecificButtons(source) {
+    handleSpecificButtons(source) {
         // Réinitialiser l'état de tous les boutons de pas de temps
         Object.keys(this.buttonManager.buttons.pasDeTemps).forEach(
             (buttonId) => {
@@ -373,6 +368,16 @@ class PanelManager {
                     }
                 }
             }
+        } else if(source ==="nebuleair"){
+            const label = document.querySelector(
+                    'label[for="btn_pas_de_temps_scan"]'
+                );
+                if (label) {
+                    // On réinitialise d'abord le texte du label
+                    label.textContent = 'scan';
+                    // Puis on ajoute le pas de temps en minutes
+                    label.textContent += ` 2 min`;
+                }
         }
     }
 

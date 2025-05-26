@@ -204,6 +204,7 @@ export function initializeSourceButtons() {
 
     // Créer un bouton pour chaque source
     Object.values(sources).forEach((source) => {
+        console.log(source)
         const button = document.createElement('button');
         button.className = 'dropdown-item';
         button.textContent = source.name;

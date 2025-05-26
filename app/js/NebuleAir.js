@@ -57,7 +57,6 @@ function updateYAxisMax() {
 export function loadNebuleAir() {
     nebuleairLayer.clearLayers();
     var pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
-    console.log('pas_de_temps: ', pas_de_temps);
     var mesures = getArrayFromLocalStorage('mesuresLocal');
 
     // Vérification si le polluant est supporté
@@ -87,7 +86,6 @@ export function loadNebuleAir() {
             return response.json();
         })
         .then((data) => {
-            console.log('NebuleAir AirCarto : ', data);
             const displayed = data.filter((e) => e.displayMap == true);
             displayed.forEach((value) => {
                 var icon_param = {
@@ -275,7 +273,6 @@ export function openSidePanelNebuleAir(
     historique,
     mesures
 ) {
-    console.log(data);
     if (!isSourceActive('nebuleair')) {
         return;
     }
@@ -320,19 +317,19 @@ export function retreive_historiqueData_nebuleAir(
     if (pas_de_temps === 'brute') {
         pas_de_temps = '2m';
     }
-    console.log(
-        'Début de retreive_historiqueData_nebuleAir avec les paramètres:',
-        {
-            sensorId,
-            pas_de_temps,
-            historique,
-            mesuresArray,
-            useCustomRange,
-            custom_start,
-            custom_end,
-        }
-    );
-    console.log('mesuresArray:', mesuresArray);
+    // console.log(
+    //     'Début de retreive_historiqueData_nebuleAir avec les paramètres:',
+    //     {
+    //         sensorId,
+    //         pas_de_temps,
+    //         historique,
+    //         mesuresArray,
+    //         useCustomRange,
+    //         custom_start,
+    //         custom_end,
+    //     }
+    // );
+    // console.log('mesuresArray:', mesuresArray);
 
     if (!isSourceActive('nebuleair')) {
         console.log('Source NebuleAir non active, annulation de la requête');
@@ -379,7 +376,6 @@ export function retreive_historiqueData_nebuleAir(
         full_url = `${API_airCarto.url_base}${API_airCarto.url_capteurs_data}?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${api_pas_de_temps}`;
     }
 
-    console.log("URL de l'API:", full_url);
 
     fetch(full_url)
         .then((response) => {
@@ -391,8 +387,8 @@ export function retreive_historiqueData_nebuleAir(
         .then((data) => {
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
-            console.log(`Données récupérées en ${requestTimer} secondes`);
-            console.log('Données reçues:', data);
+            // console.log(`Données récupérées en ${requestTimer} secondes`);
+            // console.log('Données reçues:', data);
 
             var baseInterval_timeUnit_local;
             var baseInterval_count;
@@ -549,7 +545,6 @@ function getAvailablePollutants(data) {
 
 // Création d'une série pour un polluant
 function createSeries(chart, root, pollutant, axes, data) {
-    console.log(data);
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
     const color = POLLUTANT_COLORS[colorKey] || '#000000';
