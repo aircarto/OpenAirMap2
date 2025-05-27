@@ -824,3 +824,73 @@ body.side-panel-open #collapseSidePanel {
     transition: all 0.2s ease-in-out;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+/* Signalair */
+.signalair-draggable {
+    position: absolute;
+    top: 100px;
+    left: 100px;
+    z-index: 9999;
+    width: 320px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.signalair-draggable .drag-header {
+    background-color: #f7f7f7;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+}
+
+.signalair-draggable .close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: #888;
+    transition: color 0.2s ease;
+}
+
+.signalair-draggable .close-btn:hover {
+    color: #000;
+}
+
+.signalair-draggable .drag-content {
+    padding: 16px;
+    font-size: 14px;
+    color: #333;
+}
+
+.signalair-draggable .drag-content p {
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+.signalair-draggable .drag-content p a {
+    color: #2563eb; /* Bleu moderne (inspiré de Tailwind) */
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.signalair-draggable .drag-content p a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.signalair-draggable .drag-content p a:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4); /* halo bleu */
+    border-radius: 4px;
+}

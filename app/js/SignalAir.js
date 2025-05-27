@@ -202,10 +202,8 @@ export function loadSignalAir(startDate, endDate) {
                             }
                         )
                         .on('click', () => {
-                            console.log(
-                                `[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`
-                            );
-                            openSidePanel_signalair(feature.properties, key);
+                            console.log(`[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`);
+                            showDraggableSignalairPopup(feature.properties, signalair_json[key].name);
                         })
                         .addTo(signalair_layer);
                 });
@@ -320,80 +318,55 @@ function applySignalAirDates() {
 window.resetSignalAirDates = resetSignalAirDates;
 window.applySignalAirDates = applySignalAirDates;
 
-/**
- * Ouvre le panneau latéral avec les informations du signalement
- * @param {Object} data - Les données du signalement
- * @param {string} nuisance_type - Le type de nuisance
- */
-export function openSidePanel_signalair(data, nuisance_type) {
-    console.log('Ouverture du panneau latéral pour SignalAir');
+function showDraggableSignalairPopup(data, nuisanceType) {
+    // Supprimer les anciens éléments
+    document.querySelectorAll('.signalair-draggable').forEach(el => el.remove());
 
-    // Masquer le conteneur du graphique
-    document.getElementById('card3').style.display = 'none';
-
-    // Mise à jour du contenu du panneau
-    card1_img.src = 'img/signalair/logoSignalAir.png';
-    card1_title.innerHTML = `<h3 class="mb-3">Signalement de ${nuisance_type}</h3>`;
-    card1_text.innerHTML = `
-        <div class="signalair-info-container">
-            <div class="info-card">
-                <h4>Localisation</h4>
-                <p class="info-value">${data.city || 'Non spécifiée'}</p>
-            </div>
-            
-            <div class="info-card">
-                <h4>Niveau de gêne</h4>
-                <p class="info-value">${data['niveau-de-gene'] || 'Non spécifié'}</p>
-            </div>
-            
-            <div class="info-card">
-                <h4>Symptômes déclarés</h4>
-                <p class="info-value">${data['si-oui-quels-symptomes'] || 'Aucun symptôme déclaré'}</p>
-            </div>
-            
-            <div class="info-card">
-                <h4>Origine de la nuisance</h4>
-                <p class="info-value">${data['origine-de-la-nuisance'] || 'Non spécifiée'}</p>
-                ${data['description-de-lorigine-de-la-nuisance'] ? `<p class="info-details">${data['description-de-lorigine-de-la-nuisance']}</p>` : ''}
-            </div>
-            
-            <div class="info-card">
-                <h4>Durée de la nuisance</h4>
-                <p class="info-value">${data['duree-de-la-nuisance'] || 'Non spécifiée'}</p>
-            </div>
-            
-            ${
-                data['remarque-commentaire']
-                    ? `
-            <div class="info-card">
-                <h4>Commentaires</h4>
-                <p class="info-value">${data['remarque-commentaire']}</p>
-            </div>
-            `
-                    : ''
-            }
+    // Création du conteneur draggable
+    const popup = document.createElement('div');
+    popup.className = 'signalair-draggable';
+    popup.innerHTML = `
+        <div class="drag-header">
+            <strong>Signalement: ${nuisanceType}</strong>
+            <button class="close-btn">×</button>
+        </div>
+        <div class="drag-content">
+            <p><strong>Ville:</strong> ${data.city || 'Non spécifiée'}</p>
+            <p><strong>Niveau de gêne:</strong> ${data['niveau-de-gene'] || 'Non spécifié'}</p>
+            <p><strong>Symptômes:</strong> ${data['si-oui-quels-symptomes'] || 'Aucun'}</p>
+            <p><strong>Origine:</strong> ${data['origine-de-la-nuisance'] || 'Non spécifiée'}</p>
+            <p><strong>Durée:</strong> ${data['duree-de-la-nuisance'] || 'Non spécifiée'}</p>
+            ${data['remarque-commentaire'] ? `<p><strong>Commentaires:</strong> ${data['remarque-commentaire']}</p>` : ''}
+            <p><strong>Faire un signalement:</strong> <a href="https://www.signalair.eu/fr/" target="_blank">SignalAir</a></p>
         </div>
     `;
 
-    // Créer et injecter le sélecteur de dates
-    createDateRangeSelector();
 
-    // Mise à jour de la deuxième carte avec la description de Signal'Air
-    card2_title.innerHTML = '<h3 class="mb-3">À propos de Signal\'Air</h3>';
-    card2_text.innerHTML = `
-        <div class="signalair-description">
-            <p>Signal'Air est une plateforme collaborative qui permet aux citoyens de signaler les nuisances environnementales qu'ils rencontrent dans leur quotidien.</p>
-            
-            <p>Que ce soit des odeurs désagréables, des bruits excessifs, des problèmes visuels ou des brûlages illégaux, Signal'Air offre un moyen simple et efficace de partager ces informations avec les autorités compétentes.</p>
-            
-            <p>Votre participation contribue à une meilleure compréhension des problèmes environnementaux locaux et aide à mettre en place des solutions adaptées.</p>
-            
-            <div class="action-buttons">
-                <a href="https://www.signalair.eu/fr/" target="_blank" class="btn btn-primary btn-lg">Faire un signalement</a>
-            </div>
-        </div>
-    `;
 
-    // Ouverture du panneau latéral
-    openSidePanelGeneric();
+    // Fermer le popup
+    popup.querySelector('.close-btn').addEventListener('click', () => popup.remove());
+
+    // Rendre draggable
+    let isDragging = false, offsetX, offsetY;
+
+    const header = popup.querySelector('.drag-header');
+    header.style.cursor = 'move';
+    header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - popup.offsetLeft;
+        offsetY = e.clientY - popup.offsetTop;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            popup.style.left = `${e.clientX - offsetX}px`;
+            popup.style.top = `${e.clientY - offsetY}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => (isDragging = false));
+
+    // Ajout au DOM
+    document.body.appendChild(popup);
 }
+
