@@ -59,8 +59,8 @@ let yAxisMaxValue = 90;
 export async function loadAtmoSudMicroStation() {
     try {
         atmoMicroLayer.clearLayers();
-        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
-        const pas_de_temps_atmo = convertTimeStep(pas_de_temps[0]);
+        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+        const pas_de_temps_atmo = convertTimeStep(pas_de_temps);
 
         if (pas_de_temps_atmo === 'd') return;
 
@@ -73,10 +73,7 @@ export async function loadAtmoSudMicroStation() {
         const dataCapteurSite = await fetchCapteurSites(mesures_atmo);
         initializeMicroStationMarkers(dataCapteurSite);
 
-        const data = await fetchDernieresMesures(
-            mesures_atmo,
-            pas_de_temps_atmo
-        );
+        const data = await fetchDernieresMesures(mesures_atmo, pas_de_temps);
         if (!validateData(data)) return;
 
         const filteredData = filterAndProcessData(data, pas_de_temps[0]);
@@ -130,17 +127,23 @@ async function fetchCapteurSites(mesures_atmo) {
     return await fetchAPI(fullUrlCapteurSite);
 }
 
-async function fetchDernieresMesures(mesures_atmo, pas_de_temps_atmo) {
+async function fetchDernieresMesures(mesures_atmo, pas_de_temps) {
+    console.log('fetchDernieresMesures');
+    console.log('pas_de_temps: ', pas_de_temps);
     let delais = '';
-    if (pas_de_temps_atmo === 'horaire') {
+    if (pas_de_temps === 'h') {
         delais = '64';
-    } else if (pas_de_temps_atmo === 'quart-horaire') {
+    } else if (pas_de_temps === 'qh') {
         delais = '19';
-    } else if (pas_de_temps_atmo === 'brute') {
+    } else if (pas_de_temps === '2min') {
+        delais = '6';
+    } else if (pas_de_temps === 'instantane') {
         delais = '181';
     }
+    pas_de_temps = convertTimeStep(pas_de_temps);
+
     const full_url_derniere =
-        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps_atmo}&delais=${delais}`.replace(
+        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps}&delais=${delais}`.replace(
             /\s+/g,
             ''
         );
