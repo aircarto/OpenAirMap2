@@ -29,7 +29,7 @@ function getActivePollutantName() {
 }
 
 // Fonction pour mettre à jour le texte du bouton de modélisation
-function updateModelisationButtonText() {
+export function updateModelisationButtonText() {
     const selectedOptionSpan = document.getElementById(
         'modelisation-selected-option'
     );
@@ -50,18 +50,6 @@ function updateModelisationButtonText() {
     } else {
         selectedOptionSpan.textContent = 'Cartes de modélisation';
     }
-}
-
-// Fonction pour écouter les changements dans le localStorage
-function setupLocalStorageListener() {
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function (key, value) {
-        const event = new Event('localStorageChange');
-        event.key = key;
-        event.value = value;
-        originalSetItem.apply(this, arguments);
-        window.dispatchEvent(event);
-    };
 }
 
 export function initializeModelisationButtons() {
@@ -85,19 +73,6 @@ export function initializeModelisationButtons() {
         });
         return;
     }
-
-    // Configurer l'écouteur du localStorage
-    setupLocalStorageListener();
-
-    // Écouter les changements dans le localStorage
-    window.addEventListener('localStorageChange', (event) => {
-        if (event.key === 'mesuresLocal') {
-            const activeSources = getArrayFromLocalStorage('sources_local');
-            if (activeSources.includes('mod_pm')) {
-                updateModelisationButtonText();
-            }
-        }
-    });
 
     // Vider le menu déroulant
     dropdownModelisations.innerHTML = '';
@@ -147,15 +122,6 @@ export function initializeModelisationButtons() {
         dropdownModelisations.appendChild(button);
         console.log('Bouton ajouté au menu');
     });
-
-    // Écouter les changements de polluant
-    document
-        .querySelectorAll('#btn_polluants input[type="checkbox"]')
-        .forEach((checkbox) => {
-            checkbox.addEventListener('change', () => {
-                updateModelisationButtonText();
-            });
-        });
 
     // Mettre à jour l'affichage des boutons
     updateButtonDisplay();

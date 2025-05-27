@@ -12,6 +12,7 @@ import { clearLayer } from './layers.js';
 import { loadSource, updateButtonDisplay } from './sources.js';
 import { toastManager, createCustomToast } from './toaster.js';
 import { updateTimeDisplay, startAutoRefresh } from './autoRefresh.js';
+import { updateModelisationButtonText } from './modelisations.js';
 
 /**
  * Gère le changement de mesure
@@ -62,6 +63,9 @@ export function handleMeasureChange(measure) {
         clearLayer(source);
         loadSource(source);
     });
+
+    // Mise à jour du texte de modélisation
+    updateModelisationButtonText();
 
     // Mise à jour de l'affichage
     updateTimeDisplay();
