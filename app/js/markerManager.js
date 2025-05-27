@@ -164,7 +164,7 @@ function calculateTextParameters(value) {
     let textSize = 32;
     let x_position = 5;
     let y_position = 42;
-    let checkPosition = 'right: 12px;';
+    let checkPosition = 'right: 18px;';
 
     if (value >= 1000) {
         textSize = 16;
@@ -194,7 +194,7 @@ function calculateTextParameters(value) {
 function createTextMarkerHTML(value, textSize, checkPosition, stationData) {
     const hasValue = stationData.valeur !== null;
     const checkIcon = hasValue
-        ? `<i class="bi bi-shield-check" style="position: absolute; top: -8px; ${checkPosition}; font-size: 16px; color: #28a745; text-shadow: 0 0 2px rgba(0,0,0,0.3);"></i>`
+        ? `<i class="bi bi-shield-check" style="position: absolute; top: -13px; ${checkPosition}; font-size: 16px; color:rgb(13, 14, 13);rgba(0,0,0,0.3);"></i>`
         : '';
 
     return `<div id="textDiv" style="font-size: ${textSize}px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #333;">
