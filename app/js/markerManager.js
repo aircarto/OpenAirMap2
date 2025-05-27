@@ -4,6 +4,7 @@ import { state, openSidePanelMicroStation } from './atmoSud_microStations.js';
 import { openSidePanel_stationRef } from './atmoSud_stationsRef.js';
 import { formatPollutantName } from './utils.js';
 import { mesures as supportedMesures } from './appConfig.js';
+import { openSidePanelNebuleAir } from './NebuleAir.js';
 
 // État global pour les marqueurs
 const markerState = {
@@ -382,6 +383,10 @@ function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
 function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
     console.log('click on micro station:', stationData.nom_site);
 
+    // Réinitialiser tous les autres types de marqueurs
+    resetNebuleAirMarkers();
+    resetRefStationMarkers();
+
     resetPreviousMarker();
     highlightNewMarker(marker, textMarker);
     updateGlobalState(marker, textMarker, stationData);
@@ -648,6 +653,7 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
         [stationData.latitude, stationData.longitude],
         {
             icon: L.icon(iconParam),
+            zIndexOffset: 2000,
         }
     );
 
@@ -663,12 +669,13 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
 
     const textMarker = L.marker([stationData.latitude, stationData.longitude], {
         icon: textParam,
+        zIndexOffset: 2000,
     });
 
     // Ajout des fonctions de survol
     function highlightMarker() {
-        stationMarker.setZIndexOffset(1000);
-        textMarker.setZIndexOffset(1000);
+        stationMarker.setZIndexOffset(3000);
+        textMarker.setZIndexOffset(3000);
 
         // Création d'un tooltip personnalisé avec Bootstrap
         const tooltip = document.createElement('div');
@@ -817,6 +824,11 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
  */
 function setupRefMarkerEvents(stationMarker, textMarker, value, mesure) {
     const clickHandler = () => {
+        // Réinitialiser tous les autres types de marqueurs
+        resetNebuleAirMarkers();
+        resetMicroStationMarkers();
+
+        // Gestion des stations de référence
         if (
             refMarkerState.selectedMarker &&
             refMarkerState.selectedMarker !== stationMarker
@@ -841,8 +853,8 @@ function setupRefMarkerEvents(stationMarker, textMarker, value, mesure) {
             }
         }
 
-        stationMarker.setZIndexOffset(1000);
-        textMarker.setZIndexOffset(1000);
+        stationMarker.setZIndexOffset(3000);
+        textMarker.setZIndexOffset(3000);
         if (stationMarker._icon) {
             stationMarker._icon.classList.add('marker-selected');
         }
@@ -1084,3 +1096,308 @@ export function createRefDefaultMarkers() {
 
 // Export des variables d'état
 export { refMarkerState };
+
+/**############################################################################
+ *                    MARQUEURS NEBULEAIR
+ * ############################################################################
+ */
+
+// État global pour les marqueurs NebuleAir
+const nebuleAirMarkerState = {
+    markers: {},
+    selectedMarker: null,
+    selectedText: null,
+    selectedDeviceId: null,
+};
+
+/**
+ * Crée un marqueur pour un capteur NebuleAir
+ * @param {Object} value - Données du capteur
+ * @param {string} mesure_maj_pas_de_temps - Mesure avec pas de temps
+ * @param {Array} mesures - Mesures sélectionnées
+ * @returns {Object} - Marqueurs créés
+ */
+export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
+    const icon_param = {
+        iconUrl: 'img/nebuleair/nebuleAir_default.png',
+        iconSize: [40, 40],
+        iconAnchor: [5, 40],
+    };
+
+    if (value.connected) {
+        icon_param.iconSize = [50, 50];
+        let valueToCheck = value[mesure_maj_pas_de_temps];
+        let colorCode = getColorCodeForValue(valueToCheck, mesures);
+        if (colorCode !== 'default') {
+            icon_param.iconUrl =
+                'img/nebuleair/nebuleAir_' + colorCode + '.png';
+        }
+    }
+
+    const nebuleAir_icon = L.icon(icon_param);
+    const nebuleAirMarker = L.marker([value['latitude'], value['longitude']], {
+        icon: nebuleAir_icon,
+        deviceId: value['sensorId'],
+    });
+
+    if (!window.deviceMarkers) window.deviceMarkers = {};
+    window.deviceMarkers[value['sensorId']] = {
+        marker: nebuleAirMarker,
+        data: value,
+    };
+
+    if (value.connected) {
+        const textMarker = createNebuleAirTextMarker(
+            value,
+            mesure_maj_pas_de_temps
+        );
+        setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value);
+        return { nebuleAirMarker, textMarker };
+    }
+
+    return { nebuleAirMarker, textMarker: null };
+}
+
+/**
+ * Crée un marqueur de texte pour un capteur NebuleAir
+ * @param {Object} value - Données du capteur
+ * @param {string} mesure_maj_pas_de_temps - Mesure avec pas de temps
+ * @returns {L.Marker} - Marqueur de texte
+ */
+function createNebuleAirTextMarker(value, mesure_maj_pas_de_temps) {
+    const roundedvalue = Math.round(parseFloat(value[mesure_maj_pas_de_temps]));
+    let textSize = 32;
+    let x_position = -10;
+    let y_position = 38;
+
+    if (roundedvalue >= 10) {
+        textSize = 25;
+        x_position = -5;
+        y_position = 32;
+    }
+
+    if (roundedvalue >= 100) {
+        textSize = 20;
+        x_position = -4;
+        y_position = 26;
+    }
+
+    const text_param = L.divIcon({
+        className: 'my-div-icon',
+        html: `<div id="textDiv" style="font-size: ${textSize}px;">${roundedvalue}</div>`,
+        iconAnchor: [x_position, y_position],
+    });
+
+    const textMarker = L.marker([value['latitude'], value['longitude']], {
+        icon: text_param,
+        deviceId: value['sensorId'],
+    });
+
+    return textMarker;
+}
+
+/**
+ * Configure les événements pour les marqueurs NebuleAir
+ * @param {L.Marker} nebuleAirMarker - Marqueur principal
+ * @param {L.Marker} textMarker - Marqueur de texte
+ * @param {Object} value - Données du capteur
+ */
+function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
+    const highlightMarker = () => {
+        nebuleAirMarker.setZIndexOffset(1000);
+        textMarker.setZIndexOffset(1000);
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'custom-tooltip';
+        tooltip.innerHTML = `
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-2">
+                    <h6 class="card-title mb-1">${value['sensorId']}</h6>
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">
+                            <i class="bi bi-info-circle me-1"></i>
+                            NebuleAir - AirCarto
+                        </small>
+                        <small class="text-muted">
+                            Polluants mesurés:
+                            <ul class="list-unstyled mb-0">
+                                ${value.PM1 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₁</span></li>' : ''}
+                                ${value.PM25 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₂.₅</span></li>' : ''}
+                                ${value.PM10 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₁₀</span></li>' : ''}
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        tooltip.style.cssText = `
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: opacity 0.2s;
+            opacity: 1;
+        `;
+
+        document.body.appendChild(tooltip);
+        nebuleAirMarker.tooltip = tooltip;
+        textMarker.tooltip = tooltip;
+    };
+
+    const resetMarker = () => {
+        if (nebuleAirMarkerState.selectedMarker !== nebuleAirMarker) {
+            nebuleAirMarker.setZIndexOffset(0);
+            textMarker.setZIndexOffset(0);
+        }
+
+        if (nebuleAirMarker.tooltip) {
+            nebuleAirMarker.tooltip.remove();
+            nebuleAirMarker.tooltip = null;
+            textMarker.tooltip = null;
+        }
+    };
+
+    const clickHandler = () => {
+        // Réinitialiser tous les autres types de marqueurs
+        resetMicroStationMarkers();
+        resetRefStationMarkers();
+
+        // Mettre à jour l'état des marqueurs NebuleAir
+        if (
+            nebuleAirMarkerState.selectedMarker &&
+            nebuleAirMarkerState.selectedMarker !== nebuleAirMarker
+        ) {
+            nebuleAirMarkerState.selectedMarker.setZIndexOffset(0);
+            nebuleAirMarkerState.selectedMarker._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+
+        if (
+            nebuleAirMarkerState.selectedText &&
+            nebuleAirMarkerState.selectedText !== textMarker
+        ) {
+            nebuleAirMarkerState.selectedText.setZIndexOffset(0);
+            nebuleAirMarkerState.selectedText._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+
+        nebuleAirMarker.setZIndexOffset(1000);
+        textMarker.setZIndexOffset(1000);
+        nebuleAirMarker._icon.classList.add('marker-selected');
+        textMarker._icon.classList.add('marker-selected');
+
+        nebuleAirMarkerState.selectedMarker = nebuleAirMarker;
+        nebuleAirMarkerState.selectedText = textMarker;
+        nebuleAirMarkerState.selectedDeviceId = value['sensorId'];
+
+        // Appel de la fonction d'ouverture du panneau latéral
+        openSidePanelNebuleAir(
+            value,
+            value.pas_de_temps ||
+                getArrayFromLocalStorage('pasDeTempsLocal')[0],
+            value.historiqueChart || '24h',
+            value.mesures || getArrayFromLocalStorage('mesuresLocal')
+        );
+    };
+
+    nebuleAirMarker
+        .on('mouseover', highlightMarker)
+        .on('mouseout', resetMarker)
+        .on('click', clickHandler);
+
+    textMarker
+        .on('mouseover', highlightMarker)
+        .on('mouseout', resetMarker)
+        .on('click', clickHandler);
+}
+
+/**
+ * Réinitialise l'état des marqueurs NebuleAir
+ */
+export function resetNebuleAirMarkers() {
+    if (nebuleAirMarkerState.selectedMarker) {
+        nebuleAirMarkerState.selectedMarker.setZIndexOffset(0);
+        if (nebuleAirMarkerState.selectedMarker._icon) {
+            nebuleAirMarkerState.selectedMarker._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+    }
+    if (nebuleAirMarkerState.selectedText) {
+        nebuleAirMarkerState.selectedText.setZIndexOffset(0);
+        if (nebuleAirMarkerState.selectedText._icon) {
+            nebuleAirMarkerState.selectedText._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+    }
+    nebuleAirMarkerState.selectedMarker = null;
+    nebuleAirMarkerState.selectedText = null;
+    nebuleAirMarkerState.selectedDeviceId = null;
+}
+
+/**
+ * Réinitialise l'état des marqueurs de micro-stations
+ */
+export function resetMicroStationMarkers() {
+    if (state.selectedMarker) {
+        state.selectedMarker.setZIndexOffset(0);
+        if (state.selectedMarker._icon) {
+            state.selectedMarker._icon.classList.remove('marker-selected');
+        }
+    }
+    if (state.selectedText) {
+        state.selectedText.setZIndexOffset(0);
+        if (state.selectedText._icon) {
+            state.selectedText._icon.classList.remove('marker-selected');
+        }
+    }
+    state.selectedMarker = null;
+    state.selectedText = null;
+    state.selectedDeviceId = null;
+}
+
+/**
+ * Réinitialise l'état des marqueurs de stations de référence
+ */
+export function resetRefStationMarkers() {
+    if (refMarkerState.selectedMarker) {
+        refMarkerState.selectedMarker.setZIndexOffset(0);
+        if (refMarkerState.selectedMarker._icon) {
+            refMarkerState.selectedMarker._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+    }
+    if (refMarkerState.selectedText) {
+        refMarkerState.selectedText.setZIndexOffset(0);
+        if (refMarkerState.selectedText._icon) {
+            refMarkerState.selectedText._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+    }
+    refMarkerState.selectedMarker = null;
+    refMarkerState.selectedText = null;
+    refMarkerState.selectedDeviceId = null;
+}
+
+/**
+ * Réinitialise tous les types de marqueurs
+ */
+export function resetAllMarkers() {
+    resetNebuleAirMarkers();
+    resetMicroStationMarkers();
+    resetRefStationMarkers();
+}
+
+// Export des variables d'état
+export { nebuleAirMarkerState };

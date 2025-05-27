@@ -14,6 +14,7 @@ import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
 import { openSidePanelGeneric } from './sidePanel.js';
 import { POLLUTANT_COLORS } from './appConfig.js';
+import { createNebuleAirMarker } from './markerManager.js';
 // Variables locales au module
 var state = {
     pasDeTempsChart: '1h',
@@ -88,177 +89,15 @@ export function loadNebuleAir() {
         .then((data) => {
             const displayed = data.filter((e) => e.displayMap == true);
             displayed.forEach((value) => {
-                var icon_param = {
-                    iconUrl: 'img/nebuleair/nebuleAir_default.png',
-                    iconSize: [40, 40],
-                    iconAnchor: [5, 40],
-                };
+                const { nebuleAirMarker, textMarker } = createNebuleAirMarker(
+                    value,
+                    mesure_maj_pas_de_temps,
+                    mesures
+                );
 
-                if (value.connected) {
-                    icon_param.iconSize = [50, 50];
-                    let valueToCheck = value[mesure_maj_pas_de_temps];
-                    let colorCode = getColorCodeForValue(valueToCheck, mesures);
-                    if (colorCode !== 'default') {
-                        icon_param.iconUrl =
-                            'img/nebuleair/nebuleAir_' + colorCode + '.png';
-                    }
-                }
-
-                var nebuleAir_icon = L.icon(icon_param);
-                let nebuleAirMarker = L.marker(
-                    [value['latitude'], value['longitude']],
-                    {
-                        icon: nebuleAir_icon,
-                        deviceId: value['sensorId'],
-                    }
-                ).addTo(nebuleairLayer);
-
-                if (!window.deviceMarkers) window.deviceMarkers = {};
-                window.deviceMarkers[value['sensorId']] = {
-                    marker: nebuleAirMarker,
-                    data: value,
-                };
-
-                if (value.connected) {
-                    let roundedvalue = Math.round(
-                        parseFloat(value[mesure_maj_pas_de_temps])
-                    );
-                    var textSize = 32;
-                    var x_position = -10;
-                    var y_position = 38;
-
-                    if (roundedvalue >= 10) {
-                        textSize = 25;
-                        x_position = -5;
-                        y_position = 32;
-                    }
-
-                    if (roundedvalue >= 100) {
-                        textSize = 20;
-                        x_position = -4;
-                        y_position = 26;
-                    }
-
-                    var text_param = L.divIcon({
-                        className: 'my-div-icon',
-                        html: `<div id="textDiv" style="font-size: ${textSize}px;">${roundedvalue}</div>`,
-                        iconAnchor: [x_position, y_position],
-                    });
-
-                    let textMarker = L.marker(
-                        [value['latitude'], value['longitude']],
-                        {
-                            icon: text_param,
-                            deviceId: value['sensorId'],
-                        }
-                    )
-                        .on('click', function () {
-                            if (
-                                globalSelectedMarker &&
-                                globalSelectedMarker !== nebuleAirMarker
-                            ) {
-                                globalSelectedMarker.setZIndexOffset(0);
-                                globalSelectedMarker._icon.classList.remove(
-                                    'marker-selected'
-                                );
-                            }
-
-                            if (
-                                globalSelectedText &&
-                                globalSelectedText !== textMarker
-                            ) {
-                                globalSelectedText.setZIndexOffset(0);
-                                globalSelectedText._icon.classList.remove(
-                                    'marker-selected'
-                                );
-                            }
-
-                            nebuleAirMarker.setZIndexOffset(1000);
-                            textMarker.setZIndexOffset(1000);
-                            nebuleAirMarker._icon.classList.add(
-                                'marker-selected'
-                            );
-                            textMarker._icon.classList.add('marker-selected');
-
-                            globalSelectedMarker = nebuleAirMarker;
-                            globalSelectedText = textMarker;
-                            globalSelectedDeviceId = value['sensorId'];
-
-                            openSidePanelNebuleAir(
-                                value,
-                                pas_de_temps_String,
-                                state.historiqueChart,
-                                mesures
-                            );
-                        })
-                        .addTo(nebuleairLayer);
-
-                    function highlightMarker() {
-                        nebuleAirMarker.setZIndexOffset(1000);
-                        textMarker.setZIndexOffset(1000);
-
-                        const tooltip = document.createElement('div');
-                        tooltip.className = 'custom-tooltip';
-                        tooltip.innerHTML = `
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body p-2">
-                                    <h6 class="card-title mb-1">${value['sensorId']}</h6>
-                                    <div class="d-flex flex-column">
-                                        <small class="text-muted mb-1">
-                                            <i class="bi bi-info-circle me-1"></i>
-                                            NebuleAir - AirCarto
-                                        </small>
-                                        <small class="text-muted">
-                                            Polluants mesurés:
-                                            <ul class="list-unstyled mb-0">
-                                                ${value.PM1 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₁</span></li>' : ''}
-                                                ${value.PM25 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₂.₅</span></li>' : ''}
-                                                ${value.PM10 !== undefined ? '<li><span class="text-muted">●</span><span class="fw-semibold"> PM₁₀</span></li>' : ''}
-                                            </ul>
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-
-                        tooltip.style.cssText = `
-                            position: fixed;
-                            z-index: 10000;
-                            pointer-events: none;
-                            bottom: 20px;
-                            right: 20px;
-                            background-color: white;
-                            padding: 10px;
-                            border-radius: 5px;
-                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                            transition: opacity 0.2s;
-                            opacity: 1;
-                        `;
-
-                        document.body.appendChild(tooltip);
-                        nebuleAirMarker.tooltip = tooltip;
-                        textMarker.tooltip = tooltip;
-                    }
-
-                    function resetMarker() {
-                        if (globalSelectedMarker !== nebuleAirMarker) {
-                            nebuleAirMarker.setZIndexOffset(0);
-                            textMarker.setZIndexOffset(0);
-                        }
-
-                        if (nebuleAirMarker.tooltip) {
-                            nebuleAirMarker.tooltip.remove();
-                            nebuleAirMarker.tooltip = null;
-                            textMarker.tooltip = null;
-                        }
-                    }
-
-                    nebuleAirMarker
-                        .on('mouseover', highlightMarker)
-                        .on('mouseout', resetMarker);
-                    textMarker
-                        .on('mouseover', highlightMarker)
-                        .on('mouseout', resetMarker);
+                nebuleAirMarker.addTo(nebuleairLayer);
+                if (textMarker) {
+                    textMarker.addTo(nebuleairLayer);
                 }
             });
         })
@@ -375,7 +214,6 @@ export function retreive_historiqueData_nebuleAir(
     } else {
         full_url = `${API_airCarto.url_base}${API_airCarto.url_capteurs_data}?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${api_pas_de_temps}`;
     }
-
 
     fetch(full_url)
         .then((response) => {
