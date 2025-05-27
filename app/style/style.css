@@ -14,12 +14,11 @@ body {
 
 #map-container {
     height: calc(100vh - 60px);
-    margin-top: 50px;
+    margin-top: 3rem;
     padding-right: 30px;
     padding-left: 30px;
     position: relative; /* Ensure the button is positioned relative to the map */
     background-color: white;
-    padding: 20px;
 }
 
 #map {
