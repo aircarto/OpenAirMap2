@@ -136,46 +136,6 @@ export function updateButtonsState() {
 }
 
 /**
- * Ouvre le panneau latéral pour les données SignalAir
- * @param {Object} data - Les données du signalement
- * @param {string} nuisance_type - Le type de nuisance
- */
-export function openSidePanel_signalair(data, nuisance_type) {
-    card1_img.src = 'img/signalair/logoSignalAir.png';
-    card1_title.innerHTML = 'Nuisance: ' + nuisance_type;
-    card1_text.innerHTML = `
-        Ville:   ${data['city']} </br>
-        <table class="table">
-            <tbody>
-                <tr>
-                    <td>Niveau de gêne</td>
-                    <td>${data['niveau-de-gene']}</td>
-                </tr>
-                <tr>
-                    <td>Symptômes déclarés</td>
-                    <td>${data['si-oui-quels-symptomes']}</td>
-                </tr>
-                <tr>
-                    <td>Origine de la nuisance</td>
-                    <td>${data['origine-de-la-nuisance']} ${data['description-de-lorigine-de-la-nuisance']}</td>
-                </tr>
-                <tr>
-                    <td>Durée de la nuisance</td>
-                    <td>${data['duree-de-la-nuisance']}</td>
-                </tr>
-                <tr>
-                    <td>Commentaires</td>
-                    <td>${data['remarque-commentaire']}</td>
-                </tr>
-            </tbody>
-        </table>
-        <a href="https://www.signalair.eu/fr/" target="_blank" class="btn btn-primary" id="card1_button">Faire un signalement</a>
-    `;
-
-    openSidePanelGeneric();
-}
-
-/**
  * Initialise les boutons d'ouverture et de fermeture panneau latéral
  */
 export function initializeSidePanelButtons() {

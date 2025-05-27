@@ -179,28 +179,6 @@ export function loadSignalAir(startDate, endDate) {
 
                     // Création du marqueur
                     L.marker([lat, long], { icon: signalair_icon })
-                        .bindPopup(`<b>${signalair_json[key].name}</b>`)
-                        .bindTooltip(
-                            `
-                            <div class="signalair-tooltip">
-                                <div class="tooltip-header">
-                                    <h6 class="mb-1">${signalair_json[key].name}</h6>
-                                    <small class="text-muted">${formatDate(feature.properties.created_at)}</small>
-                                </div>
-                                <div class="tooltip-body">
-                                    <p class="mb-1"><strong>Ville:</strong> ${feature.properties.city || 'Non spécifiée'}</p>
-                                    <p class="mb-1"><strong>Niveau de gêne:</strong> ${feature.properties['niveau-de-gene'] || 'Non spécifié'}</p>
-                                    <p class="mb-0"><strong>Durée:</strong> ${feature.properties['duree-de-la-nuisance'] || 'Non spécifiée'}</p>
-                                </div>
-                            </div>
-                        `,
-                            {
-                                direction: 'top',
-                                permanent: false,
-                                className: 'signalair-tooltip-container',
-                                offset: [0, -10],
-                            }
-                        )
                         .on('click', () => {
                             console.log(`[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`);
                             showDraggableSignalairPopup(feature.properties, signalair_json[key].name);
@@ -321,7 +299,7 @@ window.applySignalAirDates = applySignalAirDates;
 function showDraggableSignalairPopup(data, nuisanceType) {
     // Supprimer les anciens éléments
     document.querySelectorAll('.signalair-draggable').forEach(el => el.remove());
-
+    console.log(data) 
     // Création du conteneur draggable
     const popup = document.createElement('div');
     popup.className = 'signalair-draggable';
@@ -335,6 +313,7 @@ function showDraggableSignalairPopup(data, nuisanceType) {
             <p><strong>Niveau de gêne:</strong> ${data['niveau-de-gene'] || 'Non spécifié'}</p>
             <p><strong>Symptômes:</strong> ${data['si-oui-quels-symptomes'] || 'Aucun'}</p>
             <p><strong>Origine:</strong> ${data['origine-de-la-nuisance'] || 'Non spécifiée'}</p>
+            <p><strong>Date:</strong> ${formatDate(data.date)}</p>
             <p><strong>Durée:</strong> ${data['duree-de-la-nuisance'] || 'Non spécifiée'}</p>
             ${data['remarque-commentaire'] ? `<p><strong>Commentaires:</strong> ${data['remarque-commentaire']}</p>` : ''}
             <p><strong>Faire un signalement:</strong> <a href="https://www.signalair.eu/fr/" target="_blank">SignalAir</a></p>
@@ -370,3 +349,14 @@ function showDraggableSignalairPopup(data, nuisanceType) {
     document.body.appendChild(popup);
 }
 
+const formatDate = (dateString) => {
+    if (!dateString) return 'Non spécifiée';
+    const date = new Date(dateString.replace(' ', 'T')); // Pour compatibilité ISO
+    return new Intl.DateTimeFormat('fr-FR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(date);
+};
