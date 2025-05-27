@@ -19,9 +19,9 @@ export const mesures = {
     no2: { name: 'NO2', code: 'no2', activated: false }, // Dioxyde d'azote
     so2: { name: 'SO2', code: 'so2', activated: false }, // Dioxyde de soufre
     o3: { name: 'O3', code: 'o3', activated: false }, // Ozone
-    h2s: { name: 'H2S', code: 'h2s', activated: false }, // Sulfure d'hydrogène
-    nh3: { name: 'NH3', code: 'nh3', activated: false }, // Ammoniac
-    c6h6: { name: 'C6H6', code: 'c6h6', activated: false }, // Benzène
+    // h2s: { name: 'H2S', code: 'h2s', activated: false }, // Sulfure d'hydrogène
+    // nh3: { name: 'NH3', code: 'nh3', activated: false }, // Ammoniac
+    // c6h6: { name: 'C6H6', code: 'c6h6', activated: false }, // Benzène
 };
 
 export const sources = {
@@ -63,7 +63,7 @@ export const sources = {
 
 export const modelisations = {
     mod_pm: {
-        name: 'Modélisation',
+        name: 'Modélisation Horaires',
         code: 'mod_pm',
         activated: false,
         description: 'Carte de modélisation',
