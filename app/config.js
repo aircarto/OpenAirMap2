@@ -1,4 +1,4 @@
-// les URLs utilisées dans l'application 
+// les URLs utilisées dans l'application
 // Call API
 
 export const API_atmoSud = {
@@ -19,4 +19,8 @@ export const API_airCarto = {
     url_base: 'https://api.aircarto.fr',
     url_capteurs_metadata: '/capteurs/metadata',
     url_capteurs_data: '/capteurs/dataNebuleAir',
+};
+
+export const API_KEYS = {
+    purpleAir: 'C408CB32-3B99-11F0-81BE-42010A80001F',
 };

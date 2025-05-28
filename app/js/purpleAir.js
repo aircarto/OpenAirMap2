@@ -4,12 +4,6 @@ import { purpleair_layer } from './layers.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { seuils_PM1_PM25, seuils_PM10 } from './appConfig.js';
 
-// Déclaration des variables globales pour AmCharts
-let am5 = window.am5;
-let am5radar = window.am5radar;
-let am5xy = window.am5xy;
-let am5themes_Animated = window.am5themes_Animated;
-
 // État global pour les marqueurs PurpleAir
 const purpleAirMarkerState = {
     markers: {},
@@ -46,22 +40,6 @@ const COLOR_TO_FILENAME = {
     extr_mauvais: 'extrMauvais',
 };
 
-// Mapping des polluants vers les indices des champs
-const POLLUTANT_TO_FIELD = {
-    pm1: {
-        h: 'pm2_5_60minute',
-        d: 'pm2_5_24hour',
-    },
-    pm25: {
-        h: 'pm2_5_60minute',
-        d: 'pm2_5_24hour',
-    },
-    pm10: {
-        h: 'pm2_5_60minute',
-        d: 'pm2_5_24hour',
-    },
-};
-
 export function loadPurpleAir() {
     console.log(
         '%cloadPurpleAir',
@@ -89,6 +67,12 @@ export function loadPurpleAir() {
 
     console.log('Paramètres de configuration:', { pas_de_temps, mesures });
 
+    // Vérification si le pas de temps est instantané
+    if (pas_de_temps[0] !== 'instantane') {
+        console.log("PurpleAir n'est disponible qu'en mode instantané");
+        return;
+    }
+
     // Vérification si le polluant est supporté
     if (!['pm1', 'pm25', 'pm10'].includes(mesures[0])) {
         console.log('Polluant non supporté pour PurpleAir');
@@ -100,7 +84,7 @@ export function loadPurpleAir() {
     const params = new URLSearchParams({
         fields: 'sensor_index,name,model,latitude,longitude,altitude,date_created,last_modified,pm1.0_atm,pm2.5_atm,pm10.0_atm,pm1.0_cf_1,pm2.5_cf_1,pm10.0_cf_1',
         location_type: 0, // 0 = outdoor
-        max_age: 3600, // 1 heure en secondes
+        max_age: 10800, // 3 heures en secondes
         nwlng: -5.0, // Ouest de la France
         selng: 8.0, // Est de la France
         nwlat: 51.0, // Nord de la France
@@ -180,34 +164,18 @@ function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
         return;
     }
 
-    // Déterminer la valeur en fonction du pas de temps et du polluant
+    // Déterminer la valeur en fonction du polluant (toujours en CF=1)
     let value;
-    if (pas_de_temps === 'd') {
-        // Pour le pas de temps journalier, utiliser les valeurs ATM (plus stables)
-        switch (mesure) {
-            case 'pm1':
-                value = sensorData[FIELD_INDEX.pm1_0_atm];
-                break;
-            case 'pm25':
-                value = sensorData[FIELD_INDEX.pm2_5_atm];
-                break;
-            case 'pm10':
-                value = sensorData[FIELD_INDEX.pm10_0_atm];
-                break;
-        }
-    } else {
-        // Pour le pas de temps horaire, utiliser les valeurs CF=1 (plus réactives)
-        switch (mesure) {
-            case 'pm1':
-                value = sensorData[FIELD_INDEX.pm1_0_cf_1];
-                break;
-            case 'pm25':
-                value = sensorData[FIELD_INDEX.pm2_5_cf_1];
-                break;
-            case 'pm10':
-                value = sensorData[FIELD_INDEX.pm10_0_cf_1];
-                break;
-        }
+    switch (mesure) {
+        case 'pm1':
+            value = sensorData[FIELD_INDEX.pm1_0_cf_1];
+            break;
+        case 'pm25':
+            value = sensorData[FIELD_INDEX.pm2_5_cf_1];
+            break;
+        case 'pm10':
+            value = sensorData[FIELD_INDEX.pm10_0_cf_1];
+            break;
     }
 
     console.log('Valeur finale du capteur:', {
@@ -306,26 +274,26 @@ function showPurpleAirPopup(sensorData) {
     const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
     console.log('Pas de temps sélectionné:', pas_de_temps);
 
-    // Déterminer les valeurs en fonction du pas de temps
-    let pm1Value, pm25Value, pm10Value;
-    if (pas_de_temps === 'd') {
-        // Pour le pas de temps journalier, utiliser les valeurs ATM (plus stables)
-        pm1Value = sensorData[FIELD_INDEX.pm1_0_atm];
-        pm25Value = sensorData[FIELD_INDEX.pm2_5_atm];
-        pm10Value = sensorData[FIELD_INDEX.pm10_0_atm];
-    } else {
-        // Pour le pas de temps horaire, utiliser les valeurs CF=1 (plus réactives)
-        pm1Value = sensorData[FIELD_INDEX.pm1_0_cf_1];
-        pm25Value = sensorData[FIELD_INDEX.pm2_5_cf_1];
-        pm10Value = sensorData[FIELD_INDEX.pm10_0_cf_1];
-    }
+    // Utiliser uniquement les valeurs CF=1 (brutes)
+    const pm1Value = sensorData[FIELD_INDEX.pm1_0_cf_1];
+    const pm25Value = sensorData[FIELD_INDEX.pm2_5_cf_1];
+    const pm10Value = sensorData[FIELD_INDEX.pm10_0_cf_1];
 
     console.log('Valeurs mesurées:', {
-        pas_de_temps,
         pm1Value,
         pm25Value,
         pm10Value,
     });
+
+    // Obtenir les seuils pour chaque polluant
+    const pm1Seuil = getColorCodeForValue(pm1Value, 'pm1');
+    const pm25Seuil = getColorCodeForValue(pm25Value, 'pm25');
+    const pm10Seuil = getColorCodeForValue(pm10Value, 'pm10');
+
+    // Obtenir les couleurs pour chaque seuil
+    const pm1Color = getColorForSeuil(pm1Seuil);
+    const pm25Color = getColorForSeuil(pm25Seuil);
+    const pm10Color = getColorForSeuil(pm10Seuil);
 
     // Création du conteneur draggable
     const popup = document.createElement('div');
@@ -348,23 +316,26 @@ function showPurpleAirPopup(sensorData) {
             <button class="close-btn" style="background: none; border: none; font-size: 24px; color: #6c757d; cursor: pointer; padding: 0; line-height: 1;">×</button>
         </div>
         <div style="text-align: center; margin-bottom: 16px; color: #6c757d; font-size: 14px;">
-            Valeurs ${pas_de_temps === 'd' ? 'moyennes sur 24h' : "à l'heure"} (${pas_de_temps === 'd' ? 'ATM' : 'CF=1'})
+            Valeurs instantanées (CF=1)
         </div>
         <div class="values-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
             <div class="value-item" style="text-align: center; padding: 12px; background-color: #f8f9fa; border-radius: 6px;">
                 <span class="value-label" style="display: block; font-size: 14px; color: #6c757d; margin-bottom: 4px;">PM1</span>
-                <span class="value-number" style="display: block; font-size: 24px; font-weight: bold; color: #2D93AD; margin-bottom: 4px;">${Math.round(pm1Value)}</span>
+                <span class="value-number" style="display: block; font-size: 24px; font-weight: bold; color: #2D93AD; margin-bottom: 4px;">${pm1Value.toFixed(1)}</span>
                 <span class="value-unit" style="display: block; font-size: 12px; color: #6c757d;">µg/m³</span>
+                <span class="value-seuil" style="display: block; font-size: 12px; color: ${pm1Color}; margin-top: 4px; font-weight: bold;">Seuil: ${pm1Seuil}</span>
             </div>
             <div class="value-item" style="text-align: center; padding: 12px; background-color: #f8f9fa; border-radius: 6px;">
                 <span class="value-label" style="display: block; font-size: 14px; color: #6c757d; margin-bottom: 4px;">PM2.5</span>
-                <span class="value-number" style="display: block; font-size: 24px; font-weight: bold; color: #2D93AD; margin-bottom: 4px;">${Math.round(pm25Value)}</span>
+                <span class="value-number" style="display: block; font-size: 24px; font-weight: bold; color: #2D93AD; margin-bottom: 4px;">${pm25Value.toFixed(1)}</span>
                 <span class="value-unit" style="display: block; font-size: 12px; color: #6c757d;">µg/m³</span>
+                <span class="value-seuil" style="display: block; font-size: 12px; color: ${pm25Color}; margin-top: 4px; font-weight: bold;">Seuil: ${pm25Seuil}</span>
             </div>
             <div class="value-item" style="text-align: center; padding: 12px; background-color: #f8f9fa; border-radius: 6px;">
                 <span class="value-label" style="display: block; font-size: 14px; color: #6c757d; margin-bottom: 4px;">PM10</span>
-                <span class="value-number" style="display: block; font-size: 24px; font-weight: bold; color: #2D93AD; margin-bottom: 4px;">${Math.round(pm10Value)}</span>
+                <span class="value-number" style="display: block; font-size: 24px; font-weight: bold; color: #2D93AD; margin-bottom: 4px;">${pm10Value.toFixed(1)}</span>
                 <span class="value-unit" style="display: block; font-size: 12px; color: #6c757d;">µg/m³</span>
+                <span class="value-seuil" style="display: block; font-size: 12px; color: ${pm10Color}; margin-top: 4px; font-weight: bold;">Seuil: ${pm10Seuil}</span>
             </div>
         </div>
         <div style="text-align: center;">
@@ -507,12 +478,12 @@ function createGauge(containerId, title, value, seuils) {
 
 function getColorForSeuil(seuil) {
     const colors = {
-        bon: '#00e400',
-        moyen: '#ffff00',
-        degrade: '#ff7e00',
-        mauvais: '#ff0000',
-        tres_mauvais: '#99004c',
-        extr_mauvais: '#7e0023',
+        bon: '#4ff0e6', // Bleu clair/turquoise
+        moyen: '#51ccaa', // Vert
+        degrade: '#ede663', // Jaune
+        mauvais: '#ed5e58', // Rouge clair
+        tres_mauvais: '#881b33', // Rouge foncé
+        extr_mauvais: '#74287d', // Violet
     };
     return colors[seuil] || '#cccccc';
 }

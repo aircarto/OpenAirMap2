@@ -1,4 +1,4 @@
-//Gestiond du local storage 
+//Gestiond du local storage
 // formattage des polluants
 // couleurs des points en fonction des seuils
 
@@ -309,6 +309,7 @@ export function getThresholdsForPollutant(pollutant) {
 // Fonction pour obtenir le code couleur en fonction de la valeur et du polluant
 export function getColorCodeForValue(value, pollutant) {
     const thresholds = getThresholdsForPollutant(pollutant);
+    console.log('Thresholds:', thresholds);
     let colorCode = 'default';
     const roundedValue = Math.round(parseFloat(value));
 
