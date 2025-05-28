@@ -14,6 +14,7 @@ import { loadAtmoSudStationsRef } from './atmoSud_stationsRef.js';
 import { loadModPM, loadModIcair } from './atmoSud_mod.js';
 import { loadSignalAir } from './SignalAir.js';
 import { loadSensorCommunity } from './sensorCommunity.js';
+import { loadPurpleAir } from './purpleAir.js';
 // import { loadMobileAir } from './MobileAir.js';
 
 /**
@@ -50,10 +51,7 @@ export function loadSource(source, isInitialLoad = false) {
                 loadSensorCommunity();
                 break;
             case 'purpleair':
-                // Ces sources ne sont pas encore implémentées
-                console.warn(
-                    `La source ${source} n'est pas encore implémentée`
-                );
+                loadPurpleAir();
                 break;
             case 'atmo_micro':
                 loadAtmoSudMicroStation();

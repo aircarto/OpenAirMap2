@@ -130,3 +130,92 @@
     color: #333;
     font-weight: 500;
 }
+
+/* Styles pour le popup PurpleAir */
+.purpleair-draggable {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.purpleair-draggable .drag-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 8px 8px 0 0;
+}
+
+.purpleair-draggable .drag-content {
+    padding: 16px;
+}
+
+.purpleair-draggable .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.purpleair-draggable .close-btn:hover {
+    color: #343a40;
+}
+
+.purpleair-draggable .values-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.purpleair-draggable .value-item {
+    text-align: center;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.purpleair-draggable .value-label {
+    display: block;
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.purpleair-draggable .value-number {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #2d93ad;
+    margin-bottom: 4px;
+}
+
+.purpleair-draggable .value-unit {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.purpleair-draggable .btn-primary {
+    width: 100%;
+    padding: 8px 16px;
+    background-color: #2d93ad;
+    border-color: #2d93ad;
+}
+
+.purpleair-draggable .btn-primary:hover {
+    background-color: #247a91;
+    border-color: #247a91;
+}
