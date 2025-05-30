@@ -1,6 +1,6 @@
 import { signalair_layer } from './layers.js';
 import { map } from './mapConfig.js';
-import { openSidePanelGeneric } from './sidePanel.js';
+
 
 // Configuration des types de signalements
 const signalair_json = {
