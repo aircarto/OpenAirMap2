@@ -97,10 +97,7 @@ export function checkInitialConditions() {
         clearLayer('atmo_micro');
     }
 
-    if (
-        activeSources.includes('atmo_ref') &&
-        (selectedTimeStep === '2min' || selectedTimeStep === 'instantane')
-    ) {
+    if (activeSources.includes('atmo_ref') && selectedTimeStep === '2min') {
         removeItemFromLocalStorageArray('sources_local', 'atmo_ref');
         clearLayer('atmo_ref');
     }
@@ -330,12 +327,9 @@ function handleSourceClick(source, button) {
     }
 
     // Vérification spéciale pour AtmoSud Stations de référence
-    if (
-        sourceCode === 'atmo_ref' &&
-        (selectedTimeStep === 'instantane' || selectedTimeStep === '2min')
-    ) {
+    if (sourceCode === 'atmo_ref' && selectedTimeStep === '2min') {
         createCustomToast({
-            message: `Le pas de temps ${selectedTimeStep === 'instantane' ? 'instantané' : '2 minutes'} n'est pas disponible pour les stations de référence AtmoSud.`,
+            message: `Le pas de temps 2 minutes n'est pas disponible pour les stations de référence AtmoSud.`,
             type: 'warning',
             title: 'Attention',
             icon: 'exclamation-triangle',

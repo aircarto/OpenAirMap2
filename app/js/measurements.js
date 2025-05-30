@@ -91,12 +91,9 @@ export function handleTimeStepChange(timeStep) {
     }
 
     // Vérification pour AtmoSud Stations de référence
-    if (
-        activeSources.includes('atmo_ref') &&
-        (timeStep === '2min' || timeStep === 'instantane')
-    ) {
+    if (activeSources.includes('atmo_ref') && timeStep === '2min') {
         createCustomToast({
-            message: `Le pas de temps ${timeStep === 'instantane' ? 'instantané' : '2 minutes'} n'est pas disponible pour les stations de référence AtmoSud, <strong>désactivation de la source</strong>.`,
+            message: `Le pas de temps 2 minutes n'est pas disponible pour les stations de référence AtmoSud, <strong>désactivation de la source</strong>.`,
             type: 'warning',
             title: 'Attention',
             icon: 'exclamation-triangle',

@@ -311,11 +311,15 @@ export function loadAtmoSudStationsRef() {
     }
 
     state.pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
+    console.log('state.pasDeTemps[0]:', state.pasDeTemps[0]);
 
     // Conversion du pas de temps pour l'API AtmoSud
     switch (state.pasDeTemps[0]) {
         case '2min':
             state.pasDeTempsAtmo = 'brute';
+            break;
+        case 'instantané':
+            state.pasDeTempsAtmo = 'quart-horaire';
             break;
         case 'qh':
             state.pasDeTempsAtmo = 'quart-horaire';
@@ -400,8 +404,8 @@ export function loadAtmoSudStationsRef() {
                 ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
                 format=json&
                 nom_polluant=${mesureAtmo}&
-                temporalite=${state.pasDeTempsAtmo}&
-                delais=${'86'}&
+                temporalite=${state.pasDeTemps[0] === 'instantané' ? 'quart-horaire' : state.pasDeTempsAtmo}&
+                delais=${state.pasDeTemps[0] === 'instantané' ? '181' : '86'}&
                 download=false
             `.replace(/\s+/g, '');
 
@@ -544,8 +548,8 @@ async function getStationImage(stationId) {
                     '%cgetStationImage',
                     'color: white; font-style: bold; background-color: green;padding: 2px'
                 );
-                console.log('URL de l\'image de la station:', imageUrl);
-                console.log('URL de l\'image de la station 2:', imageUrl2);
+                console.log("URL de l'image de la station:", imageUrl);
+                console.log("URL de l'image de la station 2:", imageUrl2);
                 console.log('Image validée:', isValid);
                 console.log('Image validée 2:', isValid2);
                 return 'img/stationsRefAtmoSud/station_default.png';
@@ -558,7 +562,7 @@ async function getStationImage(stationId) {
             '%cgetStationImage',
             'color: white; font-style: bold; background-color: green;padding: 2px'
         );
-        console.log('URL de l\'image de la station:', imageUrl);
+        console.log("URL de l'image de la station:", imageUrl);
         console.log('Image validée:', isValid);
 
         return imageUrl;
