@@ -1118,6 +1118,10 @@ const nebuleAirMarkerState = {
  * @returns {Object} - Marqueurs créés
  */
 export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
+    console.log('createNebuleAirMarker');
+    console.log('value:', value);
+    console.log('mesure_maj_pas_de_temps:', mesure_maj_pas_de_temps);
+    console.log('mesures:', mesures);
     const icon_param = {
         iconUrl: 'img/nebuleair/nebuleAir_default.png',
         iconSize: [40, 40],

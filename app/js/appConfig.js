@@ -133,10 +133,10 @@ export const pas_de_temps = {
 
 // Configuration des seuils pour les particules fines PM1 et PM2.5
 export const seuils_PM1_PM25 = {
-    bon: { code: 'bon', min: 0, max: 5 }, 
+    bon: { code: 'bon', min: 0, max: 5 },
     moyen: { code: 'moyen', min: 6, max: 15 },
     degrade: { code: 'degrade', min: 16, max: 50 },
-    mauvais: { code: 'mauvais', min: 51, max: 90 }, 
+    mauvais: { code: 'mauvais', min: 51, max: 90 },
     tres_mauvais: { code: 'tres_mauvais', min: 91, max: 140 },
     extr_mauvais: { code: 'extr_mauvais', min: 141, max: 9999 },
 };
@@ -144,21 +144,21 @@ export const seuils_PM1_PM25 = {
 // Configuration des seuils pour les particules fines PM10
 export const seuils_PM10 = {
     bon: { code: 'bon', min: 0, max: 15 },
-    moyen: { code: 'moyen', min: 16, max: 45 }, 
-    degrade: { code: 'degrade', min: 46, max: 120 }, 
-    mauvais: { code: 'mauvais', min: 121, max: 195 }, 
-    tres_mauvais: { code: 'tres_mauvais', min: 196, max: 270 }, 
-    extr_mauvais: { code: 'extr_mauvais', min: 271, max: 10000 }, 
+    moyen: { code: 'moyen', min: 16, max: 45 },
+    degrade: { code: 'degrade', min: 46, max: 120 },
+    mauvais: { code: 'mauvais', min: 121, max: 195 },
+    tres_mauvais: { code: 'tres_mauvais', min: 196, max: 270 },
+    extr_mauvais: { code: 'extr_mauvais', min: 271, max: 10000 },
 };
 
 // Configuration des seuils pour le dioxyde d'azote (NO2)
 export const seuils_NO2 = {
-    bon: { code: 'bon', min: 0, max: 10 }, 
-    moyen: { code: 'moyen', min: 11, max: 25 }, 
+    bon: { code: 'bon', min: 0, max: 10 },
+    moyen: { code: 'moyen', min: 11, max: 25 },
     degrade: { code: 'degrade', min: 26, max: 60 },
     mauvais: { code: 'mauvais', min: 61, max: 100 },
-    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 }, 
-    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 9999 }, 
+    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 },
+    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 9999 },
 };
 
 export const seuilsO3 = {

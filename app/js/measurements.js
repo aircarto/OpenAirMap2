@@ -106,19 +106,6 @@ export function handleTimeStepChange(timeStep) {
         clearLayer('atmo_ref');
     }
 
-    // Vérification pour NebuleAir
-    if (activeSources.includes('nebuleair') && timeStep === 'instantane') {
-        createCustomToast({
-            message: `Les capteurs NebuleAir opérés par AirCarto ne sont pas disponibles pour le pas de temps instantané. Source désactivée.`,
-            type: 'warning',
-            title: 'Attention',
-            icon: 'exclamation-triangle',
-            timer: 5000,
-        });
-        removeItemFromLocalStorageArray('sources_local', 'nebuleair');
-        clearLayer('nebuleair');
-    }
-
     // Rechargement des sources actives
     const updatedActiveSources = getArrayFromLocalStorage('sources_local');
     updatedActiveSources.forEach((source) => {

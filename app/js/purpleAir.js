@@ -2,7 +2,7 @@ import { API_KEYS } from '../config.js';
 import { getArrayFromLocalStorage, getColorCodeForValue } from './utils.js';
 import { purpleair_layer } from './layers.js';
 import { isSourceActive } from './dataSourceManager.js';
-import { seuils_PM1_PM25, seuils_PM10 } from './appConfig.js';
+import { createCustomToast } from './toaster.js';
 
 // État global pour les marqueurs PurpleAir
 const purpleAirMarkerState = {
@@ -62,11 +62,18 @@ export function loadPurpleAir() {
     const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
     const mesures = getArrayFromLocalStorage('mesuresLocal');
 
-    console.log('Paramètres de configuration:', { pas_de_temps, mesures });
+    // console.log('Paramètres de configuration:', { pas_de_temps, mesures });
 
     // Vérification si le pas de temps est instantané
-    if (pas_de_temps[0] !== 'instantane') {
-        console.log("PurpleAir n'est disponible qu'en mode instantané");
+    if (pas_de_temps[0] !== 'instantane' && pas_de_temps[0] !== '2min') {
+        createCustomToast({
+            message:
+                "PurpleAir n'est disponible que pour les pas de temps instantané ou 2 minutes",
+            type: 'warning',
+            title: 'Attention',
+            icon: 'exclamation-triangle',
+            timer: 5000,
+        });
         return;
     }
 
@@ -88,7 +95,7 @@ export function loadPurpleAir() {
         selat: 42.0, // Sud de la France
     });
 
-    console.log('URL de la requête:', `${url}?${params.toString()}`);
+    // console.log('URL de la requête:', `${url}?${params.toString()}`);
 
     // Appel à l'API
     fetch(`${url}?${params.toString()}`, {
@@ -103,20 +110,20 @@ export function loadPurpleAir() {
             return response.json();
         })
         .then((data) => {
-            console.log('Données PurpleAir reçues:', data);
+            // console.log('Données PurpleAir reçues:', data);
             if (data.data && data.data.length > 0) {
-                console.log(`Nombre de capteurs trouvés: ${data.data.length}`);
+                // console.log(`Nombre de capteurs trouvés: ${data.data.length}`);
                 data.data.forEach((sensorData) => {
                     // Vérification des coordonnées avant de créer le marqueur
                     if (
                         sensorData[FIELD_INDEX.latitude] &&
                         sensorData[FIELD_INDEX.longitude]
                     ) {
-                        console.log('Création du marqueur pour le capteur:', {
-                            name: sensorData[FIELD_INDEX.name],
-                            lat: sensorData[FIELD_INDEX.latitude],
-                            lng: sensorData[FIELD_INDEX.longitude],
-                        });
+                        // console.log('Création du marqueur pour le capteur:', {
+                        //     name: sensorData[FIELD_INDEX.name],
+                        //     lat: sensorData[FIELD_INDEX.latitude],
+                        //     lng: sensorData[FIELD_INDEX.longitude],
+                        // });
                         createPurpleAirMarker(
                             sensorData,
                             pas_de_temps[0],
@@ -175,14 +182,14 @@ function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
             break;
     }
 
-    console.log('Valeur finale du capteur:', {
-        name: sensorData[FIELD_INDEX.name],
-        value: value,
-        pas_de_temps: pas_de_temps,
-        mesure: mesure,
-        lat: lat,
-        lng: lng,
-    });
+    // console.log('Valeur finale du capteur:', {
+    //     name: sensorData[FIELD_INDEX.name],
+    //     value: value,
+    //     pas_de_temps: pas_de_temps,
+    //     mesure: mesure,
+    //     lat: lat,
+    //     lng: lng,
+    // });
 
     // Créer l'icône du marqueur
     const icon_param = {
@@ -202,7 +209,7 @@ function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
         }
     }
 
-    console.log("Paramètres de l'icône:", icon_param);
+    // console.log("Paramètres de l'icône:", icon_param);
 
     // Créer le marqueur avec les coordonnées vérifiées
     const marker = L.marker([parseFloat(lat), parseFloat(lng)], {
@@ -247,10 +254,10 @@ function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
         if (textMarker) {
             purpleair_layer.addLayer(textMarker);
         }
-        console.log(
-            'Marqueurs ajoutés à la couche pour le capteur:',
-            sensorData[FIELD_INDEX.name]
-        );
+        // console.log(
+        //     'Marqueurs ajoutés à la couche pour le capteur:',
+        //     sensorData[FIELD_INDEX.name]
+        // );
     } catch (error) {
         console.error(
             "Erreur lors de l'ajout des marqueurs à la couche:",

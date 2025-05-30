@@ -65,6 +65,9 @@ export function loadNebuleAir() {
         console.log('Polluant non supporté pour NebuleAir');
         return;
     }
+    console.log('loadNebuleAir');
+    console.log('pas_de_temps:', pas_de_temps);
+    console.log('mesures:', mesures);
 
     let mesure_StringA = mesures[0];
     let mesure_String = `${mesure_StringA}`;
@@ -73,7 +76,7 @@ export function loadNebuleAir() {
     let mesure_majuscule = mesure_String.toUpperCase();
     let mesure_maj_pas_de_temps = mesure_majuscule;
 
-    if (pas_de_temps_String != '2min') {
+    if (pas_de_temps_String != '2min' && pas_de_temps_String != 'instantane') {
         mesure_maj_pas_de_temps = mesure_majuscule + '_' + pas_de_temps_String;
     }
 
@@ -193,6 +196,7 @@ export function retreive_historiqueData_nebuleAir(
     var api_pas_de_temps;
     switch (pas_de_temps) {
         case '2min':
+        case 'instantane':
             api_pas_de_temps = '2m';
             break;
         case 'qh':

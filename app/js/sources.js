@@ -105,14 +105,6 @@ export function checkInitialConditions() {
         clearLayer('atmo_ref');
     }
 
-    if (
-        activeSources.includes('nebuleair') &&
-        selectedTimeStep === 'instantane'
-    ) {
-        removeItemFromLocalStorageArray('sources_local', 'nebuleair');
-        clearLayer('nebuleair');
-    }
-
     // Charger les sources actives au démarrage
     if (activeSources && activeSources.length > 0) {
         activeSources.forEach((source) => {
@@ -132,22 +124,68 @@ export function updateButtonDisplay() {
     const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
     const selectedMeasure = getArrayFromLocalStorage('mesuresLocal')[0];
 
+    // console.log('updateButtonDisplay - Sources actives:', activeSources);
+
     document.querySelectorAll('#dropdown_sources button').forEach((button) => {
-        const buttonCode = Object.keys(sources).find(
+        // Chercher d'abord dans les sources principales
+        let buttonCode = Object.keys(sources).find(
             (key) => sources[key].name === button.textContent.trim()
         );
 
+        // Si pas trouvé, chercher dans les sous-sources
+        if (!buttonCode) {
+            Object.keys(sources).forEach((key) => {
+                if (sources[key].isGroup && sources[key].subSources) {
+                    const subSourceKey = Object.keys(
+                        sources[key].subSources
+                    ).find(
+                        (subKey) =>
+                            sources[key].subSources[subKey].name ===
+                            button.textContent.trim()
+                    );
+                    if (subSourceKey) {
+                        buttonCode = subSourceKey;
+                    }
+                }
+            });
+        }
+
         if (!buttonCode) return;
 
-        const sourceCode = sources[buttonCode].code;
+        // Obtenir le code de la source
+        let sourceCode;
+        if (sources[buttonCode]?.code) {
+            sourceCode = sources[buttonCode].code;
+        } else {
+            // Chercher dans les sous-sources
+            Object.keys(sources).forEach((key) => {
+                if (
+                    sources[key].isGroup &&
+                    sources[key].subSources &&
+                    sources[key].subSources[buttonCode]
+                ) {
+                    sourceCode = sources[key].subSources[buttonCode].code;
+                }
+            });
+        }
+
+        // console.log(
+        //     'Bouton:',
+        //     button.textContent.trim(),
+        //     'Code source:',
+        //     sourceCode
+        // );
 
         // Désactiver le bouton par défaut
         button.classList.remove('active');
 
         // Ne pas activer le bouton si la source n'est pas dans les sources actives
         if (!activeSources.includes(sourceCode)) {
+            // console.log('Source non active:', sourceCode);
             return;
         }
+
+        // console.log('Source active trouvée:', sourceCode);
 
         // Vérifications spécifiques pour chaque source
         if (sourceCode === 'atmo_micro' && selectedTimeStep === 'd') {
@@ -186,6 +224,7 @@ export function updateButtonDisplay() {
         }
 
         // Si toutes les conditions sont passées, activer le bouton
+        // console.log('Activation du bouton pour:', sourceCode);
         button.classList.add('active');
     });
 }
@@ -227,42 +266,17 @@ export function initializeSourceButtons() {
                 // Gestionnaire d'événements pour les sous-sources
                 subButton.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    handleSourceClick(subSource, subButton);
+                    // Créer un objet source complet pour la sous-source
+                    const fullSubSource = {
+                        name: subSource.name,
+                        code: subSource.code,
+                        activated: subSource.activated,
+                    };
+                    handleSourceClick(fullSubSource, subButton);
                 });
 
                 subMenu.appendChild(subButton);
             });
-
-            // Gestionnaire d'événements pour le groupe
-            // groupButton.addEventListener('click', () => {
-            //     const activeSources = getArrayFromLocalStorage('sources_local');
-            //     const allSubSourcesActive = Object.values(
-            //         source.subSources
-            //     ).every((subSource) => activeSources.includes(subSource.code));
-
-            //     if (allSubSourcesActive) {
-            //         // Désactiver toutes les sous-sources
-            //         Object.values(source.subSources).forEach((subSource) => {
-            //             removeItemFromLocalStorageArray(
-            //                 'sources_local',
-            //                 subSource.code
-            //             );
-            //             clearLayer(subSource.code);
-            //         });
-            //     } else {
-            //         // Activer toutes les sous-sources
-            //         Object.values(source.subSources).forEach((subSource) => {
-            //             if (!activeSources.includes(subSource.code)) {
-            //                 addItemToLocalStorageArray(
-            //                     'sources_local',
-            //                     subSource.code
-            //                 );
-            //                 loadSource(subSource.code);
-            //             }
-            //         });
-            //     }
-            //     updateButtonDisplay();
-            // });
 
             groupDiv.appendChild(groupButton);
             groupDiv.appendChild(subMenu);
@@ -287,13 +301,26 @@ export function initializeSourceButtons() {
 }
 
 function handleSourceClick(source, button) {
+    // console.log('handleSourceClick appelé avec:', { source, button });
+
     const activeSources = getArrayFromLocalStorage('sources_local');
+    // console.log('Sources actives:', activeSources);
+
     const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+    const selectedMeasure = getArrayFromLocalStorage('mesuresLocal')[0];
+    // console.log('Pas de temps sélectionné:', selectedTimeStep);
+
+    // Obtenir le code de la source (gère à la fois les sources principales et les sous-sources)
+    const sourceCode = source.code;
+    // console.log('Code de la source:', sourceCode);
 
     // Vérification spéciale pour NebuleAir
-    if (source.code === 'nebuleair' && selectedTimeStep === 'instantane') {
+    if (
+        sourceCode === 'nebuleair' &&
+        !['pm1', 'pm25', 'pm10'].includes(selectedMeasure)
+    ) {
         createCustomToast({
-            message: `Le pas de temps instantané n'est pas disponible pour les capteurs NebuleAir.`,
+            message: `La mesure ${formatPollutantName(selectedMeasure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto, <strong>désactivation de la source</strong>.`,
             type: 'warning',
             title: 'Attention',
             icon: 'exclamation-triangle',
@@ -304,7 +331,7 @@ function handleSourceClick(source, button) {
 
     // Vérification spéciale pour AtmoSud Stations de référence
     if (
-        source.code === 'atmo_ref' &&
+        sourceCode === 'atmo_ref' &&
         (selectedTimeStep === 'instantane' || selectedTimeStep === '2min')
     ) {
         createCustomToast({
@@ -317,15 +344,26 @@ function handleSourceClick(source, button) {
         return;
     }
 
-    if (activeSources.includes(source.code)) {
-        removeItemFromLocalStorageArray('sources_local', source.code);
-        clearLayer(source.code);
+    // console.log(
+    //     'Vérification si la source est active:',
+    //     activeSources.includes(sourceCode)
+    // );
+
+    if (activeSources.includes(sourceCode)) {
+        // console.log('Désactivation de la source:', sourceCode);
+        removeItemFromLocalStorageArray('sources_local', sourceCode);
+        clearLayer(sourceCode);
         button.classList.remove('active');
     } else {
-        addItemToLocalStorageArray('sources_local', source.code);
-        loadSource(source.code);
+        // console.log('Activation de la source:', sourceCode);
+        addItemToLocalStorageArray('sources_local', sourceCode);
+        loadSource(sourceCode);
         button.classList.add('active');
     }
 
+    // console.log(
+    //     'Sources actives après mise à jour:',
+    //     getArrayFromLocalStorage('sources_local')
+    // );
     updateButtonDisplay();
 }
