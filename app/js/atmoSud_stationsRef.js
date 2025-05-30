@@ -404,8 +404,8 @@ export function loadAtmoSudStationsRef() {
                 ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
                 format=json&
                 nom_polluant=${mesureAtmo}&
-                temporalite=${state.pasDeTemps[0] === 'instantané' ? 'quart-horaire' : state.pasDeTempsAtmo}&
-                delais=${state.pasDeTemps[0] === 'instantané' ? '181' : '86'}&
+                temporalite=${state.pasDeTemps[0] === 'instantane' ? 'quart-horaire' : state.pasDeTempsAtmo}&
+                delais=${state.pasDeTemps[0] === 'instantane' ? '181' : '86'}&
                 download=false
             `.replace(/\s+/g, '');
 
