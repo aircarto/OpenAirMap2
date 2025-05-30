@@ -22,12 +22,9 @@ const FIELD_INDEX = {
     latitude: 5,
     longitude: 6,
     altitude: 7,
-    pm1_0_cf_1: 8, // PM1.0 brut (CF=1)
-    pm1_0_atm: 9, // PM1.0 corrigé (ATM)
-    pm2_5_atm: 10, // PM2.5 corrigé (ATM)
-    pm2_5_cf_1: 11, // PM2.5 brut (CF=1)
-    pm10_0_atm: 12, // PM10.0 corrigé (ATM)
-    pm10_0_cf_1: 13, // PM10.0 brut (CF=1)
+    pm1_0_atm: 8, // PM1.0 corrigé (ATM)
+    pm2_5_atm: 9, // PM2.5 corrigé (ATM)
+    pm10_0_atm: 10, // PM10.0 corrigé (ATM)
 };
 
 // Mapping des codes de couleur vers les noms de fichiers
@@ -82,7 +79,7 @@ export function loadPurpleAir() {
     // Construction de la requête
     const url = 'https://api.purpleair.com/v1/sensors';
     const params = new URLSearchParams({
-        fields: 'sensor_index,name,model,latitude,longitude,altitude,date_created,last_modified,pm1.0_atm,pm2.5_atm,pm10.0_atm,pm1.0_cf_1,pm2.5_cf_1,pm10.0_cf_1',
+        fields: 'sensor_index,name,model,latitude,longitude,altitude,date_created,last_modified,pm1.0_atm,pm2.5_atm,pm10.0_atm',
         location_type: 0, // 0 = outdoor
         max_age: 10800, // 3 heures en secondes
         nwlng: -5.0, // Ouest de la France
@@ -164,17 +161,17 @@ function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
         return;
     }
 
-    // Déterminer la valeur en fonction du polluant (toujours en CF=1)
+    // Déterminer la valeur en fonction du polluant (toujours en ATM)
     let value;
     switch (mesure) {
         case 'pm1':
-            value = sensorData[FIELD_INDEX.pm1_0_cf_1];
+            value = sensorData[FIELD_INDEX.pm1_0_atm];
             break;
         case 'pm25':
-            value = sensorData[FIELD_INDEX.pm2_5_cf_1];
+            value = sensorData[FIELD_INDEX.pm2_5_atm];
             break;
         case 'pm10':
-            value = sensorData[FIELD_INDEX.pm10_0_cf_1];
+            value = sensorData[FIELD_INDEX.pm10_0_atm];
             break;
     }
 
@@ -274,10 +271,10 @@ function showPurpleAirPopup(sensorData) {
     const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
     console.log('Pas de temps sélectionné:', pas_de_temps);
 
-    // Utiliser uniquement les valeurs CF=1 (brutes)
-    const pm1Value = sensorData[FIELD_INDEX.pm1_0_cf_1];
-    const pm25Value = sensorData[FIELD_INDEX.pm2_5_cf_1];
-    const pm10Value = sensorData[FIELD_INDEX.pm10_0_cf_1];
+    // Utiliser uniquement les valeurs ATM
+    const pm1Value = sensorData[FIELD_INDEX.pm1_0_atm];
+    const pm25Value = sensorData[FIELD_INDEX.pm2_5_atm];
+    const pm10Value = sensorData[FIELD_INDEX.pm10_0_atm];
 
     console.log('Valeurs mesurées:', {
         pm1Value,
@@ -316,7 +313,7 @@ function showPurpleAirPopup(sensorData) {
             <button class="close-btn" style="background: none; border: none; font-size: 24px; color: #6c757d; cursor: pointer; padding: 0; line-height: 1;">×</button>
         </div>
         <div style="text-align: center; margin-bottom: 16px; color: #6c757d; font-size: 14px;">
-            Valeurs instantanées (CF=1)
+            Valeurs instantanées (ATM)
         </div>
         <div class="values-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
             <div class="value-item" style="text-align: center; padding: 12px; background-color: #f8f9fa; border-radius: 6px;">
@@ -348,132 +345,29 @@ function showPurpleAirPopup(sensorData) {
     `;
 
     // Fermer le popup
-    popup
-        .querySelector('.close-btn')
-        .addEventListener('click', () => popup.remove());
+    popup.querySelector('.close-btn').addEventListener('click', () => {
+        popup.remove();
+        // Réinitialiser le marqueur sélectionné
+        if (purpleAirMarkerState.selectedMarker) {
+            purpleAirMarkerState.selectedMarker.setZIndexOffset(1000);
+            purpleAirMarkerState.selectedMarker._icon.classList.remove(
+                'marker-selected'
+            );
+            if (purpleAirMarkerState.selectedText) {
+                purpleAirMarkerState.selectedText.setZIndexOffset(1000);
+                purpleAirMarkerState.selectedText._icon.classList.remove(
+                    'marker-selected'
+                );
+            }
+            purpleAirMarkerState.selectedMarker = null;
+            purpleAirMarkerState.selectedText = null;
+            purpleAirMarkerState.selectedDeviceId = null;
+        }
+    });
 
     // Ajout au DOM
     document.body.appendChild(popup);
     console.log('Popup ajouté au DOM');
-}
-
-function createGauge(containerId, title, value, seuils) {
-    // Création des bandes de couleur basées sur les seuils
-    const bands = Object.entries(seuils).map(([key, seuil]) => ({
-        startValue: seuil.min,
-        endValue: seuil.max,
-        color: getColorForSeuil(key),
-    }));
-
-    // Configuration de la jauge
-    const root = am5.Root.new(containerId);
-    root.setThemes([am5themes_Animated.new(root)]);
-
-    // Création du conteneur de la jauge
-    const chart = root.container.children.push(
-        am5xy.XYChart.new(root, {
-            panX: false,
-            panY: false,
-            wheelX: 'none',
-            wheelY: 'none',
-            layout: root.verticalLayout,
-        })
-    );
-
-    // Configuration de l'axe Y
-    const yAxis = chart.yAxes.push(
-        am5xy.ValueAxis.new(root, {
-            min: 0,
-            max: Math.max(...bands.map((band) => band.endValue)),
-            strictMinMax: true,
-            renderer: am5xy.AxisRendererY.new(root, {
-                minGridDistance: 30,
-            }),
-        })
-    );
-
-    // Ajout des bandes de couleur
-    bands.forEach((band) => {
-        const range = yAxis.createAxisRange(
-            yAxis.makeDataItem({
-                value: band.startValue,
-                endValue: band.endValue,
-            })
-        );
-        range.get('axisFill').setAll({
-            fill: am5.color(band.color),
-            fillOpacity: 1,
-        });
-    });
-
-    // Configuration de l'axe X
-    const xAxis = chart.xAxes.push(
-        am5xy.CategoryAxis.new(root, {
-            categoryField: 'category',
-            renderer: am5xy.AxisRendererX.new(root, {}),
-            tooltip: am5.Tooltip.new(root, {}),
-        })
-    );
-    xAxis.data.setAll([{ category: 'value' }]);
-
-    // Création de la série pour l'aiguille
-    const series = chart.series.push(
-        am5xy.ColumnSeries.new(root, {
-            name: 'Value',
-            xAxis: xAxis,
-            yAxis: yAxis,
-            valueYField: 'value',
-            categoryXField: 'category',
-            tooltip: am5.Tooltip.new(root, {
-                labelText: '{valueY}',
-            }),
-        })
-    );
-
-    // Configuration de l'aiguille
-    series.columns.template.setAll({
-        width: am5.percent(100),
-        fill: am5.color('#2D93AD'),
-        stroke: am5.color('#2D93AD'),
-    });
-
-    // Ajout des données
-    series.data.setAll([
-        {
-            category: 'value',
-            value: value,
-        },
-    ]);
-
-    // Ajout du titre
-    const titleLabel = chart.plotContainer.children.push(
-        am5.Label.new(root, {
-            text: title,
-            fontSize: 20,
-            centerX: am5.percent(50),
-            centerY: am5.percent(20),
-            populateText: true,
-        })
-    );
-
-    // Ajout de la valeur
-    const valueLabel = chart.plotContainer.children.push(
-        am5.Label.new(root, {
-            text: Math.round(value).toString(),
-            fontSize: 30,
-            centerX: am5.percent(50),
-            centerY: am5.percent(50),
-            populateText: true,
-        })
-    );
-
-    // Animation
-    series.appear(1000, 100);
-
-    // Nettoyage lors de la destruction
-    root.dom.addEventListener('click', function () {
-        root.dispose();
-    });
 }
 
 function getColorForSeuil(seuil) {

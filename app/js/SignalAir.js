@@ -180,8 +180,13 @@ export function loadSignalAir(startDate, endDate) {
                     // Création du marqueur
                     L.marker([lat, long], { icon: signalair_icon })
                         .on('click', () => {
-                            console.log(`[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`);
-                            showDraggableSignalairPopup(feature.properties, signalair_json[key].name);
+                            console.log(
+                                `[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`
+                            );
+                            showDraggableSignalairPopup(
+                                feature.properties,
+                                signalair_json[key].name
+                            );
                         })
                         .addTo(signalair_layer);
                 });
@@ -298,8 +303,10 @@ window.applySignalAirDates = applySignalAirDates;
 
 function showDraggableSignalairPopup(data, nuisanceType) {
     // Supprimer les anciens éléments
-    document.querySelectorAll('.signalair-draggable').forEach(el => el.remove());
-    console.log(data) 
+    document
+        .querySelectorAll('.signalair-draggable')
+        .forEach((el) => el.remove());
+    console.log(data);
     // Création du conteneur draggable
     const popup = document.createElement('div');
     popup.className = 'signalair-draggable';
@@ -320,13 +327,15 @@ function showDraggableSignalairPopup(data, nuisanceType) {
         </div>
     `;
 
-
-
     // Fermer le popup
-    popup.querySelector('.close-btn').addEventListener('click', () => popup.remove());
+    popup
+        .querySelector('.close-btn')
+        .addEventListener('click', () => popup.remove());
 
     // Rendre draggable
-    let isDragging = false, offsetX, offsetY;
+    let isDragging = false,
+        offsetX,
+        offsetY;
 
     const header = popup.querySelector('.drag-header');
     header.style.cursor = 'move';
