@@ -209,7 +209,7 @@ function createSeries(chart, root, pollutant, axes, data, unite) {
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
-            connect: true,
+            connect: false,
         })
     );
 
@@ -234,7 +234,7 @@ function createSeries(chart, root, pollutant, axes, data, unite) {
             }),
             fill: am5.color(color),
             stroke: am5.color(color),
-            connect: true,
+            connect: false,
         })
     );
 
@@ -587,8 +587,13 @@ export function openSidePanel_stationRef(deviceId, station_name, mesure) {
         '%copenSidePanel_stationRef',
         'color: white; font-style: bold; background-color: green;padding: 2px'
     );
+    console.log('deviceId:', deviceId);
+    console.log('station_name:', station_name);
+    console.log('mesure:', mesure);
     if (state.pasDeTemps[0] === 'd') {
         state.historiqueChart = '7d';
+    } else if (state.pasDeTemps[0] === 'instantane') {
+        state.pasDeTempsAtmo = 'quart-horaire';
     }
 
     // Récupération de l'image de la station
