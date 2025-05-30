@@ -24,7 +24,7 @@ export const deviceInfo = L.control({ position: 'bottomright' });
 export const nebuleairLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
 );
-export const sensorCommmunityLayer = new L.layerGroup({
+export const sensorCommunityLayer = new L.layerGroup({
     pane: 'overlayPane',
 }).addTo(map);
 export const purpleair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(

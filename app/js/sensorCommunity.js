@@ -1,312 +1,470 @@
-/**
- * Module de gestion des capteurs Sensor.Community
- * Ce module gère l'affichage et l'interaction avec les capteurs Sensor.Community
- */
+// Récupération des données des capteurs Sensor.Community
+// Cette fonction charge les données des capteurs Sensor.Community et les affiche sur la carte
 
-import { sensorCommmunityLayer } from './layers.js';
-import {
-    formatPollutantName,
-    getArrayFromLocalStorage,
-    getColorCodeForValue,
-} from './utils.js';
+import { sensorCommunityLayer } from './layers.js';
+import { getArrayFromLocalStorage } from './utils.js';
 import { isSourceActive } from './dataSourceManager.js';
-import { panelManager } from './panelManager.js';
-import { startSpinner, stopSpinner } from './spinnerManager.js';
+import { createCustomToast } from './toaster.js';
+import { createSensorCommunityMarker } from './markerManager.js';
 
-// Configuration
-const CONFIG = {
-    API_URL: 'https://api.sensor.community/v1/sensors/',
-    ICON_SIZE: [80, 80],
-    ICON_ANCHOR: [5, 70],
-    SUPPORTED_SENSORS: [
-        'SDS011',
-        'SDS021',
-        'PMS1003',
-        'PMS3003',
-        'PMS5003',
-        'PMS6003',
-        'PMS7003',
-        'HPM',
-        'SPS30',
-        'NextPM',
-        'IPS-7100',
-    ],
-    THRESHOLDS: {
-        PM1_PM25: {
-            BON: { min: 0, max: 10 },
-            MOYEN: { min: 10, max: 20 },
-            DEGRADE: { min: 20, max: 25 },
-            MAUVAIS: { min: 25, max: 50 },
-            TRES_MAUVAIS: { min: 50, max: 75 },
-            EXT_MAUVAIS: { min: 75, max: Infinity },
-        },
-        PM10: {
-            BON: { min: 0, max: 20 },
-            MOYEN: { min: 20, max: 40 },
-            DEGRADE: { min: 40, max: 50 },
-            MAUVAIS: { min: 50, max: 100 },
-            TRES_MAUVAIS: { min: 100, max: 150 },
-            EXT_MAUVAIS: { min: 150, max: Infinity },
-        },
-    },
-};
-
-// Variables locales au module
+// État global
 const state = {
-    pasDeTempsChart: '1h',
-    historiqueChart: '7d',
+    pasDeTempsChart: 'horaire',
+    pasDeTempsAtmo: '',
+    pasDeTemps: '',
+    historiqueChart: '24h',
     mesuresArray: [],
-    globalSelectedDeviceId: null,
+    selectedMarker: null,
+    selectedText: null,
+    selectedDeviceId: null,
     customDateRange: {
         start: null,
         end: null,
     },
-    apiData: {
-        data: null,
-        timestamp: null,
-        timespan: null,
-    },
 };
 
 /**
- * Fonction principale pour charger les capteurs Sensor.Community
- * Récupère les données des capteurs et les affiche sur la carte
+ * Normalise le type de mesure pour la compatibilité avec notre système
+ * @param {string} valueType - Type de mesure original
+ * @returns {string} - Type de mesure normalisé
+ */
+function normalizeValueType(valueType) {
+    // Mapping des types de mesures Sensor.Community vers nos codes
+    const mapping = {
+        P0: 'pm1', // PM1
+        P1: 'pm10', // PM10
+        P2: 'pm25', // PM2.5
+        SDS_P1: 'pm10',
+        SDS_P2: 'pm25',
+    };
+    return mapping[valueType] || valueType;
+}
+
+/**
+ * Charge les capteurs Sensor.Community sur la carte
+ * @returns {Promise<void>}
  */
 export async function loadSensorCommunity() {
-    console.log(
-        '%cSensor.Community',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
-    );
-    const start = Date.now();
-    sensorCommmunityLayer.clearLayers();
-
-    // Vérification que la source est active
-    if (!isSourceActive('sensor_community')) {
-        return;
-    }
-
+    console.log('loadSensorCommunity');
     try {
-        startSpinner();
+        // Vérification si la source est active
+        if (!isSourceActive('sensor_community')) {
+            console.log('Source Sensor.Community non active');
+            return;
+        }
+
+        // Nettoyage de la couche
+        sensorCommunityLayer.clearLayers();
 
         // Récupération des paramètres de configuration
-        state.pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
-        const mesure = getArrayFromLocalStorage('mesuresLocal');
-        const mesureSensorCommunity = mesure[0];
+        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+        const mesures = getArrayFromLocalStorage('mesuresLocal');
 
-        // Récupération des données
-        const data = await fetchSensorData();
+        // Vérification si le polluant est supporté
+        const mesure = mesures[0];
+        if (!['pm1', 'pm25', 'pm10'].includes(mesure)) {
+            createCustomToast({
+                message: `Le polluant ${mesure} n'est pas supporté pour Sensor.Community.`,
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
+            return;
+        } else if (pas_de_temps != 'instantane' && pas_de_temps != '2min') {
+            createCustomToast({
+                message: `Le pas de temps ${pas_de_temps} n'est pas supporté pour Sensor.Community.`,
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
+            return;
+        }
 
-        // Filtrage des capteurs supportés
-        const filter_sensors = data.filter((e) =>
-            CONFIG.SUPPORTED_SENSORS.includes(e.sensor.sensor_type.name)
-        );
+        // Construction de l'URL pour l'API Sensor.Community
+        const url =
+            'https://data.sensor.community/airrohr/v1/filter/country=FR';
 
-        const end = Date.now();
-        const requestTimer = (end - start) / 1000;
-        console.log(`Data gathered in %c${requestTimer} sec`, 'color: red;');
+        // Appel à l'API
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        // Stockage des données pour utilisation ultérieure
-        state.apiData = {
-            data: filter_sensors,
-            timestamp: end,
-            timespan: timespanLower,
-        };
+        const data = await response.json();
+        console.log('Données Sensor.Community reçues:', data);
 
-        // Traitement des capteurs
-        const sensorsList = new Set();
-        filter_sensors.forEach((item) => {
-            if (!sensorsList.has(item.sensor.id)) {
-                sensorsList.add(item.sensor.id);
-                createSensorMarker(item, mesureSensorCommunity);
-            }
-        });
+        // Log des types de mesures disponibles
+        if (data && data.length > 0) {
+            const uniqueValueTypes = new Set();
+            data.forEach((sensor) => {
+                if (sensor.sensordatavalues) {
+                    sensor.sensordatavalues.forEach((value) => {
+                        uniqueValueTypes.add(value.value_type);
+                    });
+                }
+            });
+            console.log(
+                'Types de mesures disponibles:',
+                Array.from(uniqueValueTypes)
+            );
+        }
+
+        // Traitement des données reçues
+        if (data && data.length > 0) {
+            data.forEach((sensor) => {
+                // Vérification des coordonnées
+                if (
+                    sensor.location &&
+                    sensor.location.latitude &&
+                    sensor.location.longitude
+                ) {
+                    // Normalisation des types de mesures
+                    if (sensor.sensordatavalues) {
+                        sensor.sensordatavalues = sensor.sensordatavalues.map(
+                            (value) => ({
+                                ...value,
+                                value_type: normalizeValueType(
+                                    value.value_type
+                                ),
+                            })
+                        );
+                    }
+
+                    // Création du marqueur pour chaque capteur
+                    createSensorCommunityMarker(sensor, pas_de_temps, mesure);
+                }
+            });
+        }
     } catch (error) {
         console.error(
-            'Erreur lors du chargement des données Sensor.Community:',
+            'Erreur lors du chargement des capteurs Sensor.Community:',
             error
         );
-    } finally {
-        stopSpinner();
+        createCustomToast({
+            message: 'Erreur lors du chargement des capteurs Sensor.Community',
+            type: 'error',
+            title: 'Erreur',
+            icon: 'exclamation-circle',
+            timer: 5000,
+        });
     }
 }
 
 /**
- * Récupère les données des capteurs depuis l'API
- * @returns {Promise<Array>} Données des capteurs
+ * Récupère les données historiques d'un capteur Sensor.Community NE MARCHE PAS
+ * @param {string} deviceId - ID du capteur
+ * @param {string} startDate - Date de début (format ISO)
+ * @param {string} endDate - Date de fin (format ISO)
+ * @returns {Promise<Object>} - Données historiques du capteur
  */
-async function fetchSensorData() {
+export async function getSensorCommunityHistoricalData(
+    deviceId,
+    startDate,
+    endDate
+) {
     try {
-        const response = await fetch(CONFIG.API_URL);
+        // Construction de l'URL avec les dates
+        const url = `https://data.sensor.community/airrohr/v1/filter/device_id=${deviceId}&start=${startDate}&end=${endDate}`;
+        console.log('Requête Sensor.Community:', {
+            deviceId,
+            url,
+            startDate,
+            endDate,
+        });
+
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return await response.json();
+
+        const data = await response.json();
+        console.log("Réponse brute de l'API:", data);
+
+        if (!data || data.length === 0) {
+            console.log('Aucune donnée trouvée pour le capteur:', deviceId);
+            throw new Error(
+                "Le capteur existe mais n'a pas envoyé de données récemment"
+            );
+        }
+
+        // Normalisation des types de mesures
+        const normalizedData = data.map((sensor) => ({
+            ...sensor,
+            sensordatavalues: sensor.sensordatavalues.map((value) => ({
+                ...value,
+                value_type: normalizeValueType(value.value_type),
+            })),
+        }));
+
+        return normalizedData;
     } catch (error) {
-        console.error('Erreur lors de la récupération des données:', error);
+        console.error(
+            'Erreur lors de la récupération des données historiques:',
+            error
+        );
         throw error;
     }
 }
 
 /**
- * Crée un marqueur pour un capteur avec ses données
- * @param {Object} item - Données du capteur
- * @param {string} mesure - Type de mesure sélectionné
+ * Crée une fenêtre popup draggable pour afficher le graphique
+ * @param {string} deviceId - ID du capteur
+ * @returns {HTMLElement} - Élément de la fenêtre popup
  */
-function createSensorMarker(item, mesure) {
-    const value_compound = getSensorValue(item, mesure);
-    if (value_compound === undefined) return;
-
-    const iconParam = createIconParameters(value_compound, mesure);
-    const sc_icon = L.icon(iconParam);
-
-    // Création du marqueur principal
-    const stationMarker = L.marker(
-        [item.location.latitude, item.location.longitude],
-        { icon: sc_icon }
-    );
-
-    // Création du marqueur de texte
-    const textSize = getTextSize(value_compound);
-    const textPosition = getTextPosition(value_compound);
-    const textParam = L.divIcon({
-        className: 'my-div-icon',
-        html: `<div id="textDiv" style="font-size: ${textSize}px;">${Math.round(value_compound)}</div>`,
-        iconAnchor: textPosition,
-        popupAnchor: [30, -60],
-    });
-
-    const textMarker = L.marker(
-        [item.location.latitude, item.location.longitude],
-        { icon: textParam }
-    );
-
-    // Configuration des événements
-    setupMarkerEvents(stationMarker, textMarker, item, mesure);
-
-    // Ajout des marqueurs à la couche
-    sensorCommmunityLayer.addLayer(stationMarker);
-    sensorCommmunityLayer.addLayer(textMarker);
-}
-
-/**
- * Récupère la valeur du capteur pour le type de mesure spécifié
- * @param {Object} item - Données du capteur
- * @param {string} mesure - Type de mesure
- * @returns {number|undefined} Valeur du capteur
- */
-function getSensorValue(item, mesure) {
-    const valueTypeMap = {
-        PM1: 'P0',
-        PM25: 'P2',
-        PM10: 'P1',
-    };
-
-    const valueType = valueTypeMap[mesure.toUpperCase()];
-    if (!valueType) return undefined;
-
-    const filtered = item.sensordatavalues.filter(
-        (e) => e.value_type === valueType
-    );
-    return filtered.length > 0 ? Math.round(filtered[0].value) : undefined;
-}
-
-/**
- * Crée les paramètres de l'icône en fonction de la valeur et du type de mesure
- * @param {number} value - Valeur du capteur
- * @param {string} mesure - Type de mesure
- * @returns {Object} Paramètres de l'icône
- */
-function createIconParameters(value, mesure) {
-    const iconParam = {
-        iconUrl: 'img/SensorCommunity/SensorCommunity_default.png',
-        iconSize: CONFIG.ICON_SIZE,
-        iconAnchor: CONFIG.ICON_ANCHOR,
-    };
-
-    const thresholds =
-        mesure.toUpperCase() === 'PM10'
-            ? CONFIG.THRESHOLDS.PM10
-            : CONFIG.THRESHOLDS.PM1_PM25;
-
-    for (const [level, range] of Object.entries(thresholds)) {
-        if (value >= range.min && value < range.max) {
-            iconParam.iconUrl = `img/SensorCommunity/SensorCommunity_${level.toLowerCase()}.png`;
-            break;
-        }
+function createDraggablePopup(deviceId) {
+    // Suppression de l'ancienne fenêtre si elle existe
+    const oldPopup = document.getElementById('sensor-community-popup');
+    if (oldPopup) {
+        oldPopup.remove();
     }
 
-    return iconParam;
+    // Création de la fenêtre popup
+    const popup = document.createElement('div');
+    popup.id = 'sensor-community-popup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        min-width: 400px;
+        min-height: 300px;
+    `;
+
+    // Création de l'en-tête
+    const header = document.createElement('div');
+    header.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        cursor: move;
+    `;
+
+    const title = document.createElement('h5');
+    title.textContent = `Capteur Sensor.Community - ${deviceId}`;
+    title.style.margin = '0';
+
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '&times;';
+    closeButton.style.cssText = `
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0 5px;
+    `;
+    closeButton.onclick = () => popup.remove();
+
+    header.appendChild(title);
+    header.appendChild(closeButton);
+    popup.appendChild(header);
+
+    // Création du conteneur pour le graphique
+    const chartContainer = document.createElement('div');
+    chartContainer.id = 'chartdiv_sensor';
+    chartContainer.style.cssText = `
+        width: 100%;
+        height: 300px;
+    `;
+    popup.appendChild(chartContainer);
+
+    // Ajout de la fenêtre au document
+    document.body.appendChild(popup);
+
+    // Rendre la fenêtre draggable
+    new PlainDraggable(popup, {
+        handle: header,
+        containment: document.body,
+    });
+
+    return popup;
 }
 
 /**
- * Configure les événements pour les marqueurs
- * @param {Object} stationMarker - Marqueur de la station
- * @param {Object} textMarker - Marqueur de texte
- * @param {Object} item - Données du capteur
- * @param {string} mesure - Type de mesure
+ * Affiche les données historiques d'un capteur Sensor.Community dans un graphique
+ * @param {string} deviceId - ID du capteur
+ * @param {string} mesure - Type de mesure à afficher
+ * @param {string} historique - Période historique ('24h', '7d', etc.)
  */
-function setupMarkerEvents(stationMarker, textMarker, item, mesure) {
-    const clickHandler = () => {
-        // Désélection des marqueurs précédents
-        if (
-            state.globalSelectedMarker &&
-            state.globalSelectedMarker !== stationMarker
-        ) {
-            state.globalSelectedMarker.setZIndexOffset(0);
-            state.globalSelectedMarker._icon?.classList.remove(
-                'marker-selected'
-            );
-        }
+export async function displaySensorCommunityHistoricalData(
+    deviceId,
+    mesure,
+    historique = '24h'
+) {
+    try {
+        // Création de la fenêtre popup
+        const popup = createDraggablePopup(deviceId);
 
-        if (
-            state.globalSelectedText &&
-            state.globalSelectedText !== textMarker
-        ) {
-            state.globalSelectedText.setZIndexOffset(0);
-            state.globalSelectedText._icon?.classList.remove('marker-selected');
-        }
+        // Calcul des dates pour les 24 dernières heures
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setHours(startDate.getHours() - 24);
 
-        // Sélection des nouveaux marqueurs
-        stationMarker.setZIndexOffset(1000);
-        textMarker.setZIndexOffset(1000);
-        stationMarker._icon?.classList.add('marker-selected');
-        textMarker._icon?.classList.add('marker-selected');
+        // Formatage des dates pour l'API
+        const formatDate = (date) => {
+            return date.toISOString().replace('T', ' ').slice(0, 19);
+        };
 
-        // Mise à jour de l'état
-        state.globalSelectedMarker = stationMarker;
-        state.globalSelectedText = textMarker;
-        window.globalSelectedDeviceId = item.sensor.id;
-        window.lastSelectedDeviceData = item;
+        const formattedStartDate = formatDate(startDate);
+        const formattedEndDate = formatDate(endDate);
 
-        console.log('Click on sensor: ' + item.sensor.id);
-        openSidePanel_sensorCommunity(
-            item.sensor.id,
-            item.sensor.id,
-            getArrayFromLocalStorage('mesuresLocal')
+        // Ajout d'un message d'information
+        const infoMessage = document.createElement('div');
+        infoMessage.style.cssText = `
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #666;
+        `;
+        infoMessage.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            Les données historiques sont limitées aux dernières 24 heures pour les capteurs Sensor.Community.
+            <br>
+            <small>Note: Les données peuvent avoir un délai de 5-10 minutes.</small>
+        `;
+        popup.insertBefore(infoMessage, popup.firstChild);
+
+        // Récupération des données historiques avec les dates
+        const data = await getSensorCommunityHistoricalData(
+            deviceId,
+            formattedStartDate,
+            formattedEndDate
         );
-    };
 
-    stationMarker.on('click', clickHandler);
-    textMarker.on('click', clickHandler);
+        if (!data || data.length === 0) {
+            throw new Error('Aucune donnée disponible pour ce capteur');
+        }
+
+        // Préparation des données pour le graphique
+        const chartData = data
+            .map((sensor) => {
+                const value = sensor.sensordatavalues?.find(
+                    (v) => v.value_type === mesure
+                )?.value;
+                if (value === undefined) {
+                    console.log(
+                        'Valeur non trouvée pour la mesure:',
+                        mesure,
+                        'dans:',
+                        sensor.sensordatavalues
+                    );
+                    return null;
+                }
+                return {
+                    date: new Date(sensor.timestamp),
+                    value: parseFloat(value),
+                };
+            })
+            .filter((point) => point !== null && !isNaN(point.value));
+
+        console.log('Données préparées pour le graphique:', chartData);
+
+        if (chartData.length === 0) {
+            throw new Error('Aucune donnée valide pour le graphique');
+        }
+
+        // Création du graphique avec amCharts
+        am5.ready(function () {
+            const chartDiv = document.getElementById('chartdiv_sensor');
+            if (!chartDiv) {
+                console.error("L'élément chartdiv_sensor n'existe pas");
+                return;
+            }
+
+            // Nettoyage du graphique précédent
+            if (window.amchart_root) {
+                window.amchart_root.dispose();
+            }
+
+            // Création du graphique
+            window.amchart_root = am5.Root.new('chartdiv_sensor');
+            const chart = window.amchart_root.container.children.push(
+                am5xy.XYChart.new(window.amchart_root, {
+                    panY: false,
+                    layout: window.amchart_root.verticalLayout,
+                })
+            );
+
+            // Création des axes
+            const xAxis = chart.xAxes.push(
+                am5xy.DateAxis.new(window.amchart_root, {
+                    baseInterval: { timeUnit: 'minute', count: 1 },
+                    renderer: am5xy.AxisRendererX.new(window.amchart_root, {}),
+                    tooltip: am5.Tooltip.new(window.amchart_root, {}),
+                })
+            );
+
+            const yAxis = chart.yAxes.push(
+                am5xy.ValueAxis.new(window.amchart_root, {
+                    renderer: am5xy.AxisRendererY.new(window.amchart_root, {}),
+                })
+            );
+
+            // Création de la série
+            const series = chart.series.push(
+                am5xy.LineSeries.new(window.amchart_root, {
+                    name: mesure.toUpperCase(),
+                    xAxis: xAxis,
+                    yAxis: yAxis,
+                    valueXField: 'date',
+                    valueYField: 'value',
+                    tooltip: am5.Tooltip.new(window.amchart_root, {
+                        labelText: '{valueY}',
+                    }),
+                })
+            );
+
+            // Ajout des données
+            series.data.setAll(chartData);
+
+            // Ajout du curseur
+            chart.set(
+                'cursor',
+                am5xy.XYCursor.new(window.amchart_root, {
+                    behavior: 'zoomX',
+                })
+            );
+
+            // Ajout de la légende
+            const legend = chart.children.push(
+                am5.Legend.new(window.amchart_root, {
+                    centerX: am5.p50,
+                    x: am5.p50,
+                })
+            );
+            legend.data.setAll([series]);
+
+            // Mise à jour du graphique
+            series.appear(1000);
+            chart.appear(1000, 100);
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de l'affichage des données historiques:",
+            error
+        );
+        createCustomToast({
+            message:
+                error.message ||
+                "Erreur lors de l'affichage des données historiques",
+            type: 'error',
+            title: 'Erreur',
+            icon: 'exclamation-circle',
+            timer: 5000,
+        });
+    }
 }
 
-/**
- * Détermine la taille du texte en fonction de la valeur
- * @param {number} valeur - Valeur du capteur
- * @returns {number} Taille du texte
- */
-function getTextSize(valeur) {
-    if (valeur >= 100) return 30;
-    if (valeur >= 10) return 38;
-    return 45;
-}
-
-/**
- * Détermine la position du texte en fonction de la valeur
- * @param {number} valeur - Valeur du capteur
- * @returns {Array} Position [x, y]
- */
-function getTextPosition(valeur) {
-    if (valeur >= 10) return [-9, 56];
-    return [-17, 62];
-}
+// Export des variables d'état
+export { state };

@@ -47,7 +47,7 @@ export function loadSource(source, isInitialLoad = false) {
             case 'nebuleair':
                 loadNebuleAir();
                 break;
-            case 'sensor_commmunity':
+            case 'sensor_community':
                 loadSensorCommunity();
                 break;
             case 'purpleair':

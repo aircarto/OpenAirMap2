@@ -98,6 +98,7 @@ export function formatPollutantName(name) {
     return name
         .replace(/PM10/g, 'PM₁₀') // Doit être avant PM1 pour éviter les conflits
         .replace(/PM2.5/g, 'PM₂.₅')
+        .replace(/PM25/g, 'PM₂.₅')
         .replace(/PM1/g, 'PM₁')
         .replace(/NO2/g, 'NO₂') // Dioxyde d'azote
         .replace(/NOx/g, 'NOₓ') // Oxydes d'azote

@@ -881,7 +881,9 @@ body.side-panel-open #collapseSidePanel {
     color: #2563eb; /* Bleu moderne (inspiré de Tailwind) */
     text-decoration: none;
     font-weight: 500;
-    transition: color 0.2s ease, text-decoration 0.2s ease;
+    transition:
+        color 0.2s ease,
+        text-decoration 0.2s ease;
 }
 
 .signalair-draggable .drag-content p a:hover {
@@ -893,4 +895,36 @@ body.side-panel-open #collapseSidePanel {
     outline: none;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4); /* halo bleu */
     border-radius: 4px;
+}
+
+/* Styles pour la fenêtre popup Sensor.Community */
+#sensor-community-popup {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease;
+}
+
+#sensor-community-popup:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+#sensor-community-popup .header {
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+#sensor-community-popup .close-button {
+    color: #6c757d;
+    transition: color 0.2s ease;
+}
+
+#sensor-community-popup .close-button:hover {
+    color: #dc3545;
+}
+
+#sensor-community-popup .chart-container {
+    padding: 15px;
 }

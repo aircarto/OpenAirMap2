@@ -5,6 +5,8 @@ import { openSidePanel_stationRef } from './atmoSud_stationsRef.js';
 import { formatPollutantName } from './utils.js';
 import { mesures as supportedMesures } from './appConfig.js';
 import { openSidePanelNebuleAir } from './NebuleAir.js';
+import { sensorCommunityLayer } from './layers.js';
+import { displaySensorCommunityHistoricalData } from './sensorCommunity.js';
 
 // État global pour les marqueurs
 const markerState = {
@@ -18,6 +20,11 @@ const refMarkerState = {
     selectedText: null,
     selectedDeviceId: null,
 };
+
+/**############################################################################
+ *                    MARQUEURS MICROSTATIONS ATMOSUD
+ * ############################################################################
+ */
 
 /**
  * Initialise les marqueurs pour les microstations AtmoSud
@@ -574,7 +581,7 @@ function formatPollutantDisplay(polluant) {
 }
 
 /**
- * Crée le HTML pour un tooltip
+ * Crée le HTML pour un tooltip (microstation atmosud)
  * @param {Object} stationData - Données de la station
  * @param {Array} formattedPollutants - Liste des polluants formatés
  * @returns {string} - HTML du tooltip
@@ -731,7 +738,6 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
                     return `<span class="fw-semibold">${polluant}</span>`;
             }
         });
-
         tooltip.innerHTML = `
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-2">
@@ -800,7 +806,12 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
 
     // Application des effets de survol aux deux marqueurs
     stationMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
-    textMarker.on('mouseover', highlightMarker).on('mouseout', resetMarker);
+    textMarker
+        .on('mouseover', highlightMarker)
+        .on('mouseout', resetMarker)
+        .on('click', () =>
+            handleMarkerClick(stationMarker, textMarker, value, mesure)
+        );
 
     setupRefMarkerEvents(stationMarker, textMarker, value, mesure);
     window.stationMarkers[value.id_station] = {
@@ -1118,10 +1129,6 @@ const nebuleAirMarkerState = {
  * @returns {Object} - Marqueurs créés
  */
 export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
-    console.log('createNebuleAirMarker');
-    console.log('value:', value);
-    console.log('mesure_maj_pas_de_temps:', mesure_maj_pas_de_temps);
-    console.log('mesures:', mesures);
     const icon_param = {
         iconUrl: 'img/nebuleair/nebuleAir_default.png',
         iconSize: [40, 40],
@@ -1401,7 +1408,319 @@ export function resetAllMarkers() {
     resetNebuleAirMarkers();
     resetMicroStationMarkers();
     resetRefStationMarkers();
+    resetSensorCommunityMarkers();
 }
 
 // Export des variables d'état
 export { nebuleAirMarkerState };
+
+/**############################################################################
+ *                    MARQUEURS SENSOR.COMMUNITY
+ * ############################################################################
+ */
+
+// État global pour les marqueurs Sensor.Community
+const sensorCommunityMarkerState = {
+    markers: {},
+    selectedMarker: null,
+    selectedText: null,
+    selectedDeviceId: null,
+};
+
+/**
+ * Crée un marqueur pour un capteur Sensor.Community
+ * @param {Object} sensor - Données du capteur
+ * @param {string} pas_de_temps - Pas de temps
+ * @param {string} mesure - Mesure sélectionnée
+ * @returns {Object} - Marqueurs créés
+ */
+export function createSensorCommunityMarker(sensor, pas_de_temps, mesure) {
+    // Vérification si le capteur a des données pour la mesure sélectionnée
+    if (!sensor.sensordatavalues || sensor.sensordatavalues.length === 0) {
+        return null;
+    }
+
+    // Recherche de la valeur pour la mesure sélectionnée
+    const sensorValue = sensor.sensordatavalues.find(
+        (value) => value.value_type === mesure
+    );
+
+    // Si pas de valeur pour la mesure sélectionnée, on ne crée pas de marqueur
+    if (!sensorValue) {
+        return null;
+    }
+
+    const icon_param = {
+        iconUrl: 'img/SensorCommunity/SensorCommunity_default.png',
+        iconSize: [50, 50],
+        iconAnchor: [5, 40],
+    };
+
+    const valueToCheck = parseFloat(sensorValue.value);
+    const colorCode = getColorCodeForValue(valueToCheck, mesure);
+
+    if (colorCode !== 'default') {
+        // Conversion des codes de couleur pour correspondre aux noms de fichiers
+        const fileColorCode =
+            colorCode === 'tres_mauvais'
+                ? 'tresMauvais'
+                : colorCode === 'extr_mauvais'
+                  ? 'extMauvais'
+                  : colorCode;
+        icon_param.iconUrl = `img/SensorCommunity/SensorCommunity_${fileColorCode}.png`;
+    }
+
+    const sensorCommunityIcon = L.icon(icon_param);
+    const sensorCommunityMarker = L.marker(
+        [sensor.location.latitude, sensor.location.longitude],
+        {
+            icon: sensorCommunityIcon,
+            deviceId: sensor.id,
+        }
+    ).addTo(sensorCommunityLayer);
+
+    if (!window.sensorCommunityMarkers) {
+        window.sensorCommunityMarkers = {};
+    }
+    window.sensorCommunityMarkers[sensor.id] = {
+        marker: sensorCommunityMarker,
+        data: sensor,
+    };
+
+    // Création du marqueur de texte
+    const textMarker = createSensorCommunityTextMarker(sensor, mesure);
+    if (textMarker) {
+        textMarker.addTo(sensorCommunityLayer);
+    }
+    setupSensorCommunityMarkerEvents(sensorCommunityMarker, textMarker, sensor);
+
+    return { sensorCommunityMarker, textMarker };
+}
+
+/**
+ * Crée un marqueur de texte pour un capteur Sensor.Community
+ * @param {Object} sensor - Données du capteur
+ * @param {string} mesure - Mesure sélectionnée
+ * @returns {L.Marker} - Marqueur de texte
+ */
+function createSensorCommunityTextMarker(sensor, mesure) {
+    // Recherche de la valeur pour la mesure sélectionnée
+    const sensorValue = sensor.sensordatavalues.find(
+        (value) => value.value_type === mesure
+    );
+
+    if (!sensorValue) return null;
+
+    const roundedValue = Math.round(parseFloat(sensorValue.value));
+    let textSize = 32;
+    let x_position = 6;
+    let y_position = 38;
+
+    if (roundedValue >= 10) {
+        textSize = 25;
+        x_position = 7;
+        y_position = 38;
+    }
+
+    if (roundedValue >= 100) {
+        textSize = 20;
+        x_position = 7;
+        y_position = 38;
+    }
+
+    const text_param = L.divIcon({
+        className: 'my-div-icon',
+        html: `<div id="textDiv" style="font-size: ${textSize}px; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #333;">${roundedValue}</div>`,
+        iconAnchor: [x_position, y_position],
+        popupAnchor: [30, -60],
+        iconSize: [50, 50],
+    });
+
+    const textMarker = L.marker(
+        [sensor.location.latitude, sensor.location.longitude],
+        {
+            icon: text_param,
+            deviceId: sensor.id,
+        }
+    );
+
+    return textMarker;
+}
+
+/**
+ * Configure les événements pour les marqueurs Sensor.Community
+ * @param {L.Marker} sensorCommunityMarker - Marqueur principal
+ * @param {L.Marker} textMarker - Marqueur de texte
+ * @param {Object} sensor - Données du capteur
+ */
+function setupSensorCommunityMarkerEvents(
+    sensorCommunityMarker,
+    textMarker,
+    sensor
+) {
+    const highlightMarker = () => {
+        sensorCommunityMarker.setZIndexOffset(1000);
+        if (textMarker) {
+            textMarker.setZIndexOffset(1000);
+        }
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'custom-tooltip';
+        tooltip.innerHTML = `
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-2">
+                    <h6 class="card-title mb-1">${sensor.id}</h6>
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Sensor.Community
+                        </small>
+                        <small class="text-muted">
+                            Polluants mesurés:
+                            <ul class="list-unstyled mb-0">
+                                ${sensor.sensordatavalues
+                                    .map(
+                                        (value) => `
+                                    <li>
+                                        <span class="text-muted">●</span>
+                                        <span class="fw-semibold">${formatPollutantName(value.value_type.toUpperCase())}</span>
+                                    </li>
+                                `
+                                    )
+                                    .join('')}
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        tooltip.style.cssText = `
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: opacity 0.2s;
+            opacity: 1;
+        `;
+
+        document.body.appendChild(tooltip);
+        sensorCommunityMarker.tooltip = tooltip;
+        if (textMarker) {
+            textMarker.tooltip = tooltip;
+        }
+    };
+
+    const resetMarker = () => {
+        if (
+            sensorCommunityMarkerState.selectedMarker !== sensorCommunityMarker
+        ) {
+            sensorCommunityMarker.setZIndexOffset(0);
+            if (textMarker) {
+                textMarker.setZIndexOffset(0);
+            }
+        }
+
+        if (sensorCommunityMarker.tooltip) {
+            sensorCommunityMarker.tooltip.remove();
+            sensorCommunityMarker.tooltip = null;
+            if (textMarker) {
+                textMarker.tooltip = null;
+            }
+        }
+    };
+
+    const clickHandler = () => {
+        // Réinitialiser tous les autres types de marqueurs
+        resetNebuleAirMarkers();
+        resetMicroStationMarkers();
+        resetRefStationMarkers();
+
+        // Mettre à jour l'état des marqueurs Sensor.Community
+        if (
+            sensorCommunityMarkerState.selectedMarker &&
+            sensorCommunityMarkerState.selectedMarker !== sensorCommunityMarker
+        ) {
+            sensorCommunityMarkerState.selectedMarker.setZIndexOffset(0);
+            sensorCommunityMarkerState.selectedMarker._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+
+        if (
+            sensorCommunityMarkerState.selectedText &&
+            sensorCommunityMarkerState.selectedText !== textMarker
+        ) {
+            sensorCommunityMarkerState.selectedText.setZIndexOffset(0);
+            sensorCommunityMarkerState.selectedText._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+
+        sensorCommunityMarker.setZIndexOffset(1000);
+        if (textMarker) {
+            textMarker.setZIndexOffset(1000);
+        }
+        sensorCommunityMarker._icon.classList.add('marker-selected');
+        if (textMarker) {
+            textMarker._icon.classList.add('marker-selected');
+        }
+
+        sensorCommunityMarkerState.selectedMarker = sensorCommunityMarker;
+        sensorCommunityMarkerState.selectedText = textMarker;
+        sensorCommunityMarkerState.selectedDeviceId = sensor.id;
+
+        // Récupération des paramètres de configuration
+        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+        const mesures = getArrayFromLocalStorage('mesuresLocal');
+        const mesure = mesures[0];
+
+        // Affichage des données historiques
+        displaySensorCommunityHistoricalData(sensor.id, mesure, '24h');
+    };
+
+    sensorCommunityMarker
+        .on('mouseover', highlightMarker)
+        .on('mouseout', resetMarker)
+        .on('click', clickHandler);
+
+    if (textMarker) {
+        textMarker
+            .on('mouseover', highlightMarker)
+            .on('mouseout', resetMarker)
+            .on('click', clickHandler);
+    }
+}
+
+/**
+ * Réinitialise l'état des marqueurs Sensor.Community
+ */
+export function resetSensorCommunityMarkers() {
+    if (sensorCommunityMarkerState.selectedMarker) {
+        sensorCommunityMarkerState.selectedMarker.setZIndexOffset(0);
+        if (sensorCommunityMarkerState.selectedMarker._icon) {
+            sensorCommunityMarkerState.selectedMarker._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+    }
+    if (sensorCommunityMarkerState.selectedText) {
+        sensorCommunityMarkerState.selectedText.setZIndexOffset(0);
+        if (sensorCommunityMarkerState.selectedText._icon) {
+            sensorCommunityMarkerState.selectedText._icon.classList.remove(
+                'marker-selected'
+            );
+        }
+    }
+    sensorCommunityMarkerState.selectedMarker = null;
+    sensorCommunityMarkerState.selectedText = null;
+    sensorCommunityMarkerState.selectedDeviceId = null;
+}
+
+// Export des variables d'état
+export { sensorCommunityMarkerState };
