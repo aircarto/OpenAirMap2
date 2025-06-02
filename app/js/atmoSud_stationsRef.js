@@ -673,22 +673,7 @@ export function retreiveHistoriqueDataStationRef(
         return;
     }
 
-    // Démarrage du spinner
     startSpinner('Chargement des données historiques...');
-
-    // console.log(
-    //     '%cretreiveHistoriqueDataStationRef',
-    //     'color: yellow; font-style: bold; background-color: brown;padding: 2px'
-    // );
-    // console.log('Paramètres:', {
-    //     stationId,
-    //     pasDeTemps,
-    //     historique,
-    //     mesuresArray,
-    //     customStart,
-    //     customEnd,
-    // });
-    // const start = Date.now();
 
     // Nettoyage complet du graphique précédent
     const chartDiv = document.getElementById('chartdiv_sensor');
@@ -801,42 +786,48 @@ export function retreiveHistoriqueDataStationRef(
                 // console.log('item', item);
                 let nomPolluant;
                 const labelLower = item.label_polluant.toLowerCase();
+
+                // Vérification de tous les formats possibles pour chaque polluant
+                if (
+                    labelLower.includes('pm1') ||
+                    labelLower.includes('particules en suspension <1 µm')
+                ) {
+                    nomPolluant = 'pm1';
+                }
+                if (
+                    labelLower.includes('pm2.5') ||
+                    labelLower.includes('particules en suspension <2.5 µm')
+                ) {
+                    nomPolluant = 'pm2.5';
+                }
                 if (
                     labelLower.includes('pm10') ||
                     labelLower.includes('particules en suspension <10 µm')
                 ) {
                     nomPolluant = 'pm10';
-                } else if (
-                    labelLower.includes('pm2.5') ||
-                    labelLower.includes('particules en suspension <2.5 µm')
-                ) {
-                    nomPolluant = 'pm2.5';
-                } else if (
-                    labelLower.includes('pm1') ||
-                    labelLower.includes('particules en suspension <1 µm')
-                ) {
-                    nomPolluant = 'pm1';
-                } else if (
+                }
+                if (
                     labelLower.includes('no2') ||
                     labelLower.includes("dioxyde d'azote")
                 ) {
                     nomPolluant = 'no2';
-                } else if (
-                    labelLower.includes('o3') ||
-                    labelLower.includes('ozone')
-                ) {
+                }
+                if (labelLower.includes('o3') || labelLower.includes('ozone')) {
                     nomPolluant = 'o3';
-                } else if (
+                }
+                if (
                     labelLower.includes('so2') ||
                     labelLower.includes('dioxyde de soufre')
                 ) {
                     nomPolluant = 'so2';
-                } else if (
+                }
+                if (
                     labelLower.includes('h2s') ||
                     labelLower.includes('sulfure dhydrogène')
                 ) {
                     nomPolluant = 'h2s';
-                } else if (
+                }
+                if (
                     labelLower.includes('c6h6') ||
                     labelLower.includes('benzene')
                 ) {

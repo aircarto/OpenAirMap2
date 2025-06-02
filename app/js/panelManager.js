@@ -217,6 +217,7 @@ class PanelManager {
         console.log('source: ', source);
         console.log('deviceId: ', deviceId);
         console.log('data: ', data);
+        console.log('deviceData: ', window.lastSelectedDeviceData);
         console.log('#######################');
 
         if (!isSourceActive(source)) {
@@ -368,16 +369,28 @@ class PanelManager {
                     }
                 }
             }
-        } else if(source ==="nebuleair"){
+        } else if (source === 'nebuleair') {
             const label = document.querySelector(
-                    'label[for="btn_pas_de_temps_scan"]'
+                'label[for="btn_pas_de_temps_scan"]'
+            );
+            if (label) {
+                // On réinitialise d'abord le texte du label
+                label.textContent = 'scan';
+                // Puis on ajoute le pas de temps en minutes
+                label.textContent += ` 2 min`;
+            }
+
+            // On vérifie le pas de temps actuel
+            const state = this.stateManager.getSourceState(source);
+            if (state?.pasDeTempsChart === '2min') {
+                // On sélectionne le bouton scan uniquement si le pas de temps est 2 min
+                const scanButton = document.getElementById(
+                    'btn_pas_de_temps_scan'
                 );
-                if (label) {
-                    // On réinitialise d'abord le texte du label
-                    label.textContent = 'scan';
-                    // Puis on ajoute le pas de temps en minutes
-                    label.textContent += ` 2 min`;
+                if (scanButton) {
+                    scanButton.checked = true;
                 }
+            }
         }
     }
 
@@ -406,8 +419,65 @@ class PanelManager {
                     `Polluant ${pollutant} non supporté par les capteurs NebuleAir`
                 );
             });
+        } else if (source === 'atmo_ref') {
+            // Pour les stations de référence AtmoSud
+            const deviceData = window.lastSelectedDeviceData;
+            if (!deviceData || !deviceData.variables) return;
+
+            // Récupération des polluants supportés
+            const supportedPollutants = new Set();
+            Object.values(deviceData.variables)
+                .filter((variable) => variable.en_service)
+                .forEach((variable) => {
+                    const labelLower = variable.label.toLowerCase();
+                    // Vérification exacte des formats pour chaque polluant pour éviter conflit PM10/PM1
+                    if (
+                        labelLower === 'pm1' ||
+                        labelLower === 'particules en suspension <1 µm'
+                    ) {
+                        supportedPollutants.add('pm1');
+                    }
+                    if (
+                        labelLower === 'pm2.5' ||
+                        labelLower === 'particules en suspension <2.5 µm'
+                    ) {
+                        supportedPollutants.add('pm25');
+                    }
+                    if (
+                        labelLower === 'pm10' ||
+                        labelLower === 'particules en suspension <10 µm'
+                    ) {
+                        supportedPollutants.add('pm10');
+                    }
+                    if (
+                        labelLower === 'no2' ||
+                        labelLower === "dioxyde d'azote"
+                    ) {
+                        supportedPollutants.add('no2');
+                    }
+                    if (labelLower === 'o3' || labelLower === 'ozone') {
+                        supportedPollutants.add('o3');
+                    }
+                    if (
+                        labelLower === 'so2' ||
+                        labelLower === 'dioxyde de soufre'
+                    ) {
+                        supportedPollutants.add('so2');
+                    }
+                });
+
+            // Gestion des boutons de polluants
+            Object.entries(allPollutants).forEach(([buttonId, pollutant]) => {
+                const isSupported = supportedPollutants.has(buttonId);
+                this.buttonManager.setButtonDisabled(
+                    'pollutant',
+                    buttonId,
+                    !isSupported,
+                    `Polluant ${pollutant} non supporté par cette station`
+                );
+            });
         } else {
-            // Pour les autres sources, on utilise les données du capteur
+            // Pour les autres sources
             const deviceData = window.lastSelectedDeviceData;
             if (!deviceData || !deviceData.polluantMesure) return;
 

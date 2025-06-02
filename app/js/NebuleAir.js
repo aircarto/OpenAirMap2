@@ -123,6 +123,9 @@ export function openSidePanelNebuleAir(
         state.historiqueChart = '7d';
     }
 
+    // Stockage des données du capteur sélectionné
+    window.lastSelectedDeviceData = data;
+
     card1_img.src = 'img/nebuleair/NebuleAir_photo.png';
     card1_title.innerHTML = data.sensorId;
     card1_subtitle.innerHTML = 'Capteur citoyen';
@@ -134,6 +137,16 @@ export function openSidePanelNebuleAir(
     card2_link.href = 'https://aircarto.fr';
 
     // Utiliser le panelManager pour ouvrir le panneau
+
+    if (pas_de_temps === 'instantane') {
+        pas_de_temps = '2min';
+    }
+    console.log('openSidePanelNebuleAir');
+    console.log('data:', data);
+    console.log('pas_de_temps:', pas_de_temps);
+    console.log('historique:', historique);
+    console.log('mesures:', mesures);
+    console.log('########################################################');
     panelManager.openPanel('nebuleair', data.sensorId, {
         pasDeTempsChart: pas_de_temps,
         historiqueChart: state.historiqueChart,

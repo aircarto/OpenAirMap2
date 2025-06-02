@@ -15,7 +15,6 @@ export class ButtonManager {
                 qh: null,
                 h: null,
                 d: null,
-                scan: null,
             },
             pollutant: {
                 pm1: null,
@@ -24,9 +23,6 @@ export class ButtonManager {
                 no2: null,
                 o3: null,
                 so2: null,
-                h2s: null,
-                nh3: null,
-                c6h6: null,
             },
         };
     }

@@ -361,3 +361,44 @@ function handleSourceClick(source, button) {
     // );
     updateButtonDisplay();
 }
+
+export function handleTimeStepChange(timeStep) {
+    const activeSources = getArrayFromLocalStorage('sources_local');
+
+    // Vérification pour les modélisations
+    if (timeStep === 'd') {
+        if (activeSources.includes('mod_pm')) {
+            removeItemFromLocalStorageArray('sources_local', 'mod_pm');
+            clearLayer('mod_pm');
+            createCustomToast({
+                message:
+                    "Les modélisations ne sont disponibles qu'en pas de temps horaire ou inférieur.",
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
+        }
+        if (activeSources.includes('icairh')) {
+            removeItemFromLocalStorageArray('sources_local', 'icairh');
+            clearLayer('icairh');
+            createCustomToast({
+                message:
+                    "Les modélisations ne sont disponibles qu'en pas de temps horaire ou inférieur.",
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
+        }
+    }
+
+    // Vérification pour AtmoSud Micro-stations
+    if (timeStep === 'd' && activeSources.includes('atmo_micro')) {
+        removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
+        clearLayer('atmo_micro');
+    }
+
+    // Mettre à jour l'affichage des boutons
+    updateButtonDisplay();
+}

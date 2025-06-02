@@ -397,11 +397,17 @@ function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
     resetPreviousMarker();
     highlightNewMarker(marker, textMarker);
     updateGlobalState(marker, textMarker, stationData);
+
+    // S'assurer que les valeurs sont définies
+    const historique = state.historiqueChart || '24h';
+    const mesures =
+        state.mesuresArray || getArrayFromLocalStorage('mesuresLocal');
+
     openSidePanelMicroStation(
         stationData,
         pas_de_temps_atmo,
-        state.historiqueChart,
-        state.mesuresArray
+        historique,
+        mesures
     );
 }
 
@@ -654,16 +660,22 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
         window.atmoRefLayer.removeLayer(
             window.stationMarkers[value.id_station].marker
         );
+        if (window.stationMarkers[value.id_station].textMarker) {
+            window.atmoRefLayer.removeLayer(
+                window.stationMarkers[value.id_station].textMarker
+            );
+        }
     }
 
-    const stationMarker = L.marker(
-        [stationData.latitude, stationData.longitude],
-        {
-            icon: L.icon(iconParam),
-            zIndexOffset: 2000,
-        }
-    );
+    const stationMarker = L.marker([value.lat, value.lon], {
+        icon: L.icon(iconParam),
+        zIndexOffset: 1000,
+    });
 
+    stationMarker.deviceId = value.id_station;
+    stationMarker.deviceData = value;
+
+    // Restauration de la logique de positionnement et de taille du texte
     const textSize = getRefTextSize(value.valeur);
     const textPosition = getRefTextPosition(value.valeur);
 
@@ -674,70 +686,86 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
         popupAnchor: [30, -60],
     });
 
-    const textMarker = L.marker([stationData.latitude, stationData.longitude], {
+    const textMarker = L.marker([value.lat, value.lon], {
         icon: textParam,
-        zIndexOffset: 2000,
+        zIndexOffset: 1000,
     });
 
-    // Ajout des fonctions de survol
     function highlightMarker() {
         stationMarker.setZIndexOffset(3000);
         textMarker.setZIndexOffset(3000);
 
-        // Création d'un tooltip personnalisé avec Bootstrap
         const tooltip = document.createElement('div');
         tooltip.className = 'custom-tooltip';
 
         // Récupération des polluants actifs
         let polluantsActifs = [];
+        let polluantsDejaVus = new Set();
         if (stationData.variables) {
             Object.values(stationData.variables).forEach((variable) => {
                 if (variable.en_service) {
-                    polluantsActifs.push(variable.label);
+                    let polluant = variable.label;
+                    // Normalisation des noms de polluants
+                    const labelLower = polluant.toLowerCase();
+                    if (
+                        labelLower === 'pm1' ||
+                        labelLower === 'particules en suspension <1 µm'
+                    ) {
+                        polluant = 'PM1';
+                    } else if (
+                        labelLower === 'pm2.5' ||
+                        labelLower === 'particules en suspension <2.5 µm'
+                    ) {
+                        polluant = 'PM2.5';
+                    } else if (
+                        labelLower === 'pm10' ||
+                        labelLower === 'particules en suspension <10 µm'
+                    ) {
+                        polluant = 'PM10';
+                    }
+                    // Vérification si le polluant est supporté par l'application
+                    const normalizedPolluant = polluant
+                        .toLowerCase()
+                        .replace('2.5', '25');
+                    if (
+                        Object.keys(supportedMesures).includes(
+                            normalizedPolluant
+                        ) &&
+                        !polluantsDejaVus.has(polluant)
+                    ) {
+                        polluantsActifs.push(polluant);
+                        polluantsDejaVus.add(polluant);
+                    }
                 }
             });
         }
-        value.polluantMesure = polluantsActifs;
 
-        polluantsActifs.forEach((polluant, index) => {
-            if (polluant === 'PM2.5') {
-                polluantsActifs[index] = 'PM25';
-            }
-        });
-
-        polluantsActifs = polluantsActifs.filter((polluant) =>
-            Object.keys(supportedMesures).includes(polluant.toLowerCase())
-        );
-
-        polluantsActifs.forEach((polluant, index) => {
-            if (polluant === 'PM25') {
-                polluantsActifs[index] = 'PM2.5';
-            }
-        });
-
-        // Format pollutant names with consistent styling
-        polluantsActifs = polluantsActifs.map((polluant) => {
+        // Formatage des polluants pour l'affichage
+        const formattedPollutants = polluantsActifs.map((polluant) => {
             switch (polluant) {
                 case 'PM1':
-                    return '<span class="fw-semibold">PM<sub>1</sub></span>';
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>1</sub></span>';
                 case 'PM2.5':
-                    return '<span class="fw-semibold">PM<sub>2.5</sub></span>';
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>2.5</sub></span>';
                 case 'PM10':
-                    return '<span class="fw-semibold">PM<sub>10</sub></span>';
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">PM<sub>10</sub></span>';
                 case 'NO2':
-                    return '<span class="fw-semibold">NO<sub>2</sub></span>';
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">NO<sub>2</sub></span>';
                 case 'SO2':
-                    return '<span class="fw-semibold">SO<sub>2</sub></span>';
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>';
                 case 'O3':
-                    return '<span class="fw-semibold">O<sub>3</sub></span>';
-                case 'H2S':
-                    return '<span class="fw-semibold">H<sub>2</sub>S</span>';
-                case 'NH3':
-                    return '<span class="fw-semibold">NH<sub>3</sub></span>';
+                    return '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>';
+                // case 'H2S':
+                //     return '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>';
+                // case 'NH3':
+                //     return '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>';
                 default:
-                    return `<span class="fw-semibold">${polluant}</span>`;
+                    return `<span class="text-muted">●</span> <span class="fw-semibold">${polluant}</span>`;
             }
         });
+
+        stationData.polluantMesure = polluantsActifs;
+
         tooltip.innerHTML = `
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-2">
@@ -748,17 +776,9 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
                             ${stationData.latitude.toFixed(4)}, ${stationData.longitude.toFixed(4)}
                         </small>
                         <small class="text-muted">
-                            Dernière mise à jour: ${new Date(value.date_debut).toLocaleString()}
-                        </small>
-                        <small class="text-muted">
                             Polluants mesurés:
                             <ul class="list-unstyled ms-3 mb-0">
-                                ${polluantsActifs
-                                    .map(
-                                        (polluant) =>
-                                            `<li><span class="text-muted">●</span> ${polluant}</li>`
-                                    )
-                                    .join('')}
+                                ${formattedPollutants.map((polluant) => `<li>${polluant}</li>`).join('')}
                             </ul>
                         </small>
                     </div>
@@ -766,7 +786,6 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
             </div>
         `;
 
-        // Style du tooltip
         tooltip.style.cssText = `
             position: fixed;
             z-index: 10000;
@@ -781,10 +800,7 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
             opacity: 1;
         `;
 
-        // Ajout du tooltip directement au body pour éviter les problèmes de z-index
         document.body.appendChild(tooltip);
-
-        // Stockage de la référence du tooltip
         stationMarker.tooltip = tooltip;
         textMarker.tooltip = tooltip;
     }
@@ -809,11 +825,59 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
     textMarker
         .on('mouseover', highlightMarker)
         .on('mouseout', resetMarker)
-        .on('click', () =>
-            handleMarkerClick(stationMarker, textMarker, value, mesure)
-        );
+        .on('click', () => {
+            // Réinitialiser tous les autres types de marqueurs
+            resetNebuleAirMarkers();
+            resetMicroStationMarkers();
 
-    setupRefMarkerEvents(stationMarker, textMarker, value, mesure);
+            // Gestion des stations de référence
+            if (
+                refMarkerState.selectedMarker &&
+                refMarkerState.selectedMarker !== stationMarker
+            ) {
+                refMarkerState.selectedMarker.setZIndexOffset(0);
+                if (refMarkerState.selectedMarker._icon) {
+                    refMarkerState.selectedMarker._icon.classList.remove(
+                        'marker-selected'
+                    );
+                }
+            }
+
+            if (
+                refMarkerState.selectedText &&
+                refMarkerState.selectedText !== textMarker
+            ) {
+                refMarkerState.selectedText.setZIndexOffset(0);
+                if (refMarkerState.selectedText._icon) {
+                    refMarkerState.selectedText._icon.classList.remove(
+                        'marker-selected'
+                    );
+                }
+            }
+
+            stationMarker.setZIndexOffset(3000);
+            textMarker.setZIndexOffset(3000);
+            if (stationMarker._icon) {
+                stationMarker._icon.classList.add('marker-selected');
+            }
+            if (textMarker._icon) {
+                textMarker._icon.classList.add('marker-selected');
+            }
+
+            refMarkerState.selectedMarker = stationMarker;
+            refMarkerState.selectedText = textMarker;
+            window.globalSelectedDeviceId = value.id_station;
+            window.lastSelectedDeviceData = stationData;
+            refMarkerState.lastSelectedStationData = value;
+
+            console.log('Click on station: ' + value.id_station);
+            openSidePanel_stationRef(
+                value.id_station,
+                value.nom_station,
+                getArrayFromLocalStorage('mesuresLocal')
+            );
+        });
+
     window.stationMarkers[value.id_station] = {
         marker: stationMarker,
         textMarker: textMarker,
@@ -948,6 +1012,7 @@ export function createRefDefaultMarkers() {
 
                 // Récupération des polluants actifs
                 let polluantsActifs = [];
+                let polluantsDejaVus = new Set();
                 if (station.variables) {
                     Object.values(station.variables).forEach((variable) => {
                         if (variable.en_service) {
@@ -1308,6 +1373,8 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
         nebuleAirMarkerState.selectedMarker = nebuleAirMarker;
         nebuleAirMarkerState.selectedText = textMarker;
         nebuleAirMarkerState.selectedDeviceId = value['sensorId'];
+        console.log('clickHandler NebuleAir');
+        console.log('value:', value);
 
         // Appel de la fonction d'ouverture du panneau latéral
         openSidePanelNebuleAir(
