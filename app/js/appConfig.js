@@ -74,6 +74,12 @@ export const modelisations = {
         activated: false,
         description: "Modélisation ICAIR'H",
     },
+    vent: {
+        name: 'Vent',
+        code: 'vent',
+        activated: false,
+        description: 'Modélisation Vent',
+    },
 };
 
 export const pas_de_temps = {

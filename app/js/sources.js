@@ -11,7 +11,7 @@ import { toastManager, createCustomToast } from './toaster.js';
 import { loadNebuleAir } from './NebuleAir.js';
 import { loadAtmoSudMicroStation } from './atmoSud_microStations.js';
 import { loadAtmoSudStationsRef } from './atmoSud_stationsRef.js';
-import { loadModPM, loadModIcair } from './atmoSud_mod.js';
+import { loadModPM, loadModIcair, loadModVent } from './atmoSud_mod.js';
 import { loadSignalAir } from './SignalAir.js';
 import { loadSensorCommunity } from './sensorCommunity.js';
 import { loadPurpleAir } from './purpleAir.js';
@@ -73,6 +73,9 @@ export function loadSource(source, isInitialLoad = false) {
                 console.warn(
                     "La source mobileair n'est pas encore implémentée"
                 );
+                break;
+            case 'vent': // Cette source n'est pas encore implémentée'
+                loadModVent();
                 break;
         }
     } catch (error) {

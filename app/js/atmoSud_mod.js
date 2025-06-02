@@ -7,6 +7,7 @@ Principalement les cartes d'AmtoSud
 import {
     modelisationPMAtmoSud_layer,
     modelisationICAIRAtmoSud_layer,
+    modelisationVentLayer,
 } from './layers.js';
 import { toastManager, createCustomToast } from './toaster.js';
 
@@ -269,5 +270,75 @@ export function loadModIcair() {
     ).addTo(modelisationICAIRAtmoSud_layer);
 }
 
+//TODO
 // si il est H entre +0 et +15 min En cas de pas de temps 15 min pour modélisation horaire on affiche l'heure précédente h23
 // si il est H entre +16 En cas de pas de temps 15 min pour modélisation horaire on affiche l'heure suivante h24
+
+// Pour garder une référence à la couche active
+let velocityLayer = null;
+
+export function loadModVent() {
+    console.log(
+        '%cloadModVent',
+        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
+    );
+
+    const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))?.[0];
+
+    if (pasDeTemps === 'd') {
+        createCustomToast({
+            message: "Les modélisations vent ne sont disponibles qu'en pas de temps horaire ou inférieur.",
+            type: 'warning',
+            title: 'Attention',
+            icon: 'exclamation-triangle',
+            timer: 5000,
+            toast: true,
+            position: 'top',
+        });
+        return;
+    }
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const HH = String(now.getHours()).padStart(2, '0');
+    const dateStr = `${yyyy}${MM}${dd}`;
+
+    const windUrl = `https://meteo.atmosud.org/${dateStr}/wind_field_${HH}.json`;
+    console.log('URL vent:', windUrl);
+
+    // Retire la couche existante si elle est déjà présente
+    if (velocityLayer) {
+        velocityLayer.clearLayers();
+        velocityLayer = null;
+        return;
+    }
+
+    // Charge la nouvelle couche GeoJSON
+    $.getJSON(windUrl, function (data) {
+        velocityLayer = L.velocityLayer({
+            displayValues: false,
+            displayOptions: false,
+            data: data,
+            velocityScale: 0.002,
+            colorScale: ["#71C3F2", "#447591"],
+            minVelocity: 1,
+            maxVelocity: 5,
+            overlayName: "wind_layer",
+        });
+
+        velocityLayer.addTo(modelisationVentLayer); // Ajout à ta couche dédiée
+        console.log('Couche vent ajoutée');
+    }).fail(() => {
+        createCustomToast({
+            message: "Impossible de charger les données de vent à cette heure.",
+            type: 'error',
+            title: 'Erreur de chargement',
+            icon: 'exclamation-triangle',
+            timer: 5000,
+            toast: true,
+            position: 'top',
+        });
+    });
+}

@@ -48,6 +48,9 @@ export const signalair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
 export const mobileair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
 );
+export const modelisationVentLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+    map
+);
 
 /**
  * Initialisation du conteneur device-info
