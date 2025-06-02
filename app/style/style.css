@@ -928,3 +928,35 @@ body.side-panel-open #collapseSidePanel {
 #sensor-community-popup .chart-container {
     padding: 15px;
 }
+.table .btn-group {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+}
+.table .btn-group .btn {
+    flex: 1;
+    white-space: nowrap;
+}
+.time-buttons-group {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 2px;
+    width: 100%;
+}
+.time-buttons-group .btn {
+    flex: 1;
+    white-space: nowrap;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    cursor: default;
+}
+#button_horloge {
+    cursor: default;
+
+}
+
+#button_horloge:hover {
+    background-color: inherit;
+    color: inherit;
+}
+
