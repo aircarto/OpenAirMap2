@@ -5,7 +5,7 @@ import {
     addItemToLocalStorageArray,
 } from './utils.js';
 import { clearLayer } from './layers.js';
-import { loadModPM, loadModIcair } from './atmoSud_mod.js';
+import { loadModPM, loadModIcair, loadModVent } from './atmoSud_mod.js';
 
 // Fonction pour obtenir le nom du polluant actif
 function getActivePollutantName() {
@@ -137,6 +137,9 @@ function loadModelisation(modelCode) {
                 break;
             case 'icairh':
                 loadModIcair();
+                break;
+            case 'vent':
+                loadModVent();
                 break;
         }
     } catch (error) {

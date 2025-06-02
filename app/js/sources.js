@@ -68,14 +68,14 @@ export function loadSource(source, isInitialLoad = false) {
             case 'signalair':
                 loadSignalAir();
                 break;
+            case 'vent':
+                loadModVent();
+                break;
             case 'mobileair':
                 // Cette source n'est pas encore implémentée
                 console.warn(
                     "La source mobileair n'est pas encore implémentée"
                 );
-                break;
-            case 'vent': // Cette source n'est pas encore implémentée'
-                loadModVent();
                 break;
         }
     } catch (error) {
@@ -385,6 +385,18 @@ export function handleTimeStepChange(timeStep) {
         if (activeSources.includes('icairh')) {
             removeItemFromLocalStorageArray('sources_local', 'icairh');
             clearLayer('icairh');
+            createCustomToast({
+                message:
+                    "Les modélisations ne sont disponibles qu'en pas de temps horaire ou inférieur.",
+                type: 'warning',
+                title: 'Attention',
+                icon: 'exclamation-triangle',
+                timer: 5000,
+            });
+        }
+        if (activeSources.includes('vent')) {
+            removeItemFromLocalStorageArray('sources_local', 'vent');
+            clearLayer('vent');
             createCustomToast({
                 message:
                     "Les modélisations ne sont disponibles qu'en pas de temps horaire ou inférieur.",

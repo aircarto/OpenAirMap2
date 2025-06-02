@@ -48,9 +48,9 @@ export const signalair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
 export const mobileair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
 );
-export const modelisationVentLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
-    map
-);
+export const modelisationVentLayer = new L.layerGroup({
+    pane: 'overlayPane',
+}).addTo(map);
 
 /**
  * Initialisation du conteneur device-info
@@ -110,6 +110,10 @@ export function clearLayer(source) {
             break;
         case 'mobileair':
             mobileair_layer.clearLayers();
+            break;
+        case 'vent':
+            console.log('Nettoyage de la couche modelisationVentLayer...');
+            modelisationVentLayer.clearLayers();
             break;
     }
     // Réinitialiser les marqueurs sélectionnés

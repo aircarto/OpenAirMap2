@@ -287,7 +287,8 @@ export function loadModVent() {
 
     if (pasDeTemps === 'd') {
         createCustomToast({
-            message: "Les modélisations vent ne sont disponibles qu'en pas de temps horaire ou inférieur.",
+            message:
+                "Les modélisations vent ne sont disponibles qu'en pas de temps horaire ou inférieur.",
             type: 'warning',
             title: 'Attention',
             icon: 'exclamation-triangle',
@@ -297,6 +298,11 @@ export function loadModVent() {
         });
         return;
     }
+
+    // Nettoyage de la couche existante
+    modelisationVentLayer.clearLayers();
+    velocityLayer = null;
+    console.log('Couche vent nettoyée');
 
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -308,13 +314,6 @@ export function loadModVent() {
     const windUrl = `https://meteo.atmosud.org/${dateStr}/wind_field_${HH}.json`;
     console.log('URL vent:', windUrl);
 
-    // Retire la couche existante si elle est déjà présente
-    if (velocityLayer) {
-        velocityLayer.clearLayers();
-        velocityLayer = null;
-        return;
-    }
-
     // Charge la nouvelle couche GeoJSON
     $.getJSON(windUrl, function (data) {
         velocityLayer = L.velocityLayer({
@@ -322,17 +321,17 @@ export function loadModVent() {
             displayOptions: false,
             data: data,
             velocityScale: 0.002,
-            colorScale: ["#71C3F2", "#447591"],
+            colorScale: ['#71C3F2', '#447591'],
             minVelocity: 1,
             maxVelocity: 5,
-            overlayName: "wind_layer",
+            overlayName: 'wind_layer',
         });
 
-        velocityLayer.addTo(modelisationVentLayer); // Ajout à ta couche dédiée
+        velocityLayer.addTo(modelisationVentLayer);
         console.log('Couche vent ajoutée');
     }).fail(() => {
         createCustomToast({
-            message: "Impossible de charger les données de vent à cette heure.",
+            message: 'Impossible de charger les données de vent à cette heure.',
             type: 'error',
             title: 'Erreur de chargement',
             icon: 'exclamation-triangle',
