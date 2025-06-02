@@ -64,6 +64,29 @@
         <link rel="stylesheet" href="css/sources.css" />
         <link rel="stylesheet" href="style/style.css" />
         <link rel="stylesheet" href="css/signalair.css" />
+        <style>
+            .table .btn-group {
+                display: flex;
+                flex-direction: row;
+                gap: 2px;
+            }
+            .table .btn-group .btn {
+                flex: 1;
+                white-space: nowrap;
+            }
+            .time-buttons-group {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 2px;
+                width: 100%;
+            }
+            .time-buttons-group .btn {
+                flex: 1;
+                white-space: nowrap;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.875rem;
+            }
+        </style>
     </head>
     <body>
         <!-- NavBar  -->
@@ -192,6 +215,17 @@
                                     id="button_horloge"
                                     class="btn btn-outline-secondary"
                                 ></span>
+                            </li>
+                            <!-- Bouton Info -->
+                            <li class="nav-item ms-2 mb-1">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#infoModal"
+                                >
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
                             </li>
                         </ul>
                     </div>
@@ -474,9 +508,9 @@
 
                                     <!-- Pas de temps -->
                                     <div
-                                        class="btn-group btn-group-sm mt-1"
+                                        class="time-buttons-group"
                                         role="group"
-                                        aria-label="Basic radio toggle button group"
+                                        aria-label="Basic mixed styles example"
                                     >
                                         <span class="btn-group-title"
                                             >Pas de temps</span
@@ -777,5 +811,603 @@
                 (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
             );
         </script>
+        <!-- Modale d'information -->
+        <div
+            class="modal fade"
+            id="infoModal"
+            tabindex="-1"
+            aria-labelledby="infoModalLabel"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="infoModalLabel">
+                            Welcome to OpenAirMap
+                        </h1>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid">
+                            <div class="row justify-content-md-center mb-2">
+                                <div class="col-lg-4">
+                                    <img
+                                        src="img/LogoAirCarto.png"
+                                        class="img-fluid"
+                                        alt="..."
+                                    />
+                                </div>
+                                <div class="col-lg-4">
+                                    <img
+                                        src="img/LogoAtmoSud.png"
+                                        class="img-fluid"
+                                        alt="..."
+                                    />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <p>
+                                    L'application OpenAirMap est un projet open
+                                    source porté par AirCarto et AtmoSud pour
+                                    afficher en temps réel les mesures de
+                                    qualité de l'air effectué par les stations
+                                    de mesures et les micro-capteurs. Les
+                                    informations affichées sur la carte sont
+                                    récupérées via différentes plateforme de
+                                    mise à disposition de données de mesure
+                                    (API). A noter que cette application est en
+                                    constante évolution et amélioration. Pour
+                                    toutes questions et suggestions n'hésitez
+                                    pas à déposer un message sur le
+                                    <a
+                                        href="https://github.com/aircarto/OpenAirMap"
+                                        style="display: inline"
+                                        >GitHub du projet</a
+                                    >. <br /><br />
+                                </p>
+                                <h5>
+                                    Liste des données proposées par OpenAirMap
+                                </h5>
+                                <p>
+                                    A noter que pour certains appareils, la
+                                    donnée n'est pas disponible pour tous les
+                                    pas de temps (2 minutes, quart-horaire,
+                                    horaire et journalier) dans ce cas l'icone
+                                    est grisée.
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col"></th>
+                                                <th scope="col">
+                                                    Type de mesure
+                                                </th>
+                                                <th scope="col">Icône</th>
+                                                <th scope="col">
+                                                    Pas de temps
+                                                </th>
+                                                <th scope="col">Description</th>
+                                                <th
+                                                    scope="col"
+                                                    class="text-end"
+                                                >
+                                                    Lien vers API
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <th scope="row">
+                                                    Capteurs NebuleAir
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-info"
+                                                        >micro-capteur</span
+                                                    >
+                                                </td>
+                                                <td>
+                                                    <img
+                                                        src="img/nebuleAir/nebuleAir_moyen.png"
+                                                        alt=""
+                                                        style="width: 30px"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Micro-capteurs open source
+                                                    co-développés par AirCarto
+                                                    et AtmoSud
+                                                </td>
+                                                <td
+                                                    class="text-end align-middle"
+                                                >
+                                                    <a
+                                                        class="btn btn-primary"
+                                                        href="https://aircarto.fr/API_V2/"
+                                                        role="button"
+                                                        >AirCarto</a
+                                                    >
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Capteurs Sensor.Community
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-info"
+                                                        >micro-capteur</span
+                                                    >
+                                                </td>
+                                                <td>
+                                                    <img
+                                                        src="img/purpleAir/purpleAir_moyen.png"
+                                                        alt=""
+                                                        style="width: 30px"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Micro-capteurs open source
+                                                    fabriqués par des citoyens
+                                                    bénévoles
+                                                </td>
+                                                <td
+                                                    class="text-end align-middle"
+                                                >
+                                                    <a
+                                                        class="btn btn-primary"
+                                                        href="https://sensor.community/fr/"
+                                                        role="button"
+                                                        >Sensor.Community</a
+                                                    >
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Capteurs PurpleAir
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-info"
+                                                        >micro-capteur</span
+                                                    >
+                                                </td>
+                                                <td>
+                                                    <img
+                                                        src="img/SensorCommunity/SensorCommunity_moyen.png"
+                                                        alt=""
+                                                        style="width: 30px"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Micro-capteurs
+                                                    commercialisés par
+                                                    l'entreprise américaine
+                                                    PurpleAir Inc.
+                                                </td>
+                                                <td
+                                                    class="text-end align-middle"
+                                                >
+                                                    <a
+                                                        class="btn btn-primary"
+                                                        href="https://api.purpleair.com/"
+                                                        role="button"
+                                                        >PurpleAir</a
+                                                    >
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Micro-stations AtmoSud
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-info"
+                                                        >micro-capteur</span
+                                                    >
+                                                </td>
+                                                <td>
+                                                    <img
+                                                        src="img/microStationsAtmoSud/microStationAtmoSud_moyen.png"
+                                                        alt=""
+                                                        style="width: 30px"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Micro-capteurs déployés par
+                                                    AtmoSud
+                                                </td>
+                                                <td
+                                                    rowspan="5"
+                                                    class="text-end align-middle"
+                                                >
+                                                    <a
+                                                        class="btn btn-primary"
+                                                        href="https://api.atmosud.org/"
+                                                        role="button"
+                                                        >AtmoSud</a
+                                                    >
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Données consolidées
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-info"
+                                                        >micro-capteur</span
+                                                    >
+                                                </td>
+                                                <td>
+                                                    <i
+                                                        class="bi bi-shield-check"
+                                                        style="
+                                                            font-size: 30px;
+                                                            color: rgb(13, 14, 13);
+                                                            rgba(0,0,0,0.3);
+                                                        "
+                                                    ></i>
+                                                </td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Données corrigées de Nebule
+                                                    Air ou de microstations
+                                                    ayant fait l'objet d'une
+                                                    qualification en condition
+                                                    réelle d'utilisation en face
+                                                    d'un analyseur de référence.
+                                                    Elles permettent de prendre
+                                                    en compte la spécificité de
+                                                    chaque capteur et l'impact
+                                                    des conditions météo. Elles
+                                                    sont estampillées d'une
+                                                    étoile et sont disponibles
+                                                    au pas de temps horaire.
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Stations de référence
+                                                    AtmoSud
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-dark"
+                                                        >station</span
+                                                    >
+                                                </td>
+                                                <td>
+                                                    <img
+                                                        src="img/stationsRefAtmoSud/refStationAtmoSud_moyen.png"
+                                                        alt=""
+                                                        style="width: 30px"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Stations de référence
+                                                    installées dans le cadre de
+                                                    la mission de surveillance
+                                                    de la qualité de l'air
+                                                    d'AtmoSud
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Modélisation Horaire PM
+                                                    AtmoSud
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-secondary"
+                                                        >modélisation</span
+                                                    >
+                                                </td>
+                                                <td></td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Modélisation des particules
+                                                    fines à l'échelle horaire
+                                                    sur toute la région PACA
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">
+                                                    Modélisation Horaire ICAIRH
+                                                    AtmoSud
+                                                </th>
+                                                <td>
+                                                    <span
+                                                        class="badge rounded-pill text-bg-secondary"
+                                                        >modélisation</span
+                                                    >
+                                                </td>
+                                                <td></td>
+                                                <td>
+                                                    <div
+                                                        class="time-buttons-group"
+                                                        role="group"
+                                                        aria-label="Basic mixed styles example"
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            2m
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            QH
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-success btn-sm"
+                                                        >
+                                                            H
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                        >
+                                                            J
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    Modélisation de l'indice
+                                                    cumulé de la qualité de
+                                                    l'air (NO2, O3, PM2.5 et
+                                                    PM10) à l'échelle horaire
+                                                    sur toute la région PACA.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Continuer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </body>
 </html>
