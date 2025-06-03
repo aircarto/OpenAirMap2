@@ -273,7 +273,7 @@ function setupMarkerEvents(
     dataCapteurSite,
     pas_de_temps_atmo
 ) {
-    const highlightMarker = () => {
+    const highlightMarker = (e) => {
         const zIndex = 2000;
         microStationMarker.setZIndexOffset(zIndex);
         textMarker.setZIndexOffset(zIndex);
@@ -281,6 +281,14 @@ function setupMarkerEvents(
         document.body.appendChild(tooltip);
         microStationMarker.tooltip = tooltip;
         textMarker.tooltip = tooltip;
+
+        // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
+        const mousemoveHandler = (e) => updateTooltipPosition(e, tooltip);
+        document.addEventListener('mousemove', mousemoveHandler);
+        tooltip.mousemoveHandler = mousemoveHandler;
+
+        // Positionner initialement le tooltip
+        updateTooltipPosition(e, tooltip);
     };
 
     const resetMarker = () => {
@@ -290,6 +298,13 @@ function setupMarkerEvents(
             textMarker.setZIndexOffset(zIndex);
         }
         if (microStationMarker.tooltip) {
+            // Supprimer l'événement mousemove
+            if (microStationMarker.tooltip.mousemoveHandler) {
+                document.removeEventListener(
+                    'mousemove',
+                    microStationMarker.tooltip.mousemoveHandler
+                );
+            }
             microStationMarker.tooltip.remove();
             microStationMarker.tooltip = null;
             textMarker.tooltip = null;
@@ -617,15 +632,27 @@ function getTooltipStyles() {
         position: fixed;
         z-index: 10000;
         pointer-events: none;
-        bottom: 20px;
-        right: 20px;
         background-color: white;
         padding: 10px;
         border-radius: 5px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         transition: opacity 0.2s;
         opacity: 1;
+        transform: translate(-50%, -100%);
+        margin-top: -10px;
     `;
+}
+
+/**
+ * Met à jour la position du tooltip en fonction de la position de la souris
+ * @param {MouseEvent} e - Événement de la souris
+ * @param {HTMLElement} tooltip - Élément tooltip
+ */
+function updateTooltipPosition(e, tooltip) {
+    if (tooltip) {
+        tooltip.style.left = `${e.clientX}px`;
+        tooltip.style.top = `${e.clientY}px`;
+    }
 }
 
 /**############################################################################
@@ -677,7 +704,7 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
         zIndexOffset: 1000,
     });
 
-    function highlightMarker() {
+    function highlightMarker(e) {
         stationMarker.setZIndexOffset(3000);
         textMarker.setZIndexOffset(3000);
 
@@ -741,10 +768,6 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
                     return '<span class="text-muted">●</span> <span class="fw-semibold">SO<sub>2</sub></span>';
                 case 'O3':
                     return '<span class="text-muted">●</span> <span class="fw-semibold">O<sub>3</sub></span>';
-                // case 'H2S':
-                //     return '<span class="text-muted">●</span> <span class="fw-semibold">H<sub>2</sub>S</span>';
-                // case 'NH3':
-                //     return '<span class="text-muted">●</span> <span class="fw-semibold">NH<sub>3</sub></span>';
                 default:
                     return `<span class="text-muted">●</span> <span class="fw-semibold">${polluant}</span>`;
             }
@@ -772,19 +795,15 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
             </div>
         `;
 
-        tooltip.style.cssText = `
-            position: fixed;
-            z-index: 10000;
-            pointer-events: none;
-            bottom: 20px;
-            right: 20px;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: opacity 0.2s;
-            opacity: 1;
-        `;
+        tooltip.style.cssText = getTooltipStyles();
+
+        // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
+        const mousemoveHandler = (e) => updateTooltipPosition(e, tooltip);
+        document.addEventListener('mousemove', mousemoveHandler);
+        tooltip.mousemoveHandler = mousemoveHandler;
+
+        // Positionner initialement le tooltip
+        updateTooltipPosition(e, tooltip);
 
         document.body.appendChild(tooltip);
         stationMarker.tooltip = tooltip;
@@ -800,6 +819,13 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
 
         // Suppression du tooltip
         if (stationMarker.tooltip) {
+            // Supprimer l'événement mousemove
+            if (stationMarker.tooltip.mousemoveHandler) {
+                document.removeEventListener(
+                    'mousemove',
+                    stationMarker.tooltip.mousemoveHandler
+                );
+            }
             stationMarker.tooltip.remove();
             stationMarker.tooltip = null;
             textMarker.tooltip = null;
@@ -989,7 +1015,7 @@ export function createRefDefaultMarkers() {
             );
 
             // Ajout des fonctions de survol
-            function highlightMarker() {
+            function highlightMarker(e) {
                 defaultMarker.setZIndexOffset(1000);
 
                 // Création d'un tooltip personnalisé avec Bootstrap
@@ -1074,20 +1100,16 @@ export function createRefDefaultMarkers() {
                     </div>
                 `;
 
-                // Style du tooltip
-                tooltip.style.cssText = `
-                    position: fixed;
-                    z-index: 10000;
-                    pointer-events: none;
-                    bottom: 20px;
-                    right: 20px;
-                    background-color: white;
-                    padding: 10px;
-                    border-radius: 5px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                    transition: opacity 0.2s;
-                    opacity: 1;
-                `;
+                tooltip.style.cssText = getTooltipStyles();
+
+                // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
+                const mousemoveHandler = (e) =>
+                    updateTooltipPosition(e, tooltip);
+                document.addEventListener('mousemove', mousemoveHandler);
+                tooltip.mousemoveHandler = mousemoveHandler;
+
+                // Positionner initialement le tooltip
+                updateTooltipPosition(e, tooltip);
 
                 // Ajout du tooltip directement au body pour éviter les problèmes de z-index
                 document.body.appendChild(tooltip);
@@ -1265,7 +1287,7 @@ function createNebuleAirTextMarker(value, mesure_maj_pas_de_temps) {
  * @param {Object} value - Données du capteur
  */
 function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
-    const highlightMarker = () => {
+    const highlightMarker = (e) => {
         nebuleAirMarker.setZIndexOffset(1000);
         textMarker.setZIndexOffset(1000);
 
@@ -1293,19 +1315,15 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
             </div>
         `;
 
-        tooltip.style.cssText = `
-            position: fixed;
-            z-index: 10000;
-            pointer-events: none;
-            bottom: 20px;
-            right: 20px;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: opacity 0.2s;
-            opacity: 1;
-        `;
+        tooltip.style.cssText = getTooltipStyles();
+
+        // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
+        const mousemoveHandler = (e) => updateTooltipPosition(e, tooltip);
+        document.addEventListener('mousemove', mousemoveHandler);
+        tooltip.mousemoveHandler = mousemoveHandler;
+
+        // Positionner initialement le tooltip
+        updateTooltipPosition(e, tooltip);
 
         document.body.appendChild(tooltip);
         nebuleAirMarker.tooltip = tooltip;
@@ -1319,6 +1337,13 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
         }
 
         if (nebuleAirMarker.tooltip) {
+            // Supprimer l'événement mousemove
+            if (nebuleAirMarker.tooltip.mousemoveHandler) {
+                document.removeEventListener(
+                    'mousemove',
+                    nebuleAirMarker.tooltip.mousemoveHandler
+                );
+            }
             nebuleAirMarker.tooltip.remove();
             nebuleAirMarker.tooltip = null;
             textMarker.tooltip = null;
@@ -1624,7 +1649,7 @@ function setupSensorCommunityMarkerEvents(
     textMarker,
     sensor
 ) {
-    const highlightMarker = () => {
+    const highlightMarker = (e) => {
         sensorCommunityMarker.setZIndexOffset(1000);
         if (textMarker) {
             textMarker.setZIndexOffset(1000);
@@ -1661,19 +1686,15 @@ function setupSensorCommunityMarkerEvents(
             </div>
         `;
 
-        tooltip.style.cssText = `
-            position: fixed;
-            z-index: 10000;
-            pointer-events: none;
-            bottom: 20px;
-            right: 20px;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: opacity 0.2s;
-            opacity: 1;
-        `;
+        tooltip.style.cssText = getTooltipStyles();
+
+        // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
+        const mousemoveHandler = (e) => updateTooltipPosition(e, tooltip);
+        document.addEventListener('mousemove', mousemoveHandler);
+        tooltip.mousemoveHandler = mousemoveHandler;
+
+        // Positionner initialement le tooltip
+        updateTooltipPosition(e, tooltip);
 
         document.body.appendChild(tooltip);
         sensorCommunityMarker.tooltip = tooltip;
@@ -1693,6 +1714,13 @@ function setupSensorCommunityMarkerEvents(
         }
 
         if (sensorCommunityMarker.tooltip) {
+            // Supprimer l'événement mousemove
+            if (sensorCommunityMarker.tooltip.mousemoveHandler) {
+                document.removeEventListener(
+                    'mousemove',
+                    sensorCommunityMarker.tooltip.mousemoveHandler
+                );
+            }
             sensorCommunityMarker.tooltip.remove();
             sensorCommunityMarker.tooltip = null;
             if (textMarker) {
