@@ -215,7 +215,6 @@ export function initializeMeasurementSelectors() {
 
     // Initialisation des boutons de pas de temps
     Object.entries(pas_de_temps).forEach(([key, timeStep]) => {
-        console.log(timeStep);
         const button = document.createElement('button');
         button.innerHTML = timeStep.name;
         button.classList.add('dropdown-item');

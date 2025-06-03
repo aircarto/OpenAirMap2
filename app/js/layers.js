@@ -72,7 +72,6 @@ deviceInfo.addTo(map);
  * @param {string} source - La source de données à nettoyer
  */
 export function clearLayer(source) {
-    console.log('Clearing layer for ' + source);
     switch (source) {
         case 'nebuleair':
             nebuleairLayer.clearLayers();
@@ -91,15 +90,11 @@ export function clearLayer(source) {
             window.deviceMarkers = {};
             break;
         case 'atmo_ref':
-            console.log('Nettoyage de la couche atmoRefLayer...');
             atmoRefLayer.clearLayers();
             window.stationMarkers = {};
             window.stationsRef = [];
             break;
         case 'mod_pm':
-            console.log(
-                'Nettoyage de la couche modelisationPMAtmoSud_layer...'
-            );
             modelisationPMAtmoSud_layer.clearLayers();
             break;
         case 'icairh':
@@ -112,7 +107,6 @@ export function clearLayer(source) {
             mobileair_layer.clearLayers();
             break;
         case 'vent':
-            console.log('Nettoyage de la couche modelisationVentLayer...');
             modelisationVentLayer.clearLayers();
             break;
     }

@@ -65,9 +65,6 @@ export function loadNebuleAir() {
         console.log('Polluant non supporté pour NebuleAir');
         return;
     }
-    console.log('loadNebuleAir');
-    console.log('pas_de_temps:', pas_de_temps);
-    console.log('mesures:', mesures);
 
     let mesure_StringA = mesures[0];
     let mesure_String = `${mesure_StringA}`;

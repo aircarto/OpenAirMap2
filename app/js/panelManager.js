@@ -224,6 +224,7 @@ class PanelManager {
             console.log('Source non active:', source);
             return;
         }
+        this.buttonManager.resetButtonStates('pollutant');
 
         updatePanelState(true, false);
         this.stateManager.setCurrentSource(source);

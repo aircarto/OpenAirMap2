@@ -53,18 +53,12 @@ export function updateModelisationButtonText() {
 }
 
 export function initializeModelisationButtons() {
-    console.log('Initialisation du menu des modélisations...');
     const dropdownModelisations = document.getElementById(
         'dropdown_modelisations'
     );
     const selectedOptionSpan = document.getElementById(
         'modelisation-selected-option'
     );
-
-    console.log('Éléments trouvés:', {
-        dropdown: dropdownModelisations,
-        selectedOption: selectedOptionSpan,
-    });
 
     if (!dropdownModelisations || !selectedOptionSpan) {
         console.error('Éléments manquants:', {
@@ -76,12 +70,9 @@ export function initializeModelisationButtons() {
 
     // Vider le menu déroulant
     dropdownModelisations.innerHTML = '';
-    console.log('Menu vidé');
 
     // Créer un bouton pour chaque modélisation
-    console.log('Modélisations disponibles:', modelisations);
     Object.values(modelisations).forEach((model) => {
-        console.log('Création du bouton pour:', model.name);
         const button = document.createElement('button');
         button.className = 'dropdown-item';
         button.textContent = model.name;
@@ -120,16 +111,13 @@ export function initializeModelisationButtons() {
         });
 
         dropdownModelisations.appendChild(button);
-        console.log('Bouton ajouté au menu');
     });
 
     // Mettre à jour l'affichage des boutons
     updateButtonDisplay();
-    console.log('Initialisation terminée');
 }
 
 function loadModelisation(modelCode) {
-    console.log('Loading modelisation: ' + modelCode);
     try {
         switch (modelCode) {
             case 'mod_pm':

@@ -289,10 +289,6 @@ function configureLegend(chart, root, allSeries, mesuresArray) {
  * trigger createStationMarker pour la création des points sur la carte
  */
 export function loadAtmoSudStationsRef() {
-    console.log(
-        '%cloadAtmoSudStationsRef',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
-    );
     const start = Date.now();
     const today = new Date();
 
@@ -311,7 +307,6 @@ export function loadAtmoSudStationsRef() {
     }
 
     state.pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
-    console.log('state.pasDeTemps[0]:', state.pasDeTemps[0]);
 
     // Conversion du pas de temps pour l'API AtmoSud
     switch (state.pasDeTemps[0]) {
@@ -400,12 +395,23 @@ export function loadAtmoSudStationsRef() {
             createRefDefaultMarkers();
 
             // Construction de l'URL pour la deuxième requête API
+            console.log(state.pasDeTemps[0]);
+            let delais = '';
+            if (state.pasDeTemps[0] === 'instantane') {
+                delais = '181';
+            } else if (state.pasDeTemps[0] === 'qh') {
+                delais = '19';
+            } else if (state.pasDeTemps[0] === 'h') {
+                delais = '64';
+            } else if (state.pasDeTemps[0] === 'd') {
+                delais = '1444';
+            }
             const fullUrlDerniere = `
                 ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
                 format=json&
                 nom_polluant=${mesureAtmo}&
                 temporalite=${state.pasDeTemps[0] === 'instantane' ? 'quart-horaire' : state.pasDeTempsAtmo}&
-                delais=${state.pasDeTemps[0] === 'instantane' ? '181' : '86'}&
+                delais=${delais}&
                 download=false
             `.replace(/\s+/g, '');
 

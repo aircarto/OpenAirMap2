@@ -128,8 +128,6 @@ async function fetchCapteurSites(mesures_atmo) {
 }
 
 async function fetchDernieresMesures(mesures_atmo, pas_de_temps) {
-    console.log('fetchDernieresMesures');
-    console.log('pas_de_temps: ', pas_de_temps);
     let delais = '';
     if (pas_de_temps === 'h') {
         delais = '64';
