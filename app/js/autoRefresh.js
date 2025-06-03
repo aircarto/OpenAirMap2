@@ -22,7 +22,7 @@ export function startAutoRefresh() {
     let refreshIntervalMs;
     switch (selectedTimeStep) {
         case 'instantane':
-            refreshIntervalMs = 10 * 1000; // 60 secondes
+            refreshIntervalMs = 60 * 1000; // 60 secondes
             break;
         case '2min':
             refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
