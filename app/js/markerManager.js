@@ -413,7 +413,9 @@ function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
     window.lastSelectedDeviceData = stationData;
 
     // Mise à jour de globalSelectedDeviceId en tant que chaîne de caractères
-    window.globalSelectedDeviceId = String(stationData.id_site);
+    const deviceId = String(stationData.id_site);
+    window.globalSelectedDeviceId = deviceId;
+    console.log('Mise à jour de globalSelectedDeviceId:', deviceId);
 
     // S'assurer que les valeurs sont définies
     const historique = state.historiqueChart || '24h';

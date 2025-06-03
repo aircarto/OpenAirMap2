@@ -117,7 +117,7 @@ export function clearLayer(source) {
     }
     // Réinitialiser les marqueurs sélectionnés
     resetAllMarkers();
-    window.globalSelectedDeviceId = null;
+    // Ne pas réinitialiser window.globalSelectedDeviceId ici
     window.lastSelectedDeviceData = null;
 }
 
@@ -131,633 +131,152 @@ export function findAndHighlightMarker(deviceId) {
         'color: blue; font-weight: bold'
     );
     console.log('DeviceId reçu:', deviceId);
-    console.log('Type de deviceId:', typeof deviceId);
 
-    // Conversion de l'ID en chaîne de caractères dès le début
+    // Conversion de l'ID en chaîne de caractères
     const deviceIdStr = String(deviceId || '');
     console.log('DeviceId converti en string:', deviceIdStr);
 
     // Réinitialiser tous les marqueurs
     resetAllMarkers();
 
-    // Attente du chargement complet des couches
-    setTimeout(() => {
-        let found = false;
-        console.log(
-            '%c[findAndHighlightMarker] Recherche du marqueur',
-            'color: green; font-weight: bold'
-        );
-        console.log('DeviceId recherché:', deviceIdStr);
+    let found = false;
+    console.log(
+        '%c[findAndHighlightMarker] Recherche du marqueur',
+        'color: green; font-weight: bold'
+    );
 
-        // Log des marqueurs disponibles dans chaque couche
-        console.log(
-            'Marqueurs dans atmoRefLayer:',
-            atmoRefLayer.getLayers().length
-        );
-        console.log(
-            'Marqueurs dans atmoMicroLayer:',
-            atmoMicroLayer.getLayers().length
-        );
-        console.log(
-            'Marqueurs dans nebuleairLayer:',
-            nebuleairLayer.getLayers().length
-        );
-        console.log(
-            'Marqueurs dans purpleair_layer:',
-            purpleair_layer.getLayers().length
-        );
-        console.log(
-            'Marqueurs dans sensorCommunityLayer:',
-            sensorCommunityLayer.getLayers().length
+    // Log des marqueurs disponibles dans chaque couche
+    console.log('Nombre de marqueurs par couche:', {
+        atmoRef: atmoRefLayer.getLayers().length,
+        atmoMicro: atmoMicroLayer.getLayers().length,
+        nebuleair: nebuleairLayer.getLayers().length,
+        sensorCommunity: sensorCommunityLayer.getLayers().length,
+    });
+
+    // Fonction pour vérifier si un marqueur correspond
+    const checkMarker = (layer, layerType) => {
+        if (!layer._icon) return false;
+
+        const layerDeviceId = String(
+            (layer.options && layer.options.deviceId) || layer.deviceId
         );
 
-        // Recherche dans la couche NebuleAir
-        if (deviceIdStr.indexOf('nebuleair') >= 0) {
-            console.log('Recherche dans la couche NebuleAir');
-            nebuleairLayer.eachLayer(function (layer) {
-                if (!layer._icon) {
-                    console.log('Marqueur sans icône ignoré');
-                    return;
-                }
+        if (layerDeviceId === deviceIdStr) {
+            console.log(
+                `%cMarqueur ${layerType} trouvé !`,
+                'color: green; font-weight: bold'
+            );
+            console.log('Détails du marqueur:', layer);
+            toastManager.sensorSelected(
+                layer.options.name || `Capteur ${layerType}`
+            );
 
-                const layerDeviceId = String(
-                    (layer.options && layer.options.deviceId) || layer.deviceId
-                );
-                console.log(
-                    'Comparaison NebuleAir - Layer ID:',
-                    layerDeviceId,
-                    'vs DeviceId recherché:',
-                    deviceIdStr
-                );
+            // Mise en évidence du marqueur
+            layer.setZIndexOffset(1000);
+            if (layer._icon) layer._icon.classList.add('marker-selected');
 
-                if (layerDeviceId === deviceIdStr) {
-                    console.log('Marqueur NebuleAir trouvé !');
-                    console.log('Détails du marqueur:', layer);
-                    toastManager.sensorSelected(
-                        layer.options.name || 'Capteur NebuleAir'
-                    );
-
-                    // Recherche du marqueur de texte correspondant
-                    let textMarker = null;
-                    nebuleairLayer.eachLayer(function (textLayer) {
-                        if (!textLayer._icon) return;
-
-                        const textLayerDeviceId =
-                            (textLayer.options && textLayer.options.deviceId) ||
-                            textLayer.deviceId;
-                        console.log(
-                            'Recherche texte - Layer ID:',
-                            textLayerDeviceId
-                        );
-
-                        if (
-                            textLayerDeviceId == deviceId &&
-                            textLayer !== layer
-                        ) {
-                            console.log('Marqueur de texte trouvé');
-                            textMarker = textLayer;
-                        }
-                    });
-
-                    // Mise en évidence du marqueur
-                    layer.setZIndexOffset(1000);
-                    if (layer._icon)
-                        layer._icon.classList.add('marker-selected');
+            // Mise à jour de l'état approprié
+            switch (layerType) {
+                case 'NebuleAir':
                     nebuleAirMarkerState.selectedMarker = layer;
-
-                    if (textMarker) {
-                        textMarker.setZIndexOffset(1000);
-                        if (textMarker._icon)
-                            textMarker._icon.classList.add('marker-selected');
-                        nebuleAirMarkerState.selectedText = textMarker;
-                    }
-
-                    found = true;
-
-                    // Réouverture du panneau latéral si nécessaire
-                    if (
-                        document.getElementById('side-panel').style.display ===
-                            'none' &&
-                        layer.deviceData
-                    ) {
-                        console.log('Réouverture du panneau NebuleAir');
-                        openSidePanelNebuleAir(
-                            layer.deviceData,
-                            getArrayFromLocalStorage('pasDeTempsLocal')[0],
-                            '24h',
-                            getArrayFromLocalStorage('mesuresLocal')[0]
-                        );
-                    }
-
-                    return false;
-                }
-            });
-        }
-        // Recherche dans la couche AtmoSud MicroStations
-        else if (deviceIdStr.indexOf('micro') >= 0) {
-            console.log('Recherche dans la couche AtmoSud MicroStations');
-            atmoMicroLayer.eachLayer(function (layer) {
-                if (!layer._icon) {
-                    console.log('Marqueur sans icône ignoré');
-                    return;
-                }
-
-                const layerDeviceId = String(
-                    (layer.options && layer.options.deviceId) || layer.deviceId
-                );
-                console.log(
-                    'Comparaison MicroStation - Layer ID:',
-                    layerDeviceId,
-                    'vs DeviceId recherché:',
-                    deviceIdStr
-                );
-
-                if (layerDeviceId === deviceIdStr) {
-                    console.log('Marqueur MicroStation trouvé !');
-                    console.log('Détails du marqueur:', layer);
-                    toastManager.sensorSelected(
-                        layer.options.name || 'Station AtmoSud'
-                    );
-
-                    // Recherche du marqueur de texte correspondant
-                    let textMarker = null;
-                    atmoMicroLayer.eachLayer(function (textLayer) {
-                        if (!textLayer._icon) return;
-
-                        const textLayerDeviceId =
-                            (textLayer.options && textLayer.options.deviceId) ||
-                            textLayer.deviceId;
-                        console.log(
-                            'Recherche texte - Layer ID:',
-                            textLayerDeviceId
-                        );
-
-                        if (
-                            textLayerDeviceId == deviceId &&
-                            textLayer !== layer
-                        ) {
-                            console.log('Marqueur de texte trouvé');
-                            textMarker = textLayer;
-                        }
-                    });
-
-                    // Mise en évidence du marqueur
-                    layer.setZIndexOffset(1000);
-                    if (layer._icon)
-                        layer._icon.classList.add('marker-selected');
+                    break;
+                case 'MicroStation':
                     state.selectedMarker = layer;
-
-                    if (textMarker) {
-                        textMarker.setZIndexOffset(1000);
-                        if (textMarker._icon)
-                            textMarker._icon.classList.add('marker-selected');
-                        state.selectedText = textMarker;
-                    }
-
-                    found = true;
-
-                    // Réouverture du panneau latéral si nécessaire
-                    if (
-                        document.getElementById('side-panel').style.display ===
-                            'none' &&
-                        layer.deviceData
-                    ) {
-                        console.log('Réouverture du panneau MicroStation');
-                        var pas_de_temps =
-                            getArrayFromLocalStorage('pasDeTempsLocal')[0];
-                        var pas_de_temps_atmo = '';
-                        switch (pas_de_temps) {
-                            case '2min':
-                                pas_de_temps_atmo = 'brute';
-                                break;
-                            case 'qh':
-                                pas_de_temps_atmo = 'quart-horaire';
-                                break;
-                            case 'h':
-                                pas_de_temps_atmo = 'horaire';
-                                break;
-                            case 'd':
-                                pas_de_temps_atmo = 'journalier';
-                                break;
-                        }
-
-                        var mesures =
-                            getArrayFromLocalStorage('mesuresLocal')[0];
-                        var mesures_atmo = mesures;
-                        if (mesures === 'pm25') {
-                            mesures_atmo = 'pm2.5';
-                        }
-
-                        openSidePanelMicroStation(
-                            layer.deviceData,
-                            '24h',
-                            pas_de_temps_atmo,
-                            mesures_atmo
-                        );
-                    }
-
-                    return false;
-                }
-            });
-        }
-        // Recherche dans la couche AtmoSud Stations de Référence
-        else if (deviceIdStr.startsWith('FR')) {
-            console.log(
-                'Recherche dans la couche AtmoSud Stations de Référence'
-            );
-            atmoRefLayer.eachLayer(function (layer) {
-                if (!layer._icon) {
-                    console.log('Marqueur sans icône ignoré');
-                    return;
-                }
-
-                const layerDeviceId = String(
-                    (layer.options && layer.options.deviceId) || layer.deviceId
-                );
-                console.log(
-                    'Comparaison Station Ref - Layer ID:',
-                    layerDeviceId,
-                    'vs DeviceId recherché:',
-                    deviceIdStr
-                );
-
-                if (layerDeviceId === deviceIdStr) {
-                    console.log('Marqueur Station Ref trouvé !');
-                    console.log('Détails du marqueur:', layer);
-                    toastManager.sensorSelected(
-                        layer.options.name || 'Station de Référence AtmoSud'
-                    );
-
-                    // Recherche du marqueur de texte correspondant
-                    let textMarker = null;
-                    atmoRefLayer.eachLayer(function (textLayer) {
-                        if (!textLayer._icon) return;
-
-                        const textLayerDeviceId =
-                            (textLayer.options && textLayer.options.deviceId) ||
-                            textLayer.deviceId;
-                        console.log(
-                            'Recherche texte - Layer ID:',
-                            textLayerDeviceId
-                        );
-
-                        if (
-                            textLayerDeviceId == deviceId &&
-                            textLayer !== layer
-                        ) {
-                            console.log('Marqueur de texte trouvé');
-                            textMarker = textLayer;
-                        }
-                    });
-
-                    // Mise en évidence du marqueur
-                    layer.setZIndexOffset(1000);
-                    if (layer._icon)
-                        layer._icon.classList.add('marker-selected');
+                    break;
+                case 'StationRef':
                     refMarkerState.selectedMarker = layer;
-
-                    if (textMarker) {
-                        textMarker.setZIndexOffset(1000);
-                        if (textMarker._icon)
-                            textMarker._icon.classList.add('marker-selected');
-                        refMarkerState.selectedText = textMarker;
-                    }
-
-                    found = true;
-
-                    // Réouverture du panneau latéral si nécessaire
-                    if (
-                        document.getElementById('side-panel').style.display ===
-                            'none' &&
-                        layer.deviceData
-                    ) {
-                        console.log(
-                            'Réouverture du panneau Station de Référence'
-                        );
-                        openSidePanel_stationRef(
-                            deviceId,
-                            layer.deviceData.nom_station,
-                            getArrayFromLocalStorage('mesuresLocal')
-                        );
-                    }
-
-                    return false;
-                }
-            });
-        }
-        // Recherche dans la couche PurpleAir
-        else if (deviceIdStr.indexOf('purpleair') >= 0) {
-            console.log('Recherche dans la couche PurpleAir');
-            purpleair_layer.eachLayer(function (layer) {
-                if (!layer._icon) {
-                    console.log('Marqueur sans icône ignoré');
-                    return;
-                }
-
-                const layerDeviceId = String(
-                    (layer.options && layer.options.deviceId) || layer.deviceId
-                );
-                console.log(
-                    'Comparaison PurpleAir - Layer ID:',
-                    layerDeviceId,
-                    'vs DeviceId recherché:',
-                    deviceIdStr
-                );
-
-                if (layerDeviceId === deviceIdStr) {
-                    console.log('Marqueur PurpleAir trouvé !');
-                    console.log('Détails du marqueur:', layer);
-                    toastManager.sensorSelected(
-                        layer.options.name || 'Capteur PurpleAir'
-                    );
-
-                    // Recherche du marqueur de texte correspondant
-                    let textMarker = null;
-                    purpleair_layer.eachLayer(function (textLayer) {
-                        if (!textLayer._icon) return;
-
-                        const textLayerDeviceId =
-                            (textLayer.options && textLayer.options.deviceId) ||
-                            textLayer.deviceId;
-                        console.log(
-                            'Recherche texte - Layer ID:',
-                            textLayerDeviceId
-                        );
-
-                        if (
-                            textLayerDeviceId == deviceId &&
-                            textLayer !== layer
-                        ) {
-                            console.log('Marqueur de texte trouvé');
-                            textMarker = textLayer;
-                        }
-                    });
-
-                    // Mise en évidence du marqueur
-                    layer.setZIndexOffset(1000);
-                    if (layer._icon)
-                        layer._icon.classList.add('marker-selected');
-                    state.selectedMarker = layer;
-
-                    if (textMarker) {
-                        textMarker.setZIndexOffset(1000);
-                        if (textMarker._icon)
-                            textMarker._icon.classList.add('marker-selected');
-                        state.selectedText = textMarker;
-                    }
-
-                    found = true;
-
-                    // Réouverture du panneau latéral si nécessaire
-                    if (
-                        document.getElementById('side-panel').style.display ===
-                            'none' &&
-                        layer.deviceData
-                    ) {
-                        console.log('Réouverture du panneau PurpleAir');
-                        openSidePanelPurpleAir(
-                            layer.deviceData,
-                            getArrayFromLocalStorage('pasDeTempsLocal')[0],
-                            '24h',
-                            getArrayFromLocalStorage('mesuresLocal')[0]
-                        );
-                    }
-
-                    return false;
-                }
-            });
-        }
-        // Recherche dans la couche Sensor.Community
-        else if (deviceIdStr.indexOf('sensor_community') >= 0) {
-            console.log('Recherche dans la couche Sensor.Community');
-            sensorCommunityLayer.eachLayer(function (layer) {
-                if (!layer._icon) {
-                    console.log('Marqueur sans icône ignoré');
-                    return;
-                }
-
-                const layerDeviceId = String(
-                    (layer.options && layer.options.deviceId) || layer.deviceId
-                );
-                console.log(
-                    'Comparaison Sensor.Community - Layer ID:',
-                    layerDeviceId,
-                    'vs DeviceId recherché:',
-                    deviceIdStr
-                );
-
-                if (layerDeviceId === deviceIdStr) {
-                    console.log('Marqueur Sensor.Community trouvé !');
-                    console.log('Détails du marqueur:', layer);
-                    toastManager.sensorSelected(
-                        layer.options.name || 'Capteur Sensor.Community'
-                    );
-
-                    // Recherche du marqueur de texte correspondant
-                    let textMarker = null;
-                    sensorCommunityLayer.eachLayer(function (textLayer) {
-                        if (!textLayer._icon) return;
-
-                        const textLayerDeviceId =
-                            (textLayer.options && textLayer.options.deviceId) ||
-                            textLayer.deviceId;
-                        console.log(
-                            'Recherche texte - Layer ID:',
-                            textLayerDeviceId
-                        );
-
-                        if (
-                            textLayerDeviceId == deviceId &&
-                            textLayer !== layer
-                        ) {
-                            console.log('Marqueur de texte trouvé');
-                            textMarker = textLayer;
-                        }
-                    });
-
-                    // Mise en évidence du marqueur
-                    layer.setZIndexOffset(1000);
-                    if (layer._icon)
-                        layer._icon.classList.add('marker-selected');
+                    break;
+                case 'SensorCommunity':
                     sensorCommunityMarkerState.selectedMarker = layer;
+                    break;
+            }
 
-                    if (textMarker) {
-                        textMarker.setZIndexOffset(1000);
-                        if (textMarker._icon)
-                            textMarker._icon.classList.add('marker-selected');
-                        sensorCommunityMarkerState.selectedText = textMarker;
-                    }
+            // Recherche du marqueur de texte correspondant
+            const layerGroup = layer._map
+                ? layer._map.getPane(layer._pane)
+                : null;
+            if (layerGroup) {
+                layerGroup.eachLayer((textLayer) => {
+                    if (!textLayer._icon || textLayer === layer) return;
 
-                    found = true;
-
-                    // Réouverture du panneau latéral si nécessaire
-                    if (
-                        document.getElementById('side-panel').style.display ===
-                            'none' &&
-                        layer.deviceData
-                    ) {
-                        console.log('Réouverture du panneau Sensor.Community');
-                        displaySensorCommunityHistoricalData(
-                            deviceId,
-                            getArrayFromLocalStorage('mesuresLocal')[0],
-                            '24h'
-                        );
-                    }
-
-                    return false;
-                }
-            });
-        }
-        // Si aucun préfixe spécifique n'est trouvé, chercher dans toutes les couches
-        else {
-            console.log(
-                'Aucun préfixe spécifique trouvé, recherche dans toutes les couches'
-            );
-
-            // Recherche dans atmoRefLayer
-            atmoRefLayer.eachLayer(function (layer) {
-                if (!layer._icon) return;
-                const layerDeviceId = String(
-                    (layer.options && layer.options.deviceId) || layer.deviceId
-                );
-                console.log(
-                    'Comparaison Station Ref - Layer ID:',
-                    layerDeviceId,
-                    'vs DeviceId recherché:',
-                    deviceIdStr
-                );
-                if (layerDeviceId === deviceIdStr) {
-                    console.log('Marqueur trouvé dans atmoRefLayer !');
-                    found = true;
-                    // ... reste du code existant ...
-                }
-            });
-
-            // Recherche dans atmoMicroLayer
-            if (!found) {
-                atmoMicroLayer.eachLayer(function (layer) {
-                    if (!layer._icon) return;
-                    const layerDeviceId = String(
-                        (layer.options && layer.options.deviceId) ||
-                            layer.deviceId
+                    const textLayerDeviceId = String(
+                        (textLayer.options && textLayer.options.deviceId) ||
+                            textLayer.deviceId
                     );
-                    console.log(
-                        'Comparaison MicroStation - Layer ID:',
-                        layerDeviceId,
-                        'vs DeviceId recherché:',
-                        deviceIdStr
-                    );
-                    if (layerDeviceId === deviceIdStr) {
-                        console.log('Marqueur trouvé dans atmoMicroLayer !');
-                        console.log('Détails du marqueur:', layer);
+                    if (textLayerDeviceId === deviceIdStr) {
+                        console.log('Marqueur de texte trouvé');
+                        textLayer.setZIndexOffset(1000);
+                        if (textLayer._icon)
+                            textLayer._icon.classList.add('marker-selected');
 
-                        // Mise en évidence du marqueur
-                        layer.setZIndexOffset(1000);
-                        if (layer._icon) {
-                            layer._icon.classList.add('marker-selected');
+                        // Mise à jour de l'état approprié
+                        switch (layerType) {
+                            case 'NebuleAir':
+                                nebuleAirMarkerState.selectedText = textLayer;
+                                break;
+                            case 'MicroStation':
+                                state.selectedText = textLayer;
+                                break;
+                            case 'StationRef':
+                                refMarkerState.selectedText = textLayer;
+                                break;
+                            case 'SensorCommunity':
+                                sensorCommunityMarkerState.selectedText =
+                                    textLayer;
+                                break;
                         }
-                        state.selectedMarker = layer;
-
-                        // Recherche du marqueur de texte correspondant
-                        let textMarker = null;
-                        atmoMicroLayer.eachLayer(function (textLayer) {
-                            if (!textLayer._icon) return;
-                            const textLayerDeviceId = String(
-                                (textLayer.options &&
-                                    textLayer.options.deviceId) ||
-                                    textLayer.deviceId
-                            );
-                            if (
-                                textLayerDeviceId === deviceIdStr &&
-                                textLayer !== layer
-                            ) {
-                                console.log('Marqueur de texte trouvé');
-                                textMarker = textLayer;
-                            }
-                        });
-
-                        if (textMarker) {
-                            textMarker.setZIndexOffset(1000);
-                            if (textMarker._icon) {
-                                textMarker._icon.classList.add(
-                                    'marker-selected'
-                                );
-                            }
-                            state.selectedText = textMarker;
-                        }
-
-                        found = true;
-
-                        // Réouverture du panneau latéral si nécessaire
-                        if (
-                            document.getElementById('side-panel').style
-                                .display === 'none' &&
-                            layer.deviceData
-                        ) {
-                            console.log('Réouverture du panneau MicroStation');
-                            var pas_de_temps =
-                                getArrayFromLocalStorage('pasDeTempsLocal')[0];
-                            var pas_de_temps_atmo = '';
-                            switch (pas_de_temps) {
-                                case '2min':
-                                    pas_de_temps_atmo = 'brute';
-                                    break;
-                                case 'qh':
-                                    pas_de_temps_atmo = 'quart-horaire';
-                                    break;
-                                case 'h':
-                                    pas_de_temps_atmo = 'horaire';
-                                    break;
-                                case 'd':
-                                    pas_de_temps_atmo = 'journalier';
-                                    break;
-                            }
-
-                            var mesures =
-                                getArrayFromLocalStorage('mesuresLocal')[0];
-                            var mesures_atmo = mesures;
-                            if (mesures === 'pm25') {
-                                mesures_atmo = 'pm2.5';
-                            }
-
-                            openSidePanelMicroStation(
-                                layer.deviceData,
-                                '24h',
-                                pas_de_temps_atmo,
-                                mesures_atmo
-                            );
-                        }
-
-                        return false;
                     }
                 });
             }
-        }
 
-        // Si le marqueur n'est pas trouvé, tentative de restauration avec les données stockées
-        if (!found) {
-            console.warn(
-                '%c[findAndHighlightMarker] Marqueur non trouvé',
-                'color: red; font-weight: bold'
-            );
-            console.log('DeviceId non trouvé:', deviceIdStr);
-            console.log('Type de deviceId:', typeof deviceIdStr);
-            console.log(
-                'Données stockées disponibles:',
-                window.lastSelectedDeviceData
-            );
-
-            if (window.lastSelectedDeviceData) {
-                console.log(
-                    'Tentative de restauration avec les données stockées'
-                );
-                console.log('Données stockées:', window.lastSelectedDeviceData);
-                // ... reste du code existant ...
-            } else {
-                console.log(
-                    'Aucune donnée stockée disponible pour la restauration'
-                );
+            // Réouverture du panneau latéral si nécessaire
+            if (
+                document.getElementById('side-panel').style.display ===
+                    'none' &&
+                layer.deviceData
+            ) {
+                console.log(`Réouverture du panneau ${layerType}`);
+                // La logique d'ouverture du panneau sera gérée par le gestionnaire d'événements du marqueur
             }
+
+            return true;
         }
-    }, 2000);
+        return false;
+    };
+
+    // Recherche dans chaque couche
+    nebuleairLayer.eachLayer((layer) => {
+        if (checkMarker(layer, 'NebuleAir')) found = true;
+    });
+
+    if (!found) {
+        atmoMicroLayer.eachLayer((layer) => {
+            if (checkMarker(layer, 'MicroStation')) found = true;
+        });
+    }
+
+    if (!found) {
+        atmoRefLayer.eachLayer((layer) => {
+            if (checkMarker(layer, 'StationRef')) found = true;
+        });
+    }
+
+    if (!found) {
+        sensorCommunityLayer.eachLayer((layer) => {
+            if (checkMarker(layer, 'SensorCommunity')) found = true;
+        });
+    }
+
+    // Si le marqueur n'est pas trouvé
+    if (!found) {
+        console.warn(
+            '%c[findAndHighlightMarker] Marqueur non trouvé',
+            'color: red; font-weight: bold'
+        );
+        console.log('DeviceId non trouvé:', deviceIdStr);
+        console.log(
+            'Données stockées disponibles:',
+            window.lastSelectedDeviceData
+        );
+    }
 }

@@ -3,7 +3,15 @@ Relance les loads de data pour les points et leur valeurs
 */
 import { getArrayFromLocalStorage } from './utils.js';
 import { loadSource, updateButtonDisplay } from './sources.js';
-import { clearLayer, findAndHighlightMarker } from './layers.js';
+import {
+    atmoMicroLayer,
+    atmoRefLayer,
+    nebuleairLayer,
+    sensorCommunityLayer,
+    purpleair_layer,
+    clearLayer,
+    findAndHighlightMarker,
+} from './layers.js';
 import { toastManager } from './toaster.js';
 
 /**
@@ -22,7 +30,7 @@ export function startAutoRefresh() {
     let refreshIntervalMs;
     switch (selectedTimeStep) {
         case 'instantane':
-            refreshIntervalMs = 60 * 1000; // 60 secondes
+            refreshIntervalMs = 10 * 1000; // 60 secondes
             break;
         case '2min':
             refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
@@ -61,6 +69,7 @@ export function startAutoRefresh() {
         const currentDeviceId = window.globalSelectedDeviceId;
         const sidePanelOpen =
             document.getElementById('side-panel').style.display !== 'none';
+        const lastSelectedData = window.lastSelectedDeviceData;
 
         // Sauvegarde des données actuelles de l'appareil si disponible
         if (
@@ -91,11 +100,37 @@ export function startAutoRefresh() {
                 updateTimeDisplay();
                 updateButtonDisplay();
 
-                // Restauration de l'état précédent si nécessaire
-                if (currentDeviceId && sidePanelOpen) {
-                    setTimeout(() => {
-                        findAndHighlightMarker(currentDeviceId);
-                    }, 1000);
+                // Vérifier si un marqueur est sélectionné (ancien ou nouveau)
+                const deviceIdToRestore = window.globalSelectedDeviceId;
+
+                if (deviceIdToRestore) {
+                    console.log(
+                        `%cRestauration du marqueur ${deviceIdToRestore} après rafraîchissement`,
+                        'color: blue; font-weight: bold'
+                    );
+
+                    // Attendre que les couches soient complètement chargées
+                    let attempts = 0;
+                    const maxAttempts = 10;
+                    const checkLayersLoaded = setInterval(() => {
+                        attempts++;
+                        const allLayersLoaded = [
+                            nebuleairLayer,
+                            atmoMicroLayer,
+                            atmoRefLayer,
+                            sensorCommunityLayer,
+                        ].every((layer) => layer.getLayers().length > 0);
+
+                        if (allLayersLoaded || attempts >= maxAttempts) {
+                            clearInterval(checkLayersLoaded);
+                            console.log(
+                                `%cTentative ${attempts}/${maxAttempts} de restauration du marqueur ${deviceIdToRestore}`,
+                                'color: blue; font-weight: bold'
+                            );
+
+                            findAndHighlightMarker(deviceIdToRestore);
+                        }
+                    }, 500);
                 }
             })
             .catch((error) => {
