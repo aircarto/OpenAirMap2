@@ -64,6 +64,7 @@
         <link rel="stylesheet" href="css/sources.css" />
         <link rel="stylesheet" href="style/style.css" />
         <link rel="stylesheet" href="css/signalair.css" />
+        <link rel="stylesheet" href="css/markers.css" />
     </head>
     <body>
         <!-- NavBar  -->
@@ -960,11 +961,47 @@
                                                     >
                                                 </td>
                                                 <td>
-                                                    <img
-                                                        src="img/microStationsAtmoSud/microStationAtmoSud_moyen.png"
-                                                        alt=""
-                                                        style="width: 30px"
-                                                    />
+                                                    <div
+                                                        style="
+                                                            display: flex;
+                                                            gap: 10px;
+                                                            align-items: center;
+                                                        "
+                                                    >
+                                                        <img
+                                                            src="img/microStationsAtmoSud/microStationAtmoSud_moyen.png"
+                                                            alt=""
+                                                            style="width: 30px"
+                                                        />
+                                                        <div
+                                                            style="
+                                                                position: relative;
+                                                                display: inline-block;
+                                                            "
+                                                        >
+                                                            <img
+                                                                src="img/microStationsAtmoSud/microStationAtmoSud_moyen.png"
+                                                                alt=""
+                                                                style="
+                                                                    width: 30px;
+                                                                "
+                                                            />
+                                                            <i
+                                                                class="bi bi-shield-check"
+                                                                style="
+                                                                    position: absolute;
+                                                                    bottom: -5px;
+                                                                    right: -5px;
+                                                                    font-size: 15px;
+                                                                    color: rgb(
+                                                                        13,
+                                                                        14,
+                                                                        13
+                                                                    );
+                                                                "
+                                                            ></i>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <table class="sub-table">
@@ -1086,78 +1123,13 @@
                                                 </td>
                                                 <td>
                                                     Microcapteurs déployés par
-                                                    AtmoSud
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th scope="row">
-                                                    Données consolidées
-                                                </th>
-                                                <td>
-                                                    <span
-                                                        class="badge rounded-pill text-bg-info"
-                                                        >microcapteur</span
-                                                    >
-                                                </td>
-                                                <td>
-                                                    <i
-                                                        class="bi bi-shield-check"
-                                                        style="
-                                                            font-size: 25px;
-                                                            color: rgb(
-                                                                13,
-                                                                14,
-                                                                13
-                                                            );
-                                                        "
-                                                    ></i>
-                                                </td>
-                                                <td>
-                                                    <div
-                                                        class="time-buttons-group"
-                                                        role="group"
-                                                        aria-label="Basic mixed styles example"
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-danger btn-sm"
-                                                        >
-                                                            Scan
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-danger btn-sm"
-                                                        >
-                                                            QH
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-success btn-sm"
-                                                        >
-                                                            H
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-danger btn-sm"
-                                                        >
-                                                            J
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    Données corrigées de Nebule
-                                                    Air ou de microcapteurs
-                                                    ayant fait l'objet d'une
-                                                    qualification en condition
-                                                    réelle d'utilisation en face
-                                                    d'un analyseur de référence.
-                                                    Elles permettent de prendre
-                                                    en compte la spécificité de
-                                                    chaque capteur et l'impact
-                                                    des conditions météo. Elles
-                                                    sont estampillées d'une
-                                                    étoile et sont disponibles
-                                                    au pas de temps horaire.
+                                                    AtmoSud. Les données
+                                                    horaires sont corrigées
+                                                    (données consolidées) pour
+                                                    prendre en compte la
+                                                    spécificité de chaque
+                                                    capteur et l'impact des
+                                                    conditions météo.
                                                 </td>
                                             </tr>
                                             <tr>
