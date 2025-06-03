@@ -41,7 +41,6 @@ export function updatePanelState(isOpen, isExpanded) {
  * Ajuste la mise en page du conteneur de la carte
  */
 export function openSidePanelGeneric() {
-
     // D'abord mettre à jour l'état
     sidePanelState.isOpen = true;
     sidePanelState.isExpanded = false;
@@ -71,7 +70,6 @@ export function openSidePanelGeneric() {
  * Restaure la mise en page du conteneur de la carte
  */
 export function closeSidePanel() {
-
     // D'abord mettre à jour l'état
     sidePanelState.isOpen = false;
     sidePanelState.isExpanded = false;
@@ -163,12 +161,69 @@ export function initializeSidePanelButtons() {
                 mapContainer.style.display = 'none';
                 sidePanelState.isExpanded = true;
 
-                // Redimensionner le graphique si nécessaire
-                if (window.amchart_root) {
-                    setTimeout(() => {
+                // Attendre que le panneau soit complètement visible
+                requestAnimationFrame(() => {
+                    console.log(
+                        "[AmCharts] Vérification de l'existence du graphique:",
+                        {
+                            amchart_root_exists: !!window.amchart_root,
+                            chart_div_exists:
+                                !!document.getElementById('chartdiv_sensor'),
+                            side_panel_width: sidePanel.offsetWidth,
+                            side_panel_height: sidePanel.offsetHeight,
+                        }
+                    );
+
+                    // Redimensionner le graphique si nécessaire
+                    if (window.amchart_root) {
+                        console.log(
+                            '[AmCharts] Tentative de redimensionnement après expansion du panneau'
+                        );
+
+                        // Forcer le redimensionnement du conteneur
+                        const chartDiv =
+                            document.getElementById('chartdiv_sensor');
+                        if (chartDiv) {
+                            console.log(
+                                '[AmCharts] Dimensions du conteneur avant redimensionnement:',
+                                {
+                                    width: chartDiv.offsetWidth,
+                                    height: chartDiv.offsetHeight,
+                                }
+                            );
+
+                            // Forcer une mise à jour des dimensions du conteneur
+                            chartDiv.style.width = '100%';
+                            chartDiv.style.height = '100%';
+
+                            // Forcer un reflow
+                            chartDiv.offsetHeight;
+
+                            console.log(
+                                '[AmCharts] Dimensions du conteneur après redimensionnement:',
+                                {
+                                    width: chartDiv.offsetWidth,
+                                    height: chartDiv.offsetHeight,
+                                }
+                            );
+                        }
+
+                        // Forcer un redimensionnement immédiat
                         window.amchart_root.resize();
-                    }, 300);
-                }
+
+                        // Puis un second redimensionnement après un court délai
+                        setTimeout(() => {
+                            console.log(
+                                '[AmCharts] Second redimensionnement après délai'
+                            );
+                            window.amchart_root.resize();
+                        }, 100);
+                    } else {
+                        console.warn(
+                            "[AmCharts] Le graphique n'est pas encore initialisé"
+                        );
+                    }
+                });
 
                 // Forcer une mise à jour des boutons
                 setTimeout(() => {
@@ -188,6 +243,70 @@ export function initializeSidePanelButtons() {
                 mapContainer.classList.remove('map-collapsed');
                 mapContainer.style.display = 'block';
                 sidePanelState.isExpanded = false;
+
+                // Attendre que le panneau soit complètement visible
+                requestAnimationFrame(() => {
+                    console.log(
+                        "[AmCharts] Vérification de l'existence du graphique:",
+                        {
+                            amchart_root_exists: !!window.amchart_root,
+                            chart_div_exists:
+                                !!document.getElementById('chartdiv_sensor'),
+                            side_panel_width: sidePanel.offsetWidth,
+                            side_panel_height: sidePanel.offsetHeight,
+                        }
+                    );
+
+                    // Redimensionner le graphique si nécessaire
+                    if (window.amchart_root) {
+                        console.log(
+                            '[AmCharts] Tentative de redimensionnement après réduction du panneau'
+                        );
+
+                        // Forcer le redimensionnement du conteneur
+                        const chartDiv =
+                            document.getElementById('chartdiv_sensor');
+                        if (chartDiv) {
+                            console.log(
+                                '[AmCharts] Dimensions du conteneur avant redimensionnement:',
+                                {
+                                    width: chartDiv.offsetWidth,
+                                    height: chartDiv.offsetHeight,
+                                }
+                            );
+
+                            // Forcer une mise à jour des dimensions du conteneur
+                            chartDiv.style.width = '100%';
+                            chartDiv.style.height = '100%';
+
+                            // Forcer un reflow
+                            chartDiv.offsetHeight;
+
+                            console.log(
+                                '[AmCharts] Dimensions du conteneur après redimensionnement:',
+                                {
+                                    width: chartDiv.offsetWidth,
+                                    height: chartDiv.offsetHeight,
+                                }
+                            );
+                        }
+
+                        // Forcer un redimensionnement immédiat
+                        window.amchart_root.resize();
+
+                        // Puis un second redimensionnement après un court délai
+                        setTimeout(() => {
+                            console.log(
+                                '[AmCharts] Second redimensionnement après délai'
+                            );
+                            window.amchart_root.resize();
+                        }, 100);
+                    } else {
+                        console.warn(
+                            "[AmCharts] Le graphique n'est pas encore initialisé"
+                        );
+                    }
+                });
 
                 updateButtonsState();
             } else {
@@ -209,9 +328,36 @@ export function initializeSidePanelButtons() {
 
             // Redimensionner le graphique si nécessaire
             if (window.amchart_root) {
-                setTimeout(() => {
+                console.log(
+                    '[AmCharts] Tentative de redimensionnement après réduction du panneau'
+                );
+                console.log('[AmCharts] État du graphique:', {
+                    isOpen: sidePanelState.isOpen,
+                    isExpanded: sidePanelState.isExpanded,
+                    display: sidePanel.style.display,
+                    width: sidePanel.offsetWidth,
+                    height: sidePanel.offsetHeight,
+                });
+
+                // Attendre que le DOM soit complètement mis à jour
+                requestAnimationFrame(() => {
+                    console.log(
+                        '[AmCharts] Animation frame - avant redimensionnement'
+                    );
                     window.amchart_root.resize();
-                }, 300);
+                    console.log('[AmCharts] Redimensionnement terminé');
+
+                    // Vérifier si le redimensionnement a été effectif
+                    setTimeout(() => {
+                        console.log(
+                            '[AmCharts] Vérification post-redimensionnement:',
+                            {
+                                containerWidth: sidePanel.offsetWidth,
+                                containerHeight: sidePanel.offsetHeight,
+                            }
+                        );
+                    }, 100);
+                });
             }
 
             updateButtonsState();
