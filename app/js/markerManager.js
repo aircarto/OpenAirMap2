@@ -391,12 +391,29 @@ function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
     console.log('click on micro station:', stationData.nom_site);
 
     // Réinitialiser tous les autres types de marqueurs
-    resetNebuleAirMarkers();
-    resetRefStationMarkers();
+    resetAllMarkers();
 
-    resetPreviousMarker();
-    highlightNewMarker(marker, textMarker);
-    updateGlobalState(marker, textMarker, stationData);
+    // Mise en évidence du nouveau marqueur
+    marker.setZIndexOffset(1000);
+    if (marker._icon) {
+        marker._icon.classList.add('marker-selected');
+    }
+
+    if (textMarker) {
+        textMarker.setZIndexOffset(1000);
+        if (textMarker._icon) {
+            textMarker._icon.classList.add('marker-selected');
+        }
+    }
+
+    // Mise à jour de l'état global
+    state.selectedMarker = marker;
+    state.selectedText = textMarker;
+    state.selectedDeviceId = stationData.id_site;
+    window.lastSelectedDeviceData = stationData;
+
+    // Mise à jour de globalSelectedDeviceId en tant que chaîne de caractères
+    window.globalSelectedDeviceId = String(stationData.id_site);
 
     // S'assurer que les valeurs sont définies
     const historique = state.historiqueChart || '24h';
@@ -409,53 +426,6 @@ function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
         historique,
         mesures
     );
-}
-
-/**
- * Réinitialise le marqueur précédemment sélectionné pour microstation atmosud
- */
-function resetPreviousMarker() {
-    if (state.selectedMarker && state.selectedMarker._icon) {
-        state.selectedMarker.setZIndexOffset(0);
-        state.selectedMarker._icon.classList.remove('marker-selected');
-    }
-
-    if (state.selectedText && state.selectedText._icon) {
-        state.selectedText.setZIndexOffset(0);
-        state.selectedText._icon.classList.remove('marker-selected');
-    }
-}
-
-/**
- * Met en évidence un nouveau marqueur pour microstation atmosud
- * @param {L.Marker} marker - Marqueur à mettre en évidence
- * @param {L.Marker} textMarker - Marqueur de texte à mettre en évidence
- */
-function highlightNewMarker(marker, textMarker) {
-    marker.setZIndexOffset(1000);
-    if (marker._icon) {
-        marker._icon.classList.add('marker-selected');
-    }
-
-    if (textMarker) {
-        textMarker.setZIndexOffset(1000);
-        if (textMarker._icon) {
-            textMarker._icon.classList.add('marker-selected');
-        }
-    }
-}
-
-/**
- * Met à jour l'état global pour microstation atmosud
- * @param {L.Marker} marker - Marqueur sélectionné
- * @param {L.Marker} textMarker - Marqueur de texte sélectionné
- * @param {Object} stationData - Données de la station
- */
-function updateGlobalState(marker, textMarker, stationData) {
-    state.selectedMarker = marker;
-    state.selectedText = textMarker;
-    state.selectedDeviceId = stationData.id_site;
-    window.lastSelectedDeviceData = stationData;
 }
 
 /**
@@ -1347,7 +1317,8 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
         // Mettre à jour l'état des marqueurs NebuleAir
         if (
             nebuleAirMarkerState.selectedMarker &&
-            nebuleAirMarkerState.selectedMarker !== nebuleAirMarker
+            nebuleAirMarkerState.selectedMarker !== nebuleAirMarker &&
+            nebuleAirMarkerState.selectedMarker._icon
         ) {
             nebuleAirMarkerState.selectedMarker.setZIndexOffset(0);
             nebuleAirMarkerState.selectedMarker._icon.classList.remove(
@@ -1357,7 +1328,8 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
 
         if (
             nebuleAirMarkerState.selectedText &&
-            nebuleAirMarkerState.selectedText !== textMarker
+            nebuleAirMarkerState.selectedText !== textMarker &&
+            nebuleAirMarkerState.selectedText._icon
         ) {
             nebuleAirMarkerState.selectedText.setZIndexOffset(0);
             nebuleAirMarkerState.selectedText._icon.classList.remove(
@@ -1366,13 +1338,24 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
         }
 
         nebuleAirMarker.setZIndexOffset(1000);
-        textMarker.setZIndexOffset(1000);
-        nebuleAirMarker._icon.classList.add('marker-selected');
-        textMarker._icon.classList.add('marker-selected');
+        if (textMarker) {
+            textMarker.setZIndexOffset(1000);
+        }
+
+        if (nebuleAirMarker._icon) {
+            nebuleAirMarker._icon.classList.add('marker-selected');
+        }
+        if (textMarker) {
+            textMarker._icon.classList.add('marker-selected');
+        }
 
         nebuleAirMarkerState.selectedMarker = nebuleAirMarker;
         nebuleAirMarkerState.selectedText = textMarker;
         nebuleAirMarkerState.selectedDeviceId = value['sensorId'];
+
+        // Mise à jour de globalSelectedDeviceId
+        window.globalSelectedDeviceId = value['sensorId'];
+
         console.log('clickHandler NebuleAir');
         console.log('value:', value);
 
@@ -1742,6 +1725,9 @@ function setupSensorCommunityMarkerEvents(
         sensorCommunityMarkerState.selectedText = textMarker;
         sensorCommunityMarkerState.selectedDeviceId = sensor.id;
 
+        // Mise à jour de globalSelectedDeviceId
+        window.globalSelectedDeviceId = sensor.id;
+
         // Récupération des paramètres de configuration
         const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
         const mesures = getArrayFromLocalStorage('mesuresLocal');
@@ -1791,3 +1777,6 @@ export function resetSensorCommunityMarkers() {
 
 // Export des variables d'état
 export { sensorCommunityMarkerState };
+
+// Export des variables d'état
+export { state };

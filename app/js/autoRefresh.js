@@ -6,7 +6,6 @@ import { loadSource, updateButtonDisplay } from './sources.js';
 import { clearLayer, findAndHighlightMarker } from './layers.js';
 import { toastManager } from './toaster.js';
 
-
 /**
  * Démarre le rafraîchissement automatique des données
  */
@@ -23,7 +22,7 @@ export function startAutoRefresh() {
     let refreshIntervalMs;
     switch (selectedTimeStep) {
         case 'instantane':
-            refreshIntervalMs = 30 * 1000; // 60 secondes
+            refreshIntervalMs = 10 * 1000; // 60 secondes
             break;
         case '2min':
             refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
