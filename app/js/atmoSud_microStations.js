@@ -225,7 +225,7 @@ export function openSidePanelMicroStation(
 }
 
 function updateCardInfo(data) {
-    card1_img.src = 'img/microStationsAtmoSud/microStationAtmoSud_default.png';
+    card1_img.src = 'img/microStationsAtmoSud/microStation_photo.jpg';
     card1_title.innerHTML = data.site_info
         ? data.site_info.nom_site
         : data.nom_site;
