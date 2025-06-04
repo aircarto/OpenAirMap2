@@ -32,7 +32,7 @@ export const nebuleairLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
 export const sensorCommunityLayer = new L.layerGroup({
     pane: 'overlayPane',
 }).addTo(map);
-export const purpleair_layer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
+export const purpleairLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
     map
 );
 export const atmoMicroLayer = new L.layerGroup({ pane: 'overlayPane' }).addTo(
@@ -87,7 +87,7 @@ export function clearLayer(source) {
             window.deviceMarkers = {};
             break;
         case 'purpleair':
-            purpleair_layer.clearLayers();
+            purpleairLayer.clearLayers();
             window.deviceMarkers = {};
             break;
         case 'atmo_micro':

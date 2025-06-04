@@ -22,7 +22,7 @@ import {
 import { POLLUTANT_COLORS } from './appConfig.js';
 
 // Variables locales au module
-var state = {
+const state = {
     pasDeTempsChart: '1h',
     pasDeTempsAtmo: '',
     pasDeTemps: '',
@@ -584,7 +584,7 @@ async function getStationImage(stationId) {
  * @param {string} station_name - Nom de la station
  * @param {Array} mesure - Mesures sélectionnées
  */
-export function openSidePanel_stationRef(deviceId, station_name, mesure) {
+export function openSidePanelStationRef(deviceId, station_name, mesure) {
     if (!isSourceActive('atmo_ref')) {
         return;
     }
@@ -671,7 +671,7 @@ export function retreiveHistoriqueDataStationRef(
     customEnd = null
 ) {
     // Vérification que la station sélectionnée est toujours la même
-    let testStationId = String(stationId);
+    const testStationId = String(stationId);
     if (!testStationId.startsWith('FR')) {
         console.log(
             "La station sélectionnée n'est pas une station de référence, annulation de la requête"
@@ -785,7 +785,7 @@ export function retreiveHistoriqueDataStationRef(
             }
 
             // Initialisation des données pour le graphique
-            let seriesData = {};
+            const seriesData = {};
 
             // Traitement des données
             data.mesures.forEach((item) => {
@@ -871,9 +871,9 @@ export function retreiveHistoriqueDataStationRef(
             });
 
             // Récupération de l'unité de mesure
-            let unite = data.mesures[0].unite;
+            const unite = data.mesures[0].unite;
 
-            let stationName = data.mesures[0].nom_station;
+            const stationName = data.mesures[0].nom_station;
 
             // Création du graphique
             am5.ready(function () {
@@ -901,7 +901,7 @@ export function retreiveHistoriqueDataStationRef(
                 window.amchart_root = am5.Root.new('chartdiv_sensor');
                 window.amchart_root.locale = am5locales_fr_FR;
                 // Création du graphique
-                let chart = createChart(window.amchart_root, stationName);
+                const chart = createChart(window.amchart_root, stationName);
 
                 // Configuration des axes
                 let baseIntervalConfig = {

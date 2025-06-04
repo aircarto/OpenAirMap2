@@ -1,7 +1,7 @@
 import { atmoMicroLayer } from './layers.js';
 import { getColorCodeForValue, getArrayFromLocalStorage } from './utils.js';
 import { state, openSidePanelMicroStation } from './atmoSud_microStations.js';
-import { openSidePanel_stationRef } from './atmoSud_stationsRef.js';
+import { openSidePanelStationRef } from './atmoSud_stationsRef.js';
 import { formatPollutantName } from './utils.js';
 import { mesures as supportedMesures } from './appConfig.js';
 import { openSidePanelNebuleAir } from './NebuleAir.js';
@@ -172,7 +172,7 @@ function calculateTextParameters(value) {
     let textSize = 32;
     let x_position = 5;
     let y_position = 42;
-    let checkPosition = 'right: 12px;';
+    const checkPosition = 'right: 12px;';
 
     if (value >= 1000) {
         textSize = 16;
@@ -390,9 +390,19 @@ function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
                 pas_de_temps_atmo
             )
         )
-        .on('mouseover', () => {
+        .on('mouseover', (e) => {
             defaultMarker.setZIndexOffset(1000);
             const tooltip = createTooltip(stationData, dataCapteurSite);
+            tooltip.style.cssText = getTooltipStyles();
+
+            // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
+            const mousemoveHandler = (e) => updateTooltipPosition(e, tooltip);
+            document.addEventListener('mousemove', mousemoveHandler);
+            tooltip.mousemoveHandler = mousemoveHandler;
+
+            // Positionner initialement le tooltip
+            updateTooltipPosition(e, tooltip);
+
             document.body.appendChild(tooltip);
             defaultMarker.tooltip = tooltip;
         })
@@ -401,6 +411,13 @@ function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
                 defaultMarker.setZIndexOffset(0);
             }
             if (defaultMarker.tooltip) {
+                // Supprimer l'événement mousemove
+                if (defaultMarker.tooltip.mousemoveHandler) {
+                    document.removeEventListener(
+                        'mousemove',
+                        defaultMarker.tooltip.mousemoveHandler
+                    );
+                }
                 defaultMarker.tooltip.remove();
                 defaultMarker.tooltip = null;
             }
@@ -650,8 +667,40 @@ function getTooltipStyles() {
  */
 function updateTooltipPosition(e, tooltip) {
     if (tooltip) {
-        tooltip.style.left = `${e.clientX}px`;
-        tooltip.style.top = `${e.clientY}px`;
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+        const tooltipWidth = tooltipRect.width;
+        const tooltipHeight = tooltipRect.height;
+
+        // Calculer la position horizontale
+        let left = mouseX;
+        if (mouseX + tooltipWidth / 2 > windowWidth) {
+            left = windowWidth - tooltipWidth / 2 - 10;
+        } else if (mouseX - tooltipWidth / 2 < 0) {
+            left = tooltipWidth / 2 + 10;
+        }
+
+        // Calculer la position verticale
+        let top = mouseY;
+        let transform = '';
+
+        if (mouseY - tooltipHeight - 10 < 0) {
+            // Si le tooltip ne rentre pas au-dessus, le mettre en dessous
+            top = mouseY + 10;
+            transform = 'translate(-50%, 0)';
+        } else {
+            // Par défaut, mettre le tooltip au-dessus
+            top = mouseY - 10;
+            transform = 'translate(-50%, -100%)';
+        }
+
+        // Appliquer les positions
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+        tooltip.style.transform = transform;
     }
 }
 
@@ -712,8 +761,8 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
         tooltip.className = 'custom-tooltip';
 
         // Récupération des polluants actifs
-        let polluantsActifs = [];
-        let polluantsDejaVus = new Set();
+        const polluantsActifs = [];
+        const polluantsDejaVus = new Set();
         if (stationData.variables) {
             Object.values(stationData.variables).forEach((variable) => {
                 if (variable.en_service) {
@@ -883,7 +932,7 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
             refMarkerState.lastSelectedStationData = value;
 
             console.log('Click on station: ' + value.id_station);
-            openSidePanel_stationRef(
+            openSidePanelStationRef(
                 value.id_station,
                 value.nom_station,
                 getArrayFromLocalStorage('mesuresLocal')
@@ -956,7 +1005,7 @@ function setupRefMarkerEvents(stationMarker, textMarker, value, mesure) {
         refMarkerState.lastSelectedStationData = value;
 
         console.log('Click on station: ' + value.id_station);
-        openSidePanel_stationRef(
+        openSidePanelStationRef(
             value.id_station,
             value.nom_station,
             getArrayFromLocalStorage('mesuresLocal')
@@ -1024,7 +1073,7 @@ export function createRefDefaultMarkers() {
 
                 // Récupération des polluants actifs
                 let polluantsActifs = [];
-                let polluantsDejaVus = new Set();
+                const polluantsDejaVus = new Set();
                 if (station.variables) {
                     Object.values(station.variables).forEach((variable) => {
                         if (variable.en_service) {
@@ -1166,7 +1215,7 @@ export function createRefDefaultMarkers() {
                 refMarkerState.lastSelectedStationData = station;
 
                 console.log('Click on station: ' + station.id_station);
-                openSidePanel_stationRef(
+                openSidePanelStationRef(
                     station.id_station,
                     station.nom_station,
                     getArrayFromLocalStorage('mesuresLocal')
@@ -1210,8 +1259,8 @@ export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
 
     if (value.connected) {
         icon_param.iconSize = [50, 50];
-        let valueToCheck = value[mesure_maj_pas_de_temps];
-        let colorCode = getColorCodeForValue(valueToCheck, mesures);
+        const valueToCheck = value[mesure_maj_pas_de_temps];
+        const colorCode = getColorCodeForValue(valueToCheck, mesures);
         if (colorCode !== 'default') {
             icon_param.iconUrl =
                 'img/nebuleair/nebuleAir_' + colorCode + '.png';

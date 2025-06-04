@@ -1,6 +1,6 @@
 import { API_KEYS } from '../config.js';
 import { getArrayFromLocalStorage, getColorCodeForValue } from './utils.js';
-import { purpleair_layer } from './layers.js';
+import { purpleairLayer } from './layers.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { createCustomToast } from './toaster.js';
 
@@ -50,13 +50,13 @@ export function loadPurpleAir() {
     }
 
     // Vérifier si la couche existe
-    if (!purpleair_layer) {
+    if (!purpleairLayer) {
         console.error("La couche PurpleAir n'existe pas");
         return;
     }
 
     // Nettoyer la couche existante
-    purpleair_layer.clearLayers();
+    purpleairLayer.clearLayers();
 
     // Récupération des paramètres de configuration
     const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
@@ -250,9 +250,9 @@ function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
 
     // Ajouter les marqueurs à la couche
     try {
-        purpleair_layer.addLayer(marker);
+        purpleairLayer.addLayer(marker);
         if (textMarker) {
-            purpleair_layer.addLayer(textMarker);
+            purpleairLayer.addLayer(textMarker);
         }
         // console.log(
         //     'Marqueurs ajoutés à la couche pour le capteur:',
