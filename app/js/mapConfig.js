@@ -1,3 +1,4 @@
+/* global L, localStorage, document */
 import { config } from './appConfig.js';
 
 /**
@@ -48,12 +49,11 @@ baseLayerGroup.addTo(map);
  * Change le fond de carte actif
  * @param {string} layerName - Nom de la couche à activer
  */
-export function changeBaseLayer(layerName) {
+export const changeBaseLayer = (layerName) => {
     baseLayerGroup.clearLayers();
     baseLayers[layerName].addTo(baseLayerGroup);
-    // Sauvegarde du choix dans le localStorage
     localStorage.setItem('baseLayer', layerName);
-}
+};
 
 /**
  * Contrôle personnalisé pour les fonds de carte
@@ -61,7 +61,7 @@ export function changeBaseLayer(layerName) {
  */
 export const baseLayerControl = L.control({ position: 'bottomleft' });
 
-baseLayerControl.onAdd = function (map) {
+baseLayerControl.onAdd = function () {
     const div = L.DomUtil.create(
         'div',
         'leaflet-control-layers leaflet-control-layers-collapsed'
@@ -82,6 +82,10 @@ baseLayerControl.onAdd = function (map) {
     );
     container.style.display = 'none';
 
+    // Récupération du fond de carte sauvegardé
+    const savedBaseLayer =
+        localStorage.getItem('baseLayer') || 'Carte standard';
+
     // Création des boutons radio pour chaque fond de carte
     Object.keys(baseLayers).forEach((layerName) => {
         const label = L.DomUtil.create(
@@ -93,7 +97,7 @@ baseLayerControl.onAdd = function (map) {
         input.type = 'radio';
         input.name = 'baseLayer';
         input.value = layerName;
-        if (layerName === 'Carte standard') {
+        if (layerName === savedBaseLayer) {
             input.checked = true;
         }
         label.appendChild(document.createTextNode(' ' + layerName));
@@ -125,48 +129,33 @@ baseLayerControl.onAdd = function (map) {
 baseLayerControl.addTo(map);
 
 /**
- * Initialise le fond de carte
- * Récupère la valeur sauvegardée dans le localStorage si elle existe
- * Sinon utilise la carte standard par défaut
- */
-export function initializeBaseLayer() {
-    const savedBaseLayer = localStorage.getItem('baseLayer');
-    if (savedBaseLayer && baseLayers[savedBaseLayer]) {
-        changeBaseLayer(savedBaseLayer);
-        // Mise à jour du bouton radio correspondant
-        const inputs = document.querySelectorAll('input[name="baseLayer"]');
-        inputs.forEach((input) => {
-            if (input.value === savedBaseLayer) {
-                input.checked = true;
-            }
-        });
-    }
-}
-
-/**
  * Initialise la position et le zoom de la carte
  * Récupère les valeurs sauvegardées dans le localStorage si elles existent
  * Sinon utilise les valeurs par défaut de la configuration
  */
-export function initializeMapPosition() {
-    if ('Lat' in localStorage) {
-        const coordsCenter_local_lat = localStorage.getItem('Lat');
-        const coordsCenter_local_long = localStorage.getItem('Long');
-        const zoomLevel_local = localStorage.getItem('Zoom');
-        map.setView(
-            [coordsCenter_local_lat, coordsCenter_local_long],
-            zoomLevel_local
-        );
-    } else {
-        map.setView(config.coordsCenter, config.zoomLevel);
+export const initializeMapPosition = () => {
+    if (
+        'Lat' in localStorage &&
+        'Long' in localStorage &&
+        'Zoom' in localStorage
+    ) {
+        const lat = parseFloat(localStorage.getItem('Lat'));
+        const lng = parseFloat(localStorage.getItem('Long'));
+        const zoom = parseInt(localStorage.getItem('Zoom'));
+
+        if (!isNaN(lat) && !isNaN(lng) && !isNaN(zoom)) {
+            map.setView([lat, lng], zoom);
+            return;
+        }
     }
-}
+    map.setView(config.coordsCenter, config.zoomLevel);
+};
 
 /**
  * Configure la sauvegarde automatique de la position et du zoom
  * Sauvegarde les valeurs dans le localStorage à chaque déplacement de la carte
  */
-export function setupMapPositionSaving() {
+export const setupMapPositionSaving = () => {
     map.on('moveend', function () {
         const center = map.getCenter();
         const currentZoom = map.getZoom();
@@ -174,13 +163,17 @@ export function setupMapPositionSaving() {
         localStorage.setItem('Long', center.lng);
         localStorage.setItem('Zoom', currentZoom);
     });
-}
+};
 
 /**
  * Initialise la carte avec toutes les configurations nécessaires
  */
-export function initializeMap() {
+export const initializeMap = () => {
     initializeMapPosition();
     setupMapPositionSaving();
-    initializeBaseLayer();
-}
+
+    const savedBaseLayer = localStorage.getItem('baseLayer');
+    if (savedBaseLayer && baseLayers[savedBaseLayer]) {
+        changeBaseLayer(savedBaseLayer);
+    }
+};

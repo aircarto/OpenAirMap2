@@ -322,7 +322,6 @@ export function loadModVent() {
             data: data,
             velocityScale: 0.002,
             lineWidth: 2,
-
             colorScale: [
                 '#3288bd', // vent très faible (bleu foncé)
                 '#66c2a5', // bleu-vert
