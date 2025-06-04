@@ -51,6 +51,8 @@ baseLayerGroup.addTo(map);
 export function changeBaseLayer(layerName) {
     baseLayerGroup.clearLayers();
     baseLayers[layerName].addTo(baseLayerGroup);
+    // Sauvegarde du choix dans le localStorage
+    localStorage.setItem('baseLayer', layerName);
 }
 
 /**
@@ -123,6 +125,25 @@ baseLayerControl.onAdd = function (map) {
 baseLayerControl.addTo(map);
 
 /**
+ * Initialise le fond de carte
+ * Récupère la valeur sauvegardée dans le localStorage si elle existe
+ * Sinon utilise la carte standard par défaut
+ */
+export function initializeBaseLayer() {
+    const savedBaseLayer = localStorage.getItem('baseLayer');
+    if (savedBaseLayer && baseLayers[savedBaseLayer]) {
+        changeBaseLayer(savedBaseLayer);
+        // Mise à jour du bouton radio correspondant
+        const inputs = document.querySelectorAll('input[name="baseLayer"]');
+        inputs.forEach((input) => {
+            if (input.value === savedBaseLayer) {
+                input.checked = true;
+            }
+        });
+    }
+}
+
+/**
  * Initialise la position et le zoom de la carte
  * Récupère les valeurs sauvegardées dans le localStorage si elles existent
  * Sinon utilise les valeurs par défaut de la configuration
@@ -161,4 +182,5 @@ export function setupMapPositionSaving() {
 export function initializeMap() {
     initializeMapPosition();
     setupMapPositionSaving();
+    initializeBaseLayer();
 }
