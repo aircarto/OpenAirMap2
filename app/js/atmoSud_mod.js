@@ -321,9 +321,20 @@ export function loadModVent() {
             displayOptions: false,
             data: data,
             velocityScale: 0.002,
-            colorScale: ['#71C3F2', '#447591'],
-            minVelocity: 1,
-            maxVelocity: 5,
+            lineWidth: 2,
+
+            colorScale: [
+                '#3288bd', // vent très faible (bleu foncé)
+                '#66c2a5', // bleu-vert
+                '#abdda4', // vert clair
+                '#e6f598', // jaune pâle
+                '#fee08b', // jaune
+                '#fdae61', // orange
+                '#f46d43', // rouge-orangé
+                '#d53e4f', // rouge foncé (vent fort)
+            ],
+            minVelocity: 0,
+            maxVelocity: 30,
             overlayName: 'wind_layer',
         });
 
