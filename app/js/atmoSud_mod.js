@@ -188,6 +188,60 @@ async function handleMapClick(e) {
 }
 
 /**
+ * Crée et affiche le contrôle de légende sur la carte
+ * @param {string} legendUrl - L'URL de la légende à afficher
+ */
+function updateLegendControl(legendUrl) {
+    // Supprimer l'ancien contrôle de légende s'il existe
+    if (window.legendControl) {
+        map.removeControl(window.legendControl);
+    }
+
+    // Créer un nouveau contrôle de légende
+    window.legendControl = L.control({ position: 'bottomright' });
+
+    window.legendControl.onAdd = function () {
+        const div = L.DomUtil.create('div', 'legend-control');
+
+        // Déterminer l'unité et le nom de la couche en fonction de la couche active
+        let unit = '';
+        let layerTitle = '';
+        if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
+            const activeLayer = modelisationPMAtmoSud_layer.getLayers()[0];
+            const layerName = activeLayer.options.layer.split(':')[1];
+            unit = 'µg/m³';
+            // Extraire le nom du polluant du nom de la couche
+            if (layerName.includes('pm2_5')) {
+                layerTitle = 'Modélisation PM2.5';
+            } else if (layerName.includes('pm10')) {
+                layerTitle = 'Modélisation PM10';
+            } else if (layerName.includes('no2')) {
+                layerTitle = 'Modélisation NO2';
+            } else if (layerName.includes('o3')) {
+                layerTitle = 'Modélisation O3';
+            } else if (layerName.includes('so2')) {
+                layerTitle = 'Modélisation SO2';
+            }
+        } else if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
+            unit = "ICAIR'H";
+            layerTitle = "Modélisation ICAIR'H";
+        }
+
+        div.innerHTML = `
+            <div class="legend-container" style="background: white; padding: 8px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.2);">
+                <div style="font-weight: bold; margin-bottom: 4px; text-align: center;">${layerTitle}</div>
+                <div style="text-align: center; font-size: 12px; margin-top: 4px; color: #333;">Unité: ${unit}</div>
+                <img src="${legendUrl}" alt="Légende" style="width: 80px;">
+            </div>
+        `;
+        return div;
+    };
+
+    // Ajouter le contrôle à la carte
+    window.legendControl.addTo(map);
+}
+
+/**
  * Charge la couche de modélisation des PM sur la carte
  * Vient chercher les données sur le serveur WMS d'AtmoSud (geoserver ou azurh)
  * @param {string} compoundUpper - Le polluant à afficher (PM1, PM25, PM10)
@@ -272,6 +326,11 @@ export function loadModPM(compoundUpper) {
             pm25Layer.addTo(modelisationPMAtmoSud_layer);
             // Ajouter l'événement de clic
             map.on('click', handleMapClick);
+            // Récupérer et afficher la légende
+            const pm25LegendUrl = getActiveLayerLegend();
+            if (pm25LegendUrl) {
+                updateLegendControl(pm25LegendUrl);
+            }
             break;
         case 'pm10':
             const pm10LayerName = getLayerName('paca_pm10', layerHour);
@@ -283,6 +342,11 @@ export function loadModPM(compoundUpper) {
             pm10Layer.addTo(modelisationPMAtmoSud_layer);
             // Ajouter l'événement de clic
             map.on('click', handleMapClick);
+            // Récupérer et afficher la légende
+            const pm10LegendUrl = getActiveLayerLegend();
+            if (pm10LegendUrl) {
+                updateLegendControl(pm10LegendUrl);
+            }
             break;
         case 'no2':
             const no2LayerName = getLayerName('paca_no2', layerHour);
@@ -294,6 +358,11 @@ export function loadModPM(compoundUpper) {
             no2Layer.addTo(modelisationPMAtmoSud_layer);
             // Ajouter l'événement de clic
             map.on('click', handleMapClick);
+            // Récupérer et afficher la légende
+            const no2LegendUrl = getActiveLayerLegend();
+            if (no2LegendUrl) {
+                updateLegendControl(no2LegendUrl);
+            }
             break;
         case 'o3':
             const o3LayerName = getLayerName('paca_o3', layerHour);
@@ -305,6 +374,11 @@ export function loadModPM(compoundUpper) {
             o3Layer.addTo(modelisationPMAtmoSud_layer);
             // Ajouter l'événement de clic
             map.on('click', handleMapClick);
+            // Récupérer et afficher la légende
+            const o3LegendUrl = getActiveLayerLegend();
+            if (o3LegendUrl) {
+                updateLegendControl(o3LegendUrl);
+            }
             break;
         case 'so2':
             const so2LayerName = getLayerName('paca_so2', layerHour);
@@ -316,6 +390,11 @@ export function loadModPM(compoundUpper) {
             so2Layer.addTo(modelisationPMAtmoSud_layer);
             // Ajouter l'événement de clic
             map.on('click', handleMapClick);
+            // Récupérer et afficher la légende
+            const so2LegendUrl = getActiveLayerLegend();
+            if (so2LegendUrl) {
+                updateLegendControl(so2LegendUrl);
+            }
             break;
         default:
             createCustomToast({
@@ -413,6 +492,12 @@ export function loadModIcair() {
 
     // Ajouter l'événement de clic
     map.on('click', handleMapClick);
+
+    // Récupérer et afficher la légende
+    const icairLegendUrl = getActiveLayerLegend();
+    if (icairLegendUrl) {
+        updateLegendControl(icairLegendUrl);
+    }
 }
 
 //TODO
@@ -495,4 +580,68 @@ export function loadModVent() {
             position: 'top',
         });
     });
+}
+
+/**
+ * Récupère l'URL de la légende pour une couche donnée
+ * @param {string} layerName - Le nom de la couche
+ * @param {string} workspace - L'espace de travail
+ * @returns {string} - L'URL de la légende
+ */
+function getLegendUrl(layerName, workspace) {
+    console.log("=== Construction de l'URL de légende ===");
+    console.log('Nom de la couche:', layerName);
+    console.log('Workspace:', workspace);
+
+    const wmsUrl =
+        'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/wms';
+    const params = {
+        REQUEST: 'GetLegendGraphic',
+        VERSION: '1.1.1',
+        FORMAT: 'image/png',
+        WIDTH: 20, // Réduction de la largeur
+        HEIGHT: 10, // Maintien de la hauteur
+        LAYER: `${workspace}:${layerName}`,
+        // TRANSPARENT: true,
+        // FONT_ANTIALIAS: true,
+        // FONT_SIZE: 10,
+        // LEGEND_OPTIONS:
+        //     'forceLabels:on;fontAntiAliasing:true;fontColor:0x000000;fontSize:10;dpi:180',
+    };
+
+    const url = `${wmsUrl}?${new URLSearchParams(params).toString()}`;
+    console.log('URL de la légende construite:', url);
+    console.log('===================================');
+    return url;
+}
+
+/**
+ * Récupère la légende pour la couche active
+ * @returns {string|null} - L'URL de la légende ou null si aucune couche n'est active
+ */
+export function getActiveLayerLegend() {
+    console.log('=== Récupération de la légende pour la couche active ===');
+    const workspace = 'azur_heure';
+    let layerName = null;
+
+    // Vérifier quelle couche est active
+    if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
+        console.log('Couche PM active détectée');
+        const activeLayer = modelisationPMAtmoSud_layer.getLayers()[0];
+        layerName = activeLayer.options.layer.split(':')[1];
+        console.log('Nom de la couche PM:', layerName);
+    } else if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
+        console.log("Couche ICAIR'H active détectée");
+        const activeLayer = modelisationICAIRAtmoSud_layer.getLayers()[0];
+        layerName = activeLayer.options.layer.split(':')[1];
+        console.log("Nom de la couche ICAIR'H:", layerName);
+    } else {
+        console.log('Aucune couche active détectée');
+        return null;
+    }
+
+    const legendUrl = getLegendUrl(layerName, workspace);
+    console.log('URL de la légende finale:', legendUrl);
+    console.log('===================================');
+    return legendUrl;
 }
