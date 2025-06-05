@@ -2,7 +2,7 @@
 export const config = {
     coordsCenter: [43.296482, 5.36978],
     zoomLevel: 10,
-    minZoom: 8,
+    minZoom: 2,
     maxZoom: 18,
     compoundUpper: 'PM25', //polluant affiché par défaut
     timespanLower: 60, //pas de temps de base 2min, 15min, 60min ou journéé (??)
