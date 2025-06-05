@@ -44,7 +44,7 @@ const state = {
 };
 
 // Variables de contrôle
-let isFetching = false;
+const isFetching = false;
 let isYAxisCapped = false;
 let yAxisMaxValue = 90;
 
@@ -134,7 +134,7 @@ async function fetchDernieresMesures(mesures_atmo, pas_de_temps) {
     } else if (pas_de_temps === 'qh') {
         delais = '19';
     } else if (pas_de_temps === '2min') {
-        delais = '6';
+        delais = '10';
     } else if (pas_de_temps === 'instantane') {
         delais = '181';
     }
@@ -272,7 +272,7 @@ export async function retreive_historiqueData_microStation(
     }
     try {
         // Vérification que le capteur sélectionné est toujours le même
-        let testSensorId = String(sensorId);
+        const testSensorId = String(sensorId);
         if (
             testSensorId.startsWith('FR') ||
             testSensorId.startsWith('nebule')
@@ -396,8 +396,8 @@ export async function retreive_historiqueData_microStation(
         }
 
         // Récupération de l'unité de mesure
-        let unite = data[0].unite;
-        let sensorName = data[0].nom_site;
+        const unite = data[0].unite;
+        const sensorName = data[0].nom_site;
 
         // Initialisation du graphique avec amCharts 5
         am5.ready(function () {
@@ -422,7 +422,7 @@ export async function retreive_historiqueData_microStation(
             window.amchart_root = am5.Root.new('chartdiv_sensor');
 
             window.amchart_root.locale = am5locales_fr_FR;
-            let chart = createChart(window.amchart_root, sensorName);
+            const chart = createChart(window.amchart_root, sensorName);
             const axes = configureAxes(
                 chart,
                 window.amchart_root,
@@ -431,7 +431,7 @@ export async function retreive_historiqueData_microStation(
             );
             configureCursor(chart, window.amchart_root);
 
-            let seriesData = {};
+            const seriesData = {};
             data.forEach((item) => {
                 const variable = item.variable;
                 if (!seriesData[variable]) {
