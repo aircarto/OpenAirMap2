@@ -11,6 +11,7 @@ import {
 } from './layers.js';
 import { toastManager, createCustomToast } from './toaster.js';
 import { map } from './mapConfig.js';
+import { formatPollutantName } from './utils.js';
 
 // Définition de la projection EPSG:2154 (Lambert 93)
 L.CRS.EPSG2154 = L.extend({}, L.CRS.EPSG3857, {
@@ -148,7 +149,7 @@ async function handleMapClick(e) {
     } else if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
         activeLayer = modelisationICAIRAtmoSud_layer.getLayers()[0];
         layerName = activeLayer.options.layer.split(':')[1];
-        unit = 'indice'; // L'unité pour ICAIR'H est un indice
+        unit = "ICAIR'h"; // L'unité pour ICAIR'H est un indice
     } else {
         return; // Aucune couche active
     }
@@ -212,19 +213,19 @@ function updateLegendControl(legendUrl) {
             unit = 'µg/m³';
             // Extraire le nom du polluant du nom de la couche
             if (layerName.includes('pm2_5')) {
-                layerTitle = 'Modélisation PM2.5';
+                layerTitle = `Modélisation ${formatPollutantName('PM2.5')}`;
             } else if (layerName.includes('pm10')) {
-                layerTitle = 'Modélisation PM10';
+                layerTitle = `Modélisation ${formatPollutantName('PM10')}`;
             } else if (layerName.includes('no2')) {
-                layerTitle = 'Modélisation NO2';
+                layerTitle = `Modélisation ${formatPollutantName('NO2')}`;
             } else if (layerName.includes('o3')) {
-                layerTitle = 'Modélisation O3';
+                layerTitle = `Modélisation ${formatPollutantName('O3')}`;
             } else if (layerName.includes('so2')) {
-                layerTitle = 'Modélisation SO2';
+                layerTitle = `Modélisation ${formatPollutantName('SO2')}`;
             }
         } else if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
-            unit = "ICAIR'H";
-            layerTitle = "Modélisation ICAIR'H";
+            unit = "ICAIR'h";
+            layerTitle = "Modélisation ICAIR'h";
         }
 
         div.innerHTML = `
