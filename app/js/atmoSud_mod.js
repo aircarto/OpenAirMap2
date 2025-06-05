@@ -551,17 +551,17 @@ export function loadModVent() {
             displayValues: false,
             displayOptions: false,
             data: data,
-            velocityScale: 0.002,
+            velocityScale: 0.004,
             lineWidth: 2,
             colorScale: [
-                '#3288bd', // vent très faible (bleu foncé)
-                '#66c2a5', // bleu-vert
-                '#abdda4', // vert clair
-                '#e6f598', // jaune pâle
-                '#fee08b', // jaune
-                '#fdae61', // orange
-                '#f46d43', // rouge-orangé
-                '#d53e4f', // rouge foncé (vent fort)
+                '#2a6f9d', // vent très faible (bleu foncé)
+                '#549e8a', // bleu-vert
+                '#8cb38a', // vert clair
+                '#c0d07d', // jaune pâle
+                '#d4b86a', // jaune
+                '#d48e4f', // orange
+                '#c85a37', // rouge-orangé
+                '#b0323f', // rouge foncé (vent fort)
             ],
             minVelocity: 0,
             maxVelocity: 30,

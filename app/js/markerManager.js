@@ -172,7 +172,7 @@ function calculateTextParameters(value) {
     let textSize = 32;
     let x_position = 5;
     let y_position = 42;
-    const checkPosition = 'right: 12px;';
+    const checkPosition = 'right: 21px;';
 
     if (value >= 1000) {
         textSize = 16;
@@ -212,10 +212,11 @@ function createTextMarkerHTML(value, textSize, checkPosition, stationData) {
             align-items: center; 
             justify-content: center;
             width: 10px;
-            height: 15px; 
+            height: 15px;
+            opacity: 0.6;
             box-shadow: 0 0 4px rgba(0,0,0,0.1); 
             z-index: 10;">
-                <i class="bi bi-shield-fill-check" style="font-size: 18px; color: #0074D9; line-height: 1;"></i>
+                <i class="bi bi-shield-fill-check" style="font-size: 18px; color: #0074D9; line-height: 1; "></i>
           </span>`
         : '';
 
