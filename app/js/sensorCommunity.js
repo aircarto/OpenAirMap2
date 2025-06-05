@@ -48,7 +48,7 @@ export async function loadSensorCommunity() {
     console.log('loadSensorCommunity');
     try {
         // Vérification si la source est active
-        if (!isSourceActive('sensor_community')) {
+        if (!isSourceActive('sensorCommunity')) {
             console.log('Source Sensor.Community non active');
             return;
         }
@@ -57,7 +57,7 @@ export async function loadSensorCommunity() {
         sensorCommunityLayer.clearLayers();
 
         // Récupération des paramètres de configuration
-        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+        const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
         const mesures = getArrayFromLocalStorage('mesuresLocal');
 
         // Vérification si le polluant est supporté
@@ -71,9 +71,9 @@ export async function loadSensorCommunity() {
                 timer: 5000,
             });
             return;
-        } else if (pas_de_temps != 'instantane' && pas_de_temps != '2min') {
+        } else if (pasDeTemps != 'instantane' && pasDeTemps != '2min') {
             createCustomToast({
-                message: `Le pas de temps ${pas_de_temps} n'est pas supporté pour Sensor.Community.`,
+                message: `Le pas de temps ${pasDeTemps} n'est pas supporté pour Sensor.Community.`,
                 type: 'warning',
                 title: 'Attention',
                 icon: 'exclamation-triangle',
@@ -133,7 +133,7 @@ export async function loadSensorCommunity() {
                     }
 
                     // Création du marqueur pour chaque capteur
-                    createSensorCommunityMarker(sensor, pas_de_temps, mesure);
+                    createSensorCommunityMarker(sensor, pasDeTemps, mesure);
                 }
             });
         }

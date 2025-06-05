@@ -25,14 +25,14 @@ export const mesures = {
 };
 
 export const sources = {
-    atmo_ref: {
+    atmoRef: {
         name: 'Station de référence atmosud',
-        code: 'atmo_ref',
+        code: 'atmoRef',
         activated: true,
     }, // Stations de référence AtmoSud
-    atmo_micro: {
+    atmoMicro: {
         name: 'Microcapteurs qualifiés',
-        code: 'atmo_micro',
+        code: 'atmoMicro',
         activated: true,
     }, // Micro-stations AtmoSud
     communautaire: {
@@ -46,9 +46,9 @@ export const sources = {
                 code: 'nebuleair',
                 activated: false,
             },
-            sensor_community: {
+            sensorCommunity: {
                 name: 'Sensor.Community',
-                code: 'sensor_community',
+                code: 'sensorCommunity',
                 activated: false,
             },
             purpleair: {
@@ -62,9 +62,9 @@ export const sources = {
 };
 
 export const modelisations = {
-    mod_pm: {
+    modPm: {
         name: 'Modélisation Horaires',
-        code: 'mod_pm',
+        code: 'modPm',
         activated: false,
         description: 'Carte de modélisation',
     },
@@ -82,41 +82,41 @@ export const modelisations = {
     },
 };
 
-export const pas_de_temps = {
+export const pasDeTemps = {
     instantane: { name: 'Scan', code: 'instantane', activated: false }, // Valeurs instantanées
-    deux_min: { name: '≤ 2 minutes', code: '2min', activated: false }, // Moyenne sur 2 minutes
-    quart_heure: { name: '15 minutes', code: 'qh', activated: false }, // Moyenne sur 15 minutes
+    deuxMin: { name: '≤ 2 minutes', code: '2min', activated: false }, // Moyenne sur 2 minutes
+    quartHeure: { name: '15 minutes', code: 'qh', activated: false }, // Moyenne sur 15 minutes
     heure: { name: 'Heure', code: 'h', activated: true }, // Moyenne horaire
     jour: { name: 'Jour', code: 'd', activated: false }, // Moyenne journalière
 };
 // // Configuration des seuils pour les particules fines PM1 et PM2.5
-// export const seuils_PM1_PM25 = {
+// export const seuilsPm1Pm25 = {
 //     bon: { code: 'bon', min: 0, max: 10 }, // Qualité de l'air bonne (0-10 µg/m³)
 //     moyen: { code: 'moyen', min: 11, max: 20 }, // Qualité de l'air moyenne (11-20 µg/m³)
 //     degrade: { code: 'degrade', min: 21, max: 25 }, // Qualité de l'air dégradée (21-25 µg/m³)
 //     mauvais: { code: 'mauvais', min: 26, max: 50 }, // Qualité de l'air mauvaise (26-50 µg/m³)
-//     tres_mauvais: { code: 'tres_mauvais', min: 51, max: 75 }, // Qualité de l'air très mauvaise (51-75 µg/m³)
-//     extr_mauvais: { code: 'extr_mauvais', min: 76, max: 9999 }, // Qualité de l'air extrêmement mauvaise (>75 µg/m³)
+//     tresMauvais: { code: 'tresMauvais', min: 51, max: 75 }, // Qualité de l'air très mauvaise (51-75 µg/m³)
+//     extrMauvais: { code: 'extrMauvais', min: 76, max: 9999 }, // Qualité de l'air extrêmement mauvaise (>75 µg/m³)
 // };
 
 // // Configuration des seuils pour les particules fines PM10
-// export const seuils_PM10 = {
+// export const seuilsPm10 = {
 //     bon: { code: 'bon', min: 0, max: 20 }, // Qualité de l'air bonne (0-20 µg/m³)
 //     moyen: { code: 'moyen', min: 21, max: 40 }, // Qualité de l'air moyenne (21-40 µg/m³)
 //     degrade: { code: 'degrade', min: 41, max: 50 }, // Qualité de l'air dégradée (41-50 µg/m³)
 //     mauvais: { code: 'mauvais', min: 51, max: 100 }, // Qualité de l'air mauvaise (51-100 µg/m³)
-//     tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 }, // Qualité de l'air très mauvaise (101-150 µg/m³)
-//     extr_mauvais: { code: 'extr_mauvais', min: 151, max: 10000 }, // Qualité de l'air extrêmement mauvaise (>150 µg/m³)
+//     tresMauvais: { code: 'tresMauvais', min: 101, max: 150 }, // Qualité de l'air très mauvaise (101-150 µg/m³)
+//     extrMauvais: { code: 'extrMauvais', min: 151, max: 10000 }, // Qualité de l'air extrêmement mauvaise (>150 µg/m³)
 // };
 
 // // Configuration des seuils pour le dioxyde d'azote (NO2) sur 24h
-// export const seuils_NO2_24h = {
+// export const seuilsNo2_24h = {
 //     bon: { code: 'bon', min: 0, max: 40 }, // Qualité de l'air bonne (0-40 µg/m³)
 //     moyen: { code: 'moyen', min: 41, max: 90 }, // Qualité de l'air moyenne (41-90 µg/m³)
 //     degrade: { code: 'degrade', min: 91, max: 120 }, // Qualité de l'air dégradée (91-120 µg/m³)
 //     mauvais: { code: 'mauvais', min: 121, max: 230 }, // Qualité de l'air mauvaise (121-230 µg/m³)
-//     tres_mauvais: { code: 'tres_mauvais', min: 231, max: 340 }, // Qualité de l'air très mauvaise (231-340 µg/m³)
-//     extr_mauvais: { code: 'extr_mauvais', min: 341, max: 9999 }, // Qualité de l'air extrêmement mauvaise (>340 µg/m³)
+//     tresMauvais: { code: 'tresMauvais', min: 231, max: 340 }, // Qualité de l'air très mauvaise (231-340 µg/m³)
+//     extrMauvais: { code: 'extrMauvais', min: 341, max: 9999 }, // Qualité de l'air extrêmement mauvaise (>340 µg/m³)
 // };
 
 // export const seuilsO3_24h = {
@@ -124,47 +124,47 @@ export const pas_de_temps = {
 //     moyen: { code: 'moyen', min: 101, max: 120 },
 //     degrade: { code: 'degrade', min: 121, max: 140 },
 //     mauvais: { code: 'mauvais', min: 141, max: 160 },
-//     tres_mauvais: { code: 'tres_mauvais', min: 161, max: 180 },
-//     extr_mauvais: { code: 'extr_mauvais', min: 181, max: 9999 },
+//     tresMauvais: { code: 'tresMauvais', min: 161, max: 180 },
+//     extrMauvais: { code: 'extrMauvais', min: 181, max: 9999 },
 // };
 
-// export const seuilsSO2_24h = {
+// export const seuilsSo2_24h = {
 //     bon: { code: 'bon', min: 0, max: 40 },
 //     moyen: { code: 'moyen', min: 41, max: 80 },
 //     degrade: { code: 'degrade', min: 81, max: 120 },
 //     mauvais: { code: 'mauvais', min: 121, max: 160 },
-//     tres_mauvais: { code: 'tres_mauvais', min: 161, max: 200 },
-//     extr_mauvais: { code: 'extr_mauvais', min: 201, max: 9999 },
+//     tresMauvais: { code: 'tresMauvais', min: 161, max: 200 },
+//     extrMauvais: { code: 'extrMauvais', min: 201, max: 9999 },
 // };
 
 // Configuration des seuils pour les particules fines PM1 et PM2.5
-export const seuils_PM1_PM25 = {
+export const seuilsPm1Pm25 = {
     bon: { code: 'bon', min: 0, max: 5 },
     moyen: { code: 'moyen', min: 6, max: 15 },
     degrade: { code: 'degrade', min: 16, max: 50 },
     mauvais: { code: 'mauvais', min: 51, max: 90 },
-    tres_mauvais: { code: 'tres_mauvais', min: 91, max: 140 },
-    extr_mauvais: { code: 'extr_mauvais', min: 141, max: 9999 },
+    tresMauvais: { code: 'tresMauvais', min: 91, max: 140 },
+    extrMauvais: { code: 'extrMauvais', min: 141, max: 9999 },
 };
 
 // Configuration des seuils pour les particules fines PM10
-export const seuils_PM10 = {
+export const seuilsPm10 = {
     bon: { code: 'bon', min: 0, max: 15 },
     moyen: { code: 'moyen', min: 16, max: 45 },
     degrade: { code: 'degrade', min: 46, max: 120 },
     mauvais: { code: 'mauvais', min: 121, max: 195 },
-    tres_mauvais: { code: 'tres_mauvais', min: 196, max: 270 },
-    extr_mauvais: { code: 'extr_mauvais', min: 271, max: 10000 },
+    tresMauvais: { code: 'tresMauvais', min: 196, max: 270 },
+    extrMauvais: { code: 'extrMauvais', min: 271, max: 10000 },
 };
 
 // Configuration des seuils pour le dioxyde d'azote (NO2)
-export const seuils_NO2 = {
+export const seuilsNo2 = {
     bon: { code: 'bon', min: 0, max: 10 },
     moyen: { code: 'moyen', min: 11, max: 25 },
     degrade: { code: 'degrade', min: 26, max: 60 },
     mauvais: { code: 'mauvais', min: 61, max: 100 },
-    tres_mauvais: { code: 'tres_mauvais', min: 101, max: 150 },
-    extr_mauvais: { code: 'extr_mauvais', min: 151, max: 9999 },
+    tresMauvais: { code: 'tresMauvais', min: 101, max: 150 },
+    extrMauvais: { code: 'extrMauvais', min: 151, max: 9999 },
 };
 
 export const seuilsO3 = {
@@ -172,17 +172,17 @@ export const seuilsO3 = {
     moyen: { code: 'moyen', min: 61, max: 100 },
     degrade: { code: 'degrade', min: 101, max: 120 },
     mauvais: { code: 'mauvais', min: 121, max: 160 },
-    tres_mauvais: { code: 'tres_mauvais', min: 161, max: 180 },
-    extr_mauvais: { code: 'extr_mauvais', min: 181, max: 9999 },
+    tresMauvais: { code: 'tresMauvais', min: 161, max: 180 },
+    extrMauvais: { code: 'extrMauvais', min: 181, max: 9999 },
 };
 
-export const seuilsSO2 = {
+export const seuilsSo2 = {
     bon: { code: 'bon', min: 0, max: 20 },
     moyen: { code: 'moyen', min: 21, max: 40 },
     degrade: { code: 'degrade', min: 41, max: 125 },
     mauvais: { code: 'mauvais', min: 126, max: 190 },
-    tres_mauvais: { code: 'tres_mauvais', min: 191, max: 275 },
-    extr_mauvais: { code: 'extr_mauvais', min: 276, max: 9999 },
+    tresMauvais: { code: 'tresMauvais', min: 191, max: 275 },
+    extrMauvais: { code: 'extrMauvais', min: 276, max: 9999 },
 };
 
 // Définition des couleurs pour les polluants dans les graphiques

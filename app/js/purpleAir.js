@@ -33,8 +33,8 @@ const COLOR_TO_FILENAME = {
     moyen: 'moyen',
     degrade: 'degrade',
     mauvais: 'mauvais',
-    tres_mauvais: 'tresMauvais',
-    extr_mauvais: 'extrMauvais',
+    tresMauvais: 'tresMauvais',
+    extrMauvais: 'extrMauvais',
 };
 
 export function loadPurpleAir() {
@@ -59,13 +59,13 @@ export function loadPurpleAir() {
     purpleairLayer.clearLayers();
 
     // Récupération des paramètres de configuration
-    const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
+    const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
     const mesures = getArrayFromLocalStorage('mesuresLocal');
 
-    // console.log('Paramètres de configuration:', { pas_de_temps, mesures });
+    // console.log('Paramètres de configuration:', { pasDeTemps, mesures });
 
     // Vérification si le pas de temps est instantané
-    if (pas_de_temps[0] !== 'instantane' && pas_de_temps[0] !== '2min') {
+    if (pasDeTemps[0] !== 'instantane' && pasDeTemps[0] !== '2min') {
         createCustomToast({
             message:
                 "PurpleAir n'est disponible que pour les pas de temps instantané ou 2 minutes",
@@ -126,7 +126,7 @@ export function loadPurpleAir() {
                         // });
                         createPurpleAirMarker(
                             sensorData,
-                            pas_de_temps[0],
+                            pasDeTemps[0],
                             mesures[0]
                         );
                     } else {
@@ -148,7 +148,7 @@ export function loadPurpleAir() {
         });
 }
 
-function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
+function createPurpleAirMarker(sensorData, pasDeTemps, mesure) {
     // Vérification supplémentaire des coordonnées
     const lat = sensorData[FIELD_INDEX.latitude];
     const lng = sensorData[FIELD_INDEX.longitude];
@@ -185,7 +185,7 @@ function createPurpleAirMarker(sensorData, pas_de_temps, mesure) {
     // console.log('Valeur finale du capteur:', {
     //     name: sensorData[FIELD_INDEX.name],
     //     value: value,
-    //     pas_de_temps: pas_de_temps,
+    //     pasDeTemps: pasDeTemps,
     //     mesure: mesure,
     //     lat: lat,
     //     lng: lng,
@@ -275,8 +275,8 @@ function showPurpleAirPopup(sensorData) {
         .forEach((el) => el.remove());
 
     // Récupérer le pas de temps sélectionné
-    const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
-    console.log('Pas de temps sélectionné:', pas_de_temps);
+    const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+    console.log('Pas de temps sélectionné:', pasDeTemps);
 
     // Utiliser uniquement les valeurs ATM
     const pm1Value = sensorData[FIELD_INDEX.pm1_0_atm];
@@ -383,8 +383,8 @@ function getColorForSeuil(seuil) {
         moyen: '#51ccaa', // Vert
         degrade: '#ede663', // Jaune
         mauvais: '#ed5e58', // Rouge clair
-        tres_mauvais: '#881b33', // Rouge foncé
-        extr_mauvais: '#74287d', // Violet
+        tresMauvais: '#881b33', // Rouge foncé
+        extrMauvais: '#74287d', // Violet
     };
     return colors[seuil] || '#cccccc';
 }

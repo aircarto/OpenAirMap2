@@ -1,7 +1,6 @@
 import { signalair_layer } from './layers.js';
 import { map } from './mapConfig.js';
 
-
 // Configuration des types de signalements
 const signalair_json = {
     odeur: {
@@ -57,9 +56,9 @@ export function loadSignalAir(startDate, endDate) {
     );
 
     // Boucle sur chaque type de signalement
-    for (let key in signalair_json) {
+    for (const key in signalair_json) {
         const { code, url, img } = signalair_json[key];
-        let full_url;
+        let fullUrl;
 
         // Vérification spéciale pour le type visuel
         if (code === 'visuel') {
@@ -67,14 +66,14 @@ export function loadSignalAir(startDate, endDate) {
             //     `[SignalAir] Vérification de l'URL pour le type visuel`
             // );
             // On essaie avec une période plus longue pour voir si c'est un problème de données
-            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/2025-01-01/${endDate}`;
-            // console.log(`[SignalAir] URL modifiée pour visuel: ${full_url}`);
+            fullUrl = `https://www.signalair.eu/fr/flux/geojson/${url}/2025-01-01/${endDate}`;
+            // console.log(`[SignalAir] URL modifiée pour visuel: ${fullUrl}`);
         } else {
-            full_url = `https://www.signalair.eu/fr/flux/geojson/${url}/${startDate}/${endDate}`;
-            // console.log(`[SignalAir] URL pour ${code}: ${full_url}`);
+            fullUrl = `https://www.signalair.eu/fr/flux/geojson/${url}/${startDate}/${endDate}`;
+            // console.log(`[SignalAir] URL pour ${code}: ${fullUrl}`);
         }
 
-        fetch(full_url)
+        fetch(fullUrl)
             .then((response) => {
                 // console.log(
                 //     `[SignalAir] Statut de la réponse pour ${code}:`,

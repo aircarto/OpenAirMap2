@@ -25,20 +25,17 @@ import { loadPurpleAir } from './purpleAir.js';
 export function loadSource(source, isInitialLoad = false) {
     console.log('Loading data for ' + source);
     try {
-        // Gestion de la désactivation automatique des sources mod_pm et icairh
-        if (source === 'mod_pm' || source === 'icairh') {
+        // Gestion de la désactivation automatique des sources modPm et icairh
+        if (source === 'modPm' || source === 'icairh') {
             const activeSources = getArrayFromLocalStorage('sources_local');
-            if (source === 'mod_pm' && activeSources.includes('icairh')) {
+            if (source === 'modPm' && activeSources.includes('icairh')) {
                 removeItemFromLocalStorageArray('sources_local', 'icairh');
                 clearLayer('icairh');
                 updateButtonDisplay('icairh', false);
-            } else if (
-                source === 'icairh' &&
-                activeSources.includes('mod_pm')
-            ) {
-                removeItemFromLocalStorageArray('sources_local', 'mod_pm');
-                clearLayer('mod_pm');
-                updateButtonDisplay('mod_pm', false);
+            } else if (source === 'icairh' && activeSources.includes('modPm')) {
+                removeItemFromLocalStorageArray('sources_local', 'modPm');
+                clearLayer('modPm');
+                updateButtonDisplay('modPm', false);
             }
         }
 
@@ -47,19 +44,19 @@ export function loadSource(source, isInitialLoad = false) {
             case 'nebuleair':
                 loadNebuleAir();
                 break;
-            case 'sensor_community':
+            case 'sensorCommunity':
                 loadSensorCommunity();
                 break;
             case 'purpleair':
                 loadPurpleAir();
                 break;
-            case 'atmo_micro':
+            case 'atmoMicro':
                 loadAtmoSudMicroStation();
                 break;
-            case 'atmo_ref':
+            case 'atmoRef':
                 loadAtmoSudStationsRef();
                 break;
-            case 'mod_pm':
+            case 'modPm':
                 loadModPM(getArrayFromLocalStorage('mesuresLocal')[0]);
                 break;
             case 'icairh':
@@ -95,14 +92,14 @@ export function checkInitialConditions() {
     const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
 
     // Vérifier d'abord les conditions de pas de temps sans notification
-    if (activeSources.includes('atmo_micro') && selectedTimeStep === 'd') {
-        removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
-        clearLayer('atmo_micro');
+    if (activeSources.includes('atmoMicro') && selectedTimeStep === 'd') {
+        removeItemFromLocalStorageArray('sources_local', 'atmoMicro');
+        clearLayer('atmoMicro');
     }
 
-    if (activeSources.includes('atmo_ref') && selectedTimeStep === '2min') {
-        removeItemFromLocalStorageArray('sources_local', 'atmo_ref');
-        clearLayer('atmo_ref');
+    if (activeSources.includes('atmoRef') && selectedTimeStep === '2min') {
+        removeItemFromLocalStorageArray('sources_local', 'atmoRef');
+        clearLayer('atmoRef');
     }
 
     // Charger les sources actives au démarrage
@@ -188,7 +185,7 @@ export function updateButtonDisplay() {
         // console.log('Source active trouvée:', sourceCode);
 
         // Vérifications spécifiques pour chaque source
-        if (sourceCode === 'atmo_micro' && selectedTimeStep === 'd') {
+        if (sourceCode === 'atmoMicro' && selectedTimeStep === 'd') {
             toastManager.atmoMicroTimeStepDailyWarning();
             return;
         }
@@ -209,7 +206,7 @@ export function updateButtonDisplay() {
         }
 
         if (
-            sourceCode === 'atmo_micro' &&
+            sourceCode === 'atmoMicro' &&
             ['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(selectedMeasure)
         ) {
             removeItemFromLocalStorageArray('sources_local', sourceCode);
@@ -330,7 +327,7 @@ function handleSourceClick(source, button) {
     }
 
     // Vérification spéciale pour AtmoSud Stations de référence
-    if (sourceCode === 'atmo_ref' && selectedTimeStep === '2min') {
+    if (sourceCode === 'atmoRef' && selectedTimeStep === '2min') {
         createCustomToast({
             message: `Le pas de temps 2 minutes n'est pas disponible pour les stations de référence AtmoSud.`,
             type: 'warning',
@@ -370,9 +367,9 @@ export function handleTimeStepChange(timeStep) {
 
     // Vérification pour les modélisations
     if (timeStep === 'd') {
-        if (activeSources.includes('mod_pm')) {
-            removeItemFromLocalStorageArray('sources_local', 'mod_pm');
-            clearLayer('mod_pm');
+        if (activeSources.includes('modPm')) {
+            removeItemFromLocalStorageArray('sources_local', 'modPm');
+            clearLayer('modPm');
             createCustomToast({
                 message:
                     "Les modélisations ne sont disponibles qu'en pas de temps horaire ou inférieur.",
@@ -409,9 +406,9 @@ export function handleTimeStepChange(timeStep) {
     }
 
     // Vérification pour AtmoSud Micro-stations
-    if (timeStep === 'd' && activeSources.includes('atmo_micro')) {
-        removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
-        clearLayer('atmo_micro');
+    if (timeStep === 'd' && activeSources.includes('atmoMicro')) {
+        removeItemFromLocalStorageArray('sources_local', 'atmoMicro');
+        clearLayer('atmoMicro');
     }
 
     // Mettre à jour l'affichage des boutons

@@ -50,12 +50,12 @@ export function initializeMicroStationMarkers(dataCapteurSite) {
  * Traite et affiche les stations sur la carte microstation atmosud
  * @param {Array} filteredData - Données filtrées des stations
  * @param {Array} dataCapteurSite - Données des capteurs
- * @param {string} pas_de_temps_atmo - Pas de temps Atmo
+ * @param {string} pasDeTempsAtmo - Pas de temps Atmo
  */
 export async function processAndDisplayStations(
     filteredData,
     dataCapteurSite,
-    pas_de_temps_atmo
+    pasDeTempsAtmo
 ) {
     for (const value of filteredData) {
         if (!validateStationData(value)) continue;
@@ -67,11 +67,11 @@ export async function processAndDisplayStations(
             textMarker,
             value,
             dataCapteurSite,
-            pas_de_temps_atmo
+            pasDeTempsAtmo
         );
     }
 
-    createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo);
+    createDefaultMarkers(dataCapteurSite, pasDeTempsAtmo);
 }
 
 /**
@@ -152,9 +152,9 @@ function createMarkerIcon(value) {
 
     if (colorCode !== 'default') {
         const iconColorCode =
-            colorCode === 'tres_mauvais'
+            colorCode === 'tresMauvais'
                 ? 'tresMauvais'
-                : colorCode === 'extr_mauvais'
+                : colorCode === 'extrMauvais'
                   ? 'ExtrMauvais'
                   : colorCode;
         icon_param.iconUrl = `img/microStationsAtmoSud/microStationAtmoSud_${iconColorCode}.png`;
@@ -264,14 +264,14 @@ function createTextMarker(value) {
  * @param {L.Marker} textMarker - Marqueur de texte
  * @param {Object} value - Données de la station
  * @param {Array} dataCapteurSite - Données des capteurs
- * @param {string} pas_de_temps_atmo - Pas de temps Atmo
+ * @param {string} pasDeTempsAtmo - Pas de temps Atmo
  */
 function setupMarkerEvents(
     microStationMarker,
     textMarker,
     value,
     dataCapteurSite,
-    pas_de_temps_atmo
+    pasDeTempsAtmo
 ) {
     const highlightMarker = (e) => {
         const zIndex = 2000;
@@ -322,7 +322,7 @@ function setupMarkerEvents(
                 microStationMarker,
                 textMarker,
                 value,
-                pas_de_temps_atmo
+                pasDeTempsAtmo
             )
         );
 }
@@ -332,19 +332,19 @@ function setupMarkerEvents(
  * condition spécifique pour capteur type nebuleair et pas de temps 2min
  * trigger createDefaultMarker function
  * @param {Array} dataCapteurSite - Données des capteurs
- * @param {string} pas_de_temps_atmo - Pas de temps Atmo
+ * @param {string} pasDeTempsAtmo - Pas de temps Atmo
  */
-function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
-    const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
+function createDefaultMarkers(dataCapteurSite, pasDeTempsAtmo) {
+    const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
 
     Object.values(window.microStationMarkers).forEach((station) => {
         if (!station.hasValue) {
-            if (pas_de_temps[0] === '2min') {
+            if (pasDeTemps[0] === '2min') {
                 if (station.data.modele_capteur === 'NebuleAir') {
                     const defaultMarker = createDefaultMarker(
                         station.data,
                         dataCapteurSite,
-                        pas_de_temps_atmo
+                        pasDeTempsAtmo
                     );
                     station.marker = defaultMarker;
                 }
@@ -352,7 +352,7 @@ function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
                 const defaultMarker = createDefaultMarker(
                     station.data,
                     dataCapteurSite,
-                    pas_de_temps_atmo
+                    pasDeTempsAtmo
                 );
                 station.marker = defaultMarker;
             }
@@ -364,10 +364,10 @@ function createDefaultMarkers(dataCapteurSite, pas_de_temps_atmo) {
  * Crée un marqueur par défaut microstation atmosud
  * @param {Object} stationData - Capteurs pour lequel on crée le marqueur
  * @param {Array} dataCapteurSite - Liste des capteurs
- * @param {string} pas_de_temps_atmo - Pas de temps Atmo
+ * @param {string} pasDeTempsAtmo - Pas de temps Atmo
  * @returns {L.Marker} - Marqueur créé
  */
-function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
+function createDefaultMarker(stationData, dataCapteurSite, pasDeTempsAtmo) {
     const defaultMarker = L.marker([stationData.lat, stationData.lon], {
         icon: L.icon({
             iconUrl: 'img/microStationsAtmoSud/microStationAtmoSud_default.png',
@@ -383,12 +383,7 @@ function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
 
     defaultMarker
         .on('click', () =>
-            handleMarkerClick(
-                defaultMarker,
-                null,
-                stationData,
-                pas_de_temps_atmo
-            )
+            handleMarkerClick(defaultMarker, null, stationData, pasDeTempsAtmo)
         )
         .on('mouseover', (e) => {
             defaultMarker.setZIndexOffset(1000);
@@ -431,9 +426,9 @@ function createDefaultMarker(stationData, dataCapteurSite, pas_de_temps_atmo) {
  * @param {L.Marker} marker - Marqueur cliqué
  * @param {L.Marker} textMarker - Marqueur de texte
  * @param {Object} stationData - Données de la station
- * @param {string} pas_de_temps_atmo - Pas de temps Atmo
+ * @param {string} pasDeTempsAtmo - Pas de temps Atmo
  */
-function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
+function handleMarkerClick(marker, textMarker, stationData, pasDeTempsAtmo) {
     console.log('click on micro station:', stationData.nom_site);
 
     // Réinitialiser tous les autres types de marqueurs
@@ -468,12 +463,7 @@ function handleMarkerClick(marker, textMarker, stationData, pas_de_temps_atmo) {
     const mesures =
         state.mesuresArray || getArrayFromLocalStorage('mesuresLocal');
 
-    openSidePanelMicroStation(
-        stationData,
-        pas_de_temps_atmo,
-        historique,
-        mesures
-    );
+    openSidePanelMicroStation(stationData, pasDeTempsAtmo, historique, mesures);
 }
 
 /**
@@ -1246,11 +1236,11 @@ const nebuleAirMarkerState = {
 /**
  * Crée un marqueur pour un capteur NebuleAir
  * @param {Object} value - Données du capteur
- * @param {string} mesure_maj_pas_de_temps - Mesure avec pas de temps
+ * @param {string} mesure_maj_pasDeTemps - Mesure avec pas de temps
  * @param {Array} mesures - Mesures sélectionnées
  * @returns {Object} - Marqueurs créés
  */
-export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
+export function createNebuleAirMarker(value, mesure_maj_pasDeTemps, mesures) {
     const icon_param = {
         iconUrl: 'img/nebuleair/nebuleAir_default.png',
         iconSize: [40, 40],
@@ -1259,7 +1249,7 @@ export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
 
     if (value.connected) {
         icon_param.iconSize = [50, 50];
-        const valueToCheck = value[mesure_maj_pas_de_temps];
+        const valueToCheck = value[mesure_maj_pasDeTemps];
         const colorCode = getColorCodeForValue(valueToCheck, mesures);
         if (colorCode !== 'default') {
             icon_param.iconUrl =
@@ -1282,7 +1272,7 @@ export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
     if (value.connected) {
         const textMarker = createNebuleAirTextMarker(
             value,
-            mesure_maj_pas_de_temps
+            mesure_maj_pasDeTemps
         );
         setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value);
         return { nebuleAirMarker, textMarker };
@@ -1294,11 +1284,11 @@ export function createNebuleAirMarker(value, mesure_maj_pas_de_temps, mesures) {
 /**
  * Crée un marqueur de texte pour un capteur NebuleAir
  * @param {Object} value - Données du capteur
- * @param {string} mesure_maj_pas_de_temps - Mesure avec pas de temps
+ * @param {string} mesure_maj_pasDeTemps - Mesure avec pas de temps
  * @returns {L.Marker} - Marqueur de texte
  */
-function createNebuleAirTextMarker(value, mesure_maj_pas_de_temps) {
-    const roundedvalue = Math.round(parseFloat(value[mesure_maj_pas_de_temps]));
+function createNebuleAirTextMarker(value, mesure_maj_pasDeTemps) {
+    const roundedvalue = Math.round(parseFloat(value[mesure_maj_pasDeTemps]));
     let textSize = 32;
     let x_position = -10;
     let y_position = 38;
@@ -1452,8 +1442,7 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
         // Appel de la fonction d'ouverture du panneau latéral
         openSidePanelNebuleAir(
             value,
-            value.pas_de_temps ||
-                getArrayFromLocalStorage('pasDeTempsLocal')[0],
+            value.pasDeTemps || getArrayFromLocalStorage('pasDeTempsLocal')[0],
             value.historiqueChart || '24h',
             value.mesures || getArrayFromLocalStorage('mesuresLocal')
         );
@@ -1570,11 +1559,11 @@ const sensorCommunityMarkerState = {
 /**
  * Crée un marqueur pour un capteur Sensor.Community
  * @param {Object} sensor - Données du capteur
- * @param {string} pas_de_temps - Pas de temps
+ * @param {string} pasDeTemps - Pas de temps
  * @param {string} mesure - Mesure sélectionnée
  * @returns {Object} - Marqueurs créés
  */
-export function createSensorCommunityMarker(sensor, pas_de_temps, mesure) {
+export function createSensorCommunityMarker(sensor, pasDeTemps, mesure) {
     // Vérification si le capteur a des données pour la mesure sélectionnée
     if (!sensor.sensordatavalues || sensor.sensordatavalues.length === 0) {
         return null;
@@ -1602,9 +1591,9 @@ export function createSensorCommunityMarker(sensor, pas_de_temps, mesure) {
     if (colorCode !== 'default') {
         // Conversion des codes de couleur pour correspondre aux noms de fichiers
         const fileColorCode =
-            colorCode === 'tres_mauvais'
+            colorCode === 'tresMauvais'
                 ? 'tresMauvais'
-                : colorCode === 'extr_mauvais'
+                : colorCode === 'extrMauvais'
                   ? 'extMauvais'
                   : colorCode;
         icon_param.iconUrl = `img/SensorCommunity/SensorCommunity_${fileColorCode}.png`;
@@ -1822,7 +1811,7 @@ function setupSensorCommunityMarkerEvents(
         window.globalSelectedDeviceId = sensor.id;
 
         // Récupération des paramètres de configuration
-        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+        const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
         const mesures = getArrayFromLocalStorage('mesuresLocal');
         const mesure = mesures[0];
 

@@ -3,14 +3,14 @@
 // couleurs des points en fonction des seuils
 
 import {
-    seuils_PM10,
-    seuils_NO2,
+    seuilsPm10,
+    seuilsNo2,
     seuilsO3,
-    seuilsSO2,
-    seuils_PM1_PM25,
+    seuilsSo2,
+    seuilsPm1Pm25,
     sources,
     mesures,
-    pas_de_temps,
+    pasDeTemps,
 } from './appConfig.js';
 
 // Local storage utils
@@ -295,15 +295,15 @@ export function updateTimeDisplay() {
 // Fonction pour obtenir les seuils appropriés pour un polluant donné
 export function getThresholdsForPollutant(pollutant) {
     if (pollutant === 'pm10') {
-        return seuils_PM10;
+        return seuilsPm10;
     } else if (pollutant === 'no2') {
-        return seuils_NO2;
+        return seuilsNo2;
     } else if (pollutant === 'o3') {
         return seuilsO3;
     } else if (pollutant === 'so2') {
-        return seuilsSO2;
+        return seuilsSo2;
     } else {
-        return seuils_PM1_PM25;
+        return seuilsPm1Pm25;
     }
 }
 
@@ -313,7 +313,7 @@ export function getColorCodeForValue(value, pollutant) {
     let colorCode = 'default';
     const roundedValue = Math.round(parseFloat(value));
 
-    for (let key in thresholds) {
+    for (const key in thresholds) {
         const min = thresholds[key].min;
         const max = thresholds[key].max;
 
@@ -328,7 +328,7 @@ export function getColorCodeForValue(value, pollutant) {
 
 // Fonction pour vérifier si une valeur est présente dans un objet
 export function isValueInObject(obj, value) {
-    for (let key in obj) {
+    for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
             if (obj[key] === value) {
                 return true;
@@ -379,7 +379,7 @@ export function initializeDefaultValues() {
     // Initialiser le pas de temps sélectionné
     if (!localStorage.getItem('pasDeTempsLocal')) {
         const defaultTimeStep =
-            Object.values(pas_de_temps).find((timeStep) => timeStep.activated)
+            Object.values(pasDeTemps).find((timeStep) => timeStep.activated)
                 ?.code || '2min';
         localStorage.setItem(
             'pasDeTempsLocal',

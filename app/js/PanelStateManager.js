@@ -1,8 +1,8 @@
 export class PanelStateManager {
     constructor() {
         this.state = {
-            atmo_ref: this.createDefaultSourceState(),
-            atmo_micro: this.createDefaultSourceState(),
+            atmoRef: this.createDefaultSourceState(),
+            atmoMicro: this.createDefaultSourceState(),
             nebuleair: this.createDefaultSourceState(),
         };
         this.currentSource = null;

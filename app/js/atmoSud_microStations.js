@@ -1,16 +1,13 @@
+/* eslint-env browser */
 // Récupération des données des micro-stations AtmoSud
 // Cette fonction charge les données des micro-stations AtmoSud et les affiche sur la carte
 
 import { atmoMicroLayer } from './layers.js';
-import {
-    formatPollutantName,
-    getArrayFromLocalStorage,
-    getColorCodeForValue,
-} from './utils.js';
+import { formatPollutantName, getArrayFromLocalStorage } from './utils.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
-import { API_atmoSud } from '../config.js';
+import { apiAtmoSud } from '../config.js';
 import { openSidePanelGeneric } from './sidePanel.js';
 import { createCustomToast } from './toaster.js';
 import {
@@ -22,10 +19,10 @@ import { POLLUTANT_COLORS } from './appConfig.js';
 // Constantes
 
 // Éléments DOM
-const card1_img = document.getElementById('card1_img');
-const card1_title = document.getElementById('card1_title');
-const card1_text = document.getElementById('card1_text');
-const card2_link = document.getElementById('card2_link');
+const card1Img = document.getElementById('card1Img');
+const card1Title = document.getElementById('card1Title');
+const card1Text = document.getElementById('card1Text');
+const card2Link = document.getElementById('card2Link');
 
 // État global
 const state = {
@@ -56,27 +53,27 @@ let yAxisMaxValue = 90;
  * Charge les micro-stations AtmoSud sur la carte
  * @returns {Promise<void>}
  */
-export async function loadAtmoSudMicroStation() {
+export const loadAtmoSudMicroStation = async () => {
     try {
         atmoMicroLayer.clearLayers();
-        const pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
-        const pas_de_temps_atmo = convertTimeStep(pas_de_temps);
+        const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
+        const pasDeTempsAtmo = convertTimeStep(pasDeTemps);
 
-        if (pas_de_temps_atmo === 'd') return;
+        if (pasDeTempsAtmo === 'd') return;
 
         const mesures = getArrayFromLocalStorage('mesuresLocal');
         if (!validateMesures(mesures[0])) return;
 
         state.mesuresArray = [...mesures];
-        const mesures_atmo = mesures[0] === 'pm25' ? ['pm2.5'] : mesures;
+        const mesuresAtmo = mesures[0] === 'pm25' ? ['pm2.5'] : mesures;
 
-        const dataCapteurSite = await fetchCapteurSites(mesures_atmo);
+        const dataCapteurSite = await fetchCapteurSites(mesuresAtmo);
         initializeMicroStationMarkers(dataCapteurSite);
 
-        const data = await fetchDernieresMesures(mesures_atmo, pas_de_temps);
+        const data = await fetchDernieresMesures(mesuresAtmo, pasDeTemps);
         if (!validateData(data)) return;
 
-        const filteredData = filterAndProcessData(data, pas_de_temps[0]);
+        const filteredData = filterAndProcessData(data, pasDeTemps[0]);
         if (filteredData.length === 0) {
             showNoDataWarning();
             return;
@@ -85,18 +82,18 @@ export async function loadAtmoSudMicroStation() {
         await processAndDisplayStations(
             filteredData,
             dataCapteurSite,
-            pas_de_temps_atmo
+            pasDeTempsAtmo
         );
     } catch (error) {
         handleError('loadAtmoSudMicroStation', error);
     }
-}
+};
 
 /**
  * Fonctions utilitaires pour la gestion des données
  */
 
-function convertTimeStep(pas_de_temps) {
+const convertTimeStep = (pasDeTemps) => {
     const timeStepMap = {
         instantane: 'brute',
         '2min': 'brute',
@@ -105,60 +102,60 @@ function convertTimeStep(pas_de_temps) {
         d: 'd',
     };
 
-    const converted = timeStepMap[pas_de_temps] || 'horaire';
+    const converted = timeStepMap[pasDeTemps] || 'horaire';
     state.pasDeTempsChart = converted;
     return converted;
-}
+};
 
-function validateMesures(mesure) {
+const validateMesures = (mesure) => {
     if (['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(mesure)) {
         console.warn('Mesure non supportée:', mesure);
         return false;
     }
     return true;
-}
+};
 
-async function fetchCapteurSites(mesures_atmo) {
+const fetchCapteurSites = async (mesuresAtmo) => {
     const fullUrlCapteurSite =
-        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_sites}?format=json&variable=${mesures_atmo}&actifs=2880`.replace(
+        `${apiAtmoSud.urlBase}${apiAtmoSud.urlCapteursSites}?format=json&variable=${mesuresAtmo}&actifs=2880`.replace(
             /\s+/g,
             ''
         );
     return await fetchAPI(fullUrlCapteurSite);
-}
+};
 
-async function fetchDernieresMesures(mesures_atmo, pas_de_temps) {
+const fetchDernieresMesures = async (mesuresAtmo, pasDeTemps) => {
     let delais = '';
-    if (pas_de_temps === 'h') {
+    if (pasDeTemps === 'h') {
         delais = '64';
-    } else if (pas_de_temps === 'qh') {
+    } else if (pasDeTemps === 'qh') {
         delais = '19';
-    } else if (pas_de_temps === '2min') {
+    } else if (pasDeTemps === '2min') {
         delais = '10';
-    } else if (pas_de_temps === 'instantane') {
+    } else if (pasDeTemps === 'instantane') {
         delais = '181';
     }
-    pas_de_temps = convertTimeStep(pas_de_temps);
+    pasDeTemps = convertTimeStep(pasDeTemps);
 
-    const full_url_derniere =
-        `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures_dernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesures_atmo}&aggregation=${pas_de_temps}&delais=${delais}`.replace(
+    const fullUrlDerniere =
+        `${apiAtmoSud.urlBase}${apiAtmoSud.urlCapteursMesuresDernieres}?format=json&download=false&valeur_brute=true&type_capteur=true&variable=${mesuresAtmo}&aggregation=${pasDeTemps}&delais=${delais}`.replace(
             /\s+/g,
             ''
         );
-    return await fetchAPI(full_url_derniere);
-}
+    return await fetchAPI(fullUrlDerniere);
+};
 
-function validateData(data) {
+const validateData = (data) => {
     if (!Array.isArray(data)) {
         throw new Error('Les données reçues ne sont pas au bon format');
     }
     return true;
-}
+};
 
-function filterAndProcessData(data, pas_de_temps) {
+const filterAndProcessData = (data, pasDeTemps) => {
     let filteredData = data;
-    if (pas_de_temps === '2min') {
-        filteredData = data.filter((item) => item.pas_de_temps === 120);
+    if (pasDeTemps === '2min') {
+        filteredData = data.filter((item) => item.pasDeTemps === 120);
     }
     const uniqueMeasures = {};
     filteredData.forEach((measure) => {
@@ -172,9 +169,9 @@ function filterAndProcessData(data, pas_de_temps) {
     });
 
     return Object.values(uniqueMeasures);
-}
+};
 
-function showNoDataWarning() {
+const showNoDataWarning = () => {
     createCustomToast({
         message: 'Aucune donnée disponible pour les critères sélectionnés',
         type: 'warning',
@@ -182,92 +179,92 @@ function showNoDataWarning() {
         icon: 'exclamation-triangle',
         timer: 5000,
     });
-}
+};
 
 /**
  * Fonctions de gestion du panneau latéral
  */
 
-export function openSidePanelMicroStation(
+export const openSidePanelMicroStation = (
     data,
-    pas_de_temps_atmo,
+    pasDeTempsAtmo,
     historique,
-    mesures_atmo
-) {
-    if (!isSourceActive('atmo_micro')) return;
+    mesuresAtmo
+) => {
+    if (!isSourceActive('atmoMicro')) return;
 
     updateCardInfo(data);
     console.log('openSidePanelMicroStation');
     console.log('data: ', data);
-    console.log('pas_de_temps_atmo: ', pas_de_temps_atmo);
+    console.log('pasDeTempsAtmo: ', pasDeTempsAtmo);
     console.log('historique: ', historique);
-    console.log('mesures_atmo: ', mesures_atmo);
-    if (pas_de_temps_atmo === 'quart-horaire') {
-        pas_de_temps_atmo = 'qh';
-    } else if (pas_de_temps_atmo === 'journalière') {
-        pas_de_temps_atmo = 'd';
-    } else if (pas_de_temps_atmo === 'instantanée') {
-        pas_de_temps_atmo = 'brute';
-    } else if (pas_de_temps_atmo === 'horaire') {
-        pas_de_temps_atmo = 'h';
+    console.log('mesuresAtmo: ', mesuresAtmo);
+    if (pasDeTempsAtmo === 'quart-horaire') {
+        pasDeTempsAtmo = 'qh';
+    } else if (pasDeTempsAtmo === 'journalière') {
+        pasDeTempsAtmo = 'd';
+    } else if (pasDeTempsAtmo === 'instantanée') {
+        pasDeTempsAtmo = 'brute';
+    } else if (pasDeTempsAtmo === 'horaire') {
+        pasDeTempsAtmo = 'h';
     }
 
-    panelManager.openPanel('atmo_micro', data.id_site, {
-        pasDeTempsAtmo: pas_de_temps_atmo,
+    panelManager.openPanel('atmoMicro', data.id_site, {
+        pasDeTempsAtmo: pasDeTempsAtmo,
         historiqueChart: historique,
-        mesuresArray: mesures_atmo,
-        pasDeTempsChart: pas_de_temps_atmo,
-        pasDeTemps: pas_de_temps_atmo,
+        mesuresArray: mesuresAtmo,
+        pasDeTempsChart: pasDeTempsAtmo,
+        pasDeTemps: pasDeTempsAtmo,
         customDateRange: state.customDateRange,
     });
 
     openSidePanelGeneric();
-}
+};
 
-function updateCardInfo(data) {
-    card1_img.src = 'img/microStationsAtmoSud/microStation_photo.jpg';
-    card1_title.innerHTML = data.site_info
+const updateCardInfo = (data) => {
+    card1Img.src = 'img/microStationsAtmoSud/microStation_photo.jpg';
+    card1Title.innerHTML = data.site_info
         ? data.site_info.nom_site
         : data.nom_site;
-    card1_subtitle.innerHTML = `Micro-station AtmoSud - ${data.site_info ? data.site_info.modele_capteur : data.modele_capteur}`;
-    card1_text.innerHTML = '';
+    card1Subtitle.innerHTML = `Micro-station AtmoSud - ${data.site_info ? data.site_info.modele_capteur : data.modele_capteur}`;
+    card1Text.innerHTML = '';
 
-    card2_text.innerHTML =
+    card2Text.innerHTML =
         "Les micro-stations sont des capteurs de mesure de la qualité de l'air déployés par AtmoSud pour compléter le réseau de stations de référence.";
-    card2_link.innerHTML = 'AtmoSud.org';
-    card2_link.href = 'https://www.atmosud.org';
-}
+    card2Link.innerHTML = 'AtmoSud.org';
+    card2Link.href = 'https://www.atmosud.org';
+};
 
 /**
  * Fonction principale pour récupérer les données historiques d'une micro-station
  * @param {string} sensorId - Identifiant unique de la station
- * @param {string} pas_de_temps - Période d'agrégation des données ('brute', 'quart-horaire', 'horaire', 'journalier')
+ * @param {string} pasDeTemps - Période d'agrégation des données ('brute', 'quart-horaire', 'horaire', 'journalier')
  * @param {string} historique - Période de temps pour l'historique ('1h', '3h', '24h', '7d', '30d', '365d')
- * @param {Array} mesures_array - Liste des polluants à récupérer (ex: ['pm2.5', 'pm10'])
+ * @param {Array} mesuresArray - Liste des polluants à récupérer (ex: ['pm2.5', 'pm10'])
  * @param {boolean} add_mesure - Indique si on ajoute une mesure (non utilisé actuellement)
- * @param {string} custom_start - Date de début personnalisée (optionnel)
- * @param {string} custom_end - Date de fin personnalisée (optionnel)
+ * @param {string} customStart - Date de début personnalisée (optionnel)
+ * @param {string} customEnd - Date de fin personnalisée (optionnel)
  */
-export async function retreive_historiqueData_microStation(
+export const retreiveHistoriqueDataMicroStation = async (
     sensorId,
-    pas_de_temps,
+    pasDeTemps,
     historique,
-    mesures_array,
-    custom_start = null,
-    custom_end = null
-) {
-    console.log('retreive_historiqueData_microStation');
-    console.log('pas_de_temps: ', pas_de_temps);
-    if (pas_de_temps === 'qh') {
-        pas_de_temps = 'quart-horaire';
-    } else if (pas_de_temps === 'h') {
-        pas_de_temps = 'horaire';
-    } else if (pas_de_temps === 'd') {
-        pas_de_temps = 'journalier';
+    mesuresArray,
+    customStart = null,
+    customEnd = null
+) => {
+    console.log('retreiveHistoriqueDataMicroStation');
+    console.log('pasDeTemps: ', pasDeTemps);
+    if (pasDeTemps === 'qh') {
+        pasDeTemps = 'quart-horaire';
+    } else if (pasDeTemps === 'h') {
+        pasDeTemps = 'horaire';
+    } else if (pasDeTemps === 'd') {
+        pasDeTemps = 'journalier';
     }
-    for (let i = 0; i < mesures_array.length; i++) {
-        if (mesures_array[i] === 'pm25') {
-            mesures_array[i] = 'pm2.5';
+    for (let i = 0; i < mesuresArray.length; i++) {
+        if (mesuresArray[i] === 'pm25') {
+            mesuresArray[i] = 'pm2.5';
         }
     }
     try {
@@ -298,7 +295,7 @@ export async function retreive_historiqueData_microStation(
         }
 
         // Mise à jour des variables d'état
-        state.pasDeTempsChart = pas_de_temps;
+        state.pasDeTempsChart = pasDeTemps;
         state.historiqueChart = historique;
 
         // Construction des paramètres de l'URL avec URLSearchParams pour un encodage correct
@@ -308,21 +305,21 @@ export async function retreive_historiqueData_microStation(
             download: 'false',
             nb_dec: '1',
             valeur_brute: 'true',
-            variable: mesures_array.join(','),
+            variable: mesuresArray.join(','),
             type_capteur: 'true',
         });
 
         // Gestion spéciale du paramètre aggregation selon le pas de temps
-        if (pas_de_temps === '2min') {
+        if (pasDeTemps === '2min') {
             params.append('aggregation', 'brute');
         } else {
-            params.append('aggregation', pas_de_temps);
+            params.append('aggregation', pasDeTemps);
         }
 
         // Ajout des paramètres de date
-        if (custom_start && custom_end) {
-            params.append('debut', custom_start);
-            params.append('fin', custom_end);
+        if (customStart && customEnd) {
+            params.append('debut', customStart);
+            params.append('fin', customEnd);
         } else if (state.customDateRange.start && state.customDateRange.end) {
             params.append('debut', state.customDateRange.start);
             params.append('fin', state.customDateRange.end);
@@ -356,10 +353,10 @@ export async function retreive_historiqueData_microStation(
         }
 
         // Construction de l'URL complète pour l'appel API
-        const full_url = `${API_atmoSud.url_base}${API_atmoSud.url_capteurs_mesures}?${params.toString()}`;
+        const fullUrl = `${apiAtmoSud.urlBase}${apiAtmoSud.urlCapteursMesures}?${params.toString()}`;
 
         // Appel à l'API pour récupérer les données
-        const data = await fetchAPI(full_url);
+        const data = await fetchAPI(fullUrl);
 
         // Vérification de la validité des données reçues
         if (!data || !Array.isArray(data)) {
@@ -373,22 +370,22 @@ export async function retreive_historiqueData_microStation(
         };
 
         // Ajustement de l'intervalle en fonction du pas de temps
-        if (pas_de_temps === '2min') {
+        if (pasDeTemps === '2min') {
             baseIntervalConfig = {
                 timeUnit: 'minute',
                 count: 2,
             };
-        } else if (pas_de_temps === 'quart-horaire') {
+        } else if (pasDeTemps === 'quart-horaire') {
             baseIntervalConfig = {
                 timeUnit: 'minute',
                 count: 15,
             };
-        } else if (pas_de_temps === 'horaire') {
+        } else if (pasDeTemps === 'horaire') {
             baseIntervalConfig = {
                 timeUnit: 'hour',
                 count: 1,
             };
-        } else if (pas_de_temps === 'journalier') {
+        } else if (pasDeTemps === 'journalier') {
             baseIntervalConfig = {
                 timeUnit: 'day',
                 count: 1,
@@ -429,7 +426,7 @@ export async function retreive_historiqueData_microStation(
                 baseIntervalConfig,
                 unite
             );
-            configureCursor(chart, window.amchart_root);
+            const cursor = configureCursor(chart, window.amchart_root);
 
             const seriesData = {};
             data.forEach((item) => {
@@ -455,8 +452,6 @@ export async function retreive_historiqueData_microStation(
 
             const allSeries = [];
             Object.keys(seriesData).forEach((variable) => {
-                const colorKey = variable === 'pm2.5' ? 'pm25' : variable;
-
                 if (seriesData[variable].corrected.length > 0) {
                     allSeries.push(
                         createSeries(
@@ -486,7 +481,12 @@ export async function retreive_historiqueData_microStation(
                 }
             });
 
-            configureLegend(chart, window.amchart_root, allSeries);
+            configureLegend(
+                chart,
+                window.amchart_root,
+                allSeries,
+                mesuresArray
+            );
 
             chart.appear(1000, 100);
             stopSpinner();
@@ -500,10 +500,7 @@ export async function retreive_historiqueData_microStation(
             });
         });
     } catch (error) {
-        console.error(
-            'Erreur dans retreive_historiqueData_microStation:',
-            error
-        );
+        console.error('Erreur dans retreiveHistoriqueDataMicroStation:', error);
         stopSpinner();
         showErrorNotification(error.message);
         // Nettoyage en cas d'erreur
@@ -519,9 +516,9 @@ export async function retreive_historiqueData_microStation(
             window.amchart_root = undefined;
         }
     }
-}
+};
 
-function createChart(root, sensorName) {
+const createChart = (root, sensorName) => {
     const chart = root.container.children.push(
         am5xy.XYChart.new(root, {
             panX: false,
@@ -552,10 +549,10 @@ function createChart(root, sensorName) {
     );
 
     return chart;
-}
+};
 
 // Configuration des axes
-function configureAxes(chart, root, baseInterval, unite) {
+const configureAxes = (chart, root, baseInterval, unite) => {
     const xAxis = chart.xAxes.push(
         am5xy.DateAxis.new(root, {
             maxDeviation: 0.2,
@@ -601,10 +598,10 @@ function configureAxes(chart, root, baseInterval, unite) {
     );
 
     return { xAxis, yAxis };
-}
+};
 
 // Configuration du curseur
-function configureCursor(chart, root) {
+const configureCursor = (chart, root) => {
     const cursor = chart.set(
         'cursor',
         am5xy.XYCursor.new(root, {
@@ -613,10 +610,10 @@ function configureCursor(chart, root) {
     );
     cursor.lineY.set('visible', false);
     return cursor;
-}
+};
 
 // Création d'une série pour un polluant
-function createSeries(
+const createSeries = (
     chart,
     root,
     pollutant,
@@ -624,7 +621,7 @@ function createSeries(
     data,
     type = 'corrigée',
     unite
-) {
+) => {
     console.log('createSeries');
     console.log('pollutant: ', pollutant);
     console.log('axes: ', axes);
@@ -677,9 +674,9 @@ function createSeries(
         compare: polluantCompare,
         type,
     };
-}
+};
 
-function configureLegend(chart, root, allSeries, mesuresArray) {
+const configureLegend = (chart, root, allSeries, mesuresArray) => {
     const legend = chart.children.push(
         am5.Legend.new(root, {
             centerX: am5.percent(50),
@@ -697,19 +694,19 @@ function configureLegend(chart, root, allSeries, mesuresArray) {
 
     legend.data.setAll(chart.series.values);
     return legend;
-}
+};
 
 /**
  * Fonctions de gestion des erreurs et des appels API
  */
 
-function handleError(context, error) {
+const handleError = (context, error) => {
     console.error(`Erreur dans ${context}:`, error);
     showErrorNotification(error.message);
     stopSpinner();
-}
+};
 
-function showErrorNotification(message) {
+const showErrorNotification = (message) => {
     createCustomToast({
         message: message,
         type: 'error',
@@ -717,9 +714,9 @@ function showErrorNotification(message) {
         icon: 'exclamation-circle',
         timer: 5000,
     });
-}
+};
 
-async function fetchAPI(url, options = {}) {
+const fetchAPI = async (url, options = {}) => {
     startSpinner('Chargement des données...');
     try {
         const response = await fetch(url, {
@@ -746,26 +743,26 @@ async function fetchAPI(url, options = {}) {
         showErrorNotification(error.message);
         throw error;
     }
-}
+};
 
 /**
  * Fonctions de gestion du graphique
  */
 
-export function toggleYAxisCapping() {
+export const toggleYAxisCapping = () => {
     isYAxisCapped = !isYAxisCapped;
     updateYAxisMax();
     return isYAxisCapped;
-}
+};
 
-export function setYAxisMaxValue(value) {
+export const setYAxisMaxValue = (value) => {
     yAxisMaxValue = value;
     if (isYAxisCapped) {
         updateYAxisMax();
     }
-}
+};
 
-function updateYAxisMax() {
+const updateYAxisMax = () => {
     if (window.amchart_root) {
         const chart = window.amchart_root.container.children.getIndex(0);
         if (chart) {
@@ -775,7 +772,7 @@ function updateYAxisMax() {
             }
         }
     }
-}
+};
 
 // Initialisation des événements pour le capping de l'axe Y
 document.addEventListener('DOMContentLoaded', function () {

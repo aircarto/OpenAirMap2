@@ -7,7 +7,7 @@ import {
     getArrayFromLocalStorage,
     getColorCodeForValue,
 } from './utils.js';
-import { API_airCarto } from '../config.js';
+import { apiAirCarto } from '../config.js';
 
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
@@ -16,7 +16,7 @@ import { openSidePanelGeneric } from './sidePanel.js';
 import { POLLUTANT_COLORS } from './appConfig.js';
 import { createNebuleAirMarker } from './markerManager.js';
 // Variables locales au module
-var state = {
+const state = {
     pasDeTempsChart: '1h',
     historiqueChart: '24h',
     mesuresArray: [],
@@ -57,8 +57,8 @@ function updateYAxisMax() {
 // Fonction principale exportée
 export function loadNebuleAir() {
     nebuleairLayer.clearLayers();
-    var pas_de_temps = getArrayFromLocalStorage('pasDeTempsLocal');
-    var mesures = getArrayFromLocalStorage('mesuresLocal');
+    const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
+    const mesures = getArrayFromLocalStorage('mesuresLocal');
 
     // Vérification si le polluant est supporté
     if (!['pm1', 'pm25', 'pm10'].includes(mesures[0])) {
@@ -66,19 +66,19 @@ export function loadNebuleAir() {
         return;
     }
 
-    let mesure_StringA = mesures[0];
-    let mesure_String = `${mesure_StringA}`;
-    let pas_de_tempsA = pas_de_temps[0];
-    let pas_de_temps_String = `${pas_de_tempsA}`;
-    let mesure_majuscule = mesure_String.toUpperCase();
-    let mesure_maj_pas_de_temps = mesure_majuscule;
+    const mesure_StringA = mesures[0];
+    const mesure_String = `${mesure_StringA}`;
+    const pasDeTempsA = pasDeTemps[0];
+    const pasDeTemps_String = `${pasDeTempsA}`;
+    const mesure_majuscule = mesure_String.toUpperCase();
+    let mesure_maj_pasDeTemps = mesure_majuscule;
 
-    if (pas_de_temps_String != '2min' && pas_de_temps_String != 'instantane') {
-        mesure_maj_pas_de_temps = mesure_majuscule + '_' + pas_de_temps_String;
+    if (pasDeTemps_String != '2min' && pasDeTemps_String != 'instantane') {
+        mesure_maj_pasDeTemps = mesure_majuscule + '_' + pasDeTemps_String;
     }
 
     fetch(
-        `${API_airCarto.url_base}${API_airCarto.url_capteurs_metadata}?capteurType=NebuleAir`
+        `${apiAirCarto.urlBase}${apiAirCarto.urlCapteursMetadata}?capteurType=NebuleAir`
     )
         .then((response) => {
             if (!response.ok) {
@@ -91,7 +91,7 @@ export function loadNebuleAir() {
             displayed.forEach((value) => {
                 const { nebuleAirMarker, textMarker } = createNebuleAirMarker(
                     value,
-                    mesure_maj_pas_de_temps,
+                    mesure_maj_pasDeTemps,
                     mesures
                 );
 
@@ -106,46 +106,41 @@ export function loadNebuleAir() {
         });
 }
 
-export function openSidePanelNebuleAir(
-    data,
-    pas_de_temps,
-    historique,
-    mesures
-) {
+export function openSidePanelNebuleAir(data, pasDeTemps, historique, mesures) {
     if (!isSourceActive('nebuleair')) {
         return;
     }
 
-    if (pas_de_temps === 'd') {
+    if (pasDeTemps === 'd') {
         state.historiqueChart = '7d';
     }
 
     // Stockage des données du capteur sélectionné
     window.lastSelectedDeviceData = data;
 
-    card1_img.src = 'img/nebuleair/NebuleAir_photo.png';
-    card1_title.innerHTML = data.sensorId;
-    card1_subtitle.innerHTML = 'Capteur citoyen';
-    card1_text.innerHTML = '';
+    card1Img.src = 'img/nebuleair/NebuleAir_photo.png';
+    card1Title.innerHTML = data.sensorId;
+    card1Subtitle.innerHTML = 'Capteur citoyen';
+    card1Text.innerHTML = '';
 
-    card2_text.innerHTML =
+    card2Text.innerHTML =
         "Le capteur NebuleAir est un dispositif de mesure de l'air extérieur développé par AirCarto et AtmoSud. Il peut être placé sur le rebord d'une fenêtre ou sur un balcon afin de mesurer le taux de particules fines présent dans l'air. Il communique ses données toutes 2 minutes et les envoies sur les serveurs d'AirCarto via une connexion WIFI.";
-    card2_link.innerHTML = 'AirCarto.fr';
-    card2_link.href = 'https://aircarto.fr';
+    card2Link.innerHTML = 'AirCarto.fr';
+    card2Link.href = 'https://aircarto.fr';
 
     // Utiliser le panelManager pour ouvrir le panneau
 
-    if (pas_de_temps === 'instantane') {
-        pas_de_temps = '2min';
+    if (pasDeTemps === 'instantane') {
+        pasDeTemps = '2min';
     }
     console.log('openSidePanelNebuleAir');
     console.log('data:', data);
-    console.log('pas_de_temps:', pas_de_temps);
+    console.log('pasDeTemps:', pasDeTemps);
     console.log('historique:', historique);
     console.log('mesures:', mesures);
     console.log('########################################################');
     panelManager.openPanel('nebuleair', data.sensorId, {
-        pasDeTempsChart: pas_de_temps,
+        pasDeTempsChart: pasDeTemps,
         historiqueChart: state.historiqueChart,
         mesuresArray: mesures,
         customDateRange: {
@@ -159,26 +154,26 @@ export function openSidePanelNebuleAir(
 
 export function retreive_historiqueData_nebuleAir(
     sensorId,
-    pas_de_temps,
+    pasDeTemps,
     historique,
     mesuresArray = [],
     useCustomRange = false,
-    custom_start = null,
-    custom_end = null
+    customStart = null,
+    customEnd = null
 ) {
-    if (pas_de_temps === 'brute') {
-        pas_de_temps = '2m';
+    if (pasDeTemps === 'brute') {
+        pasDeTemps = '2m';
     }
     // console.log(
     //     'Début de retreive_historiqueData_nebuleAir avec les paramètres:',
     //     {
     //         sensorId,
-    //         pas_de_temps,
+    //         pasDeTemps,
     //         historique,
     //         mesuresArray,
     //         useCustomRange,
-    //         custom_start,
-    //         custom_end,
+    //         customStart,
+    //         customEnd,
     //     }
     // );
     // console.log('mesuresArray:', mesuresArray);
@@ -203,33 +198,33 @@ export function retreive_historiqueData_nebuleAir(
     }
     chartDiv.innerHTML = '';
 
-    var api_pas_de_temps;
-    switch (pas_de_temps) {
+    let api_pasDeTemps;
+    switch (pasDeTemps) {
         case '2min':
         case 'instantane':
-            api_pas_de_temps = '2m';
+            api_pasDeTemps = '2m';
             break;
         case 'qh':
-            api_pas_de_temps = '15m';
+            api_pasDeTemps = '15m';
             break;
         case 'h':
-            api_pas_de_temps = '1h';
+            api_pasDeTemps = '1h';
             break;
         case 'd':
-            api_pas_de_temps = '1d';
+            api_pasDeTemps = '1d';
             break;
         default:
-            api_pas_de_temps = pas_de_temps;
+            api_pasDeTemps = pasDeTemps;
     }
 
-    var full_url;
-    if (useCustomRange && custom_start && custom_end) {
-        full_url = `${API_airCarto.url_base}${API_airCarto.url_capteurs_data}?capteurID=${sensorId}&start=${custom_start}&end=${custom_end}&freq=${api_pas_de_temps}`;
+    let fullUrl;
+    if (useCustomRange && customStart && customEnd) {
+        fullUrl = `${apiAirCarto.urlBase}${apiAirCarto.urlCapteursData}?capteurID=${sensorId}&start=${customStart}&end=${customEnd}&freq=${api_pasDeTemps}`;
     } else {
-        full_url = `${API_airCarto.url_base}${API_airCarto.url_capteurs_data}?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${api_pas_de_temps}`;
+        fullUrl = `${apiAirCarto.urlBase}${apiAirCarto.urlCapteursData}?capteurID=${sensorId}&start=-${historique}&stop=now&freq=${api_pasDeTemps}`;
     }
 
-    fetch(full_url)
+    fetch(fullUrl)
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -242,24 +237,24 @@ export function retreive_historiqueData_nebuleAir(
             // console.log(`Données récupérées en ${requestTimer} secondes`);
             // console.log('Données reçues:', data);
 
-            var baseInterval_timeUnit_local;
-            var baseInterval_count;
-            if (pas_de_temps == '2m' || pas_de_temps == '2min') {
+            let baseInterval_timeUnit_local;
+            let baseInterval_count;
+            if (pasDeTemps == '2m' || pasDeTemps == '2min') {
                 baseInterval_timeUnit_local = 'minute';
                 baseInterval_count = 2;
             }
-            if (pas_de_temps == '15m' || pas_de_temps == 'qh') {
+            if (pasDeTemps == '15m' || pasDeTemps == 'qh') {
                 baseInterval_timeUnit_local = 'minute';
                 baseInterval_count = 15;
             }
-            if (pas_de_temps == '1h' || pas_de_temps == 'h') {
+            if (pasDeTemps == '1h' || pasDeTemps == 'h') {
                 baseInterval_timeUnit_local = 'hour';
                 baseInterval_count = 1;
             }
             if (
-                pas_de_temps == '24h' ||
-                pas_de_temps == '1d' ||
-                pas_de_temps == 'd'
+                pasDeTemps == '24h' ||
+                pasDeTemps == '1d' ||
+                pasDeTemps == 'd'
             ) {
                 baseInterval_timeUnit_local = 'day';
                 baseInterval_count = 1;

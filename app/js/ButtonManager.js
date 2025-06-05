@@ -41,10 +41,10 @@ export class ButtonManager {
         });
 
         this.buttons.pasDeTemps.scan = document.getElementById(
-            'btn_pas_de_temps_scan'
+            'btn_pasDeTemps_scan'
         );
         ['qh', 'h', 'd'].forEach((key) => {
-            const buttonId = `btn_pas_de_temps_${key}`;
+            const buttonId = `btn_pasDeTemps_${key}`;
             this.buttons.pasDeTemps[key] = document.getElementById(buttonId);
         });
 

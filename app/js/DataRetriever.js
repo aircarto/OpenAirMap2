@@ -1,5 +1,5 @@
 import { retreiveHistoriqueDataStationRef } from './atmoSud_stationsRef.js';
-import { retreive_historiqueData_microStation } from './atmoSud_microStations.js';
+import { retreiveHistoriqueDataMicroStation } from './atmoSud_microStations.js';
 import { retreive_historiqueData_nebuleAir } from './NebuleAir.js';
 
 export class DataRetriever {
@@ -55,12 +55,12 @@ export class DataRetriever {
         let pasDeTemps = state.pasDeTempsChart;
         if (source === 'nebuleair') {
             pasDeTemps = this.convertPasDeTempsForNebuleAir(pasDeTemps);
-        } else if (source === 'atmo_ref') {
+        } else if (source === 'atmoRef') {
             pasDeTemps = this.convertPasDeTempsForAtmoSud(pasDeTemps);
         }
 
         switch (source) {
-            case 'atmo_ref':
+            case 'atmoRef':
                 retreiveHistoriqueDataStationRef(
                     state.deviceId,
                     state.pasDeTempsChart,
@@ -72,8 +72,8 @@ export class DataRetriever {
                 );
                 break;
 
-            case 'atmo_micro':
-                retreive_historiqueData_microStation(
+            case 'atmoMicro':
+                retreiveHistoriqueDataMicroStation(
                     state.deviceId,
                     state.pasDeTempsChart,
                     state.historiqueChart,

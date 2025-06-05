@@ -90,16 +90,16 @@ export function clearLayer(source) {
             purpleairLayer.clearLayers();
             window.deviceMarkers = {};
             break;
-        case 'atmo_micro':
+        case 'atmoMicro':
             atmoMicroLayer.clearLayers();
             window.deviceMarkers = {};
             break;
-        case 'atmo_ref':
+        case 'atmoRef':
             atmoRefLayer.clearLayers();
             window.stationMarkers = {};
             window.stationsRef = [];
             break;
-        case 'mod_pm':
+        case 'modPm':
             modelisationPMAtmoSud_layer.clearLayers();
             break;
         case 'icairh':

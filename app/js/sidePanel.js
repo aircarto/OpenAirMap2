@@ -8,19 +8,19 @@ import { map } from './mapConfig.js';
 export const sidePanel = document.getElementById('side-panel');
 export const card1 = document.getElementById('card1');
 export const card1_body = document.getElementById('card1_body');
-export const card1_img = document.getElementById('card1_img');
-export const card1_title = document.getElementById('card1_title');
-export const card1_text = document.getElementById('card1_text');
+export const card1Img = document.getElementById('card1Img');
+export const card1Title = document.getElementById('card1Title');
+export const card1Text = document.getElementById('card1Text');
 export const card1_button = document.getElementById('card1_button');
 export const card2 = document.getElementById('card2');
 export const card2_title = document.getElementById('card2_title');
-export const card2_text = document.getElementById('card2_text');
+export const card2Text = document.getElementById('card2Text');
 export const card2_button = document.getElementById('card2_button');
-export const card2_link = document.getElementById('card2_link');
+export const card2Link = document.getElementById('card2Link');
 export const mapContainer = document.getElementById('map-container');
 
 // Variables globales pour l'état du side panel
-let sidePanelState = {
+const sidePanelState = {
     isOpen: false,
     isExpanded: false,
 };

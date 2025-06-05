@@ -12,12 +12,11 @@ import {
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
-import { API_atmoSud } from '../config.js';
+import { apiAtmoSud } from '../config.js';
 import { openSidePanelGeneric } from './sidePanel.js';
 import {
     createRefStationMarker,
     createRefDefaultMarkers,
-    refMarkerState,
 } from './markerManager.js';
 import { POLLUTANT_COLORS } from './appConfig.js';
 
@@ -349,7 +348,7 @@ export function loadAtmoSudStationsRef() {
 
     // Construction de l'URL pour la première requête API
     const fullUrlStations = `
-        ${API_atmoSud.url_base}${API_atmoSud.url_stations}?
+        ${apiAtmoSud.urlBase}${apiAtmoSud.urlStations}?
         format=json&
         nom_polluant=${mesureAtmo}&
         station_en_service=true&
@@ -368,7 +367,7 @@ export function loadAtmoSudStationsRef() {
         .then((data) => {
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
-            // console.log('full_url_stations', fullUrlStations);
+            // console.log('fullUrl_stations', fullUrlStations);
             // console.log(
             //     `Data gathered in %c${requestTimer} sec`,
             //     'color: red;'
@@ -407,7 +406,7 @@ export function loadAtmoSudStationsRef() {
                 delais = '1444';
             }
             const fullUrlDerniere = `
-                ${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures_derniere}?
+                ${apiAtmoSud.urlBase}${apiAtmoSud.urlStationsMesuresDerniere}?
                 format=json&
                 nom_polluant=${mesureAtmo}&
                 temporalite=${state.pasDeTemps[0] === 'instantane' ? 'quart-horaire' : state.pasDeTempsAtmo}&
@@ -585,7 +584,7 @@ async function getStationImage(stationId) {
  * @param {Array} mesure - Mesures sélectionnées
  */
 export function openSidePanelStationRef(deviceId, station_name, mesure) {
-    if (!isSourceActive('atmo_ref')) {
+    if (!isSourceActive('atmoRef')) {
         return;
     }
 
@@ -603,7 +602,7 @@ export function openSidePanelStationRef(deviceId, station_name, mesure) {
     }
 
     // Récupération de l'image de la station
-    const card1Img = document.getElementById('card1_img');
+    const card1Img = document.getElementById('card1Img');
     if (card1Img) {
         card1Img.src = 'img/stationsRefAtmoSud/refStationAtmoSud_default.png';
         getStationImage(window.globalSelectedDeviceId)
@@ -626,18 +625,18 @@ export function openSidePanelStationRef(deviceId, station_name, mesure) {
     }
 
     // Mise à jour des informations de la carte
-    card1_title.innerHTML = station_name;
-    card1_subtitle.innerHTML = 'Station de référence AtmoSud';
-    card1_text.innerHTML = '';
+    card1Title.innerHTML = station_name;
+    card1Subtitle.innerHTML = 'Station de référence AtmoSud';
+    card1Text.innerHTML = '';
 
-    card2_text.innerHTML =
+    card2Text.innerHTML =
         "Les stations de référence sont des stations de mesure de la qualité de l'air déployées par AtmoSud pour mesurer précisément la qualité de l'air.";
-    card2_link.innerHTML = 'AtmoSud.org';
-    card2_link.href = 'https://www.atmosud.org';
+    card2Link.innerHTML = 'AtmoSud.org';
+    card2Link.href = 'https://www.atmosud.org';
 
     // Utiliser le gestionnaire de panneau pour configurer les boutons
     console.log('customDateRange', state.customDateRange);
-    panelManager.openPanel('atmo_ref', deviceId, {
+    panelManager.openPanel('atmoRef', deviceId, {
         pasDeTempsAtmo: state.pasDeTempsAtmo,
         historiqueChart: state.historiqueChart,
         mesuresArray: [polluantAPI],
@@ -726,7 +725,7 @@ export function retreiveHistoriqueDataStationRef(
     }
 
     // Construction de l'URL avec les paramètres
-    let fullUrl = `${API_atmoSud.url_base}${API_atmoSud.url_stations_mesures}?
+    let fullUrl = `${apiAtmoSud.urlBase}${apiAtmoSud.urlStationsMesures}?
         format=json&
         station_id=${stationId}&
         nom_polluant=${state.mesuresArray.join(',')}&

@@ -4,7 +4,7 @@
 
 import { isSourceActive } from './dataSourceManager.js';
 import { retreiveHistoriqueDataStationRef } from './atmoSud_stationsRef.js';
-import { retreive_historiqueData_microStation } from './atmoSud_microStations.js';
+import { retreiveHistoriqueDataMicroStation } from './atmoSud_microStations.js';
 import { retreive_historiqueData_nebuleAir } from './NebuleAir.js';
 import { updatePanelState } from './sidePanel.js';
 import { PanelStateManager } from './PanelStateManager.js';
@@ -13,7 +13,7 @@ import { DateManager } from './DateManager.js';
 import { DataRetriever } from './DataRetriever.js';
 
 // Variables globales pour l'état du side panel
-let sidePanelState = {
+const sidePanelState = {
     isOpen: false,
     isExpanded: false,
 };
@@ -330,14 +330,14 @@ class PanelManager {
             }
         );
 
-        if (source === 'atmo_ref') {
+        if (source === 'atmoRef') {
             this.buttonManager.setButtonDisabled(
                 'pasDeTemps',
                 'scan',
                 true,
                 'Pas de temps non disponible pour les stations de référence AtmoSud'
             );
-        } else if (source === 'atmo_micro') {
+        } else if (source === 'atmoMicro') {
             this.buttonManager.setButtonDisabled(
                 'pasDeTemps',
                 'd',
@@ -345,12 +345,12 @@ class PanelManager {
                 'pas de temps non disponible pour les micro-stations AtmoSud'
             );
             const deviceData = window.lastSelectedDeviceData;
-            if (deviceData?.pas_de_temps) {
+            if (deviceData?.pasDeTemps) {
                 const pasDeTempsEnMinutes = Math.round(
-                    deviceData.pas_de_temps / 60
+                    deviceData.pasDeTemps / 60
                 );
                 const label = document.querySelector(
-                    'label[for="btn_pas_de_temps_scan"]'
+                    'label[for="btn_pasDeTemps_scan"]'
                 );
                 if (label) {
                     // On réinitialise d'abord le texte du label
@@ -363,7 +363,7 @@ class PanelManager {
                 const state = this.stateManager.getSourceState(source);
                 if (state?.pasDeTempsChart === 'brute') {
                     const scanButton = document.getElementById(
-                        'btn_pas_de_temps_scan'
+                        'btn_pasDeTemps_scan'
                     );
                     if (scanButton) {
                         scanButton.checked = true;
@@ -372,7 +372,7 @@ class PanelManager {
             }
         } else if (source === 'nebuleair') {
             const label = document.querySelector(
-                'label[for="btn_pas_de_temps_scan"]'
+                'label[for="btn_pasDeTemps_scan"]'
             );
             if (label) {
                 // On réinitialise d'abord le texte du label
@@ -386,7 +386,7 @@ class PanelManager {
             if (state?.pasDeTempsChart === '2min') {
                 // On sélectionne le bouton scan uniquement si le pas de temps est 2 min
                 const scanButton = document.getElementById(
-                    'btn_pas_de_temps_scan'
+                    'btn_pasDeTemps_scan'
                 );
                 if (scanButton) {
                     scanButton.checked = true;
@@ -420,7 +420,7 @@ class PanelManager {
                     `Polluant ${pollutant} non supporté par les capteurs NebuleAir`
                 );
             });
-        } else if (source === 'atmo_ref') {
+        } else if (source === 'atmoRef') {
             // Pour les stations de référence AtmoSud
             const deviceData = window.lastSelectedDeviceData;
             if (!deviceData || !deviceData.variables) return;

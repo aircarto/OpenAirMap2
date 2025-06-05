@@ -41,7 +41,7 @@ export function updateModelisationButtonText() {
     );
 
     if (activeModelisation) {
-        if (activeModelisation.code === 'mod_pm') {
+        if (activeModelisation.code === 'modPm') {
             const pollutantName = getActivePollutantName();
             selectedOptionSpan.textContent = `${activeModelisation.name} ${pollutantName}`;
         } else {
@@ -120,7 +120,7 @@ export function initializeModelisationButtons() {
 function loadModelisation(modelCode) {
     try {
         switch (modelCode) {
-            case 'mod_pm':
+            case 'modPm':
                 loadModPM(getArrayFromLocalStorage('mesuresLocal')[0]);
                 break;
             case 'icairh':

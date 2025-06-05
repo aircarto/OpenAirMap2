@@ -82,12 +82,12 @@ body {
     color: white;
 }
 
-#btn_tres_mauvais {
+#btn_tresMauvais {
     background-color: #881b33;
     color: white;
 }
 
-#btn_extr_mauvais {
+#btn_extrMauvais {
     background-color: #74287d;
     color: white;
 }
@@ -177,7 +177,7 @@ body {
     }
 
     .btn-group label[for='btn_historique_'],
-    .btn-group label[for='btn_pas_de_temps_'] {
+    .btn-group label[for='btn_pasDeTemps_'] {
         font-size: 0.75rem;
         padding: 0.2rem 0.4rem;
     }
@@ -253,7 +253,7 @@ body {
     }
 
     .btn-group label[for='btn_historique_'],
-    .btn-group label[for='btn_pas_de_temps_'] {
+    .btn-group label[for='btn_pasDeTemps_'] {
         font-size: 0.8rem;
         padding: 0.25rem 0.45rem;
     }

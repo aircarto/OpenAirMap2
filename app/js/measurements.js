@@ -1,6 +1,6 @@
 // Gestion du menu sur la top bar (polluants et pas de temps)
 // note. ne concerne pas les sources de données
-import { mesures, pas_de_temps } from './appConfig.js';
+import { mesures, pasDeTemps } from './appConfig.js';
 import {
     getArrayFromLocalStorage,
     addItemToLocalStorageArray,
@@ -40,11 +40,11 @@ export function handleMeasureChange(measure) {
 
     // Vérification pour AtmoSud Micro-stations
     if (
-        activeSources.includes('atmo_micro') &&
+        activeSources.includes('atmoMicro') &&
         ['so2', 'nh3', 'o3', 'h2s', 'c6h6'].includes(measure)
     ) {
-        removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
-        clearLayer('atmo_micro');
+        removeItemFromLocalStorageArray('sources_local', 'atmoMicro');
+        clearLayer('atmoMicro');
         createCustomToast({
             message: `La mesure ${formatPollutantName(measure)} n'est pas disponible pour les capteurs AtmoSud Micro-stations, <strong>désactivation de la source</strong>.`,
             type: 'warning',
@@ -80,18 +80,18 @@ export function handleTimeStepChange(timeStep) {
     const activeSources = getArrayFromLocalStorage('sources_local');
 
     // Vérification pour AtmoSud Micro-stations
-    if (activeSources.includes('atmo_micro')) {
+    if (activeSources.includes('atmoMicro')) {
         if (timeStep === 'd') {
             toastManager.atmoMicroTimeStepDailyWarning();
-            removeItemFromLocalStorageArray('sources_local', 'atmo_micro');
-            clearLayer('atmo_micro');
+            removeItemFromLocalStorageArray('sources_local', 'atmoMicro');
+            clearLayer('atmoMicro');
         } else if (timeStep === '2min') {
             toastManager.atmoMicroTimeStepWarning();
         }
     }
 
     // Vérification pour AtmoSud Stations de référence
-    if (activeSources.includes('atmo_ref') && timeStep === '2min') {
+    if (activeSources.includes('atmoRef') && timeStep === '2min') {
         createCustomToast({
             message: `Le pas de temps 2 minutes n'est pas disponible pour les stations de référence AtmoSud, <strong>désactivation de la source</strong>.`,
             type: 'warning',
@@ -99,8 +99,8 @@ export function handleTimeStepChange(timeStep) {
             icon: 'exclamation-triangle',
             timer: 5000,
         });
-        removeItemFromLocalStorageArray('sources_local', 'atmo_ref');
-        clearLayer('atmo_ref');
+        removeItemFromLocalStorageArray('sources_local', 'atmoRef');
+        clearLayer('atmoRef');
     }
 
     // Rechargement des sources actives
@@ -131,8 +131,8 @@ export function updateThresholdButtons() {
         btn_moyen: `${thresholds.moyen.min} à ${thresholds.moyen.max} µg/m³`,
         btn_degrade: `${thresholds.degrade.min} à ${thresholds.degrade.max} µg/m³`,
         btn_mauvais: `${thresholds.mauvais.min} à ${thresholds.mauvais.max} µg/m³`,
-        btn_tres_mauvais: `${thresholds.tres_mauvais.min} à ${thresholds.tres_mauvais.max} µg/m³`,
-        btn_extr_mauvais: `>${thresholds.extr_mauvais.min} µg/m³`,
+        btn_tresMauvais: `${thresholds.tresMauvais.min} à ${thresholds.tresMauvais.max} µg/m³`,
+        btn_extrMauvais: `>${thresholds.extrMauvais.min} µg/m³`,
     };
 
     Object.entries(buttons).forEach(([id, value]) => {
@@ -214,7 +214,7 @@ export function initializeMeasurementSelectors() {
     });
 
     // Initialisation des boutons de pas de temps
-    Object.entries(pas_de_temps).forEach(([key, timeStep]) => {
+    Object.entries(pasDeTemps).forEach(([key, timeStep]) => {
         const button = document.createElement('button');
         button.innerHTML = timeStep.name;
         button.classList.add('dropdown-item');
@@ -234,7 +234,7 @@ export function initializeMeasurementSelectors() {
         ) {
             button.classList.add('active');
             document
-                .querySelector('#dropdown_pas_de_temps')
+                .querySelector('#dropdown_pasDeTemps')
                 .closest('.dropdown')
                 .querySelector('.selected-option').innerHTML = timeStep.name;
         }
@@ -248,12 +248,12 @@ export function initializeMeasurementSelectors() {
             ) {
                 localStorage.removeItem('pasDeTempsLocal');
                 document
-                    .querySelectorAll('#dropdown_pas_de_temps button')
+                    .querySelectorAll('#dropdown_pasDeTemps button')
                     .forEach((btn) => btn.classList.remove('active'));
                 addItemToLocalStorageArray('pasDeTempsLocal', timeStep.code);
                 button.classList.add('active');
                 document
-                    .querySelector('#dropdown_pas_de_temps')
+                    .querySelector('#dropdown_pasDeTemps')
                     .closest('.dropdown')
                     .querySelector('.selected-option').innerHTML =
                     timeStep.name;
@@ -263,7 +263,7 @@ export function initializeMeasurementSelectors() {
 
         const li = document.createElement('li');
         li.appendChild(button);
-        document.getElementById('dropdown_pas_de_temps').appendChild(li);
+        document.getElementById('dropdown_pasDeTemps').appendChild(li);
     });
 
     // Mettre à jour les boutons de seuil
