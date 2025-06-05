@@ -44,6 +44,44 @@ export function logActiveLayers() {
     console.log('===================================');
 }
 
+// Fonction utilitaire pour obtenir l'heure de la couche
+function getLayerHour() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+
+    // Récupération du pas de temps
+    const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))[0];
+
+    // Conversion en UTC (soustraire 2 heures)
+    const utcHours = (hours + 24 - 2) % 24;
+
+    // Détermination de l'heure de la couche
+    let layerHour = 24; // Par défaut, on utilise h24
+
+    // Si on est au pas de temps quart d'heure et dans les 15 premières minutes
+    if (pasDeTemps === 'qh' && minutes < 15) {
+        if (utcHours === 0) {
+            layerHour = 23; // h23 pour minuit UTC
+        } else {
+            layerHour = (utcHours + 24 - 1) % 24;
+        }
+    }
+
+    return layerHour;
+}
+
+// Fonction utilitaire pour obtenir le nom de la couche
+function getLayerName(prefix, hour) {
+    return `${prefix}_h${String(hour).padStart(2, '0')}`;
+}
+
+// Fonction utilitaire pour construire l'URL WMTS
+function buildWmtsUrl(wmtsUrl, workspace, layerName) {
+    const baseUrl = `${wmtsUrl}?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.1.1&LAYER=${workspace}:${layerName}&TILEMATRIXSET=EPSG:900913&FORMAT=image/png8&TILEMATRIX=EPSG:900913:{z}&TILEROW={y}&TILECOL={x}`;
+    return baseUrl;
+}
+
 /**
  * Charge la couche de modélisation des PM sur la carte
  * Vient chercher les données sur le serveur WMS d'AtmoSud (geoserver ou azurh)
@@ -85,121 +123,80 @@ export function loadModPM(compoundUpper) {
     modelisationPMAtmoSud_layer.clearLayers();
     console.log('Couche nettoyée');
 
-    // Récupération du pas de temps sélectionné
-    const pasDeTempsLocal = JSON.parse(
-        localStorage.getItem('pasDeTempsLocal')
-    )[0];
-    console.log('Pas de temps sélectionné:', pasDeTempsLocal);
+    const wmtsUrl =
+        'https://azurh-geoservices.atmosud.org/geoserver/gwc/service/wmts';
+    const workspace = 'azur_heure';
+    const wmtsOptions = {
+        layer: '',
+        style: '',
+        tilematrixSet: 'EPSG:900913',
+        format: 'image/png8',
+        version: '1.1.1',
+        opacity: 0.7,
+        pane: 'overlayPane',
+        zIndex: 1000,
+        minZoom: 0,
+        maxZoom: 16,
+        attribution: 'AtmoSud',
+        tileSize: 256,
+        crs: L.CRS.EPSG3857,
+        bounds: [
+            [41.3, 3.0],
+            [44.5, 7.5],
+        ],
+    };
 
-    let string_layer;
-    let wmsUrl;
-    let wmsOptions;
-    console.log('########################');
-    console.log(compoundUpper);
-    console.log('########################');
+    const layerHour = getLayerHour();
+    console.log('Heure UTC de la couche:', layerHour);
+
     switch (compoundUpper) {
         case 'pm1':
-            string_layer = 'paca_pm1_h24';
             console.log('Pas de modélisation AtmoSud pour les PM1');
             toastManager.atmoModPm1Warning();
             return;
-            break;
         case 'pm25':
-            // Mode horaire ou inférieur
-            string_layer = 'paca_pm2_5_h24';
-            wmsUrl =
-                'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
-
-            console.log('Création de la couche WMS pour PM2.5:', string_layer);
-            wmsOptions = {
-                layers: string_layer,
-                format: 'image/png',
-                transparent: true,
-                opacity: 0.6,
-                version: '1.1.1',
-                styles: '',
-                noWrap: true,
-                pane: 'overlayPane',
-                zIndex: 1000,
-            };
-            const pm25Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            const pm25LayerName = getLayerName('paca_pm2_5', layerHour);
+            wmtsOptions.layer = `${workspace}:${pm25LayerName}`;
+            const pm25Layer = L.tileLayer(
+                buildWmtsUrl(wmtsUrl, workspace, pm25LayerName),
+                wmtsOptions
+            );
             pm25Layer.addTo(modelisationPMAtmoSud_layer);
             break;
         case 'pm10':
-            string_layer = 'paca_pm10_h24';
-            wmsUrl =
-                'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
-
-            wmsOptions = {
-                layers: string_layer,
-                format: 'image/png',
-                transparent: true,
-                opacity: 0.6,
-                version: '1.1.1',
-                styles: '',
-                noWrap: true,
-                pane: 'overlayPane',
-                zIndex: 1000,
-            };
-            const pm10Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            const pm10LayerName = getLayerName('paca_pm10', layerHour);
+            wmtsOptions.layer = `${workspace}:${pm10LayerName}`;
+            const pm10Layer = L.tileLayer(
+                buildWmtsUrl(wmtsUrl, workspace, pm10LayerName),
+                wmtsOptions
+            );
             pm10Layer.addTo(modelisationPMAtmoSud_layer);
             break;
         case 'no2':
-            string_layer = 'paca_no2_h24';
-            wmsUrl =
-                'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
-
-            wmsOptions = {
-                layers: string_layer,
-                format: 'image/png',
-                transparent: true,
-                opacity: 0.6,
-                version: '1.1.1',
-                styles: '',
-                noWrap: true,
-                pane: 'overlayPane',
-                zIndex: 1000,
-            };
-            const no2Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            const no2LayerName = getLayerName('paca_no2', layerHour);
+            wmtsOptions.layer = `${workspace}:${no2LayerName}`;
+            const no2Layer = L.tileLayer(
+                buildWmtsUrl(wmtsUrl, workspace, no2LayerName),
+                wmtsOptions
+            );
             no2Layer.addTo(modelisationPMAtmoSud_layer);
             break;
         case 'o3':
-            string_layer = 'paca_o3_h24';
-            wmsUrl =
-                'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
-
-            wmsOptions = {
-                layers: string_layer,
-                format: 'image/png',
-                transparent: true,
-                opacity: 0.6,
-                version: '1.1.1',
-                styles: '',
-                noWrap: true,
-                pane: 'overlayPane',
-                zIndex: 1000,
-            };
-
-            const o3Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            const o3LayerName = getLayerName('paca_o3', layerHour);
+            wmtsOptions.layer = `${workspace}:${o3LayerName}`;
+            const o3Layer = L.tileLayer(
+                buildWmtsUrl(wmtsUrl, workspace, o3LayerName),
+                wmtsOptions
+            );
             o3Layer.addTo(modelisationPMAtmoSud_layer);
             break;
         case 'so2':
-            string_layer = 'paca_so2_h24';
-            wmsUrl =
-                'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows';
-
-            wmsOptions = {
-                layers: string_layer,
-                format: 'image/png',
-                transparent: true,
-                opacity: 0.6,
-                version: '1.1.1',
-                styles: '',
-                noWrap: true,
-                pane: 'overlayPane',
-                zIndex: 1000,
-            };
-            const so2Layer = new L.tileLayer.wms(wmsUrl, wmsOptions);
+            const so2LayerName = getLayerName('paca_so2', layerHour);
+            wmtsOptions.layer = `${workspace}:${so2LayerName}`;
+            const so2Layer = L.tileLayer(
+                buildWmtsUrl(wmtsUrl, workspace, so2LayerName),
+                wmtsOptions
+            );
             so2Layer.addTo(modelisationPMAtmoSud_layer);
             break;
         default:
@@ -255,19 +252,43 @@ export function loadModIcair() {
         modelisationPMAtmoSud_layer.clearLayers();
         console.log('Couche PM désactivée');
     }
-    new L.tileLayer.wms(
-        'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/ows',
-        {
-            version: '1.1.1',
-            layers: 'paca_icairh_h24',
-            format: 'image/png',
-            crs: L.CRS.EPSG4326,
-            transparent: true,
-            opacity: 0.6,
-            pane: 'overlayPane',
-            zIndex: 1000,
-        }
-    ).addTo(modelisationICAIRAtmoSud_layer);
+
+    const wmtsUrl =
+        'https://azurh-geoservices.atmosud.org/geoserver/gwc/service/wmts';
+    const workspace = 'azur_heure';
+
+    const layerHour = getLayerHour();
+    const layerName = getLayerName('paca_icairh', layerHour);
+
+    console.log('Heure UTC de la couche:', layerHour);
+    console.log('Nom de la couche:', layerName);
+
+    const wmtsOptions = {
+        layer: `${workspace}:${layerName}`,
+        style: '',
+        tilematrixSet: 'EPSG:900913',
+        format: 'image/png8',
+        version: '1.1.1',
+        opacity: 0.7,
+        pane: 'overlayPane',
+        zIndex: 1000,
+        minZoom: 0,
+        maxZoom: 16,
+        attribution: 'AtmoSud',
+        tileSize: 256,
+        crs: L.CRS.EPSG3857,
+        bounds: [
+            [41.3, 3.0],
+            [44.5, 7.5],
+        ],
+    };
+
+    const icairLayer = L.tileLayer(
+        buildWmtsUrl(wmtsUrl, workspace, layerName),
+        wmtsOptions
+    );
+
+    icairLayer.addTo(modelisationICAIRAtmoSud_layer);
 }
 
 //TODO
