@@ -10,6 +10,7 @@ import {
     modelisationVentLayer,
 } from './layers.js';
 import { toastManager, createCustomToast } from './toaster.js';
+import { map } from './mapConfig.js';
 
 // Définition de la projection EPSG:2154 (Lambert 93)
 L.CRS.EPSG2154 = L.extend({}, L.CRS.EPSG3857, {
@@ -83,6 +84,110 @@ function buildWmtsUrl(wmtsUrl, workspace, layerName) {
 }
 
 /**
+ * Récupère la valeur d'une maille via GetFeatureInfo
+ * @param {L.LatLng} latlng - Les coordonnées du point cliqué
+ * @param {string} layerName - Le nom de la couche
+ * @param {string} workspace - L'espace de travail
+ * @returns {Promise<number>} - La valeur de la maille
+ */
+async function getFeatureInfoValue(latlng, layerName, workspace) {
+    const wmsUrl =
+        'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/wms';
+    const bbox = [
+        latlng.lng,
+        latlng.lat,
+        latlng.lng + 0.000001,
+        latlng.lat + 0.000001,
+    ].join(',');
+
+    const params = {
+        INFO_FORMAT: 'application/json',
+        REQUEST: 'GetFeatureInfo',
+        SERVICE: 'WMS',
+        VERSION: '1.1.1',
+        WIDTH: 1,
+        HEIGHT: 1,
+        X: 1,
+        Y: 1,
+        BBOX: bbox,
+        LAYERS: `${workspace}:${layerName}`,
+        QUERY_LAYERS: `${workspace}:${layerName}`,
+        TYPENAME: `${workspace}:${layerName}`,
+        srs: 'EPSG:4326',
+    };
+
+    const url = `${wmsUrl}?${new URLSearchParams(params).toString()}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+            return data.features[0].properties.GRAY_INDEX;
+        }
+        return null;
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la valeur:', error);
+        return null;
+    }
+}
+
+/**
+ * Gère le clic sur la carte pour récupérer la valeur d'une maille
+ * @param {L.MouseEvent} e - L'événement de clic
+ */
+async function handleMapClick(e) {
+    let activeLayer = null;
+    let layerName = null;
+    const workspace = 'azur_heure';
+    let unit = 'µg/m³';
+
+    // Vérifier quelle couche est active
+    if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
+        activeLayer = modelisationPMAtmoSud_layer.getLayers()[0];
+        layerName = activeLayer.options.layer.split(':')[1];
+    } else if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
+        activeLayer = modelisationICAIRAtmoSud_layer.getLayers()[0];
+        layerName = activeLayer.options.layer.split(':')[1];
+        unit = 'indice'; // L'unité pour ICAIR'H est un indice
+    } else {
+        return; // Aucune couche active
+    }
+
+    const value = await getFeatureInfoValue(e.latlng, layerName, workspace);
+
+    // Créer un popup à l'endroit du clic
+    const popup = L.popup({
+        closeButton: true,
+        autoClose: true,
+        closeOnEscapeKey: true,
+        closeOnClick: true,
+        className: 'value-popup',
+    });
+
+    if (value !== null) {
+        popup
+            .setLatLng(e.latlng)
+            .setContent(
+                `<div class="value-popup-content">
+                <strong>Valeur de la maille:</strong><br>
+                ${value.toFixed(2)} ${unit}
+            </div>`
+            )
+            .openOn(map);
+    } else {
+        popup
+            .setLatLng(e.latlng)
+            .setContent(
+                `<div class="value-popup-content">
+                <strong>Attention</strong><br>
+                Aucune valeur disponible à cet emplacement
+            </div>`
+            )
+            .openOn(map);
+    }
+}
+
+/**
  * Charge la couche de modélisation des PM sur la carte
  * Vient chercher les données sur le serveur WMS d'AtmoSud (geoserver ou azurh)
  * @param {string} compoundUpper - Le polluant à afficher (PM1, PM25, PM10)
@@ -123,6 +228,9 @@ export function loadModPM(compoundUpper) {
     modelisationPMAtmoSud_layer.clearLayers();
     console.log('Couche nettoyée');
 
+    // Supprimer l'ancien événement de clic s'il existe
+    map.off('click', handleMapClick);
+
     const wmtsUrl =
         'https://azurh-geoservices.atmosud.org/geoserver/gwc/service/wmts';
     const workspace = 'azur_heure';
@@ -162,6 +270,8 @@ export function loadModPM(compoundUpper) {
                 wmtsOptions
             );
             pm25Layer.addTo(modelisationPMAtmoSud_layer);
+            // Ajouter l'événement de clic
+            map.on('click', handleMapClick);
             break;
         case 'pm10':
             const pm10LayerName = getLayerName('paca_pm10', layerHour);
@@ -171,6 +281,8 @@ export function loadModPM(compoundUpper) {
                 wmtsOptions
             );
             pm10Layer.addTo(modelisationPMAtmoSud_layer);
+            // Ajouter l'événement de clic
+            map.on('click', handleMapClick);
             break;
         case 'no2':
             const no2LayerName = getLayerName('paca_no2', layerHour);
@@ -180,6 +292,8 @@ export function loadModPM(compoundUpper) {
                 wmtsOptions
             );
             no2Layer.addTo(modelisationPMAtmoSud_layer);
+            // Ajouter l'événement de clic
+            map.on('click', handleMapClick);
             break;
         case 'o3':
             const o3LayerName = getLayerName('paca_o3', layerHour);
@@ -189,6 +303,8 @@ export function loadModPM(compoundUpper) {
                 wmtsOptions
             );
             o3Layer.addTo(modelisationPMAtmoSud_layer);
+            // Ajouter l'événement de clic
+            map.on('click', handleMapClick);
             break;
         case 'so2':
             const so2LayerName = getLayerName('paca_so2', layerHour);
@@ -198,6 +314,8 @@ export function loadModPM(compoundUpper) {
                 wmtsOptions
             );
             so2Layer.addTo(modelisationPMAtmoSud_layer);
+            // Ajouter l'événement de clic
+            map.on('click', handleMapClick);
             break;
         default:
             createCustomToast({
@@ -253,6 +371,9 @@ export function loadModIcair() {
         console.log('Couche PM désactivée');
     }
 
+    // Supprimer l'ancien événement de clic s'il existe
+    map.off('click', handleMapClick);
+
     const wmtsUrl =
         'https://azurh-geoservices.atmosud.org/geoserver/gwc/service/wmts';
     const workspace = 'azur_heure';
@@ -289,6 +410,9 @@ export function loadModIcair() {
     );
 
     icairLayer.addTo(modelisationICAIRAtmoSud_layer);
+
+    // Ajouter l'événement de clic
+    map.on('click', handleMapClick);
 }
 
 //TODO
