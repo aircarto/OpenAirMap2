@@ -222,7 +222,17 @@ export const openSidePanelMicroStation = (
 };
 
 const updateCardInfo = (data) => {
-    card1Img.src = 'img/microStationsAtmoSud/microStation_photo.jpg';
+    console.log(data.modele_capteur)
+    if (data.modele_capteur === 'NebuleAir') {
+        card1Img.src = 'img/nebuleair/NebuleAir_photo.png';
+    } else if (data.modele_capteur === 'Kunak PRO') {
+        card1Img.src = 'img/microStationsAtmoSud/kunak-air-pro.jpg';
+    } else if (data.modele_capteur === 'PMo') {
+        card1Img.src = 'img/microStationsAtmoSud/nexelec-pmo.jpg';
+    } else {
+            card1Img.src = 'img/microStationsAtmoSud/microStation_photo.jpg';
+    }
+
     card1Title.innerHTML = data.site_info
         ? data.site_info.nom_site
         : data.nom_site;
