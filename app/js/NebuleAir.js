@@ -164,19 +164,19 @@ export function retreive_historiqueData_nebuleAir(
     if (pasDeTemps === 'brute') {
         pasDeTemps = '2m';
     }
-    // console.log(
-    //     'Début de retreive_historiqueData_nebuleAir avec les paramètres:',
-    //     {
-    //         sensorId,
-    //         pasDeTemps,
-    //         historique,
-    //         mesuresArray,
-    //         useCustomRange,
-    //         customStart,
-    //         customEnd,
-    //     }
-    // );
-    // console.log('mesuresArray:', mesuresArray);
+    console.log(
+        'Début de retreive_historiqueData_nebuleAir avec les paramètres:',
+        {
+            sensorId,
+            pasDeTemps,
+            historique,
+            mesuresArray,
+            useCustomRange,
+            customStart,
+            customEnd,
+        }
+    );
+    console.log('mesuresArray:', mesuresArray);
 
     if (!isSourceActive('nebuleair')) {
         console.log('Source NebuleAir non active, annulation de la requête');
@@ -461,6 +461,21 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
         window.amchart_root = am5.Root.new('chartdiv_sensor');
         window.amchart_root.locale = am5locales_fr_FR;
 
+        // Vérification des données
+        if (!data || data.length === 0) {
+            const chartDiv = document.getElementById('chartdiv_sensor');
+            if (chartDiv) {
+                chartDiv.innerHTML = `
+                    <div class="alert alert-warning m-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Aucune donnée historique disponible pour ce capteur.
+                    </div>
+                `;
+            }
+            stopSpinner();
+            return;
+        }
+
         const sensorName = data[0].sensorId;
 
         // Création du graphique
@@ -499,6 +514,16 @@ function createNebuleAirChart(data, baseInterval, mesuresArray) {
         stopSpinner();
     } catch (error) {
         console.error('Erreur lors de la création du graphique:', error);
+        const chartDiv = document.getElementById('chartdiv_sensor');
+        if (chartDiv) {
+            chartDiv.innerHTML = `
+                <div class="alert alert-danger m-3" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Une erreur est survenue lors de l'affichage des données.
+                </div>
+            `;
+        }
+        stopSpinner();
     }
 }
 
