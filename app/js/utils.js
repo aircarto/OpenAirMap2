@@ -387,3 +387,40 @@ export function initializeDefaultValues() {
         );
     }
 }
+
+/**
+ * Formate le temps écoulé depuis une date donnée en français
+ * @param {Date|string} date - La date à comparer
+ * @returns {string} Le temps écoulé formaté
+ */
+export function formatTimeAgo(date) {
+    const now = new Date();
+    const past = new Date(date);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+
+    const days = Math.floor(diffInSeconds / (24 * 60 * 60));
+    const hours = Math.floor((diffInSeconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((diffInSeconds % (60 * 60)) / 60);
+
+    let result = '';
+
+    if (days > 0) {
+        result += `${days} jour${days > 1 ? 's' : ''}`;
+    }
+
+    if (hours > 0) {
+        if (result) result += ' ';
+        result += `${hours} heure${hours > 1 ? 's' : ''}`;
+    }
+
+    if (minutes > 0) {
+        if (result) result += ' ';
+        result += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    }
+
+    if (!result) {
+        result = "moins d'une minute";
+    }
+
+    return `il y a ${result}`;
+}
