@@ -384,7 +384,7 @@ function getAvailablePollutants(data) {
     const pollutants = [];
 
     if (firstDataPoint.PM1 !== undefined) pollutants.push('PM1');
-    if (firstDataPoint.PM25 !== undefined) pollutants.push('PM2.5');
+    if (firstDataPoint.PM25 !== undefined) pollutants.push('PM25');
     if (firstDataPoint.PM10 !== undefined) pollutants.push('PM10');
 
     return pollutants;
