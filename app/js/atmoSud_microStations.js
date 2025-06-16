@@ -194,11 +194,11 @@ export const openSidePanelMicroStation = (
     if (!isSourceActive('atmoMicro')) return;
 
     updateCardInfo(data);
-    console.log('openSidePanelMicroStation');
-    console.log('data: ', data);
-    console.log('pasDeTempsAtmo: ', pasDeTempsAtmo);
-    console.log('historique: ', historique);
-    console.log('mesuresAtmo: ', mesuresAtmo);
+    // console.log('openSidePanelMicroStation');
+    // console.log('data: ', data);
+    // console.log('pasDeTempsAtmo: ', pasDeTempsAtmo);
+    // console.log('historique: ', historique);
+    // console.log('mesuresAtmo: ', mesuresAtmo);
     if (pasDeTempsAtmo === 'quart-horaire') {
         pasDeTempsAtmo = 'qh';
     } else if (pasDeTempsAtmo === 'journalière') {
@@ -222,7 +222,6 @@ export const openSidePanelMicroStation = (
 };
 
 const updateCardInfo = (data) => {
-    console.log(data.modele_capteur)
     if (data.modele_capteur === 'NebuleAir') {
         card1Img.src = 'img/nebuleair/NebuleAir_photo.png';
     } else if (data.modele_capteur === 'Kunak PRO') {
@@ -230,7 +229,7 @@ const updateCardInfo = (data) => {
     } else if (data.modele_capteur === 'PMo') {
         card1Img.src = 'img/microStationsAtmoSud/nexelec-pmo.jpg';
     } else {
-            card1Img.src = 'img/microStationsAtmoSud/microStation_photo.jpg';
+        card1Img.src = 'img/microStationsAtmoSud/microStation_photo.jpg';
     }
 
     card1Title.innerHTML = data.site_info
@@ -263,8 +262,8 @@ export const retreiveHistoriqueDataMicroStation = async (
     customStart = null,
     customEnd = null
 ) => {
-    console.log('retreiveHistoriqueDataMicroStation');
-    console.log('pasDeTemps: ', pasDeTemps);
+    // console.log('retreiveHistoriqueDataMicroStation');
+    // console.log('pasDeTemps: ', pasDeTemps);
     if (pasDeTemps === 'qh') {
         pasDeTemps = 'quart-horaire';
     } else if (pasDeTemps === 'h') {
@@ -284,9 +283,9 @@ export const retreiveHistoriqueDataMicroStation = async (
             testSensorId.startsWith('FR') ||
             testSensorId.startsWith('nebule')
         ) {
-            console.log(
-                "Le capteur sélectionné n'est pas une micro-station, annulation de la requête"
-            );
+            // console.log(
+            //     "Le capteur sélectionné n'est pas une micro-station, annulation de la requête"
+            // );
             return;
         }
 
@@ -632,12 +631,12 @@ const createSeries = (
     type = 'corrigée',
     unite
 ) => {
-    console.log('createSeries');
-    console.log('pollutant: ', pollutant);
-    console.log('axes: ', axes);
-    console.log('data: ', data);
-    console.log('type: ', type);
-    console.log('#######################');
+    // console.log('createSeries');
+    // console.log('pollutant: ', pollutant);
+    // console.log('axes: ', axes);
+    // console.log('data: ', data);
+    // console.log('type: ', type);
+    // console.log('#######################');
 
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;

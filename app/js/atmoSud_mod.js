@@ -231,6 +231,7 @@ function updateLegendControl(legendUrl) {
         div.innerHTML = `
             <div class="legend-container" style="background: white; padding: 4px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.2);">
                 <div style="font-weight: bold; margin-bottom: 4px; text-align: center;">${layerTitle}</div>
+                <div style="font-weight: bold; margin-bottom: 4px; text-align: center;">Lorem ipsum </div>
                 <div style=" font-size: 12px; margin-top: 4px;">Unité: ${unit}</div>
                 <img src="${legendUrl}" alt="Légende">
             </div>

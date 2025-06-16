@@ -82,8 +82,8 @@ export function clearLayer(source) {
             nebuleairLayer.clearLayers();
             window.deviceMarkers = {};
             break;
-        case 'sensor_commmunity':
-            sensorCommmunityLayer.clearLayers();
+        case 'sensorCommunity':
+            sensorCommunityLayer.clearLayers();
             window.deviceMarkers = {};
             break;
         case 'purpleair':

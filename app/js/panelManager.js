@@ -163,13 +163,35 @@ class PanelManager {
                     const state = this.stateManager.getSourceState(source);
                     const previousLength = state.mesuresArray.length;
 
+                    const isPollutantInArray = (array, poll) => {
+                        if (poll === 'pm2.5') {
+                            return (
+                                array.includes('pm2.5') ||
+                                array.includes('pm25')
+                            );
+                        }
+                        return array.includes(poll);
+                    };
+
+                    const filterPollutantFromArray = (array, poll) => {
+                        if (poll === 'pm2.5') {
+                            return array.filter(
+                                (item) => item !== 'pm2.5' && item !== 'pm25'
+                            );
+                        }
+                        return array.filter((item) => item !== poll);
+                    };
+
                     if (button.checked) {
-                        if (!state.mesuresArray.includes(pollutant)) {
+                        if (
+                            !isPollutantInArray(state.mesuresArray, pollutant)
+                        ) {
                             state.mesuresArray.push(pollutant);
                         }
                     } else {
-                        state.mesuresArray = state.mesuresArray.filter(
-                            (item) => item !== pollutant
+                        state.mesuresArray = filterPollutantFromArray(
+                            state.mesuresArray,
+                            pollutant
                         );
                     }
 
@@ -212,16 +234,16 @@ class PanelManager {
     }
 
     openPanel(source, deviceId, data) {
-        console.log('#######################');
-        console.log('openPanel');
-        console.log('source: ', source);
-        console.log('deviceId: ', deviceId);
-        console.log('data: ', data);
-        console.log('deviceData: ', window.lastSelectedDeviceData);
-        console.log('#######################');
+        // console.log('#######################');
+        // console.log('openPanel');
+        // console.log('source: ', source);
+        // console.log('deviceId: ', deviceId);
+        // console.log('data: ', data);
+        // console.log('deviceData: ', window.lastSelectedDeviceData);
+        // console.log('#######################');
 
         if (!isSourceActive(source)) {
-            console.log('Source non active:', source);
+            // console.log('Source non active:', source);
             return;
         }
         this.buttonManager.resetButtonStates('pollutant');
@@ -345,9 +367,9 @@ class PanelManager {
                 'pas de temps non disponible pour les micro-stations AtmoSud'
             );
             const deviceData = window.lastSelectedDeviceData;
-            if (deviceData?.pasDeTemps) {
+            if (deviceData?.pas_de_temps) {
                 const pasDeTempsEnMinutes = Math.round(
-                    deviceData.pasDeTemps / 60
+                    deviceData.pas_de_temps / 60
                 );
                 const label = document.querySelector(
                     'label[for="btn_pasDeTemps_scan"]'
@@ -535,7 +557,7 @@ class PanelManager {
             nh3: 'nh3',
             c6h6: 'c6h6',
         };
-        return conversions[pollutant] || pollutant;
+        return conversions[pollutant.toLowerCase()] || pollutant.toLowerCase();
     }
 }
 
