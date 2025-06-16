@@ -101,9 +101,17 @@ export function clearLayer(source) {
             break;
         case 'modPm':
             modelisationPMAtmoSud_layer.clearLayers();
+            if (window.legendControl) {
+                map.removeControl(window.legendControl);
+                window.legendControl = null;
+            }
             break;
         case 'icairh':
             modelisationICAIRAtmoSud_layer.clearLayers();
+            if (window.legendControl) {
+                map.removeControl(window.legendControl);
+                window.legendControl = null;
+            }
             break;
         case 'signalair':
             signalair_layer.clearLayers();

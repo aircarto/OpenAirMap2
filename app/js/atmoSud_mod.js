@@ -189,14 +189,22 @@ async function handleMapClick(e) {
 }
 
 /**
+ * Supprime la légende de la carte
+ */
+function removeLegendControl() {
+    if (window.legendControl) {
+        map.removeControl(window.legendControl);
+        window.legendControl = null;
+    }
+}
+
+/**
  * Crée et affiche le contrôle de légende sur la carte
  * @param {string} legendUrl - L'URL de la légende à afficher
  */
 function updateLegendControl(legendUrl) {
     // Supprimer l'ancien contrôle de légende s'il existe
-    if (window.legendControl) {
-        map.removeControl(window.legendControl);
-    }
+    removeLegendControl();
 
     // Créer un nouveau contrôle de légende
     window.legendControl = L.control({ position: 'bottomright' });
@@ -278,11 +286,13 @@ export function loadModPM(compoundUpper) {
     if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
         modelisationICAIRAtmoSud_layer.clearLayers();
         console.log("Couche ICAIR'H désactivée");
+        removeLegendControl();
     }
 
     // Nettoyage de la couche existante
     modelisationPMAtmoSud_layer.clearLayers();
     console.log('Couche nettoyée');
+    removeLegendControl();
 
     // Supprimer l'ancien événement de clic s'il existe
     map.off('click', handleMapClick);
@@ -450,6 +460,7 @@ export function loadModIcair() {
     if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
         modelisationPMAtmoSud_layer.clearLayers();
         console.log('Couche PM désactivée');
+        removeLegendControl();
     }
 
     // Supprimer l'ancien événement de clic s'il existe
