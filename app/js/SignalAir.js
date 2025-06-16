@@ -43,12 +43,10 @@ export function loadSignalAir(startDate, endDate) {
     // Nettoyage de la couche existante
     signalair_layer.clearLayers();
 
-    // Calcul des dates si non fournies (veille)
+    // Si aucune date n'est fournie, afficher le popup de sélection
     if (!startDate || !endDate) {
-        const now = new Date();
-        now.setDate(now.getDate() - 1); // On se place à la veille
-        endDate = now.toISOString().split('T')[0];
-        startDate = endDate; // Même date que la fin pour n'avoir que la veille
+        showDatePickerPopup();
+        return;
     }
 
     console.log(
@@ -368,3 +366,92 @@ const formatDate = (dateString) => {
         minute: '2-digit',
     }).format(date);
 };
+
+/**
+ * Affiche le popup de sélection de dates
+ */
+function showDatePickerPopup() {
+    // Supprimer les anciens éléments
+    document
+        .querySelectorAll('.signalair-date-picker-popup')
+        .forEach((el) => el.remove());
+
+    // Création du conteneur draggable
+    const popup = document.createElement('div');
+    popup.className = 'signalair-date-picker-popup';
+
+    // Initialiser les dates par défaut (30 derniers jours)
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    const today = new Date().toISOString().split('T')[0];
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    popup.innerHTML = `
+        <div class="signalair-date-picker-header">
+            <h3>Sélection de la période</h3>
+            <button class="close-btn">×</button>
+        </div>
+        <div class="signalair-date-picker-content">
+            <div class="signalair-date-picker-inputs">
+                <div class="signalair-date-picker-group">
+                    <label for="signalair-date-start">Date de début</label>
+                    <input type="date" id="signalair-date-start" class="form-control" max="${today}" value="${startDateStr}">
+                </div>
+                <div class="signalair-date-picker-group">
+                    <label for="signalair-date-end">Date de fin</label>
+                    <input type="date" id="signalair-date-end" class="form-control" max="${today}" value="${endDateStr}">
+                </div>
+            </div>
+            <div class="signalair-date-picker-actions">
+                <button class="btn-reset" id="signalair-reset-dates">Réinitialiser</button>
+                <button class="btn-apply" id="signalair-apply-dates">Appliquer</button>
+            </div>
+        </div>
+    `;
+
+    // Ajout au DOM avant d'ajouter les écouteurs d'événements
+    document.body.appendChild(popup);
+
+    // Fermer le popup
+    popup
+        .querySelector('.close-btn')
+        .addEventListener('click', () => popup.remove());
+
+    // Ajouter les écouteurs d'événements
+    popup
+        .querySelector('#signalair-reset-dates')
+        .addEventListener('click', () => {
+            resetSignalAirDates();
+            popup.remove();
+        });
+    popup
+        .querySelector('#signalair-apply-dates')
+        .addEventListener('click', () => {
+            applySignalAirDates();
+            popup.remove();
+        });
+
+    // Rendre draggable
+    let isDragging = false,
+        offsetX,
+        offsetY;
+
+    const header = popup.querySelector('.signalair-date-picker-header');
+    header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - popup.offsetLeft;
+        offsetY = e.clientY - popup.offsetTop;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            popup.style.left = `${e.clientX - offsetX}px`;
+            popup.style.top = `${e.clientY - offsetY}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => (isDragging = false));
+}
