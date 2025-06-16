@@ -113,10 +113,12 @@ export const startAutoRefresh = () => {
 
         // Récupération et rafraîchissement des sources actives
         const activeSources = getArrayFromLocalStorage('sources_local');
-        const refreshPromises = activeSources.map((source) => {
-            clearLayer(source);
-            return loadSource(source);
-        });
+        const refreshPromises = activeSources
+            .filter((source) => source !== 'signalair') // Exclure SignalAir
+            .map((source) => {
+                clearLayer(source);
+                return loadSource(source);
+            });
 
         // Attente de la fin de tous les rafraîchissements
         Promise.all(refreshPromises)

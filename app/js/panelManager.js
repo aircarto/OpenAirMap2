@@ -164,22 +164,25 @@ class PanelManager {
                     const previousLength = state.mesuresArray.length;
 
                     const isPollutantInArray = (array, poll) => {
-                        if (poll === 'pm2.5') {
-                            return (
-                                array.includes('pm2.5') ||
-                                array.includes('pm25')
-                            );
-                        }
-                        return array.includes(poll);
+                        const normalizedPoll = poll
+                            .toLowerCase()
+                            .replace('2.5', '25');
+                        return array.some(
+                            (item) =>
+                                item.toLowerCase().replace('2.5', '25') ===
+                                normalizedPoll
+                        );
                     };
 
                     const filterPollutantFromArray = (array, poll) => {
-                        if (poll === 'pm2.5') {
-                            return array.filter(
-                                (item) => item !== 'pm2.5' && item !== 'pm25'
-                            );
-                        }
-                        return array.filter((item) => item !== poll);
+                        const normalizedPoll = poll
+                            .toLowerCase()
+                            .replace('2.5', '25');
+                        return array.filter(
+                            (item) =>
+                                item.toLowerCase().replace('2.5', '25') !==
+                                normalizedPoll
+                        );
                     };
 
                     if (button.checked) {

@@ -62,12 +62,12 @@ export const sources = {
 };
 
 export const modelisations = {
-    modPm: {
-        name: 'Modélisation Horaires',
-        code: 'modPm',
-        activated: false,
-        description: 'Carte de modélisation',
-    },
+    // modPm: {
+    //     name: 'Modélisation Horaires',
+    //     code: 'modPm',
+    //     activated: false,
+    //     description: 'Carte de modélisation',
+    // },
     icairh: {
         name: "ICAIR'H (modélisation multipolluant)",
         code: 'icairh',

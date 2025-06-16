@@ -1,5 +1,9 @@
 import { atmoMicroLayer } from './layers.js';
-import { getColorCodeForValue, getArrayFromLocalStorage } from './utils.js';
+import {
+    getColorCodeForValue,
+    getArrayFromLocalStorage,
+    formatTimeAgo,
+} from './utils.js';
 import { state, openSidePanelMicroStation } from './atmoSud_microStations.js';
 import { openSidePanelStationRef } from './atmoSud_stationsRef.js';
 import { formatPollutantName } from './utils.js';
@@ -605,6 +609,7 @@ function formatPollutantDisplay(polluant) {
  * @returns {string} - HTML du tooltip
  */
 function createTooltipHTML(stationData, formattedPollutants) {
+    console.log('stationData:', stationData);
     return `
         <div class="card border-0 shadow-sm">
             <div class="card-body p-2">
@@ -615,7 +620,7 @@ function createTooltipHTML(stationData, formattedPollutants) {
                             ? `
                         <small class="text-muted mb-1">
                             <i class="bi bi-clock me-1"></i>
-                            Dernière mise à jour: ${new Date(stationData.time).toLocaleString()}
+                            Dernière mise à jour: ${formatTimeAgo(stationData.time)}
                         </small>
                     `
                             : ''
@@ -1273,16 +1278,11 @@ export function createNebuleAirMarker(value, mesure_maj_pasDeTemps, mesures) {
         data: value,
     };
 
-    if (value.connected) {
-        const textMarker = createNebuleAirTextMarker(
-            value,
-            mesure_maj_pasDeTemps
-        );
-        setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value);
-        return { nebuleAirMarker, textMarker };
-    }
-
-    return { nebuleAirMarker, textMarker: null };
+    const textMarker = value.connected
+        ? createNebuleAirTextMarker(value, mesure_maj_pasDeTemps)
+        : null;
+    setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value);
+    return { nebuleAirMarker, textMarker };
 }
 
 /**
@@ -1332,7 +1332,9 @@ function createNebuleAirTextMarker(value, mesure_maj_pasDeTemps) {
 function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
     const highlightMarker = (e) => {
         nebuleAirMarker.setZIndexOffset(1000);
-        textMarker.setZIndexOffset(1000);
+        if (textMarker) {
+            textMarker.setZIndexOffset(1000);
+        }
 
         const tooltip = document.createElement('div');
         tooltip.className = 'custom-tooltip';
@@ -1344,7 +1346,18 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
                         <small class="text-muted mb-1">
                             <i class="bi bi-info-circle me-1"></i>
                             NebuleAir - AirCarto
+                            ${!value.connected ? '<span class="text-danger">(Déconnecté)</span>' : ''}
                         </small>
+                        ${
+                            value.time
+                                ? `
+                            <small class="text-muted mb-1">
+                                <i class="bi bi-clock me-1"></i>
+                                Dernière mise à jour: ${formatTimeAgo(value.time)}
+                            </small>
+                        `
+                                : ''
+                        }
                         <small class="text-muted">
                             Polluants mesurés:
                             <ul class="list-unstyled mb-0">
@@ -1370,13 +1383,17 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
 
         document.body.appendChild(tooltip);
         nebuleAirMarker.tooltip = tooltip;
-        textMarker.tooltip = tooltip;
+        if (textMarker) {
+            textMarker.tooltip = tooltip;
+        }
     };
 
     const resetMarker = () => {
         if (nebuleAirMarkerState.selectedMarker !== nebuleAirMarker) {
             nebuleAirMarker.setZIndexOffset(0);
-            textMarker.setZIndexOffset(0);
+            if (textMarker) {
+                textMarker.setZIndexOffset(0);
+            }
         }
 
         if (nebuleAirMarker.tooltip) {
@@ -1389,7 +1406,9 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
             }
             nebuleAirMarker.tooltip.remove();
             nebuleAirMarker.tooltip = null;
-            textMarker.tooltip = null;
+            if (textMarker) {
+                textMarker.tooltip = null;
+            }
         }
     };
 
@@ -1457,10 +1476,12 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
         .on('mouseout', resetMarker)
         .on('click', clickHandler);
 
-    textMarker
-        .on('mouseover', highlightMarker)
-        .on('mouseout', resetMarker)
-        .on('click', clickHandler);
+    if (textMarker) {
+        textMarker
+            .on('mouseover', highlightMarker)
+            .on('mouseout', resetMarker)
+            .on('click', clickHandler);
+    }
 }
 
 /**
@@ -1708,6 +1729,16 @@ function setupSensorCommunityMarkerEvents(
                             <i class="bi bi-info-circle me-1"></i>
                             Sensor.Community
                         </small>
+                        ${
+                            sensor.timestamp
+                                ? `
+                            <small class="text-muted mb-1">
+                                <i class="bi bi-clock me-1"></i>
+                                Dernière mise à jour: ${formatTimeAgo(sensor.timestamp)}
+                            </small>
+                        `
+                                : ''
+                        }
                         <small class="text-muted">
                             Polluants mesurés:
                             <ul class="list-unstyled mb-0">

@@ -8,6 +8,7 @@ import {
     formatPollutantName,
     getArrayFromLocalStorage,
     getColorCodeForValue,
+    formatTimeAgo,
 } from './utils.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { panelManager } from './panelManager.js';
@@ -983,4 +984,37 @@ export function retreiveHistoriqueDataStationRef(
                 window.amchart_root = undefined;
             }
         });
+}
+
+// Dans la fonction qui crée le tooltip pour les stations de référence
+function createRefStationTooltip(stationData) {
+    return `
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-2">
+                <h6 class="card-title mb-1">${stationData.nom_station}</h6>
+                <div class="d-flex flex-column">
+                    ${
+                        stationData.time
+                            ? `
+                        <small class="text-muted mb-1">
+                            <i class="bi bi-clock me-1"></i>
+                            Dernière mise à jour: ${formatTimeAgo(stationData.time)}
+                        </small>
+                    `
+                            : ''
+                    }
+                    <small class="text-muted mb-1">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        ${stationData.latitude.toFixed(4)}, ${stationData.longitude.toFixed(4)}
+                    </small>
+                    <small class="text-muted">
+                        Polluants mesurés:
+                        <ul class="list-unstyled ms-3 mb-0">
+                            ${stationData.polluants.map((polluant) => `<li>${polluant}</li>`).join('')}
+                        </ul>
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
 }
