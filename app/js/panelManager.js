@@ -234,16 +234,16 @@ class PanelManager {
     }
 
     openPanel(source, deviceId, data) {
-        console.log('#######################');
-        console.log('openPanel');
-        console.log('source: ', source);
-        console.log('deviceId: ', deviceId);
-        console.log('data: ', data);
-        console.log('deviceData: ', window.lastSelectedDeviceData);
-        console.log('#######################');
+        // console.log('#######################');
+        // console.log('openPanel');
+        // console.log('source: ', source);
+        // console.log('deviceId: ', deviceId);
+        // console.log('data: ', data);
+        // console.log('deviceData: ', window.lastSelectedDeviceData);
+        // console.log('#######################');
 
         if (!isSourceActive(source)) {
-            console.log('Source non active:', source);
+            // console.log('Source non active:', source);
             return;
         }
         this.buttonManager.resetButtonStates('pollutant');
@@ -367,9 +367,9 @@ class PanelManager {
                 'pas de temps non disponible pour les micro-stations AtmoSud'
             );
             const deviceData = window.lastSelectedDeviceData;
-            if (deviceData?.pasDeTemps) {
+            if (deviceData?.pas_de_temps) {
                 const pasDeTempsEnMinutes = Math.round(
-                    deviceData.pasDeTemps / 60
+                    deviceData.pas_de_temps / 60
                 );
                 const label = document.querySelector(
                     'label[for="btn_pasDeTemps_scan"]'
