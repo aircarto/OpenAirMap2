@@ -6,7 +6,10 @@ import { formatPollutantName } from './utils.js';
 import { mesures as supportedMesures } from './appConfig.js';
 import { openSidePanelNebuleAir } from './NebuleAir.js';
 import { sensorCommunityLayer } from './layers.js';
-import { displaySensorCommunityHistoricalData } from './sensorCommunity.js';
+import {
+    displaySensorCommunityHistoricalData,
+    displaySensorCommunityGrafana,
+} from './sensorCommunity.js';
 
 // État global pour les marqueurs
 const markerState = {
@@ -1605,14 +1608,14 @@ export function createSensorCommunityMarker(sensor, pasDeTemps, mesure) {
         [sensor.location.latitude, sensor.location.longitude],
         {
             icon: sensorCommunityIcon,
-            deviceId: sensor.id,
+            deviceId: sensor.sensor.id,
         }
     ).addTo(sensorCommunityLayer);
 
     if (!window.sensorCommunityMarkers) {
         window.sensorCommunityMarkers = {};
     }
-    window.sensorCommunityMarkers[sensor.id] = {
+    window.sensorCommunityMarkers[sensor.sensor.id] = {
         marker: sensorCommunityMarker,
         data: sensor,
     };
@@ -1670,7 +1673,7 @@ function createSensorCommunityTextMarker(sensor, mesure) {
         [sensor.location.latitude, sensor.location.longitude],
         {
             icon: text_param,
-            deviceId: sensor.id,
+            deviceId: sensor.sensor.id,
         }
     );
 
@@ -1699,7 +1702,7 @@ function setupSensorCommunityMarkerEvents(
         tooltip.innerHTML = `
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-2">
-                    <h6 class="card-title mb-1">${sensor.id}</h6>
+                    <h6 class="card-title mb-1">${sensor.sensor.id}</h6>
                     <div class="d-flex flex-column">
                         <small class="text-muted mb-1">
                             <i class="bi bi-info-circle me-1"></i>
@@ -1799,6 +1802,7 @@ function setupSensorCommunityMarkerEvents(
         if (textMarker) {
             textMarker.setZIndexOffset(1000);
         }
+
         sensorCommunityMarker._icon.classList.add('marker-selected');
         if (textMarker) {
             textMarker._icon.classList.add('marker-selected');
@@ -1806,18 +1810,16 @@ function setupSensorCommunityMarkerEvents(
 
         sensorCommunityMarkerState.selectedMarker = sensorCommunityMarker;
         sensorCommunityMarkerState.selectedText = textMarker;
-        sensorCommunityMarkerState.selectedDeviceId = sensor.id;
+        sensorCommunityMarkerState.selectedDeviceId = sensor.sensor.id;
 
         // Mise à jour de globalSelectedDeviceId
-        window.globalSelectedDeviceId = sensor.id;
+        window.globalSelectedDeviceId = sensor.sensor.id;
 
         // Récupération des paramètres de configuration
-        const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
-        const mesures = getArrayFromLocalStorage('mesuresLocal');
-        const mesure = mesures[0];
+        const mesure = getArrayFromLocalStorage('mesuresLocal')[0];
 
         // Affichage des données historiques
-        displaySensorCommunityHistoricalData(sensor.id, mesure, '24h');
+        displaySensorCommunityGrafana(sensor.sensor.id, mesure);
     };
 
     sensorCommunityMarker

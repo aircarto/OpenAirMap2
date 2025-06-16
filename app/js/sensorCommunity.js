@@ -154,21 +154,21 @@ export async function loadSensorCommunity() {
 
 /**
  * Récupère les données historiques d'un capteur Sensor.Community NE MARCHE PAS
- * @param {string} deviceId - ID du capteur
+ * @param {string} sensorId - ID du capteur
  * @param {string} startDate - Date de début (format ISO)
  * @param {string} endDate - Date de fin (format ISO)
  * @returns {Promise<Object>} - Données historiques du capteur
  */
 export async function getSensorCommunityHistoricalData(
-    deviceId,
+    sensorId,
     startDate,
     endDate
 ) {
     try {
         // Construction de l'URL avec les dates
-        const url = `https://data.sensor.community/airrohr/v1/filter/device_id=${deviceId}&start=${startDate}&end=${endDate}`;
+        const url = `https://data.sensor.community/airrohr/v1/filter/sensor_id=${sensorId}&start=${startDate}&end=${endDate}`;
         console.log('Requête Sensor.Community:', {
-            deviceId,
+            sensorId,
             url,
             startDate,
             endDate,
@@ -183,7 +183,7 @@ export async function getSensorCommunityHistoricalData(
         console.log("Réponse brute de l'API:", data);
 
         if (!data || data.length === 0) {
-            console.log('Aucune donnée trouvée pour le capteur:', deviceId);
+            console.log('Aucune donnée trouvée pour le capteur:', sensorId);
             throw new Error(
                 "Le capteur existe mais n'a pas envoyé de données récemment"
             );
@@ -210,10 +210,10 @@ export async function getSensorCommunityHistoricalData(
 
 /**
  * Crée une fenêtre popup draggable pour afficher le graphique
- * @param {string} deviceId - ID du capteur
+ * @param {string} sensorId - ID du capteur
  * @returns {HTMLElement} - Élément de la fenêtre popup
  */
-function createDraggablePopup(deviceId) {
+function createDraggablePopup(sensorId) {
     // Suppression de l'ancienne fenêtre si elle existe
     const oldPopup = document.getElementById('sensor-community-popup');
     if (oldPopup) {
@@ -229,12 +229,17 @@ function createDraggablePopup(deviceId) {
         left: 50%;
         transform: translate(-50%, -50%);
         background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        padding: 0;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
         z-index: 10000;
-        min-width: 400px;
-        min-height: 300px;
+        width: 600px;
+        height: 80vh;
+        max-width: 90vw;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     `;
 
     // Création de l'en-tête
@@ -243,25 +248,47 @@ function createDraggablePopup(deviceId) {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
+        padding: 12px 16px;
+        background: #f8f9fa;
         border-bottom: 1px solid #eee;
         cursor: move;
+        flex-shrink: 0;
     `;
 
     const title = document.createElement('h5');
-    title.textContent = `Capteur Sensor.Community - ${deviceId}`;
-    title.style.margin = '0';
+    title.textContent = `Capteur Sensor.Community - ${sensorId}`;
+    title.style.cssText = `
+        margin: 0;
+        font-size: 1rem;
+        color: #333;
+        font-weight: 500;
+    `;
 
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '&times;';
     closeButton.style.cssText = `
         background: none;
         border: none;
-        font-size: 24px;
+        font-size: 20px;
         cursor: pointer;
         padding: 0 5px;
+        color: #666;
+        transition: color 0.2s;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
     `;
+    closeButton.onmouseover = () => {
+        closeButton.style.color = '#333';
+        closeButton.style.background = '#eee';
+    };
+    closeButton.onmouseout = () => {
+        closeButton.style.color = '#666';
+        closeButton.style.background = 'none';
+    };
     closeButton.onclick = () => popup.remove();
 
     header.appendChild(title);
@@ -270,10 +297,11 @@ function createDraggablePopup(deviceId) {
 
     // Création du conteneur pour le graphique
     const chartContainer = document.createElement('div');
-    chartContainer.id = 'chartdiv_sensor';
+    chartContainer.id = 'sensor-community-grafana-container';
     chartContainer.style.cssText = `
-        width: 100%;
-        height: 300px;
+        flex: 1;
+        height: 80%;
+        overflow: hidden;
     `;
     popup.appendChild(chartContainer);
 
@@ -291,18 +319,18 @@ function createDraggablePopup(deviceId) {
 
 /**
  * Affiche les données historiques d'un capteur Sensor.Community dans un graphique
- * @param {string} deviceId - ID du capteur
+ * @param {string} sensorId - ID du capteur
  * @param {string} mesure - Type de mesure à afficher
  * @param {string} historique - Période historique ('24h', '7d', etc.)
  */
 export async function displaySensorCommunityHistoricalData(
-    deviceId,
+    sensorId,
     mesure,
     historique = '24h'
 ) {
     try {
         // Création de la fenêtre popup
-        const popup = createDraggablePopup(deviceId);
+        const popup = createDraggablePopup(sensorId);
 
         // Calcul des dates pour les 24 dernières heures
         const endDate = new Date();
@@ -337,7 +365,7 @@ export async function displaySensorCommunityHistoricalData(
 
         // Récupération des données historiques avec les dates
         const data = await getSensorCommunityHistoricalData(
-            deviceId,
+            sensorId,
             formattedStartDate,
             formattedEndDate
         );
@@ -458,6 +486,87 @@ export async function displaySensorCommunityHistoricalData(
             message:
                 error.message ||
                 "Erreur lors de l'affichage des données historiques",
+            type: 'error',
+            title: 'Erreur',
+            icon: 'exclamation-circle',
+            timer: 5000,
+        });
+    }
+}
+
+/**
+ * Affiche les données historiques d'un capteur Sensor.Community dans un graphique Grafana
+ * @param {string} sensorId - ID du capteur
+ * @param {string} mesure - Type de mesure à afficher
+ */
+export function displaySensorCommunityGrafana(sensorId, mesure) {
+    try {
+        console.log('Affichage du Grafana pour le capteur:', sensorId);
+
+        // Création de la fenêtre popup
+        const popup = createDraggablePopup(sensorId);
+        console.log('Popup créée');
+
+        // Construction de l'URL Grafana avec l'API RRD de Madavi
+        const grafanaUrl = `https://api-rrd.madavi.de:3000/grafana/d-solo/000000004/single-sensor-view-for-map?orgId=1&var-node=${sensorId}&panelId=2&theme=light`;
+        console.log('URL Grafana:', grafanaUrl);
+
+        // Création de l'iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = grafanaUrl;
+        iframe.style.cssText = `
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 0;
+        `;
+        iframe.allow =
+            'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.sandbox =
+            'allow-same-origin allow-scripts allow-popups allow-forms';
+
+        // Ajout de l'iframe au conteneur du graphique
+        const chartContainer = document.getElementById(
+            'sensor-community-grafana-container'
+        );
+        console.log('Conteneur du graphique:', chartContainer);
+
+        if (chartContainer) {
+            // Nettoyage du conteneur
+            chartContainer.innerHTML = '';
+            // Ajout de l'iframe
+            chartContainer.appendChild(iframe);
+            console.log('Iframe ajoutée au conteneur');
+        } else {
+            console.error("Le conteneur du graphique n'a pas été trouvé");
+        }
+
+        // Ajout d'un message d'information
+        const infoMessage = document.createElement('div');
+        infoMessage.style.cssText = `
+            background-color: #f8f9fa;
+            padding: 8px 16px;
+            border-top: 1px solid #eee;
+            font-size: 0.85em;
+            color: #666;
+            flex-shrink: 0;
+        `;
+        infoMessage.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            Graphique des dernières 24 heures fourni par Sensor.Community.
+            <br>
+            <small>Note: Les données peuvent avoir un délai de 5-10 minutes.</small>
+        `;
+        popup.appendChild(infoMessage);
+    } catch (error) {
+        console.error(
+            "Erreur lors de l'affichage du graphique Grafana:",
+            error
+        );
+        createCustomToast({
+            message:
+                error.message ||
+                "Erreur lors de l'affichage du graphique Grafana",
             type: 'error',
             title: 'Erreur',
             icon: 'exclamation-circle',

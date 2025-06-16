@@ -163,13 +163,35 @@ class PanelManager {
                     const state = this.stateManager.getSourceState(source);
                     const previousLength = state.mesuresArray.length;
 
+                    const isPollutantInArray = (array, poll) => {
+                        if (poll === 'pm2.5') {
+                            return (
+                                array.includes('pm2.5') ||
+                                array.includes('pm25')
+                            );
+                        }
+                        return array.includes(poll);
+                    };
+
+                    const filterPollutantFromArray = (array, poll) => {
+                        if (poll === 'pm2.5') {
+                            return array.filter(
+                                (item) => item !== 'pm2.5' && item !== 'pm25'
+                            );
+                        }
+                        return array.filter((item) => item !== poll);
+                    };
+
                     if (button.checked) {
-                        if (!state.mesuresArray.includes(pollutant)) {
+                        if (
+                            !isPollutantInArray(state.mesuresArray, pollutant)
+                        ) {
                             state.mesuresArray.push(pollutant);
                         }
                     } else {
-                        state.mesuresArray = state.mesuresArray.filter(
-                            (item) => item !== pollutant
+                        state.mesuresArray = filterPollutantFromArray(
+                            state.mesuresArray,
+                            pollutant
                         );
                     }
 
@@ -535,7 +557,7 @@ class PanelManager {
             nh3: 'nh3',
             c6h6: 'c6h6',
         };
-        return conversions[pollutant] || pollutant;
+        return conversions[pollutant.toLowerCase()] || pollutant.toLowerCase();
     }
 }
 
