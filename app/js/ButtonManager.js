@@ -59,7 +59,9 @@ export class ButtonManager {
     }
 
     setButtonState(type, id, checked) {
-        console.log(type, id, checked);
+        if (id === '2min') {
+            id = 'scan';
+        }
         const button = this.getButton(type, id);
         if (!button.disabled) {
             button.checked = checked;
@@ -69,7 +71,6 @@ export class ButtonManager {
     setButtonDisabled(type, id, disabled, title = '') {
         const button = this.getButton(type, id);
         if (button) {
-            
             button.disabled = disabled;
             button.title = title;
         }
