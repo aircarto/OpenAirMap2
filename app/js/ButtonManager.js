@@ -60,7 +60,7 @@ export class ButtonManager {
 
     setButtonState(type, id, checked) {
         const button = this.getButton(type, id);
-        if (button) {
+        if (!button.disabled) {
             button.checked = checked;
         }
     }
@@ -68,6 +68,7 @@ export class ButtonManager {
     setButtonDisabled(type, id, disabled, title = '') {
         const button = this.getButton(type, id);
         if (button) {
+            
             button.disabled = disabled;
             button.title = title;
         }

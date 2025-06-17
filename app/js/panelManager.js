@@ -255,9 +255,9 @@ class PanelManager {
         this.stateManager.setCurrentSource(source);
         this.stateManager.updateSourceState(source, { deviceId, ...data });
 
+        this.handlePollutantButtons(source);
         this.updateButtonStates(source);
         this.handleSpecificButtons(source);
-        this.handlePollutantButtons(source);
         this.updateHistoriqueData(source);
     }
 
