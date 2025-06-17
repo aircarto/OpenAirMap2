@@ -79,30 +79,6 @@ export function handleMeasureChange(measure) {
 export function handleTimeStepChange(timeStep) {
     const activeSources = getArrayFromLocalStorage('sources_local');
 
-    // Vérification pour AtmoSud Micro-stations
-    if (activeSources.includes('atmoMicro')) {
-        if (timeStep === 'd') {
-            toastManager.atmoMicroTimeStepDailyWarning();
-            removeItemFromLocalStorageArray('sources_local', 'atmoMicro');
-            clearLayer('atmoMicro');
-        } else if (timeStep === '2min') {
-            toastManager.atmoMicroTimeStepWarning();
-        }
-    }
-
-    // Vérification pour AtmoSud Stations de référence
-    if (activeSources.includes('atmoRef') && timeStep === '2min') {
-        createCustomToast({
-            message: `Le pas de temps 2 minutes n'est pas disponible pour les stations de référence AtmoSud, <strong>désactivation de la source</strong>.`,
-            type: 'warning',
-            title: 'Attention',
-            icon: 'exclamation-triangle',
-            timer: 5000,
-        });
-        removeItemFromLocalStorageArray('sources_local', 'atmoRef');
-        clearLayer('atmoRef');
-    }
-
     // Rechargement des sources actives
     const updatedActiveSources = getArrayFromLocalStorage('sources_local');
     updatedActiveSources.forEach((source) => {

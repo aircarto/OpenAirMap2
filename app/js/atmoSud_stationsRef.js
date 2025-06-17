@@ -19,6 +19,7 @@ import {
     createRefStationMarker,
     createRefDefaultMarkers,
 } from './markerManager.js';
+import { toastManager } from './toaster.js';
 import { POLLUTANT_COLORS } from './appConfig.js';
 
 // Variables locales au module
@@ -336,9 +337,7 @@ export function loadAtmoSudStationsRef() {
 
     // Vérification de la disponibilité des données
     if (state.pasDeTemps[0] === '2min') {
-        console.warn(
-            'Pas de données pour le pas de temps ' + state.pasDeTemps[0]
-        );
+        toastManager.atmoRefTimeStepWarning();
         return;
     }
 
@@ -432,7 +431,6 @@ export function loadAtmoSudStationsRef() {
 
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
-
 
             // Traitement des données de mesure
             if (data.mesures && data.mesures.length > 0) {

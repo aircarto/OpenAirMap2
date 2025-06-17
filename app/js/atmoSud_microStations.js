@@ -9,7 +9,7 @@ import { panelManager } from './panelManager.js';
 import { startSpinner, stopSpinner } from './spinnerManager.js';
 import { apiAtmoSud } from '../config.js';
 import { openSidePanelGeneric } from './sidePanel.js';
-import { createCustomToast } from './toaster.js';
+import { toastManager, createCustomToast } from './toaster.js';
 import {
     initializeMicroStationMarkers,
     processAndDisplayStations,
@@ -59,7 +59,12 @@ export const loadAtmoSudMicroStation = async () => {
         const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
         const pasDeTempsAtmo = convertTimeStep(pasDeTemps);
 
-        if (pasDeTempsAtmo === 'd') return;
+        if (pasDeTemps === 'd') {
+            toastManager.atmoMicroTimeStepDailyWarning();
+            return;
+        } else if (pasDeTemps === '2min') {
+            toastManager.atmoMicroTimeStepWarning();
+        }
 
         const mesures = getArrayFromLocalStorage('mesuresLocal');
         if (!validateMesures(mesures[0])) return;
