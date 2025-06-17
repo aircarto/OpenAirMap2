@@ -309,57 +309,86 @@
     left: 50%;
     transform: translate(-50%, -50%);
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    z-index: 10000;
-    width: 320px;
-    max-width: 90vw;
-    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    min-width: 300px;
+    z-index: 1000;
     font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+        Cantarell, sans-serif;
+    animation: popupFadeIn 0.3s ease-out;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
 }
 
 .signalair-date-picker-header {
-    background: #ffffff;
-    padding: 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    cursor: move;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
 }
 
 .signalair-date-picker-header h3 {
     margin: 0;
-    font-size: 1rem;
-    color: #1a1a1a;
+    font-size: 1.1rem;
+    color: #333;
     font-weight: 600;
 }
 
-.signalair-date-picker-header .close-btn {
+.close-btn {
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 1.3rem;
     color: #666;
     cursor: pointer;
-    padding: 4px;
-    line-height: 1;
-    border-radius: 50%;
+    padding: 0;
     width: 24px;
     height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
     transition: all 0.2s ease;
 }
 
-.signalair-date-picker-header .close-btn:hover {
-    background: #f5f5f5;
-    color: #1a1a1a;
+.close-btn:hover {
+    background-color: #f0f0f0;
+    transform: rotate(90deg);
 }
 
 .signalair-date-picker-content {
-    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.days-counter {
+    margin: 0;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    color: #495057;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.days-counter:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
 }
 
 .signalair-date-picker-inputs {
@@ -371,108 +400,122 @@
 .signalair-date-picker-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 .signalair-date-picker-group label {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #666;
     font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
-.signalair-date-picker-group input {
-    padding: 8px 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+.signalair-date-picker-group input[type='date'] {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
     font-size: 0.9rem;
-    color: #1a1a1a;
+    color: #333;
     transition: all 0.2s ease;
-    background: #fafafa;
+    background-color: #fff;
 }
 
-.signalair-date-picker-group input:hover {
-    border-color: #d0d0d0;
-    background: #f5f5f5;
+.signalair-date-picker-group input[type='date']:hover {
+    border-color: #0074d9;
+    background-color: #f8f9fa;
 }
 
-.signalair-date-picker-group input:focus {
+.signalair-date-picker-group input[type='date']:focus {
     outline: none;
-    border-color: #3498db;
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    border-color: #0074d9;
+    box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
+    background-color: #fff;
 }
 
 .signalair-date-picker-actions {
     display: flex;
     gap: 8px;
-    margin-top: 20px;
+    margin-top: 8px;
 }
 
-.signalair-date-picker-actions button {
+.btn-reset,
+.btn-apply {
     flex: 1;
-    padding: 8px 12px;
+    padding: 8px;
     border: none;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 500;
+    border-radius: 6px;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-weight: 500;
 }
 
-.signalair-date-picker-actions .btn-reset {
-    background: #f5f5f5;
-    color: #666;
+.btn-reset {
+    background-color: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
 }
 
-.signalair-date-picker-actions .btn-reset:hover {
-    background: #e8e8e8;
-    color: #1a1a1a;
+.btn-reset:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+    transform: translateY(-1px);
 }
 
-.signalair-date-picker-actions .btn-apply {
-    background: #3498db;
+.btn-apply {
+    background-color: #0074d9;
     color: white;
+    box-shadow: 0 2px 4px rgba(0, 116, 217, 0.2);
 }
 
-.signalair-date-picker-actions .btn-apply:hover {
-    background: #2980b9;
+.btn-apply:hover {
+    background-color: #0063b1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 116, 217, 0.3);
 }
 
+/* Style pour le conteneur draggable */
+.signalair-date-picker-header {
+    cursor: move;
+    user-select: none;
+    position: relative;
+}
+
+.signalair-date-picker-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #eee, transparent);
+}
+
+/* Animation pour les boutons */
+.btn-reset:active,
+.btn-apply:active {
+    transform: translateY(1px);
+}
+
+/* Responsive design */
 @media (max-width: 480px) {
     .signalair-date-picker-popup {
-        width: 280px;
-    }
-
-    .signalair-date-picker-header {
-        padding: 10px 14px;
+        width: 90%;
+        min-width: auto;
+        margin: 0 10px;
     }
 
     .signalair-date-picker-header h3 {
-        font-size: 0.95rem;
+        font-size: 1rem;
     }
 
-    .signalair-date-picker-content {
-        padding: 14px;
-    }
-
-    .signalair-date-picker-inputs {
-        gap: 10px;
-    }
-
-    .signalair-date-picker-group input {
-        padding: 7px 10px;
+    .days-counter {
         font-size: 0.85rem;
+        padding: 8px;
     }
 
-    .signalair-date-picker-actions {
-        margin-top: 16px;
-        gap: 6px;
-    }
-
-    .signalair-date-picker-actions button {
-        padding: 7px 10px;
-        font-size: 0.8rem;
+    .btn-reset,
+    .btn-apply {
+        padding: 6px;
+        font-size: 0.85rem;
     }
 }

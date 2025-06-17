@@ -56,21 +56,7 @@ export function loadSignalAir(startDate, endDate) {
     // Boucle sur chaque type de signalement
     for (const key in signalair_json) {
         const { code, url, img } = signalair_json[key];
-        let fullUrl;
-
-        // Vérification spéciale pour le type visuel
-        if (code === 'visuel') {
-            // console.log(
-            //     `[SignalAir] Vérification de l'URL pour le type visuel`
-            // );
-            // On essaie avec une période plus longue pour voir si c'est un problème de données
-            fullUrl = `https://www.signalair.eu/fr/flux/geojson/${url}/2025-01-01/${endDate}`;
-            // console.log(`[SignalAir] URL modifiée pour visuel: ${fullUrl}`);
-        } else {
-            fullUrl = `https://www.signalair.eu/fr/flux/geojson/${url}/${startDate}/${endDate}`;
-            // console.log(`[SignalAir] URL pour ${code}: ${fullUrl}`);
-        }
-
+        let fullUrl = `https://www.signalair.eu/fr/flux/geojson/${url}/${startDate}/${endDate}`;
         fetch(fullUrl)
             .then((response) => {
                 // console.log(
@@ -210,7 +196,7 @@ function createDateRangeSelector() {
     const dateRangeDiv = document.createElement('div');
     dateRangeDiv.className = 'signalair-date-range';
     dateRangeDiv.innerHTML = `
-        <h4>Période de recherche</h4>
+        <h4>Période des signalements</h4>
         <div class="date-range-inputs">
             <div class="date-input-group">
                 <label for="signalair-date-start">Date de début</label>
@@ -235,10 +221,10 @@ function createDateRangeSelector() {
         console.error("Le panneau latéral (side-panel) n'a pas été trouvé");
     }
 
-    // Initialiser les dates par défaut (30 derniers jours)
+    // Initialiser les dates par défaut (2 derniers jours)
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    startDate.setDate(startDate.getDate() - 2);
 
     document.getElementById('signalair-date-start').value = startDate
         .toISOString()
@@ -262,7 +248,7 @@ function createDateRangeSelector() {
 function resetSignalAirDates() {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    startDate.setDate(startDate.getDate() - 2);
 
     document.getElementById('signalair-date-start').value = startDate
         .toISOString()
@@ -380,21 +366,65 @@ function showDatePickerPopup() {
     const popup = document.createElement('div');
     popup.className = 'signalair-date-picker-popup';
 
-    // Initialiser les dates par défaut (30 derniers jours)
+    // Initialiser les dates par défaut (2 derniers jours)
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    startDate.setDate(startDate.getDate() - 2);
 
     const today = new Date().toISOString().split('T')[0];
     const startDateStr = startDate.toISOString().split('T')[0];
     const endDateStr = endDate.toISOString().split('T')[0];
 
+    // Fonction pour calculer la différence de jours
+    const calculateDaysDifference = (start, end) => {
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const diffTime = Math.abs(endDate - startDate);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    };
+
+    // Fonction pour formater le texte de la période
+    const formatPeriodText = (startDate, endDate, daysDiff) => {
+        const isToday = endDate === today;
+        const startDateFormatted = new Date(startDate).toLocaleDateString(
+            'fr-FR',
+            {
+                day: 'numeric',
+                month: 'long',
+            }
+        );
+        const endDateFormatted = new Date(endDate).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
+
+        if (isToday) {
+            return `Affichage des signalements des ${daysDiff} derniers jours`;
+        } else if (daysDiff === 1) {
+            return `Affichage des signalements du ${startDateFormatted}`;
+        } else {
+            return `Affichage des signalements du ${startDateFormatted} au ${endDateFormatted}`;
+        }
+    };
+
+    // Fonction pour mettre à jour le texte du compteur
+    const updateDaysCounter = () => {
+        const startDate = document.getElementById('signalair-date-start').value;
+        const endDate = document.getElementById('signalair-date-end').value;
+        const daysDiff = calculateDaysDifference(startDate, endDate);
+        const periodText = formatPeriodText(startDate, endDate, daysDiff);
+        document.getElementById('signalair-days-counter').textContent =
+            periodText;
+    };
+
     popup.innerHTML = `
         <div class="signalair-date-picker-header">
-            <h3>Sélection de la période</h3>
+            <h3>Période des signalements</h3>
             <button class="close-btn">×</button>
         </div>
         <div class="signalair-date-picker-content">
+            <p id="signalair-days-counter" class="days-counter"></p>
             <div class="signalair-date-picker-inputs">
                 <div class="signalair-date-picker-group">
                     <label for="signalair-date-start">Date de début</label>
@@ -415,6 +445,17 @@ function showDatePickerPopup() {
     // Ajout au DOM avant d'ajouter les écouteurs d'événements
     document.body.appendChild(popup);
 
+    // Mettre à jour le compteur initial
+    updateDaysCounter();
+
+    // Ajouter les écouteurs d'événements pour les changements de date
+    popup
+        .querySelector('#signalair-date-start')
+        .addEventListener('change', updateDaysCounter);
+    popup
+        .querySelector('#signalair-date-end')
+        .addEventListener('change', updateDaysCounter);
+
     // Fermer le popup
     popup
         .querySelector('.close-btn')
@@ -425,13 +466,13 @@ function showDatePickerPopup() {
         .querySelector('#signalair-reset-dates')
         .addEventListener('click', () => {
             resetSignalAirDates();
-            popup.remove();
+            updateDaysCounter();
         });
     popup
         .querySelector('#signalair-apply-dates')
         .addEventListener('click', () => {
             applySignalAirDates();
-            popup.remove();
+            updateDaysCounter();
         });
 
     // Rendre draggable
@@ -440,6 +481,7 @@ function showDatePickerPopup() {
         offsetY;
 
     const header = popup.querySelector('.signalair-date-picker-header');
+    header.style.cursor = 'move';
     header.addEventListener('mousedown', (e) => {
         isDragging = true;
         offsetX = e.clientX - popup.offsetLeft;
