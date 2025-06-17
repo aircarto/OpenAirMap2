@@ -44,7 +44,7 @@ export const sources = {
             nebuleair: {
                 name: 'NebuleAir',
                 code: 'nebuleair',
-                activated: false,
+                activated: true,
             },
             sensorCommunity: {
                 name: 'Sensor.Community',
