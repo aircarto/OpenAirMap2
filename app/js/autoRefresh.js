@@ -50,7 +50,7 @@ export const startAutoRefresh = () => {
             break;
         }
         case '2min': {
-            refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
+            refreshIntervalMs = 60 * 1000; // 2 minutes
             break;
         }
         case 'qh': {

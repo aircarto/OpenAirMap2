@@ -432,12 +432,7 @@ export function loadAtmoSudStationsRef() {
 
             const end = Date.now();
             const requestTimer = (end - start) / 1000;
-            // console.log('full url derniere: ' + fullUrlDerniere);
-            // console.log(
-            //     `Data gathered in %c${requestTimer} sec`,
-            //     'color: red;'
-            // );
-            // console.log('Station ayant renvoyé mesure/derniere', data);
+
 
             // Traitement des données de mesure
             if (data.mesures && data.mesures.length > 0) {
@@ -550,26 +545,11 @@ async function getStationImage(stationId) {
             });
 
             if (!isValid2) {
-                console.log(
-                    '%cgetStationImage',
-                    'color: white; font-style: bold; background-color: green;padding: 2px'
-                );
-                console.log("URL de l'image de la station:", imageUrl);
-                console.log("URL de l'image de la station 2:", imageUrl2);
-                console.log('Image validée:', isValid);
-                console.log('Image validée 2:', isValid2);
                 return 'img/stationsRefAtmoSud/station_default.png';
             }
 
             return imageUrl2;
         }
-
-        console.log(
-            '%cgetStationImage',
-            'color: white; font-style: bold; background-color: green;padding: 2px'
-        );
-        console.log("URL de l'image de la station:", imageUrl);
-        console.log('Image validée:', isValid);
 
         return imageUrl;
     } catch (error) {
@@ -589,13 +569,6 @@ export function openSidePanelStationRef(deviceId, station_name, mesure) {
         return;
     }
 
-    console.log(
-        '%copenSidePanel_stationRef',
-        'color: white; font-style: bold; background-color: green;padding: 2px'
-    );
-    console.log('deviceId:', deviceId);
-    console.log('station_name:', station_name);
-    console.log('mesure:', mesure);
     if (state.pasDeTemps[0] === 'd') {
         state.historiqueChart = '7d';
     } else if (state.pasDeTemps[0] === 'instantane') {
@@ -636,7 +609,6 @@ export function openSidePanelStationRef(deviceId, station_name, mesure) {
     card2Link.href = 'https://www.atmosud.org';
 
     // Utiliser le gestionnaire de panneau pour configurer les boutons
-    console.log('customDateRange', state.customDateRange);
     panelManager.openPanel('atmoRef', deviceId, {
         pasDeTempsAtmo: state.pasDeTempsAtmo,
         historiqueChart: state.historiqueChart,

@@ -155,7 +155,7 @@ const validateData = (data) => {
 const filterAndProcessData = (data, pasDeTemps) => {
     let filteredData = data;
     if (pasDeTemps === '2min') {
-        filteredData = data.filter((item) => item.pasDeTemps === 120);
+        filteredData = data.filter((item) => item.pas_de_temps <= 120);
     }
     const uniqueMeasures = {};
     filteredData.forEach((measure) => {
@@ -194,11 +194,6 @@ export const openSidePanelMicroStation = (
     if (!isSourceActive('atmoMicro')) return;
 
     updateCardInfo(data);
-    // console.log('openSidePanelMicroStation');
-    // console.log('data: ', data);
-    // console.log('pasDeTempsAtmo: ', pasDeTempsAtmo);
-    // console.log('historique: ', historique);
-    // console.log('mesuresAtmo: ', mesuresAtmo);
     if (pasDeTempsAtmo === 'quart-horaire') {
         pasDeTempsAtmo = 'qh';
     } else if (pasDeTempsAtmo === 'journalière') {

@@ -437,7 +437,6 @@ function createDefaultMarker(stationData, dataCapteurSite, pasDeTempsAtmo) {
  * @param {string} pasDeTempsAtmo - Pas de temps Atmo
  */
 function handleMarkerClick(marker, textMarker, stationData, pasDeTempsAtmo) {
-    console.log('click on micro station:', stationData.nom_site);
 
     // Réinitialiser tous les autres types de marqueurs
     resetAllMarkers();
@@ -464,7 +463,6 @@ function handleMarkerClick(marker, textMarker, stationData, pasDeTempsAtmo) {
     // Mise à jour de globalSelectedDeviceId en tant que chaîne de caractères
     const deviceId = String(stationData.id_site);
     window.globalSelectedDeviceId = deviceId;
-    console.log('Mise à jour de globalSelectedDeviceId:', deviceId);
 
     // S'assurer que les valeurs sont définies
     const historique = state.historiqueChart || '24h';
@@ -609,7 +607,6 @@ function formatPollutantDisplay(polluant) {
  * @returns {string} - HTML du tooltip
  */
 function createTooltipHTML(stationData, formattedPollutants) {
-    console.log('stationData:', stationData);
     return `
         <div class="card border-0 shadow-sm">
             <div class="card-body p-2">
@@ -930,7 +927,6 @@ export function createRefStationMarker(value, iconParam, stationData, mesure) {
             window.lastSelectedDeviceData = stationData;
             refMarkerState.lastSelectedStationData = value;
 
-            console.log('Click on station: ' + value.id_station);
             openSidePanelStationRef(
                 value.id_station,
                 value.nom_station,
@@ -1003,7 +999,6 @@ function setupRefMarkerEvents(stationMarker, textMarker, value, mesure) {
         window.lastSelectedDeviceData = value;
         refMarkerState.lastSelectedStationData = value;
 
-        console.log('Click on station: ' + value.id_station);
         openSidePanelStationRef(
             value.id_station,
             value.nom_station,
@@ -1213,7 +1208,6 @@ export function createRefDefaultMarkers() {
                 window.globalSelectedDeviceId = station.id_station;
                 refMarkerState.lastSelectedStationData = station;
 
-                console.log('Click on station: ' + station.id_station);
                 openSidePanelStationRef(
                     station.id_station,
                     station.nom_station,
@@ -1458,9 +1452,6 @@ function setupNebuleAirMarkerEvents(nebuleAirMarker, textMarker, value) {
 
         // Mise à jour de globalSelectedDeviceId
         window.globalSelectedDeviceId = value['sensorId'];
-
-        console.log('clickHandler NebuleAir');
-        console.log('value:', value);
 
         // Appel de la fonction d'ouverture du panneau latéral
         openSidePanelNebuleAir(

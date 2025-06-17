@@ -82,7 +82,6 @@ export function initializeModelisationButtons() {
         button.title = model.description;
 
         button.addEventListener('click', () => {
-            console.log('Clic sur:', model.name);
             const activeSources = getArrayFromLocalStorage('sources_local');
 
             // Vérifier si l'autre modélisation est active

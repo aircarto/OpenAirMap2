@@ -133,12 +133,6 @@ export function openSidePanelNebuleAir(data, pasDeTemps, historique, mesures) {
     if (pasDeTemps === 'instantane') {
         pasDeTemps = '2min';
     }
-    console.log('openSidePanelNebuleAir');
-    console.log('data:', data);
-    console.log('pasDeTemps:', pasDeTemps);
-    console.log('historique:', historique);
-    console.log('mesures:', mesures);
-    console.log('########################################################');
     panelManager.openPanel('nebuleair', data.sensorId, {
         pasDeTempsChart: pasDeTemps,
         historiqueChart: state.historiqueChart,
@@ -164,19 +158,12 @@ export function retreive_historiqueData_nebuleAir(
     if (pasDeTemps === 'brute') {
         pasDeTemps = '2m';
     }
-    console.log(
-        'Début de retreive_historiqueData_nebuleAir avec les paramètres:',
-        {
-            sensorId,
-            pasDeTemps,
-            historique,
-            mesuresArray,
-            useCustomRange,
-            customStart,
-            customEnd,
+
+    for (let i = 0; i < mesuresArray.length; i++) {
+        if (mesuresArray[i] === 'pm2.5') {
+            mesuresArray[i] = 'pm25';
         }
-    );
-    console.log('mesuresArray:', mesuresArray);
+    }
 
     if (!isSourceActive('nebuleair')) {
         console.log('Source NebuleAir non active, annulation de la requête');

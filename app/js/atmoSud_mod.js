@@ -257,15 +257,9 @@ function updateLegendControl(legendUrl) {
  * @param {string} compoundUpper - Le polluant à afficher (PM1, PM25, PM10)
  */
 export function loadModPM(compoundUpper) {
-    console.log(
-        '%cloadModPm',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
-    );
-    console.log('Polluant sélectionné:', compoundUpper);
 
     // Récupération du pas de temps sélectionné
     const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))[0];
-    console.log('Pas de temps sélectionné:', pasDeTemps);
 
     // Vérification du pas de temps journalier
     if (pasDeTemps === 'd') {
@@ -285,13 +279,11 @@ export function loadModPM(compoundUpper) {
     // Désactiver la couche ICAIR'H si elle est active
     if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
         modelisationICAIRAtmoSud_layer.clearLayers();
-        console.log("Couche ICAIR'H désactivée");
         removeLegendControl();
     }
 
     // Nettoyage de la couche existante
     modelisationPMAtmoSud_layer.clearLayers();
-    console.log('Couche nettoyée');
     removeLegendControl();
 
     // Supprimer l'ancien événement de clic s'il existe
@@ -321,11 +313,9 @@ export function loadModPM(compoundUpper) {
     };
 
     const layerHour = getLayerHour();
-    console.log('Heure UTC de la couche:', layerHour);
 
     switch (compoundUpper) {
         case 'pm1':
-            console.log('Pas de modélisation AtmoSud pour les PM1');
             toastManager.atmoModPm1Warning();
             return;
         case 'pm25':
@@ -420,25 +410,14 @@ export function loadModPM(compoundUpper) {
             });
     }
 
-    // Vérification finale
-    console.log('Vérification finale de la couche');
-    console.log(
-        'Nombre total de couches dans modelisationPMAtmoSud_layer:',
-        modelisationPMAtmoSud_layer.getLayers().length
-    );
-
     // Afficher les informations sur les couches actives
     logActiveLayers();
 }
 
 export function loadModIcair() {
-    console.log(
-        '%cloadModIcair',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
-    );
+
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
-    console.log('Date utilisée:', dateStr);
     const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))[0];
 
     // Vérification du pas de temps journalier
@@ -459,7 +438,6 @@ export function loadModIcair() {
     // Désactiver la couche PM si elle est active
     if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
         modelisationPMAtmoSud_layer.clearLayers();
-        console.log('Couche PM désactivée');
         removeLegendControl();
     }
 
@@ -473,8 +451,7 @@ export function loadModIcair() {
     const layerHour = getLayerHour();
     const layerName = getLayerName('paca_icairh', layerHour);
 
-    console.log('Heure UTC de la couche:', layerHour);
-    console.log('Nom de la couche:', layerName);
+
 
     const wmtsOptions = {
         layer: `${workspace}:${layerName}`,
@@ -521,10 +498,6 @@ export function loadModIcair() {
 let velocityLayer = null;
 
 export function loadModVent() {
-    console.log(
-        '%cloadModVent',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
-    );
 
     const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))?.[0];
 
@@ -545,7 +518,6 @@ export function loadModVent() {
     // Nettoyage de la couche existante
     modelisationVentLayer.clearLayers();
     velocityLayer = null;
-    console.log('Couche vent nettoyée');
 
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -555,7 +527,6 @@ export function loadModVent() {
     const dateStr = `${yyyy}${MM}${dd}`;
 
     const windUrl = `https://meteo.atmosud.org/${dateStr}/wind_field_${HH}.json`;
-    console.log('URL vent:', windUrl);
 
     // Charge la nouvelle couche GeoJSON
     $.getJSON(windUrl, function (data) {
@@ -581,7 +552,6 @@ export function loadModVent() {
         });
 
         velocityLayer.addTo(modelisationVentLayer);
-        console.log('Couche vent ajoutée');
     }).fail(() => {
         createCustomToast({
             message: 'Impossible de charger les données de vent à cette heure.',
@@ -602,9 +572,7 @@ export function loadModVent() {
  * @returns {string} - L'URL de la légende
  */
 function getLegendUrl(layerName, workspace) {
-    console.log("=== Construction de l'URL de légende ===");
-    console.log('Nom de la couche:', layerName);
-    console.log('Workspace:', workspace);
+
 
     const wmsUrl =
         'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/wms';
@@ -623,8 +591,6 @@ function getLegendUrl(layerName, workspace) {
     };
 
     const url = `${wmsUrl}?${new URLSearchParams(params).toString()}`;
-    console.log('URL de la légende construite:', url);
-    console.log('===================================');
     return url;
 }
 
@@ -633,28 +599,20 @@ function getLegendUrl(layerName, workspace) {
  * @returns {string|null} - L'URL de la légende ou null si aucune couche n'est active
  */
 export function getActiveLayerLegend() {
-    console.log('=== Récupération de la légende pour la couche active ===');
     const workspace = 'azur_heure';
     let layerName = null;
 
     // Vérifier quelle couche est active
     if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
-        console.log('Couche PM active détectée');
         const activeLayer = modelisationPMAtmoSud_layer.getLayers()[0];
         layerName = activeLayer.options.layer.split(':')[1];
-        console.log('Nom de la couche PM:', layerName);
     } else if (modelisationICAIRAtmoSud_layer.getLayers().length > 0) {
-        console.log("Couche ICAIR'H active détectée");
         const activeLayer = modelisationICAIRAtmoSud_layer.getLayers()[0];
         layerName = activeLayer.options.layer.split(':')[1];
-        console.log("Nom de la couche ICAIR'H:", layerName);
     } else {
-        console.log('Aucune couche active détectée');
         return null;
     }
 
     const legendUrl = getLegendUrl(layerName, workspace);
-    console.log('URL de la légende finale:', legendUrl);
-    console.log('===================================');
     return legendUrl;
 }
