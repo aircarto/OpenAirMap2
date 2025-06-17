@@ -272,18 +272,18 @@ export function retreive_historiqueData_nebuleAir(
 function createChart(root, sensorName) {
     const chart = root.container.children.push(
         am5xy.XYChart.new(root, {
-            panX: false,
             panY: false,
-            wheelX: 'panX',
-            wheelY: 'zoomX',
-            paddingLeft: 0,
-            paddingBottom: 50,
-            layout: am5.GridLayout.new(root, {
-                maxColumns: 1,
-                fixedWidthGrid: true,
-            }),
+            layout: root.verticalLayout,
+            height: am5.percent(100),
+            paddingRight: 15,
+            paddingLeft: 15,
         })
     );
+
+    // Ajout de la gestion du redimensionnement
+    chart.events.on('sizechanged', function () {
+        chart.set('height', am5.percent(100));
+    });
 
     chart.children.unshift(
         am5.Label.new(root, {

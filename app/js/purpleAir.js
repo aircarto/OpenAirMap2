@@ -3,6 +3,7 @@ import { getArrayFromLocalStorage, getColorCodeForValue } from './utils.js';
 import { purpleairLayer } from './layers.js';
 import { isSourceActive } from './dataSourceManager.js';
 import { createCustomToast } from './toaster.js';
+import { getColorForSeuil } from './mapConfig.js';
 
 // État global pour les marqueurs PurpleAir
 const purpleAirMarkerState = {
@@ -375,18 +376,6 @@ function showPurpleAirPopup(sensorData) {
     // Ajout au DOM
     document.body.appendChild(popup);
     console.log('Popup ajouté au DOM');
-}
-
-function getColorForSeuil(seuil) {
-    const colors = {
-        bon: '#4ff0e6', // Bleu clair/turquoise
-        moyen: '#51ccaa', // Vert
-        degrade: '#ede663', // Jaune
-        mauvais: '#ed5e58', // Rouge clair
-        tresMauvais: '#881b33', // Rouge foncé
-        extrMauvais: '#74287d', // Violet
-    };
-    return colors[seuil] || '#cccccc';
 }
 
 function setupPurpleAirMarkerEvents(marker, textMarker, sensorData, value) {

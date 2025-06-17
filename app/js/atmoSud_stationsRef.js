@@ -112,8 +112,15 @@ function createChart(root, stationName) {
             colors: {
                 colors: [],
             },
+            height: am5.percent(100),
+            paddingRight: 15,
         })
     );
+
+    // Ajout de la gestion du redimensionnement
+    chart.events.on('sizechanged', function () {
+        chart.set('height', am5.percent(100));
+    });
 
     // ➕ Ajout du titre du graphique
     chart.children.unshift(

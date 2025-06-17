@@ -177,3 +177,58 @@ export const initializeMap = () => {
         changeBaseLayer(savedBaseLayer);
     }
 };
+
+/**
+ * Crée et gère la légende des seuils pour les petits écrans
+ * @param {Object} thresholds - Les seuils à afficher
+ */
+export function createThresholdLegend(thresholds) {
+    // Supprimer l'ancienne légende si elle existe
+    const oldLegend = document.querySelector('.legend-seuils');
+    if (oldLegend) {
+        oldLegend.remove();
+    }
+
+    // Créer le conteneur de la légende
+    const legend = L.control({ position: 'bottomright' });
+
+    legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'legend-seuils');
+
+        // Créer le contenu de la légende
+        const legendContent = Object.entries(thresholds)
+            .map(([key, value]) => {
+                const color = getColorForSeuil(key);
+                return `
+                <div>
+                    <i style="background: ${color}"></i>
+                    ${key.charAt(0).toUpperCase() + key.slice(1)}: ${value.min} à ${value.max} µg/m³
+                </div>
+            `;
+            })
+            .join('');
+
+        div.innerHTML = legendContent;
+        return div;
+    };
+
+    // Ajouter la légende à la carte
+    legend.addTo(map);
+}
+
+/**
+ * Fonction pour obtenir la couleur en fonction du seuil
+ * @param {string} seuil - Le nom du seuil
+ * @returns {string} - La couleur hexadécimale correspondante
+ */
+export function getColorForSeuil(seuil) {
+    const colors = {
+        bon: '#4ff0e6', // Bleu clair/turquoise
+        moyen: '#51ccaa', // Vert
+        degrade: '#ede663', // Jaune
+        mauvais: '#ed5e58', // Rouge clair
+        tresMauvais: '#881b33', // Rouge foncé
+        extrMauvais: '#74287d', // Violet
+    };
+    return colors[seuil] || '#cccccc';
+}

@@ -286,17 +286,20 @@ function setupMarkerEvents(
         microStationMarker.setZIndexOffset(zIndex);
         textMarker.setZIndexOffset(zIndex);
         const tooltip = createTooltip(value, dataCapteurSite);
-        document.body.appendChild(tooltip);
-        microStationMarker.tooltip = tooltip;
-        textMarker.tooltip = tooltip;
 
-        // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
-        const mousemoveHandler = (e) => updateTooltipPosition(e, tooltip);
-        document.addEventListener('mousemove', mousemoveHandler);
-        tooltip.mousemoveHandler = mousemoveHandler;
+        if (tooltip) {
+            document.body.appendChild(tooltip);
+            microStationMarker.tooltip = tooltip;
+            textMarker.tooltip = tooltip;
 
-        // Positionner initialement le tooltip
-        updateTooltipPosition(e, tooltip);
+            // Ajouter l'événement mousemove pour mettre à jour la position du tooltip
+            const mousemoveHandler = (e) => updateTooltipPosition(e, tooltip);
+            document.addEventListener('mousemove', mousemoveHandler);
+            tooltip.mousemoveHandler = mousemoveHandler;
+
+            // Positionner initialement le tooltip
+            updateTooltipPosition(e, tooltip);
+        }
     };
 
     const resetMarker = () => {
@@ -437,7 +440,6 @@ function createDefaultMarker(stationData, dataCapteurSite, pasDeTempsAtmo) {
  * @param {string} pasDeTempsAtmo - Pas de temps Atmo
  */
 function handleMarkerClick(marker, textMarker, stationData, pasDeTempsAtmo) {
-
     // Réinitialiser tous les autres types de marqueurs
     resetAllMarkers();
 
@@ -473,12 +475,16 @@ function handleMarkerClick(marker, textMarker, stationData, pasDeTempsAtmo) {
 }
 
 /**
- * Crée un tooltip pour un microcapteur atmosud
+ * Crée un tooltip pour un marqueur
  * @param {Object} stationData - Données de la station
  * @param {Array} dataCapteurSite - Données des capteurs
  * @returns {HTMLElement} - Élément tooltip
  */
 function createTooltip(stationData, dataCapteurSite) {
+    if (isMobileScreen()) {
+        return null;
+    }
+
     const tooltip = document.createElement('div');
     tooltip.className = 'custom-tooltip';
 
@@ -637,17 +643,27 @@ function createTooltipHTML(stationData, formattedPollutants) {
 }
 
 /**
+ * Vérifie si l'écran est en mode mobile
+ * @returns {boolean} - True si l'écran est en mode mobile
+ */
+function isMobileScreen() {
+    return window.innerWidth <= 576;
+}
+
+/**
  * Récupère les styles CSS pour un tooltip
  * @returns {string} - Styles CSS
  */
 function getTooltipStyles() {
+    if (isMobileScreen()) {
+        return 'display: none !important;';
+    }
     return `
         position: fixed;
         z-index: 10000;
         pointer-events: none;
         background-color: white;
         padding: 10px;
-        border-radius: 5px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         transition: opacity 0.2s;
         opacity: 1;

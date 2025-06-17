@@ -13,6 +13,7 @@ import { loadSource, updateButtonDisplay } from './sources.js';
 import { toastManager, createCustomToast } from './toaster.js';
 import { updateTimeDisplay, startAutoRefresh } from './autoRefresh.js';
 import { updateModelisationButtonText } from './modelisations.js';
+import { createThresholdLegend } from './mapConfig.js';
 
 /**
  * Gère le changement de mesure
@@ -129,6 +130,9 @@ export function updateThresholdButtons() {
         }
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // Mise à jour de la légende pour les petits écrans
+    createThresholdLegend(thresholds);
 }
 
 /**

@@ -43,6 +43,8 @@ body {
     height: 35vh;
     max-width: 100%;
     min-height: 250px;
+    position: relative;
+    overflow: hidden;
 }
 
 #div_button_seuils_ {
@@ -129,10 +131,12 @@ body {
 
 @media (max-width: 576px) {
     #device-info {
-        max-width: 90%;
-        right: 5%;
-        bottom: 10px;
-        font-size: 0.9em;
+        width: 100%;
+        max-width: 100%;
+        left: 0;
+        right: 0;
+        margin: 0;
+        border-radius: 0;
     }
 
     #map-container {
@@ -158,7 +162,7 @@ body {
     }
 
     #chartdiv_sensor {
-        height: 70vh;
+        height: 50vh;
         min-height: 200px;
     }
 
@@ -238,7 +242,7 @@ body {
     }
 
     #chartdiv_sensor {
-        height: 32vh;
+        height: 40vh;
         min-height: 220px;
     }
 
@@ -1053,4 +1057,41 @@ body.side-panel-open #collapseSidePanel {
     background-color: #0074d9 !important;
     border-color: #0074d9 !important;
     color: white !important;
+}
+
+/* Styles pour la légende des seuils */
+.legend-seuils {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+    font-size: 12px;
+    line-height: 18px;
+    color: #333;
+}
+
+.legend-seuils i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+/* Media query pour les petits écrans */
+@media (max-width: 768px) {
+    #div_button_seuils_ {
+        display: none;
+    }
+
+    .legend-seuils {
+        display: block;
+    }
+}
+
+/* Media query pour les grands écrans */
+@media (min-width: 769px) {
+    .legend-seuils {
+        display: none;
+    }
 }
