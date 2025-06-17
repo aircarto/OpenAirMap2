@@ -239,7 +239,6 @@ function updateLegendControl(legendUrl) {
         div.innerHTML = `
             <div class="legend-container" style="background: white; padding: 4px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.2);">
                 <div style="font-weight: bold; margin-bottom: 4px; text-align: center;">${layerTitle}</div>
-                <div style="font-weight: bold; margin-bottom: 4px; text-align: center;">Lorem ipsum </div>
                 <div style=" font-size: 12px; margin-top: 4px;">Unité: ${unit}</div>
                 <img src="${legendUrl}" alt="Légende">
             </div>
@@ -257,7 +256,6 @@ function updateLegendControl(legendUrl) {
  * @param {string} compoundUpper - Le polluant à afficher (PM1, PM25, PM10)
  */
 export function loadModPM(compoundUpper) {
-
     // Récupération du pas de temps sélectionné
     const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))[0];
 
@@ -415,7 +413,6 @@ export function loadModPM(compoundUpper) {
 }
 
 export function loadModIcair() {
-
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
     const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))[0];
@@ -450,8 +447,6 @@ export function loadModIcair() {
 
     const layerHour = getLayerHour();
     const layerName = getLayerName('paca_icairh', layerHour);
-
-
 
     const wmtsOptions = {
         layer: `${workspace}:${layerName}`,
@@ -498,7 +493,6 @@ export function loadModIcair() {
 let velocityLayer = null;
 
 export function loadModVent() {
-
     const pasDeTemps = JSON.parse(localStorage.getItem('pasDeTempsLocal'))?.[0];
 
     if (pasDeTemps === 'd') {
@@ -572,8 +566,6 @@ export function loadModVent() {
  * @returns {string} - L'URL de la légende
  */
 function getLegendUrl(layerName, workspace) {
-
-
     const wmsUrl =
         'https://azurh-geoservices.atmosud.org/geoserver/azur_heure/wms';
     const params = {
