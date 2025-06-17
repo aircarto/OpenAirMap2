@@ -59,6 +59,7 @@ export class ButtonManager {
     }
 
     setButtonState(type, id, checked) {
+        console.log(type, id, checked);
         const button = this.getButton(type, id);
         if (!button.disabled) {
             button.checked = checked;
