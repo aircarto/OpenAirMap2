@@ -29,6 +29,12 @@ const signalair_json = {
     },
 };
 
+// État global pour les marqueurs SignalAir
+const signalAirMarkerState = {
+    selectedMarker: null,
+    selectedPopup: null,
+};
+
 /**
  * Charge les données SignalAir sur la carte
  * @param {string} [startDate] - Date de début au format YYYY-MM-DD
@@ -136,6 +142,7 @@ export function loadSignalAir(startDate, endDate) {
                         iconSize: [35, 35],
                         iconAnchor: [15, 15],
                         popupAnchor: [0, -10],
+                        className: 'signalair-marker-icon',
                     };
 
                     const signalair_icon = L.icon(icon_param);
@@ -161,11 +168,33 @@ export function loadSignalAir(startDate, endDate) {
                     };
 
                     // Création du marqueur
-                    L.marker([lat, long], { icon: signalair_icon })
+                    const marker = L.marker([lat, long], {
+                        icon: signalair_icon,
+                    })
                         .on('click', () => {
                             console.log(
                                 `[SignalAir] Clic sur le signalement ${feature.properties.id_declaration}`
                             );
+
+                            // Réinitialiser le marqueur précédemment sélectionné
+                            if (signalAirMarkerState.selectedMarker) {
+                                signalAirMarkerState.selectedMarker.setZIndexOffset(
+                                    0
+                                );
+                                if (signalAirMarkerState.selectedMarker._icon) {
+                                    signalAirMarkerState.selectedMarker._icon.classList.remove(
+                                        'marker-selected'
+                                    );
+                                }
+                            }
+
+                            // Mettre en évidence le nouveau marqueur
+                            marker.setZIndexOffset(1000);
+                            if (marker._icon) {
+                                marker._icon.classList.add('marker-selected');
+                            }
+                            signalAirMarkerState.selectedMarker = marker;
+
                             showDraggableSignalairPopup(
                                 feature.properties,
                                 signalair_json[key].name
@@ -311,9 +340,19 @@ function showDraggableSignalairPopup(data, nuisanceType) {
     `;
 
     // Fermer le popup
-    popup
-        .querySelector('.close-btn')
-        .addEventListener('click', () => popup.remove());
+    popup.querySelector('.close-btn').addEventListener('click', () => {
+        popup.remove();
+        // Réinitialiser le marqueur sélectionné
+        if (signalAirMarkerState.selectedMarker) {
+            signalAirMarkerState.selectedMarker.setZIndexOffset(0);
+            if (signalAirMarkerState.selectedMarker._icon) {
+                signalAirMarkerState.selectedMarker._icon.classList.remove(
+                    'marker-selected'
+                );
+            }
+            signalAirMarkerState.selectedMarker = null;
+        }
+    });
 
     // Rendre draggable
     let isDragging = false,

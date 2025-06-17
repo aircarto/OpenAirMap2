@@ -229,3 +229,28 @@
     color: #666;
     text-align: center;
 }
+
+/* Style pour les marqueurs SignalAir */
+.signalair-marker-icon {
+    transition: all 0.3s ease;
+}
+
+.signalair-marker-icon.marker-selected {
+    animation: pulse 1.5s ease-in-out infinite;
+    z-index: 1000 !important;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
