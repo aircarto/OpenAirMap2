@@ -1235,3 +1235,112 @@ body.side-panel-open #collapseSidePanel {
         display: none;
     }
 }
+
+/* Styles pour le bouton de fermeture mobile */
+#closeSidePanelMobile {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1200;
+    background-color: white;
+    border: 2px solid #6c757d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    padding: 10px 12px;
+    border-radius: 50%;
+    display: none;
+}
+
+#closeSidePanelMobile:hover {
+    background-color: #f8f9fa;
+    border-color: #495057;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+#closeSidePanelMobile:active {
+    transform: scale(0.95);
+}
+
+/* Améliorations pour le side panel sur mobile */
+@media (max-width: 576px) {
+    #side-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        z-index: 1100;
+        background-color: white;
+        overflow-y: auto;
+        padding: 20px 15px;
+        margin-top: 0;
+    }
+
+    #side-panel .row {
+        margin-top: 60px; /* Espace pour la navbar */
+    }
+
+    /* Masquer les boutons complexes sur mobile */
+    #toggleSidePanel,
+    #collapseSidePanel,
+    #reduceSidePanel {
+        display: none !important;
+    }
+
+    /* Afficher le bouton de fermeture mobile quand le panneau est ouvert */
+    #closeSidePanelMobile {
+        display: block;
+    }
+
+    /* Améliorer l'espacement des cartes sur mobile */
+    #side-panel .card {
+        margin-bottom: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #side-panel .card-body {
+        padding: 15px;
+    }
+
+    /* Ajuster la hauteur du graphique sur mobile */
+    #chartdiv_sensor {
+        height: 40vh;
+        min-height: 250px;
+    }
+
+    /* Améliorer la lisibilité des boutons sur mobile */
+    .btn-group .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    .btn-group-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+}
+
+/* Styles pour les écrans moyens (tablettes) */
+@media (min-width: 577px) and (max-width: 768px) {
+    #closeSidePanelMobile {
+        display: none !important;
+    }
+
+    #side-panel {
+        padding: 15px;
+    }
+
+    #chartdiv_sensor {
+        height: 35vh;
+        min-height: 250px;
+    }
+}
+
+/* Masquer le bouton de fermeture mobile sur desktop */
+@media (min-width: 769px) {
+    #closeSidePanelMobile {
+        display: none !important;
+    }
+}

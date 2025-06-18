@@ -26,6 +26,14 @@ const sidePanelState = {
 };
 
 /**
+ * Vérifie si l'écran est considéré comme petit (mobile)
+ * @returns {boolean} True si l'écran est petit
+ */
+function isSmallScreen() {
+    return window.innerWidth < 576; // Bootstrap sm breakpoint
+}
+
+/**
  * Met à jour l'état du panneau latéral
  * @param {boolean} isOpen - Si le panneau est ouvert
  * @param {boolean} isExpanded - Si le panneau est agrandi
@@ -47,9 +55,21 @@ export function openSidePanelGeneric() {
 
     // Ensuite appliquer les changements visuels
     sidePanel.style.display = 'block';
-    mapContainer.classList.remove('col-12');
-    mapContainer.classList.add('col-12', 'col-sm-6', 'col-lg-7');
-    sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
+
+    // Gestion responsive différente pour mobile et desktop
+    if (isSmallScreen()) {
+        // Sur mobile, le panneau prend toute la largeur
+        mapContainer.classList.remove('col-12', 'col-sm-6', 'col-lg-7');
+        mapContainer.classList.add('col-12');
+        sidePanel.classList.add('col-12');
+        sidePanel.classList.remove('col-sm-6', 'col-lg-5');
+    } else {
+        // Sur desktop, layout normal
+        mapContainer.classList.remove('col-12');
+        mapContainer.classList.add('col-12', 'col-sm-6', 'col-lg-7');
+        sidePanel.classList.add('col-12', 'col-sm-6', 'col-lg-5');
+    }
+
     document.body.classList.add('side-panel-open');
 
     // Forcer un reflow pour s'assurer que les dimensions sont calculées
@@ -96,38 +116,69 @@ export function updateButtonsState() {
     const toggleButton = document.getElementById('toggleSidePanel');
     const collapseButton = document.getElementById('collapseSidePanel');
     const reduceButton = document.getElementById('reduceSidePanel');
+    const mobileCloseButton = document.getElementById('closeSidePanelMobile');
 
-    if (toggleButton && collapseButton && reduceButton) {
-        if (!sidePanelState.isOpen) {
-            // Panneau fermé
-            toggleButton
-                .querySelector('i')
-                .classList.replace('bi-chevron-left', 'bi-chevron-right');
-            collapseButton.style.display = 'none';
-            reduceButton.style.display = 'none';
-        } else {
-            // Panneau ouvert
-            if (sidePanelState.isExpanded) {
-                // Panneau agrandi - flèche vers la gauche pour réduire
-                toggleButton
-                    .querySelector('i')
-                    .classList.replace('bi-chevron-right', 'bi-chevron-left');
-                toggleButton.style.display = 'none';
-                collapseButton.style.display = 'none';
-                reduceButton.style.display = 'block';
+    if (isSmallScreen()) {
+        // Sur mobile : masquer les boutons complexes, gérer le bouton de fermeture mobile
+        if (toggleButton) toggleButton.style.display = 'none';
+        if (collapseButton) collapseButton.style.display = 'none';
+        if (reduceButton) reduceButton.style.display = 'none';
+
+        // Afficher le bouton de fermeture mobile seulement si le panneau est ouvert
+        if (mobileCloseButton) {
+            if (sidePanelState.isOpen) {
+                mobileCloseButton.style.display = 'block';
+                mobileCloseButton.style.pointerEvents = 'auto';
             } else {
-                // Panneau normal - flèche vers la droite pour agrandir
+                mobileCloseButton.style.display = 'none';
+                mobileCloseButton.style.pointerEvents = 'none';
+            }
+        }
+    } else {
+        // Sur desktop : logique normale
+        if (mobileCloseButton) {
+            mobileCloseButton.style.display = 'none';
+            mobileCloseButton.style.pointerEvents = 'none';
+        }
+
+        if (toggleButton && collapseButton && reduceButton) {
+            if (!sidePanelState.isOpen) {
+                // Panneau fermé
                 toggleButton
                     .querySelector('i')
                     .classList.replace('bi-chevron-left', 'bi-chevron-right');
-                toggleButton.style.display = 'block';
-                collapseButton.style.position = 'absolute';
-                collapseButton.style.right = '10px';
-                collapseButton.style.top = '50%';
-                collapseButton.style.transform = 'none';
-                collapseButton.style.zIndex = '1100';
-                collapseButton.style.display = 'block';
+                collapseButton.style.display = 'none';
                 reduceButton.style.display = 'none';
+            } else {
+                // Panneau ouvert
+                if (sidePanelState.isExpanded) {
+                    // Panneau agrandi - flèche vers la gauche pour réduire
+                    toggleButton
+                        .querySelector('i')
+                        .classList.replace(
+                            'bi-chevron-right',
+                            'bi-chevron-left'
+                        );
+                    toggleButton.style.display = 'none';
+                    collapseButton.style.display = 'none';
+                    reduceButton.style.display = 'block';
+                } else {
+                    // Panneau normal - flèche vers la droite pour agrandir
+                    toggleButton
+                        .querySelector('i')
+                        .classList.replace(
+                            'bi-chevron-left',
+                            'bi-chevron-right'
+                        );
+                    toggleButton.style.display = 'block';
+                    collapseButton.style.position = 'absolute';
+                    collapseButton.style.right = '10px';
+                    collapseButton.style.top = '50%';
+                    collapseButton.style.transform = 'none';
+                    collapseButton.style.zIndex = '1100';
+                    collapseButton.style.display = 'block';
+                    reduceButton.style.display = 'none';
+                }
             }
         }
     }
@@ -376,11 +427,19 @@ export function initializeMobileCloseButton() {
     const closeButton = document.getElementById('closeSidePanelMobile');
     if (closeButton) {
         closeButton.addEventListener('click', function () {
-            const toggleButton = document.getElementById('toggleSidePanel');
-            const toggleIcon = toggleButton.querySelector('i');
-
+            // Fermer le panneau
             closeSidePanel();
-            toggleIcon.classList.replace('bi-chevron-left', 'bi-chevron-right');
+
+            // Mettre à jour l'état des boutons
+            updateButtonsState();
+            updateToggleButtonVisibility();
+
+            // Redimensionner la carte
+            if (map) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 100);
+            }
         });
     }
 }
@@ -390,10 +449,73 @@ export function initializeMobileCloseButton() {
  */
 export function updateToggleButtonVisibility() {
     const toggleButton = document.getElementById('toggleSidePanel');
-    if (window.globalSelectedDeviceId) {
-        toggleButton.classList.remove('hidden');
+    const collapseButton = document.getElementById('collapseSidePanel');
+    const reduceButton = document.getElementById('reduceSidePanel');
+    const mobileCloseButton = document.getElementById('closeSidePanelMobile');
+
+    // Vérifier si lastSelectedDeviceData existe et n'est pas null/undefined
+    const hasDeviceData =
+        window.lastSelectedDeviceData &&
+        window.lastSelectedDeviceData !== null &&
+        window.lastSelectedDeviceData !== undefined;
+
+    if (isSmallScreen()) {
+        // Sur mobile : masquer les boutons complexes, gérer le bouton de fermeture mobile
+        if (toggleButton) {
+            toggleButton.style.display = 'none';
+            toggleButton.style.pointerEvents = 'none';
+        }
+        if (collapseButton) {
+            collapseButton.style.display = 'none';
+            collapseButton.style.pointerEvents = 'none';
+        }
+        if (reduceButton) {
+            reduceButton.style.display = 'none';
+            reduceButton.style.pointerEvents = 'none';
+        }
+
+        // Le bouton de fermeture mobile est géré par updateButtonsState()
+        if (mobileCloseButton) {
+            mobileCloseButton.style.pointerEvents = hasDeviceData
+                ? 'auto'
+                : 'none';
+        }
     } else {
-        toggleButton.classList.add('hidden');
+        // Sur desktop : logique normale
+        if (mobileCloseButton) {
+            mobileCloseButton.style.display = 'none';
+            mobileCloseButton.style.pointerEvents = 'none';
+        }
+
+        if (hasDeviceData) {
+            // Afficher les boutons et permettre l'interaction
+            if (toggleButton) {
+                toggleButton.classList.remove('hidden');
+                toggleButton.style.pointerEvents = 'auto';
+            }
+            if (collapseButton) {
+                collapseButton.classList.remove('hidden');
+                collapseButton.style.pointerEvents = 'auto';
+            }
+            if (reduceButton) {
+                reduceButton.classList.remove('hidden');
+                reduceButton.style.pointerEvents = 'auto';
+            }
+        } else {
+            // Masquer les boutons et empêcher l'interaction
+            if (toggleButton) {
+                toggleButton.classList.add('hidden');
+                toggleButton.style.pointerEvents = 'none';
+            }
+            if (collapseButton) {
+                collapseButton.classList.add('hidden');
+                collapseButton.style.pointerEvents = 'none';
+            }
+            if (reduceButton) {
+                reduceButton.classList.add('hidden');
+                reduceButton.style.pointerEvents = 'none';
+            }
+        }
     }
 }
 
@@ -445,24 +567,40 @@ document.addEventListener('DOMContentLoaded', function () {
         attributeFilter: ['style', 'class'],
     });
 
-    // Observateur existant pour data-selected-device
-    const deviceObserver = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            if (
-                mutation.type === 'attributes' &&
-                mutation.attributeName === 'data-selected-device'
-            ) {
-                updateToggleButtonVisibility();
-            }
-        });
+    // Écouteur pour le redimensionnement de la fenêtre
+    window.addEventListener('resize', function () {
+        // Mettre à jour l'état des boutons lors du redimensionnement
+        updateButtonsState();
+        updateToggleButtonVisibility();
+        updateButtonsPosition();
+
+        // Redimensionner la carte si nécessaire
+        if (map) {
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        }
     });
 
-    deviceObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['data-selected-device'],
-    });
+    // Fonction pour surveiller les changements de window.lastSelectedDeviceData
+    function watchLastSelectedDeviceData() {
+        let currentValue = window.lastSelectedDeviceData;
+
+        // Vérifier périodiquement si la valeur a changé
+        setInterval(() => {
+            if (window.lastSelectedDeviceData !== currentValue) {
+                currentValue = window.lastSelectedDeviceData;
+                updateToggleButtonVisibility();
+                updateButtonsState();
+            }
+        }, 100); // Vérifier toutes les 100ms
+    }
+
+    // Démarrer la surveillance
+    watchLastSelectedDeviceData();
 
     // Initialisation initiale
     updateToggleButtonVisibility();
+    updateButtonsState();
     updateButtonsPosition();
 });
