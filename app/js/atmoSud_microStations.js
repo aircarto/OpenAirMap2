@@ -528,11 +528,21 @@ export const retreiveHistoriqueDataMicroStation = async (
 const createChart = (root, sensorName) => {
     const chart = root.container.children.push(
         am5xy.XYChart.new(root, {
+            panX: false,
             panY: false,
-            layout: root.verticalLayout,
-            height: am5.percent(100),
+            wheelX: 'panX',
+            wheelY: 'zoomX',
+            paddingLeft: 0,
             paddingRight: 15,
-            paddingLeft: 15,
+            paddingBottom: 50,
+            layout: am5.GridLayout.new(root, {
+                maxColumns: 1,
+                fixedWidthGrid: true,
+            }),
+            colors: {
+                colors: [],
+            },
+            height: am5.percent(100),
         })
     );
 
