@@ -93,12 +93,12 @@ export function checkInitialConditions() {
 
     // Vérifier d'abord les conditions de pas de temps sans notification
     if (activeSources.includes('atmoMicro') && selectedTimeStep === 'd') {
-        removeItemFromLocalStorageArray('sources_local', 'atmoMicro');
+        toastManager.atmoMicroTimeStepDailyWarning();
         clearLayer('atmoMicro');
     }
 
     if (activeSources.includes('atmoRef') && selectedTimeStep === '2min') {
-        removeItemFromLocalStorageArray('sources_local', 'atmoRef');
+        toastManager.atmoRefTimeStepWarning();
         clearLayer('atmoRef');
     }
 
@@ -179,14 +179,6 @@ export function updateButtonDisplay() {
         // Ne pas activer le bouton si la source n'est pas dans les sources actives
         if (!activeSources.includes(sourceCode)) {
             // console.log('Source non active:', sourceCode);
-            return;
-        }
-
-        // console.log('Source active trouvée:', sourceCode);
-
-        // Vérifications spécifiques pour chaque source
-        if (sourceCode === 'atmoMicro' && selectedTimeStep === 'd') {
-            toastManager.atmoMicroTimeStepDailyWarning();
             return;
         }
 
@@ -328,13 +320,7 @@ function handleSourceClick(source, button) {
 
     // Vérification spéciale pour AtmoSud Stations de référence
     if (sourceCode === 'atmoRef' && selectedTimeStep === '2min') {
-        createCustomToast({
-            message: `Le pas de temps 2 minutes n'est pas disponible pour les stations de référence AtmoSud.`,
-            type: 'warning',
-            title: 'Attention',
-            icon: 'exclamation-triangle',
-            timer: 5000,
-        });
+        toastManager.atmoRefTimeStepWarning();
         return;
     }
 
@@ -407,7 +393,7 @@ export function handleTimeStepChange(timeStep) {
 
     // Vérification pour AtmoSud Micro-stations
     if (timeStep === 'd' && activeSources.includes('atmoMicro')) {
-        removeItemFromLocalStorageArray('sources_local', 'atmoMicro');
+        toastManager.atmoMicroTimeStepDailyWarning();
         clearLayer('atmoMicro');
     }
 

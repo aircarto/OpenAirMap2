@@ -731,6 +731,19 @@ const fetchAPI = async (url, options = {}) => {
             ...options,
         });
 
+        if (response.status === 204) {
+            stopSpinner();
+            createCustomToast({
+                message:
+                    'Aucune donnée disponible pour les critères sélectionnés',
+                type: 'info',
+                title: 'Information',
+                icon: 'info-circle',
+                timer: 5000,
+            });
+            return []; // Retourne un tableau vide pour une réponse 204
+        }
+
         if (!response.ok) {
             throw new Error(
                 `Erreur HTTP: ${response.status} - ${response.statusText}`

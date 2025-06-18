@@ -179,20 +179,21 @@ function calculateTextParameters(value) {
     let textSize = 32;
     let x_position = 5;
     let y_position = 42;
-    const checkPosition = 'right: 21px;';
+    let checkPosition = 'right: 21px;';
 
     if (value >= 1000) {
         textSize = 16;
-        x_position = 8;
+        x_position = 9;
         y_position = 42;
     } else if (value >= 100) {
         textSize = 20;
-        x_position = 6;
+        x_position = 8;
         y_position = 42;
     } else if (value >= 10) {
         textSize = 26;
-        x_position = 8;
+        x_position = 7;
         y_position = 42;
+        checkPosition = 'right: 20px;';
     }
 
     return { textSize, x_position, y_position, checkPosition };

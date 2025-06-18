@@ -7,6 +7,17 @@ const defaultConfig = {
     width: 'auto',
     padding: '1em',
     html: true,
+    customClass: {
+        popup: 'custom-toast',
+        title: 'toast-title',
+        content: 'toast-content',
+    },
+    didOpen: (toast) => {
+        // Ajuster la position sur mobile
+        if (window.innerWidth <= 768) {
+            toast.style.margin = '0.5rem auto';
+        }
+    },
 };
 
 // Types de toasters prédéfinis
@@ -14,25 +25,25 @@ const toastTypes = {
     SUCCESS: {
         icon: 'success',
         title: 'Succès',
-        background: '#a5dc86',
+        background: 'rgba(46, 213, 115, 0.95)',
         color: 'white',
     },
     ERROR: {
         icon: 'error',
         title: 'Erreur',
-        background: '#f27474',
+        background: 'rgba(255, 71, 87, 0.95)',
         color: 'white',
     },
     WARNING: {
         icon: 'warning',
         title: 'Attention',
-        background: '#f8bb86',
-        color: 'black',
+        background: 'rgba(255, 159, 67, 0.95)',
+        color: '#2c3e50',
     },
     INFO: {
         icon: 'info',
         title: 'Information',
-        background: '#3fc3ee',
+        background: 'rgba(52, 152, 219, 0.95)',
         color: 'white',
     },
 };
