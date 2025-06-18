@@ -33,11 +33,6 @@ export function addItemToLocalStorageArray(key, item) {
     if (!array.includes(item)) {
         array.push(item);
         saveArrayToLocalStorage(key, array);
-        console.log(`Ajout de ${item} au localStorage pour la clé ${key}`);
-    } else {
-        console.log(
-            `${item} existe déjà dans le localStorage pour la clé ${key}`
-        );
     }
 }
 
@@ -48,13 +43,6 @@ export function removeItemFromLocalStorageArray(key, item) {
     if (index > -1) {
         array.splice(index, 1);
         saveArrayToLocalStorage(key, array);
-        console.log(
-            `Suppression de ${item} du localStorage pour la clé ${key}`
-        );
-    } else {
-        console.log(
-            `${item} n'existe pas dans le localStorage pour la clé ${key}`
-        );
     }
 }
 
@@ -195,103 +183,6 @@ export function updateTimeDisplay() {
     horlogeButton.innerHTML = displayText; // Mise à jour de l'affichage
 }
 
-// Fonction pour configurer le rafraîchissement automatique des données
-// export function setupAutoRefresh() {
-//     // Nettoyage de tout intervalle de rafraîchissement existant
-//     if (window.refreshInterval) {
-//         clearInterval(window.refreshInterval);
-//     }
-
-//     // Récupération du pas de temps actuel
-//     const selectedTimeStep = getArrayFromLocalStorage(pasDeTempsLocal)[0];
-
-//     // Détermination de l'intervalle de rafraîchissement en millisecondes
-//     let refreshIntervalMs;
-//     switch (selectedTimeStep) {
-//         case 'instantane':
-//         case '2min':
-//             refreshIntervalMs = 2 * 60 * 1000; // 2 minutes
-//             break;
-//         case 'qh':
-//             refreshIntervalMs = 15 * 60 * 1000; // 15 minutes
-//             break;
-//         case 'h':
-//             refreshIntervalMs = 60 * 60 * 1000; // 1 heure
-//             break;
-//         case 'd':
-//             refreshIntervalMs = 24 * 60 * 60 * 1000; // 1 jour
-//             break;
-//         default:
-//             refreshIntervalMs = 5 * 60 * 1000; // Par défaut 5 minutes
-//     }
-
-//     console.log(
-//         `Rafraîchissement automatique réglé sur ${refreshIntervalMs / 1000} secondes basé sur le pas de temps '${selectedTimeStep}'`
-//     );
-
-//     // Configuration de l'intervalle de rafraîchissement
-//     window.refreshInterval = setInterval(() => {
-//         // Vérification si un rafraîchissement est déjà en cours
-//         if (window.isRefreshing) {
-//             console.log('Un rafraîchissement est déjà en cours, attente...');
-//             return;
-//         }
-//         window.isRefreshing = true;
-
-//         console.log(
-//             '⏰ Rafraîchissement automatique des données selon le pas de temps'
-//         );
-
-//         // Sauvegarde de l'état actuel avant le rafraîchissement
-//         const currentDeviceId = globalSelectedDeviceId;
-//         const sidePanelOpen =
-//             document.getElementById('side-panel').style.display !== 'none';
-
-//         // Sauvegarde des données actuelles de l'appareil si disponible
-//         if (
-//             currentDeviceId &&
-//             window.deviceMarkers &&
-//             window.deviceMarkers[currentDeviceId]
-//         ) {
-//             window.lastSelectedDeviceData =
-//                 window.deviceMarkers[currentDeviceId].data;
-//         }
-
-//         // Réinitialisation des marqueurs
-//         window.deviceMarkers = {};
-//         globalSelectedMarker = null;
-//         globalSelectedText = null;
-
-//         // Récupération et rafraîchissement des sources actives
-//         const activeSources = getArrayFromLocalStorage(sources_local);
-//         const refreshPromises = activeSources.map((source) => {
-//             clearLayer(source);
-//             return loadSource(source);
-//         });
-
-//         // Attente de la fin de tous les rafraîchissements
-//         Promise.all(refreshPromises)
-//             .then(() => {
-//                 // Mise à jour de l'affichage
-//                 updateTimeDisplay();
-//                 updateButtonDisplay();
-
-//                 // Restauration de l'état précédent si nécessaire
-//                 if (currentDeviceId && sidePanelOpen) {
-//                     setTimeout(() => {
-//                         findAndHighlightMarker(currentDeviceId);
-//                     }, 1000);
-//                 }
-//             })
-//             .catch((error) => {
-//                 console.error('Erreur lors du rafraîchissement:', error);
-//             })
-//             .finally(() => {
-//                 window.isRefreshing = false;
-//             });
-//     }, refreshIntervalMs);
-// }
-
 // Fonction pour obtenir les seuils appropriés pour un polluant donné
 export function getThresholdsForPollutant(pollutant) {
     if (pollutant === 'pm10') {
@@ -348,7 +239,6 @@ export function closeSidePanel() {
     const sidePanel = document.getElementById('side-panel');
     const mapContainer = document.getElementById('map-container');
 
-    console.log('Closing side panel');
     sidePanel.classList.remove('col-2', 'col-sm-4', 'col-lg-3');
     sidePanel.style.display = 'none';
     mapContainer.classList.remove('col-8', 'col-lg-9');

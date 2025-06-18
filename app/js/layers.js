@@ -134,32 +134,12 @@ export function clearLayer(source) {
  * @param {string} deviceId - L'identifiant de l'appareil à mettre en évidence
  */
 export function findAndHighlightMarker(deviceId) {
-    console.log(
-        '%c[findAndHighlightMarker] Début de la fonction',
-        'color: blue; font-weight: bold'
-    );
-    console.log('DeviceId reçu:', deviceId);
-
     // Conversion de l'ID en chaîne de caractères
     const deviceIdStr = String(deviceId || '');
-    console.log('DeviceId converti en string:', deviceIdStr);
-
     // Réinitialiser tous les marqueurs
     resetAllMarkers();
 
     let found = false;
-    console.log(
-        '%c[findAndHighlightMarker] Recherche du marqueur',
-        'color: green; font-weight: bold'
-    );
-
-    // Log des marqueurs disponibles dans chaque couche
-    console.log('Nombre de marqueurs par couche:', {
-        atmoRef: atmoRefLayer.getLayers().length,
-        atmoMicro: atmoMicroLayer.getLayers().length,
-        nebuleair: nebuleairLayer.getLayers().length,
-        sensorCommunity: sensorCommunityLayer.getLayers().length,
-    });
 
     // Fonction pour vérifier si un marqueur correspond
     const checkMarker = (layer, layerType) => {
@@ -170,11 +150,6 @@ export function findAndHighlightMarker(deviceId) {
         );
 
         if (layerDeviceId === deviceIdStr) {
-            console.log(
-                `%cMarqueur ${layerType} trouvé !`,
-                'color: green; font-weight: bold'
-            );
-            console.log('Détails du marqueur:', layer);
             toastManager.sensorSelected(
                 layer.options.name || `Capteur ${layerType}`
             );
@@ -212,7 +187,6 @@ export function findAndHighlightMarker(deviceId) {
                             textLayer.deviceId
                     );
                     if (textLayerDeviceId === deviceIdStr) {
-                        console.log('Marqueur de texte trouvé');
                         textLayer.setZIndexOffset(1000);
                         if (textLayer._icon)
                             textLayer._icon.classList.add('marker-selected');
@@ -235,16 +209,6 @@ export function findAndHighlightMarker(deviceId) {
                         }
                     }
                 });
-            }
-
-            // Réouverture du panneau latéral si nécessaire
-            if (
-                document.getElementById('side-panel').style.display ===
-                    'none' &&
-                layer.deviceData
-            ) {
-                console.log(`Réouverture du panneau ${layerType}`);
-                // La logique d'ouverture du panneau sera gérée par le gestionnaire d'événements du marqueur
             }
 
             return true;
@@ -273,18 +237,5 @@ export function findAndHighlightMarker(deviceId) {
         sensorCommunityLayer.eachLayer((layer) => {
             if (checkMarker(layer, 'SensorCommunity')) found = true;
         });
-    }
-
-    // Si le marqueur n'est pas trouvé
-    if (!found) {
-        console.warn(
-            '%c[findAndHighlightMarker] Marqueur non trouvé',
-            'color: red; font-weight: bold'
-        );
-        console.log('DeviceId non trouvé:', deviceIdStr);
-        console.log(
-            'Données stockées disponibles:',
-            window.lastSelectedDeviceData
-        );
     }
 }

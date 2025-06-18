@@ -309,9 +309,7 @@ export function loadAtmoSudStationsRef() {
 
     // S'assurer que la couche est sur la carte
     if (!window.atmoRefLayer) {
-        console.log('Ajout de la couche atmoRefLayer à la carte...');
         window.atmoRefLayer = atmoRefLayer;
-        console.log('Couche atmoRefLayer ajoutée à la carte');
     }
 
     state.pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
@@ -372,15 +370,6 @@ export function loadAtmoSudStationsRef() {
             return response.json();
         })
         .then((data) => {
-            const end = Date.now();
-            const requestTimer = (end - start) / 1000;
-            // console.log('fullUrl_stations', fullUrlStations);
-            // console.log(
-            //     `Data gathered in %c${requestTimer} sec`,
-            //     'color: red;'
-            // );
-            // console.log('Stations:', data.stations);
-
             // Traitement des stations actives
             let stationsActives = 0;
             window.stationsRef = []; // Initialisation de window.stationsRef
@@ -395,13 +384,11 @@ export function loadAtmoSudStationsRef() {
                     stationsActives++;
                 }
             });
-            // console.log('Nombre de stations actives:', stationsActives);
 
             // Création des marqueurs par défaut pour toutes les stations actives
             createRefDefaultMarkers();
 
             // Construction de l'URL pour la deuxième requête API
-            console.log(state.pasDeTemps[0]);
             let delais = '';
             if (state.pasDeTemps[0] === 'instantane') {
                 delais = '181';
@@ -435,10 +422,6 @@ export function loadAtmoSudStationsRef() {
         })
         .then((result) => {
             const { data, url: fullUrlDerniere } = result;
-
-            const end = Date.now();
-            const requestTimer = (end - start) / 1000;
-
             // Traitement des données de mesure
             if (data.mesures && data.mesures.length > 0) {
                 data.mesures.forEach((value) => {
@@ -477,9 +460,7 @@ export function loadAtmoSudStationsRef() {
 
             // S'assurer que la couche est sur la carte
             if (!window.atmoRefLayer) {
-                console.log('Ajout de la couche atmoRefLayer à la carte...');
                 window.atmoRefLayer = atmoRefLayer;
-                console.log('Couche atmoRefLayer ajoutée à la carte');
             }
         })
         .catch((error) => {
@@ -492,11 +473,7 @@ export function loadAtmoSudStationsRef() {
                 createRefDefaultMarkers();
                 // S'assurer que la couche est sur la carte
                 if (!window.atmoRefLayer) {
-                    console.log(
-                        'Ajout de la couche atmoRefLayer à la carte...'
-                    );
                     window.atmoRefLayer = atmoRefLayer;
-                    console.log('Couche atmoRefLayer ajoutée à la carte');
                 }
             }
         });
@@ -587,7 +564,6 @@ export function openSidePanelStationRef(deviceId, station_name, mesure) {
         getStationImage(window.globalSelectedDeviceId)
             .then((imageUrl) => {
                 card1Img.src = imageUrl;
-                // console.log('Image mise à jour dans le panneau');
             })
             .catch((error) => {
                 console.error(
@@ -647,15 +623,6 @@ export function retreiveHistoriqueDataStationRef(
     customStart = null,
     customEnd = null
 ) {
-    // Vérification que la station sélectionnée est toujours la même
-    const testStationId = String(stationId);
-    if (!testStationId.startsWith('FR')) {
-        console.log(
-            "La station sélectionnée n'est pas une station de référence, annulation de la requête"
-        );
-        return;
-    }
-
     startSpinner('Chargement des données historiques...');
 
     // Nettoyage complet du graphique précédent
@@ -753,8 +720,6 @@ export function retreiveHistoriqueDataStationRef(
             return response.json();
         })
         .then((data) => {
-            // console.log('Données reçues:', data);
-
             if (!data.mesures || data.mesures.length === 0) {
                 console.warn('Aucune donnée disponible');
                 stopSpinner();
@@ -766,7 +731,6 @@ export function retreiveHistoriqueDataStationRef(
 
             // Traitement des données
             data.mesures.forEach((item) => {
-                // console.log('item', item);
                 let nomPolluant;
                 const labelLower = item.label_polluant.toLowerCase();
 
@@ -832,13 +796,6 @@ export function retreiveHistoriqueDataStationRef(
                                 item.validation === 'validée' ? true : false,
                         });
                     }
-                } else {
-                    console.log('Polluant non traité:', {
-                        label: item.label_polluant,
-                        labelLower: labelLower,
-                        mesuresArray: state.mesuresArray,
-                        nomPolluant: nomPolluant,
-                    });
                 }
             });
 

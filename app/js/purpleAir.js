@@ -39,14 +39,8 @@ const COLOR_TO_FILENAME = {
 };
 
 export function loadPurpleAir() {
-    console.log(
-        '%cloadPurpleAir',
-        'color: yellow; font-style: bold; background-color: blue;padding: 2px'
-    );
-
     // Vérifier si la source est active
     if (!isSourceActive('purpleair')) {
-        console.log('Source PurpleAir non active');
         return;
     }
 
@@ -63,8 +57,6 @@ export function loadPurpleAir() {
     const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal');
     const mesures = getArrayFromLocalStorage('mesuresLocal');
 
-    // console.log('Paramètres de configuration:', { pasDeTemps, mesures });
-
     // Vérification si le pas de temps est instantané
     if (pasDeTemps[0] !== 'instantane' && pasDeTemps[0] !== '2min') {
         createCustomToast({
@@ -80,7 +72,6 @@ export function loadPurpleAir() {
 
     // Vérification si le polluant est supporté
     if (!['pm1', 'pm25', 'pm10'].includes(mesures[0])) {
-        console.log('Polluant non supporté pour PurpleAir');
         return;
     }
 
@@ -96,8 +87,6 @@ export function loadPurpleAir() {
         selat: 42.0, // Sud de la France
     });
 
-    // console.log('URL de la requête:', `${url}?${params.toString()}`);
-
     // Appel à l'API
     fetch(`${url}?${params.toString()}`, {
         headers: {
@@ -111,20 +100,13 @@ export function loadPurpleAir() {
             return response.json();
         })
         .then((data) => {
-            // console.log('Données PurpleAir reçues:', data);
             if (data.data && data.data.length > 0) {
-                // console.log(`Nombre de capteurs trouvés: ${data.data.length}`);
                 data.data.forEach((sensorData) => {
                     // Vérification des coordonnées avant de créer le marqueur
                     if (
                         sensorData[FIELD_INDEX.latitude] &&
                         sensorData[FIELD_INDEX.longitude]
                     ) {
-                        // console.log('Création du marqueur pour le capteur:', {
-                        //     name: sensorData[FIELD_INDEX.name],
-                        //     lat: sensorData[FIELD_INDEX.latitude],
-                        //     lng: sensorData[FIELD_INDEX.longitude],
-                        // });
                         createPurpleAirMarker(
                             sensorData,
                             pasDeTemps[0],
@@ -138,7 +120,13 @@ export function loadPurpleAir() {
                     }
                 });
             } else {
-                console.log('Aucun capteur trouvé dans la zone spécifiée');
+                createCustomToast({
+                    message: 'Aucun capteur trouvé dans la zone spécifiée',
+                    type: 'warning',
+                    title: 'Attention',
+                    icon: 'exclamation-triangle',
+                    timer: 5000,
+                });
             }
         })
         .catch((error) => {
@@ -183,15 +171,6 @@ function createPurpleAirMarker(sensorData, pasDeTemps, mesure) {
             break;
     }
 
-    // console.log('Valeur finale du capteur:', {
-    //     name: sensorData[FIELD_INDEX.name],
-    //     value: value,
-    //     pasDeTemps: pasDeTemps,
-    //     mesure: mesure,
-    //     lat: lat,
-    //     lng: lng,
-    // });
-
     // Créer l'icône du marqueur
     const icon_param = {
         iconUrl: 'img/purpleAir/purpleAir_default.png',
@@ -209,8 +188,6 @@ function createPurpleAirMarker(sensorData, pasDeTemps, mesure) {
             icon_param.iconUrl = `img/purpleAir/purpleAir_${filename}.png`;
         }
     }
-
-    // console.log("Paramètres de l'icône:", icon_param);
 
     // Créer le marqueur avec les coordonnées vérifiées
     const marker = L.marker([parseFloat(lat), parseFloat(lng)], {
@@ -255,10 +232,6 @@ function createPurpleAirMarker(sensorData, pasDeTemps, mesure) {
         if (textMarker) {
             purpleairLayer.addLayer(textMarker);
         }
-        // console.log(
-        //     'Marqueurs ajoutés à la couche pour le capteur:',
-        //     sensorData[FIELD_INDEX.name]
-        // );
     } catch (error) {
         console.error(
             "Erreur lors de l'ajout des marqueurs à la couche:",
@@ -268,8 +241,6 @@ function createPurpleAirMarker(sensorData, pasDeTemps, mesure) {
 }
 
 function showPurpleAirPopup(sensorData) {
-    console.log('showPurpleAirPopup appelé avec les données:', sensorData);
-
     // Supprimer les anciens éléments
     document
         .querySelectorAll('.purpleair-draggable')
@@ -277,18 +248,11 @@ function showPurpleAirPopup(sensorData) {
 
     // Récupérer le pas de temps sélectionné
     const pasDeTemps = getArrayFromLocalStorage('pasDeTempsLocal')[0];
-    console.log('Pas de temps sélectionné:', pasDeTemps);
 
     // Utiliser uniquement les valeurs ATM
     const pm1Value = sensorData[FIELD_INDEX.pm1_0_atm];
     const pm25Value = sensorData[FIELD_INDEX.pm2_5_atm];
     const pm10Value = sensorData[FIELD_INDEX.pm10_0_atm];
-
-    console.log('Valeurs mesurées:', {
-        pm1Value,
-        pm25Value,
-        pm10Value,
-    });
 
     // Obtenir les seuils pour chaque polluant
     const pm1Seuil = getColorCodeForValue(pm1Value, 'pm1');
@@ -375,7 +339,6 @@ function showPurpleAirPopup(sensorData) {
 
     // Ajout au DOM
     document.body.appendChild(popup);
-    console.log('Popup ajouté au DOM');
 }
 
 function setupPurpleAirMarkerEvents(marker, textMarker, sensorData, value) {
@@ -447,8 +410,6 @@ function setupPurpleAirMarkerEvents(marker, textMarker, sensorData, value) {
     };
 
     const clickHandler = () => {
-        console.log('Click sur le marqueur PurpleAir');
-
         // Réinitialiser les autres types de marqueurs
         resetOtherMarkers();
 
@@ -483,7 +444,6 @@ function setupPurpleAirMarkerEvents(marker, textMarker, sensorData, value) {
         purpleAirMarkerState.selectedDeviceId =
             sensorData[FIELD_INDEX.sensor_index];
 
-        console.log('État du marqueur mis à jour, appel de showPurpleAirPopup');
         // Afficher le popup avec les jauges
         showPurpleAirPopup(sensorData);
     };

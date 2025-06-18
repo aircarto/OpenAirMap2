@@ -70,22 +70,13 @@ export const startAutoRefresh = () => {
         }
     }
 
-    console.log(
-        `Rafraîchissement automatique réglé sur ${refreshIntervalMs / 1000} secondes basé sur le pas de temps '${selectedTimeStep}'`
-    );
-
     // Configuration de l'intervalle de rafraîchissement
     window.refreshInterval = setInterval(() => {
         // Vérification si un rafraîchissement est déjà en cours
         if (window.isRefreshing) {
-            console.log('Un rafraîchissement est déjà en cours, attente...');
             return;
         }
         window.isRefreshing = true;
-
-        console.log(
-            '⏰ Rafraîchissement automatique des données selon le pas de temps'
-        );
 
         // Nettoyage des tooltips avant le rafraîchissement
         cleanupTooltips();
@@ -131,11 +122,6 @@ export const startAutoRefresh = () => {
                 const deviceIdToRestore = window.globalSelectedDeviceId;
 
                 if (deviceIdToRestore) {
-                    console.log(
-                        `%cRestauration du marqueur ${deviceIdToRestore} après rafraîchissement`,
-                        'color: blue; font-weight: bold'
-                    );
-
                     // Attendre que les couches soient complètement chargées
                     let attempts = 0;
                     const maxAttempts = 10;
@@ -150,10 +136,6 @@ export const startAutoRefresh = () => {
 
                         if (allLayersLoaded || attempts >= maxAttempts) {
                             clearInterval(checkLayersLoaded);
-                            console.log(
-                                `%cTentative ${attempts}/${maxAttempts} de restauration du marqueur ${deviceIdToRestore}`,
-                                'color: blue; font-weight: bold'
-                            );
 
                             findAndHighlightMarker(deviceIdToRestore);
                         }

@@ -45,11 +45,9 @@ function normalizeValueType(valueType) {
  * @returns {Promise<void>}
  */
 export async function loadSensorCommunity() {
-    console.log('loadSensorCommunity');
     try {
         // Vérification si la source est active
         if (!isSourceActive('sensorCommunity')) {
-            console.log('Source Sensor.Community non active');
             return;
         }
 
@@ -93,7 +91,6 @@ export async function loadSensorCommunity() {
         }
 
         const data = await response.json();
-        console.log('Données Sensor.Community reçues:', data);
 
         // Log des types de mesures disponibles
         if (data && data.length > 0) {
@@ -105,10 +102,6 @@ export async function loadSensorCommunity() {
                     });
                 }
             });
-            console.log(
-                'Types de mesures disponibles:',
-                Array.from(uniqueValueTypes)
-            );
         }
 
         // Traitement des données reçues
@@ -167,12 +160,6 @@ export async function getSensorCommunityHistoricalData(
     try {
         // Construction de l'URL avec les dates
         const url = `https://data.sensor.community/airrohr/v1/filter/sensor_id=${sensorId}&start=${startDate}&end=${endDate}`;
-        console.log('Requête Sensor.Community:', {
-            sensorId,
-            url,
-            startDate,
-            endDate,
-        });
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -180,10 +167,8 @@ export async function getSensorCommunityHistoricalData(
         }
 
         const data = await response.json();
-        console.log("Réponse brute de l'API:", data);
 
         if (!data || data.length === 0) {
-            console.log('Aucune donnée trouvée pour le capteur:', sensorId);
             throw new Error(
                 "Le capteur existe mais n'a pas envoyé de données récemment"
             );
@@ -381,12 +366,6 @@ export async function displaySensorCommunityHistoricalData(
                     (v) => v.value_type === mesure
                 )?.value;
                 if (value === undefined) {
-                    console.log(
-                        'Valeur non trouvée pour la mesure:',
-                        mesure,
-                        'dans:',
-                        sensor.sensordatavalues
-                    );
                     return null;
                 }
                 return {
@@ -395,8 +374,6 @@ export async function displaySensorCommunityHistoricalData(
                 };
             })
             .filter((point) => point !== null && !isNaN(point.value));
-
-        console.log('Données préparées pour le graphique:', chartData);
 
         if (chartData.length === 0) {
             throw new Error('Aucune donnée valide pour le graphique');
@@ -501,15 +478,11 @@ export async function displaySensorCommunityHistoricalData(
  */
 export function displaySensorCommunityGrafana(sensorId, mesure) {
     try {
-        console.log('Affichage du Grafana pour le capteur:', sensorId);
-
         // Création de la fenêtre popup
         const popup = createDraggablePopup(sensorId);
-        console.log('Popup créée');
 
         // Construction de l'URL Grafana avec l'API RRD de Madavi
         const grafanaUrl = `https://api-rrd.madavi.de:3000/grafana/d-solo/000000004/single-sensor-view-for-map?orgId=1&var-node=${sensorId}&panelId=2&theme=light`;
-        console.log('URL Grafana:', grafanaUrl);
 
         // Création de l'iframe
         const iframe = document.createElement('iframe');
@@ -529,14 +502,12 @@ export function displaySensorCommunityGrafana(sensorId, mesure) {
         const chartContainer = document.getElementById(
             'sensor-community-grafana-container'
         );
-        console.log('Conteneur du graphique:', chartContainer);
 
         if (chartContainer) {
             // Nettoyage du conteneur
             chartContainer.innerHTML = '';
             // Ajout de l'iframe
             chartContainer.appendChild(iframe);
-            console.log('Iframe ajoutée au conteneur');
         } else {
             console.error("Le conteneur du graphique n'a pas été trouvé");
         }

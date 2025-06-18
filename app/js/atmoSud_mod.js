@@ -23,29 +23,6 @@ L.CRS.EPSG2154 = L.extend({}, L.CRS.EPSG3857, {
     },
 });
 
-/**
- * Affiche les informations sur les couches actives dans la console
- */
-export function logActiveLayers() {
-    console.log('=== Couches actives sur la carte ===');
-    console.log(
-        'Couche PM AtmoSud:',
-        modelisationPMAtmoSud_layer.getLayers().length > 0
-            ? 'Active'
-            : 'Inactive'
-    );
-    if (modelisationPMAtmoSud_layer.getLayers().length > 0) {
-        const activeLayer = modelisationPMAtmoSud_layer.getLayers()[0];
-        console.log('URL WMS:', activeLayer._url);
-        console.log('Nom de la couche:', activeLayer.options.layers);
-        console.log(
-            'Pas de temps:',
-            JSON.parse(localStorage.getItem('pasDeTempsLocal'))[0]
-        );
-    }
-    console.log('===================================');
-}
-
 // Fonction utilitaire pour obtenir l'heure de la couche
 function getLayerHour() {
     const now = new Date();
@@ -407,9 +384,6 @@ export function loadModPM(compoundUpper) {
                 position: 'top',
             });
     }
-
-    // Afficher les informations sur les couches actives
-    logActiveLayers();
 }
 
 export function loadModIcair() {

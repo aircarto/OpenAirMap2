@@ -62,7 +62,6 @@ export function loadNebuleAir() {
 
     // Vérification si le polluant est supporté
     if (!['pm1', 'pm25', 'pm10'].includes(mesures[0])) {
-        console.log('Polluant non supporté pour NebuleAir');
         return;
     }
 
@@ -166,18 +165,11 @@ export function retreive_historiqueData_nebuleAir(
     }
 
     if (!isSourceActive('nebuleair')) {
-        console.log('Source NebuleAir non active, annulation de la requête');
-        return;
-    }
-
-    if (!sensorId) {
-        console.log('Aucun capteur sélectionné, annulation de la requête');
         return;
     }
 
     startSpinner('Chargement des données historiques...');
 
-    const start = Date.now();
     const chartDiv = document.getElementById('chartdiv_sensor');
     if (!chartDiv) {
         console.error('Élément chartdiv_sensor non trouvé');
@@ -219,11 +211,6 @@ export function retreive_historiqueData_nebuleAir(
             return response.json();
         })
         .then((data) => {
-            const end = Date.now();
-            const requestTimer = (end - start) / 1000;
-            // console.log(`Données récupérées en ${requestTimer} secondes`);
-            // console.log('Données reçues:', data);
-
             let baseInterval_timeUnit_local;
             let baseInterval_count;
             if (pasDeTemps == '2m' || pasDeTemps == '2min') {

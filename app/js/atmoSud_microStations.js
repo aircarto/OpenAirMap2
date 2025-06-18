@@ -260,8 +260,7 @@ export const retreiveHistoriqueDataMicroStation = async (
     customStart = null,
     customEnd = null
 ) => {
-    // console.log('retreiveHistoriqueDataMicroStation');
-    // console.log('pasDeTemps: ', pasDeTemps);
+    // Formatage du pas de temps pour call API
     if (pasDeTemps === 'qh') {
         pasDeTemps = 'quart-horaire';
     } else if (pasDeTemps === 'h') {
@@ -269,24 +268,14 @@ export const retreiveHistoriqueDataMicroStation = async (
     } else if (pasDeTemps === 'd') {
         pasDeTemps = 'journalier';
     }
+
+    // Formatage des mesures pour call API
     for (let i = 0; i < mesuresArray.length; i++) {
         if (mesuresArray[i] === 'pm25') {
             mesuresArray[i] = 'pm2.5';
         }
     }
     try {
-        // Vérification que le capteur sélectionné est toujours le même
-        const testSensorId = String(sensorId);
-        if (
-            testSensorId.startsWith('FR') ||
-            testSensorId.startsWith('nebule')
-        ) {
-            // console.log(
-            //     "Le capteur sélectionné n'est pas une micro-station, annulation de la requête"
-            // );
-            return;
-        }
-
         // Démarrage du spinner
         startSpinner('Chargement des données historiques...');
 
@@ -639,13 +628,6 @@ const createSeries = (
     type = 'corrigée',
     unite
 ) => {
-    // console.log('createSeries');
-    // console.log('pollutant: ', pollutant);
-    // console.log('axes: ', axes);
-    // console.log('data: ', data);
-    // console.log('type: ', type);
-    // console.log('#######################');
-
     const polluantCompare = pollutant.toLowerCase().replace('2.5', '25');
     const colorKey = polluantCompare === 'pm2.5' ? 'pm25' : polluantCompare;
     const color = POLLUTANT_COLORS[colorKey] || '#000000';

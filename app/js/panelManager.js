@@ -237,14 +237,6 @@ class PanelManager {
     }
 
     openPanel(source, deviceId, data) {
-        // console.log('#######################');
-        // console.log('openPanel');
-        // console.log('source: ', source);
-        // console.log('deviceId: ', deviceId);
-        // console.log('data: ', data);
-        // console.log('deviceData: ', window.lastSelectedDeviceData);
-        // console.log('#######################');
-
         if (!isSourceActive(source)) {
             // console.log('Source non active:', source);
             return;

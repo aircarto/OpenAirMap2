@@ -23,7 +23,6 @@ import { loadPurpleAir } from './purpleAir.js';
  * @param {boolean} isInitialLoad - Indique si c'est le chargement initial
  */
 export function loadSource(source, isInitialLoad = false) {
-    console.log('Loading data for ' + source);
     try {
         // Gestion de la désactivation automatique des sources modPm et icairh
         if (source === 'modPm' || source === 'icairh') {
@@ -121,8 +120,6 @@ export function updateButtonDisplay() {
     const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
     const selectedMeasure = getArrayFromLocalStorage('mesuresLocal')[0];
 
-    // console.log('updateButtonDisplay - Sources actives:', activeSources);
-
     document.querySelectorAll('#dropdown_sources button').forEach((button) => {
         // Chercher d'abord dans les sources principales
         let buttonCode = Object.keys(sources).find(
@@ -166,19 +163,11 @@ export function updateButtonDisplay() {
             });
         }
 
-        // console.log(
-        //     'Bouton:',
-        //     button.textContent.trim(),
-        //     'Code source:',
-        //     sourceCode
-        // );
-
         // Désactiver le bouton par défaut
         button.classList.remove('active');
 
         // Ne pas activer le bouton si la source n'est pas dans les sources actives
         if (!activeSources.includes(sourceCode)) {
-            // console.log('Source non active:', sourceCode);
             return;
         }
 
@@ -213,7 +202,6 @@ export function updateButtonDisplay() {
         }
 
         // Si toutes les conditions sont passées, activer le bouton
-        // console.log('Activation du bouton pour:', sourceCode);
         button.classList.add('active');
     });
 }
@@ -290,18 +278,13 @@ export function initializeSourceButtons() {
 }
 
 function handleSourceClick(source, button) {
-    // console.log('handleSourceClick appelé avec:', { source, button });
-
     const activeSources = getArrayFromLocalStorage('sources_local');
-    // console.log('Sources actives:', activeSources);
 
     const selectedTimeStep = getArrayFromLocalStorage('pasDeTempsLocal')[0];
     const selectedMeasure = getArrayFromLocalStorage('mesuresLocal')[0];
-    // console.log('Pas de temps sélectionné:', selectedTimeStep);
 
     // Obtenir le code de la source (gère à la fois les sources principales et les sous-sources)
     const sourceCode = source.code;
-    // console.log('Code de la source:', sourceCode);
 
     // Vérification spéciale pour NebuleAir
     if (
@@ -324,27 +307,16 @@ function handleSourceClick(source, button) {
         return;
     }
 
-    // console.log(
-    //     'Vérification si la source est active:',
-    //     activeSources.includes(sourceCode)
-    // );
-
     if (activeSources.includes(sourceCode)) {
-        // console.log('Désactivation de la source:', sourceCode);
         removeItemFromLocalStorageArray('sources_local', sourceCode);
         clearLayer(sourceCode);
         button.classList.remove('active');
     } else {
-        // console.log('Activation de la source:', sourceCode);
         addItemToLocalStorageArray('sources_local', sourceCode);
         loadSource(sourceCode);
         button.classList.add('active');
     }
 
-    // console.log(
-    //     'Sources actives après mise à jour:',
-    //     getArrayFromLocalStorage('sources_local')
-    // );
     updateButtonDisplay();
 }
 
