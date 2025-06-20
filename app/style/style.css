@@ -30,6 +30,141 @@ body {
     height: 50px;
 }
 
+/* Styles pour le logo responsive dans la navbar */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+}
+
+.navbar-logo {
+    height: 30px;
+    width: auto;
+    max-width: 120px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+
+/* Responsive pour le logo */
+@media (max-width: 576px) {
+    .navbar-brand {
+        gap: 0.25rem;
+    }
+
+    .navbar-brand span {
+        font-size: 0.9rem;
+    }
+
+    .navbar-logo {
+        height: 25px;
+        max-width: 80px;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+    .navbar-logo {
+        height: 28px;
+        max-width: 100px;
+    }
+}
+
+@media (min-width: 769px) {
+    .navbar-logo {
+        height: 30px;
+        max-width: 120px;
+    }
+}
+
+/* Styles pour le bouton burger responsive */
+.navbar-toggler {
+    border: none;
+    padding: 0.25rem 0.5rem;
+    font-size: 1.25rem;
+    line-height: 1;
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.navbar-toggler:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive pour le bouton burger */
+@media (max-width: 576px) {
+    .navbar-toggler {
+        padding: 0.2rem 0.4rem;
+        font-size: 1.1rem;
+        margin-right: 0.5rem;
+    }
+
+    .navbar-toggler-icon {
+        width: 1.1em;
+        height: 1.1em;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+    .navbar-toggler {
+        padding: 0.25rem 0.5rem;
+        font-size: 1.2rem;
+        margin-right: 0.75rem;
+    }
+
+    /* Ajustements pour tablettes */
+    .navbar-brand {
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .navbar-brand span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar-toggler {
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+}
+
+/* Ajustement de l'espacement de la navbar sur mobile */
+@media (max-width: 576px) {
+    #nav-bar .container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Ajustements spécifiques pour éviter le débordement */
+    #nav-bar {
+        min-height: 50px;
+        max-height: 50px;
+        overflow: hidden;
+    }
+
+    .navbar-brand {
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .navbar-brand span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar-toggler {
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+}
+
 /* Carré pour faire la ligne multicolor */
 .square {
     width: 15%;

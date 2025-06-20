@@ -40,7 +40,7 @@ function isSmallScreen() {
 
     // Pour Safari sur iOS, utiliser une détection plus large
     if (isIOS && isSafari) {
-        return window.innerWidth <= 768; // Plus large pour iOS
+        return window.innerWidth <= 768;
     }
 
     // Pour les autres appareils, utiliser le breakpoint Bootstrap
@@ -72,15 +72,13 @@ export function openSidePanelGeneric() {
 
     // Gestion responsive différente pour mobile et desktop
     if (isSmallScreen()) {
-        console.log('Ouverture du panneau en mode mobile');
-
         // Forcer les styles pour mobile - écraser toutes les classes Bootstrap
         sidePanel.style.position = 'fixed';
         sidePanel.style.top = '0';
         sidePanel.style.left = '0';
         sidePanel.style.width = '100%';
         sidePanel.style.height = '100vh';
-        sidePanel.style.zIndex = '9999'; // Z-index très élevé pour être sûr
+        sidePanel.style.zIndex = '9999';
         sidePanel.style.backgroundColor = 'white';
         sidePanel.style.overflowY = 'auto';
         sidePanel.style.padding = '20px 15px';
@@ -100,16 +98,7 @@ export function openSidePanelGeneric() {
 
         // Supprimer les classes Bootstrap du conteneur de carte
         mapContainer.classList.remove('col-12', 'col-sm-6', 'col-lg-7');
-
-        console.log('Styles appliqués au panneau mobile:', {
-            position: sidePanel.style.position,
-            width: sidePanel.style.width,
-            height: sidePanel.style.height,
-            zIndex: sidePanel.style.zIndex,
-        });
     } else {
-        console.log('Ouverture du panneau en mode desktop');
-
         // Sur desktop, layout normal
         sidePanel.style.position = '';
         sidePanel.style.top = '';
@@ -150,18 +139,7 @@ export function openSidePanelGeneric() {
         if (map) {
             map.invalidateSize();
         }
-
-        // Vérification finale pour mobile
-        if (isSmallScreen()) {
-            const rect = sidePanel.getBoundingClientRect();
-            console.log('Dimensions finales du panneau:', {
-                width: rect.width,
-                height: rect.height,
-                top: rect.top,
-                left: rect.left,
-            });
-        }
-    }, 100); // Délai plus long pour Safari iOS
+    }, 100);
 }
 
 /**
@@ -169,11 +147,6 @@ export function openSidePanelGeneric() {
  * Restaure la mise en page du conteneur de la carte
  */
 export function closeSidePanel() {
-    console.log(
-        'Fermeture du panneau latéral - appelé depuis:',
-        new Error().stack
-    );
-
     // D'abord mettre à jour l'état
     sidePanelState.isOpen = false;
     sidePanelState.isExpanded = false;
@@ -203,13 +176,11 @@ export function closeSidePanel() {
 
     // Restaurer les classes Bootstrap selon le mode
     if (isSmallScreen()) {
-        console.log('Restauration en mode mobile');
         // Sur mobile, supprimer toutes les classes
         sidePanel.className = '';
         mapContainer.classList.remove('col-12', 'col-sm-6', 'col-lg-7');
         mapContainer.classList.add('col-12');
     } else {
-        console.log('Restauration en mode desktop');
         // Sur desktop, restaurer les classes Bootstrap
         sidePanel.className = 'vh-100 overflow-auto';
         mapContainer.classList.remove('col-12', 'col-sm-6', 'col-lg-7');
@@ -387,7 +358,6 @@ export function initializeSidePanelButtons() {
                         setTimeout(() => {
                             window.amchart_root.resize();
                         }, 100);
-                    } else {
                     }
                 });
 
@@ -433,7 +403,6 @@ export function initializeSidePanelButtons() {
                         setTimeout(() => {
                             window.amchart_root.resize();
                         }, 100);
-                    } else {
                     }
                 });
 
@@ -637,31 +606,6 @@ function updateButtonsPosition() {
 
 // Modifier l'initialisation des observateurs
 document.addEventListener('DOMContentLoaded', function () {
-    // Fonction de débogage pour Safari iOS
-    const debugSafariIOS = () => {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isSafari = /^((?!chrome|android).)*safari/i.test(
-            navigator.userAgent
-        );
-
-        if (isIOS && isSafari) {
-            console.log('Safari iOS détecté - Optimisations appliquées');
-            console.log('Largeur écran:', window.innerWidth);
-            console.log('Hauteur écran:', window.innerHeight);
-            console.log('isSmallScreen():', isSmallScreen());
-        }
-    };
-
-    // Afficher le bouton de test sur mobile pour le débogage
-    if (isSmallScreen()) {
-        const testButton = document.querySelector(
-            'button[onclick="testSidePanel()"]'
-        );
-        if (testButton) {
-            testButton.style.display = 'block';
-        }
-    }
-
     // Observateur pour les changements de style du panneau latéral
     const sidePanelObserver = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
