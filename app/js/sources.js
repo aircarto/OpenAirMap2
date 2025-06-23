@@ -311,6 +311,13 @@ function handleSourceClick(source, button) {
         removeItemFromLocalStorageArray('sources_local', sourceCode);
         clearLayer(sourceCode);
         button.classList.remove('active');
+        // Suppression de la popup de choix de date pour signalair
+        if (sourceCode === 'signalair') {
+            const popup = document.getElementsByClassName('signalair-date-picker-popup')[0];
+            if (popup) {
+                popup.remove();
+            }
+        }
     } else {
         addItemToLocalStorageArray('sources_local', sourceCode);
         loadSource(sourceCode);
