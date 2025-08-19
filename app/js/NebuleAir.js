@@ -248,6 +248,11 @@ export function retreive_historiqueData_nebuleAir(
                     mesuresArray
                 );
             });
+            am5plugins_exporting.Exporting.new(window.amchart_root, {
+                menu: am5plugins_exporting.ExportingMenu.new(window.amchart_root, {}),
+                filePrefix: 'historique_data_nebuleAir',
+                dataSource: data, // ⚡ Ici tu peux aussi transformer `data` en tableau plat si besoin
+            });
         })
         .catch((error) => {
             stopSpinner();
