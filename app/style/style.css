@@ -598,13 +598,22 @@ body {
     padding: 0 !important;
 }
 
-.custom-toast .swal2-html-container {
-    margin: 0.75rem 0 !important;
-    color: #34495e !important;
-    line-height: 1.5 !important;
-    font-size: 0.95rem !important;
-    padding: 0 !important;
+.custom-toast-refwarning .swal2-html-container {
+    margin: 0.25rem 0 !important;       /* réduit fortement l’espace vertical */
+    color: #7f8c8d !important;          /* gris plus doux */
+    line-height: 1.2 !important;        /* texte plus compact */
+    font-size: 0.85rem !important;      /* texte plus petit */
+    padding: 0.25rem 0.5rem !important; /* moins d’espace intérieur */
+    min-height: auto !important;        /* pas de hauteur imposée */
 }
+
+/* On réduit aussi le padding global du popup */
+.custom-toast-refwarning.swal2-popup.swal2-toast {
+    padding: 0.25rem 0.5rem !important;
+    box-shadow: none !important;       /* moins de relief, plus discret */
+    background: rgba(255, 159, 67, 0.1) !important; /* fond très léger */
+}
+
 
 /* Styles responsifs pour les toasts */
 @media (max-width: 768px) {

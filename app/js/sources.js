@@ -97,7 +97,7 @@ export function checkInitialConditions() {
     }
 
     if (activeSources.includes('atmoRef') && selectedTimeStep === '2min') {
-        toastManager.atmoRefTimeStepWarning();
+        // toastManager.atmoRefTimeStepWarning();
         clearLayer('atmoRef');
     }
 
@@ -303,7 +303,7 @@ function handleSourceClick(source, button) {
 
     // Vérification spéciale pour AtmoSud Stations de référence
     if (sourceCode === 'atmoRef' && selectedTimeStep === '2min') {
-        toastManager.atmoRefTimeStepWarning();
+        // toastManager.atmoRefTimeStepWarning();
         return;
     }
 
