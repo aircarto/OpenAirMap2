@@ -160,7 +160,7 @@ export const toastManager = {
     // Notification pour les stations de référence AtmoSud avec pas de temps 2min ou instantané
     atmoRefTimeStepWarning: () => {
         const toast = createToast(
-            'Les stations de référence AtmoSud ne sont pas disponibles aux pas de temps 2 minutes et instantané. Source désactivée.',
+            'Les stations de référence AtmoSud ne sont pas disponibles aux pas de temps 2 minutes. Source désactivée.',
             'warning',
             { timer: 5000 }
         );

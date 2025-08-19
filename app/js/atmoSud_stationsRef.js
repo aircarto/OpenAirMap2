@@ -900,6 +900,14 @@ export function retreiveHistoriqueDataStationRef(
                 // Animation
                 chart.appear(1000, 100);
                 stopSpinner();
+                am5plugins_exporting.Exporting.new(window.amchart_root, {
+                menu: am5plugins_exporting.ExportingMenu.new(
+                    window.amchart_root,
+                    {}
+                ),
+                filePrefix: 'historique_data',
+                dataSource: data.mesures,
+            });
             });
         })
         .catch((error) => {

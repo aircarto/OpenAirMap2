@@ -150,9 +150,13 @@ export function findAndHighlightMarker(deviceId) {
         );
 
         if (layerDeviceId === deviceIdStr) {
-            toastManager.sensorSelected(
-                layer.options.name || `Capteur ${layerType}`
-            );
+            // console.log(
+            //     '%cfindAndHighlightMarker', 'background: #222; color: #bada55',
+            //     layerDeviceId, deviceIdStr
+            // );
+            // toastManager.sensorSelected(
+            //     layer.options.name || `Capteur ${layerType}`
+            // );
 
             // Mise en évidence du marqueur
             layer.setZIndexOffset(1000);
