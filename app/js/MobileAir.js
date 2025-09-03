@@ -1,15 +1,30 @@
+import { mobileair_layer } from './layers.js';
+import { map, getColorForSeuil } from './mapConfig.js';
+import { getArrayFromLocalStorage } from './utils.js';
+import { seuilsPm1Pm25, seuilsPm10, pasDeTemps } from './appConfig.js';
+import {
+    card1Img,
+    card1Title,
+    card1Subtitle,
+    card1Text,
+    card2Text,
+    card2Link,
+    openSidePanelGeneric,
+} from './sidePanel.js';
+
 var selected_point_timespan;
 var old_selected_point_timespan;
 
 var circles = {};
+var mesuresArray = [];
 
-function loadMobileAir() {
+export function loadMobileAir() {
     console.log(
         '%cloadMobileAir',
         'color: yellow; font-style: bold; background-color: blue;padding: 2px'
     );
     mobileair_layer.clearLayers();
-    var mesures = getArrayFromLocalStorage(mesures_local);
+    var mesures = getArrayFromLocalStorage('mesuresLocal');
     console.log('Mesures : ' + mesures);
     //il faut faire passer le type de mesure en maj (différence dans le JSON et dans l'appli)
     let mesure_StringA = mesures[0];
@@ -100,17 +115,14 @@ function getDataMobileAir(sensorToken, mesures, mesure_majuscule) {
                     //pour les pm1 et les pm25
                     if (mesures == 'pm1' || mesures == 'pm25') {
                         for (let key in seuilsPm1Pm25) {
-                            let color_hex = seuilsPm1Pm25[key].color_hex;
+                            let color_hex = getColorForSeuil(key);
                             let min = seuilsPm1Pm25[key].min;
                             let max = seuilsPm1Pm25[key].max;
                             let value_rounded = Math.round(
                                 value[mesure_majuscule]
                             );
                             //si la valeur est entre le max et le min
-                            if (
-                                (value_rounded >= min) &
-                                (value_rounded <= max)
-                            ) {
+                            if (value_rounded >= min && value_rounded <= max) {
                                 circle_param.color = color_hex;
                                 circle_param.fillColor = color_hex;
                             }
@@ -119,7 +131,7 @@ function getDataMobileAir(sensorToken, mesures, mesure_majuscule) {
                     //pour les pm10
                     if (mesures == 'pm10') {
                         for (let key in seuilsPm10) {
-                            let color_hex = seuilsPm10[key].color_hex;
+                            let color_hex = getColorForSeuil(key);
                             let min = seuilsPm10[key].min;
                             let max = seuilsPm10[key].max;
                             let value_rounded = Math.round(
@@ -127,10 +139,7 @@ function getDataMobileAir(sensorToken, mesures, mesure_majuscule) {
                             );
 
                             //si la valeur est entre le max et le min
-                            if (
-                                (value_rounded >= min) &
-                                (value_rounded <= max)
-                            ) {
+                            if (value_rounded >= min && value_rounded <= max) {
                                 circle_param.color = color_hex;
                                 circle_param.fillColor = color_hex;
                             }
@@ -248,7 +257,7 @@ function openSidePanel_mobileAir(data, pasDeTemps, historique, mesures) {
     mesuresArray.length = 0;
     mesuresArray.push(mesures);
     //card 1
-    card1Img.src = 'img/nebuleair/NebuleAir_photo.png';
+    card1Img.src = 'img/nebuleair/NebuleAir_photo.png'; // TODO: Ajouter une image spécifique pour MobileAir
     card1Title.innerHTML = 'MobileAir ' + data.sensorId;
     card1Subtitle.innerHTML = 'Capteur citoyen de mesure en mobilité';
     card1Text.innerHTML = ''; //empty content from previous opening
@@ -261,11 +270,12 @@ function openSidePanel_mobileAir(data, pasDeTemps, historique, mesures) {
     retreive_historiqueData_mobileAir(
         data.sensorId,
         data.sessionId,
-        mesuresArray
+        mesuresArray,
+        false // add_mesure = false car on a déjà configuré mesuresArray
     );
 
     //fonction semblable pour tous les types de capteurs
-    openSidePanel_generic();
+    openSidePanelGeneric();
 } //end openSidePanel_mobileAir
 
 /*
@@ -385,12 +395,18 @@ function highlight_circle_on_map(
     selected_point_timespan,
     old_selected_point_timespan
 ) {
-    circles[selected_point_timespan].setStyle({
-        opacity: 1,
-        color: 'red',
-    });
+    // Vérifier que le cercle sélectionné existe
+    if (circles[selected_point_timespan]) {
+        circles[selected_point_timespan].setStyle({
+            opacity: 1,
+            color: 'red',
+        });
+    }
 
-    circles[old_selected_point_timespan].setStyle({
-        opacity: 0,
-    });
+    // Vérifier que l'ancien cercle existe avant de le modifier
+    if (circles[old_selected_point_timespan]) {
+        circles[old_selected_point_timespan].setStyle({
+            opacity: 0,
+        });
+    }
 }

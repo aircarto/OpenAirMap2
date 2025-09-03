@@ -15,7 +15,7 @@ import { loadModPM, loadModIcair, loadModVent } from './atmoSud_mod.js';
 import { loadSignalAir } from './SignalAir.js';
 import { loadSensorCommunity } from './sensorCommunity.js';
 import { loadPurpleAir } from './purpleAir.js';
-// import { loadMobileAir } from './MobileAir.js';
+import { loadMobileAir } from './MobileAir.js';
 
 /**
  * Charge une source de données spécifique
@@ -68,10 +68,7 @@ export function loadSource(source, isInitialLoad = false) {
                 loadModVent();
                 break;
             case 'mobileair':
-                // Cette source n'est pas encore implémentée
-                console.warn(
-                    "La source mobileair n'est pas encore implémentée"
-                );
+                loadMobileAir();
                 break;
         }
     } catch (error) {

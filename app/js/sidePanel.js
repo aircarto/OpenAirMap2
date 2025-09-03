@@ -10,6 +10,7 @@ export const card1 = document.getElementById('card1');
 export const card1_body = document.getElementById('card1_body');
 export const card1Img = document.getElementById('card1Img');
 export const card1Title = document.getElementById('card1Title');
+export const card1Subtitle = document.getElementById('card1Subtitle');
 export const card1Text = document.getElementById('card1Text');
 export const card1_button = document.getElementById('card1_button');
 export const card2 = document.getElementById('card2');
