@@ -1033,8 +1033,8 @@ function setupRefMarkerEvents(stationMarker, textMarker, value, mesure) {
  * @returns {number} Taille du texte
  */
 function getRefTextSize(valeur) {
-    if (valeur > 99.4) return 22;
-    if (valeur > 9.4) return 28;
+    if (valeur > 99.4) return 20;
+    if (valeur > 9.4) return 24;
     return 32;
 }
 
@@ -1044,8 +1044,8 @@ function getRefTextSize(valeur) {
  * @returns {Array} Position [x, y]
  */
 function getRefTextPosition(valeur) {
-    if (valeur > 99.4) return [-20, 37];
-    if (valeur > 9.4) return [-19, 37];
+    if (valeur > 99.4) return [-20, 33];
+    if (valeur > 9.4) return [-19, 35];
     return [-20, 39];
 }
 

@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.12.1",
-    "sweetalert2": "^11.17.2",
     "toaster-ui": "^1.1.5"
   }
 }

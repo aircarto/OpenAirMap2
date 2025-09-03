@@ -52,19 +52,30 @@
         />
         <!-- AJAX -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
-        <!-- SweetAlert2 -->
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
-        />
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <!-- PlainDraggable -->
         <script src="https://cdn.jsdelivr.net/npm/plain-draggable@2.5.15/plain-draggable.min.js"></script>
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <!-- style CSS  -->
         <link rel="stylesheet" href="css/sources.css" />
         <link rel="stylesheet" href="style/style.css" />
         <link rel="stylesheet" href="css/signalair.css" />
         <link rel="stylesheet" href="css/value-popup.css" />
+        <!-- Matomo -->
+        <script>
+            var _paq = window._paq = window._paq || [];
+            /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+            _paq.push(['trackPageView']);
+            _paq.push(['enableLinkTracking']);
+            (function() {
+                var u="https://analytics.atmosud.org/matomo/";
+                _paq.push(['setTrackerUrl', u+'matomo.php']);
+                _paq.push(['setSiteId', '10']);
+                var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+                g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+            })();
+        </script>
+        <!-- End Matomo Code -->
     </head>
     <body>
         <!-- NavBar  -->
