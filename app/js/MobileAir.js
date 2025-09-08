@@ -75,7 +75,7 @@ function showDatePickerPopupMobileAir() {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
             document.getElementById('mobileair-days-counter').textContent =
-                `Affichage des données du ${start} au ${end} (${diffDays} jours)`;
+                `Affichage des données sur ${diffDays} jours`;
         }
     };
 
@@ -219,7 +219,7 @@ function getDataMobileAir(sensorToken, mesure, mesureMajuscule, startDate, endDa
         url: fullUrl_mobileair,
         success: function (data) {
             if (!data || data.length === 0) {
-                console.warn('No data received for sensor ' + sensorToken);
+                // console.warn('No data received for sensor ' + sensorToken);
                 return;
             }
 
@@ -325,7 +325,7 @@ function getDataMobileAir(sensorToken, mesure, mesureMajuscule, startDate, endDa
 /**
  * Ouverture du panneau latéral avec infos capteur
  */
-function openSidePanel_mobileAir(data, pasDeTemps, historique, mesure) {
+function openSidePanel_mobileAir(data, mesure) {
     // console.log('openSidePanel_mobileAir');
 
     mesuresArray.length = 0;
@@ -333,9 +333,9 @@ function openSidePanel_mobileAir(data, pasDeTemps, historique, mesure) {
 
     // Card 1
     card1Img.src = 'img/nebuleair/NebuleAir_photo.png';
-    card1Title.innerHTML = 'MobileAir ' + data.sensorId;
-    card1Subtitle.innerHTML = 'Capteur citoyen de mesure en mobilité';
-    card1Text.innerHTML = '';
+    card1Title.innerHTML = 'MobileAir ' + data.sensorId ;
+    card1Subtitle.innerHTML = 'Capteur citoyen de mesure en mobilité' ;
+    card1Text.innerHTML = `Session n°${data.sessionId}`;
 
     // Card 2
     card2Text.innerHTML = `Le MobileAir est un capteur mobile de la qualité de l'air.
@@ -361,7 +361,7 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
 
     // console.log(`Récupération data sensor ${sensorId}, session ${sessionId}`);
     // console.log('Mesures:', mesuresArray);
-
+    console.log(mesure);
     const fullUrl_mobileair = `
         https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${sensorId}&
         sessionID=${sessionId}&
