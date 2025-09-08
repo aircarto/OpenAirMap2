@@ -556,6 +556,15 @@ export function openSidePanelStationRef(deviceId, station_name, mesure) {
     } else if (state.pasDeTemps[0] === 'instantane') {
         state.pasDeTempsAtmo = 'quart-horaire';
     }
+    document.getElementById('togglePollutants').disabled = false;
+    document.getElementById('btn_historique_3h').disabled = false;
+    document.getElementById('btn_historique_24h').disabled = false;
+    document.getElementById('btn_historique_7d').disabled = false;
+    document.getElementById('btn_historique_365d').disabled = false;
+    document.getElementById('btn_pasDeTemps_scan').disabled = false;
+    document.getElementById('btn_pasDeTemps_qh').disabled = false;
+    document.getElementById('btn_pasDeTemps_h').disabled = false;
+    document.getElementById('btn_pasDeTemps_d').disabled = false;
 
     // Récupération de l'image de la station
     const card1Img = document.getElementById('card1Img');
@@ -901,13 +910,13 @@ export function retreiveHistoriqueDataStationRef(
                 chart.appear(1000, 100);
                 stopSpinner();
                 am5plugins_exporting.Exporting.new(window.amchart_root, {
-                menu: am5plugins_exporting.ExportingMenu.new(
-                    window.amchart_root,
-                    {}
-                ),
-                filePrefix: 'historique_data',
-                dataSource: data.mesures,
-            });
+                    menu: am5plugins_exporting.ExportingMenu.new(
+                        window.amchart_root,
+                        {}
+                    ),
+                    filePrefix: 'historique_data',
+                    dataSource: data.mesures,
+                });
             });
         })
         .catch((error) => {

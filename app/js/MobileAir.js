@@ -1,6 +1,6 @@
 import { mobileair_layer } from './layers.js';
 import { map, getColorForSeuil } from './mapConfig.js';
-import { getArrayFromLocalStorage } from './utils.js';
+import { getArrayFromLocalStorage, formatPollutantName } from './utils.js';
 import { seuilsPm1Pm25, seuilsPm10, pasDeTemps } from './appConfig.js';
 import {
     card1Img,
@@ -23,7 +23,9 @@ var mesuresArray = [];
  */
 function showDatePickerPopupMobileAir() {
     // Supprimer d'anciens popups
-    document.querySelectorAll('.mobileair-draggable').forEach(el => el.remove());
+    document
+        .querySelectorAll('.mobileair-draggable')
+        .forEach((el) => el.remove());
 
     // Créer le conteneur
     const popup = document.createElement('div');
@@ -81,48 +83,63 @@ function showDatePickerPopupMobileAir() {
 
     updateDaysCounter();
 
-    popup.querySelector('#mobileair-date-start').addEventListener('change', updateDaysCounter);
-    popup.querySelector('#mobileair-date-end').addEventListener('change', updateDaysCounter);
+    popup
+        .querySelector('#mobileair-date-start')
+        .addEventListener('change', updateDaysCounter);
+    popup
+        .querySelector('#mobileair-date-end')
+        .addEventListener('change', updateDaysCounter);
 
     /**
      * Bouton fermer
      */
-    popup.querySelector('.close-btn').addEventListener('click', () => popup.remove());
+    popup
+        .querySelector('.close-btn')
+        .addEventListener('click', () => popup.remove());
 
     /**
      * Bouton réinitialiser
      */
-    popup.querySelector('#mobileair-reset-dates').addEventListener('click', () => {
-        document.getElementById('mobileair-date-start').value = startDateStr;
-        document.getElementById('mobileair-date-end').value = endDateStr;
-        updateDaysCounter();
-    });
+    popup
+        .querySelector('#mobileair-reset-dates')
+        .addEventListener('click', () => {
+            document.getElementById('mobileair-date-start').value =
+                startDateStr;
+            document.getElementById('mobileair-date-end').value = endDateStr;
+            updateDaysCounter();
+        });
 
     /**
      * Bouton appliquer
      */
-    popup.querySelector('#mobileair-apply-dates').addEventListener('click', () => {
-        const start = document.getElementById('mobileair-date-start').value;
-        const end = document.getElementById('mobileair-date-end').value;
+    popup
+        .querySelector('#mobileair-apply-dates')
+        .addEventListener('click', () => {
+            const start = document.getElementById('mobileair-date-start').value;
+            const end = document.getElementById('mobileair-date-end').value;
 
-        if (!start || !end) {
-            alert('Veuillez sélectionner une date de début et une date de fin');
-            return;
-        }
-        if (new Date(start) > new Date(end)) {
-            alert('La date de début doit être antérieure à la date de fin');
-            return;
-        }
+            if (!start || !end) {
+                alert(
+                    'Veuillez sélectionner une date de début et une date de fin'
+                );
+                return;
+            }
+            if (new Date(start) > new Date(end)) {
+                alert('La date de début doit être antérieure à la date de fin');
+                return;
+            }
 
-        popup.remove();
-        mobileair_layer.clearLayers();
-        loadMobileAir(start, end);
-    });
+            popup.remove();
+            mobileair_layer.clearLayers();
+            loadMobileAir(start, end);
+        });
 
     /**
      * Rendre le popup draggable
      */
-    let isDragging = false, offsetX = 0, offsetY = 0;
+    let isDragging = false,
+        offsetX = 0,
+        offsetY = 0;
 
     const header = popup.querySelector('.drag-header');
     header.addEventListener('mousedown', (e) => {
@@ -151,8 +168,6 @@ function showDatePickerPopupMobileAir() {
     popup.style.left = '50%';
     popup.style.transform = 'translate(-50%, -50%)';
 }
-
-
 
 /**
  * Fonction principale pour charger les données MobileAir
@@ -186,7 +201,13 @@ export function loadMobileAir(startDate, endDate) {
         success: function (data) {
             $.each(data, function (key, value) {
                 // console.log('Sensor token: ' + value['sensorToken']);
-                getDataMobileAir(value['sensorToken'], mesure, mesureMajuscule, startDate, endDate);
+                getDataMobileAir(
+                    value['sensorToken'],
+                    mesure,
+                    mesureMajuscule,
+                    startDate,
+                    endDate
+                );
             });
         },
         error: function (xhr, status, error) {
@@ -200,7 +221,13 @@ export function loadMobileAir(startDate, endDate) {
 /**
  * Récupération et affichage des données pour un capteur MobileAir
  */
-function getDataMobileAir(sensorToken, mesure, mesureMajuscule, startDate, endDate) {
+function getDataMobileAir(
+    sensorToken,
+    mesure,
+    mesureMajuscule,
+    startDate,
+    endDate
+) {
     const startParam = `${startDate}T00:00:00Z`;
     const endParam = `${endDate}T23:59:59Z`;
 
@@ -290,22 +317,28 @@ function getDataMobileAir(sensorToken, mesure, mesureMajuscule, startDate, endDa
                     timeZone: 'Europe/Paris',
                     timeZoneName: 'short',
                 };
-                const frenchDate = dateMesure.toLocaleDateString('fr-FR', options);
+                const frenchDate = dateMesure.toLocaleDateString(
+                    'fr-FR',
+                    options
+                );
 
                 let mobileAirTooltip = `
                     <b>MobileAir ${value['sensorId']} (session n° ${value['sessionId']})</b><br/>
-                    ${frenchDate}<br/>
-                    ${mesure.toUpperCase()}: ${value[mesureMajuscule]} µg/m&sup3;
+                    ${frenchDate.slice(0, -5)}<br/>
+                    ${formatPollutantName(mesureMajuscule)}: ${value[mesureMajuscule]} µg/m&sup3;
                 `;
 
-                const circle = L.circleMarker([value['lat'], value['lon']], circle_param)
+                const circle = L.circleMarker(
+                    [value['lat'], value['lon']],
+                    circle_param
+                )
                     .bindTooltip(mobileAirTooltip, {
                         direction: 'center',
                         offset: [0, -50],
                     })
                     .on('click', function () {
                         // console.log('Click on sensor: ' + value['sensorId']);
-                        openSidePanel_mobileAir(value, pasDeTemps, '24h', mesure);
+                        openSidePanel_mobileAir(value, mesure);
                     })
                     .addTo(mobileair_layer);
 
@@ -333,9 +366,9 @@ function openSidePanel_mobileAir(data, mesure) {
 
     // Card 1
     card1Img.src = 'img/nebuleair/NebuleAir_photo.png';
-    card1Title.innerHTML = 'MobileAir ' + data.sensorId ;
-    card1Subtitle.innerHTML = 'Capteur citoyen de mesure en mobilité' ;
-    card1Text.innerHTML = `Session n°${data.sessionId}`;
+    card1Title.innerHTML = 'MobileAir ' + data.sensorId;
+    card1Subtitle.innerHTML = 'Capteur citoyen de mesure en mobilité';
+    // card1Text.innerHTML = `Session n°${data.sessionId}`;
 
     // Card 2
     card2Text.innerHTML = `Le MobileAir est un capteur mobile de la qualité de l'air.
@@ -343,8 +376,23 @@ function openSidePanel_mobileAir(data, mesure) {
         Il est équipé d'une puce GPS qui permet la géolocalisation des données.`;
     card2Link.innerHTML = 'AirCarto.fr';
 
+    document.getElementById('togglePollutants').disabled = true;
+    document.getElementById('btn_historique_3h').disabled = true;
+    document.getElementById('btn_historique_24h').disabled = true;
+    document.getElementById('btn_historique_7d').disabled = true;
+    document.getElementById('btn_historique_365d').disabled = true;
+    document.getElementById('btn_pasDeTemps_scan').disabled = true;
+    document.getElementById('btn_pasDeTemps_qh').disabled = true;
+    document.getElementById('btn_pasDeTemps_h').disabled = true;
+    document.getElementById('btn_pasDeTemps_d').disabled = true;
+
     // Données historiques
-    retreive_historiqueData_mobileAir(data.sensorId, data.sessionId, mesuresArray, false);
+    retreive_historiqueData_mobileAir(
+        data.sensorId,
+        data.sessionId,
+        mesuresArray,
+        false
+    );
 
     openSidePanelGeneric();
 }
@@ -352,7 +400,12 @@ function openSidePanel_mobileAir(data, mesure) {
 /**
  * Récupération des données d'une session pour le graphique
  */
-function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesure) {
+function retreive_historiqueData_mobileAir(
+    sensorId,
+    sessionId,
+    mesure,
+    add_mesure
+) {
     const start = Date.now();
 
     if (add_mesure) {
@@ -361,7 +414,6 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
 
     // console.log(`Récupération data sensor ${sensorId}, session ${sessionId}`);
     // console.log('Mesures:', mesuresArray);
-    console.log(mesure);
     const fullUrl_mobileair = `
         https://api.aircarto.fr/capteurs/dataMobileAir?capteurID=${sensorId}&
         sessionID=${sessionId}&
@@ -378,28 +430,74 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
             const duration = (Date.now() - start) / 1000;
             // console.log(`Data gathered in %c${duration} sec`, 'color: red;');
 
-            const filteredData = data.filter((item) => item.sessionId === sessionId);
+            const filteredData = data.filter(
+                (item) => item.sessionId === sessionId
+            );
             // console.log('Filtered session data:', filteredData);
 
-            const dataForChart_pm1 = filteredData.map((item) => ({
+            // Déterminer le polluant à afficher selon la mesure sélectionnée
+            const mesureActuelle = mesuresArray[0]; // Récupérer la première mesure du tableau
+            const mesureMajuscule = mesureActuelle.toUpperCase();
+            const dataForChart = filteredData.map((item) => ({
                 x: new Date(item.time).getTime(), // millisecondes
-                y: item.PM1,
+                y: item[mesureMajuscule],
             }));
 
             // Graphique CanvasJS
             var chart = new CanvasJS.Chart('chartdiv_sensor', {
                 zoomEnabled: true,
+                title: {
+                    text: `Évolution ${formatPollutantName(mesureMajuscule)} - MobileAir ${sensorId}`,
+                    fontSize: 16,
+                    fontFamily: 'Arial, sans-serif',
+                },
+                subtitles: [
+                    {
+                        text: `Session n°${sessionId}`,
+                        fontSize: 12,
+                        fontFamily: 'Arial, sans-serif',
+                    },
+                ],
+                axisY: {
+                    title: `${formatPollutantName(mesureMajuscule)} (µg/m³)`,
+                    titleFontSize: 12,
+                },
                 toolTip: {
+                    content: function (e) {
+                        const pointTime = e.entries[0].dataPoint.x;
+                        const pointValue = e.entries[0].dataPoint.y;
+                        const date = new Date(pointTime).toLocaleString(
+                            'fr-FR',
+                            {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                timeZone: 'Europe/Paris',
+                            }
+                        );
+
+                        return `<b>${formatPollutantName(mesureMajuscule)}</b><br/>${date}<br/>Valeur: ${pointValue} µg/m³`;
+                    },
                     updated: function (e) {
                         const pointTime = e.entries[0].dataPoint.x;
 
                         if (!selected_point_timespan) {
                             selected_point_timespan = pointTime;
-                            highlight_circle_on_map(selected_point_timespan, old_selected_point_timespan);
+                            highlight_circle_on_map(
+                                selected_point_timespan,
+                                old_selected_point_timespan
+                            );
                         } else if (selected_point_timespan !== pointTime) {
-                            old_selected_point_timespan = selected_point_timespan;
+                            old_selected_point_timespan =
+                                selected_point_timespan;
                             selected_point_timespan = pointTime;
-                            highlight_circle_on_map(selected_point_timespan, old_selected_point_timespan);
+                            highlight_circle_on_map(
+                                selected_point_timespan,
+                                old_selected_point_timespan
+                            );
                         }
                     },
                 },
@@ -407,7 +505,9 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
                     {
                         type: 'area',
                         xValueType: 'dateTime',
-                        dataPoints: dataForChart_pm1,
+                        dataPoints: dataForChart,
+                        name: mesureMajuscule,
+                        color: '#1f77b4',
                     },
                 ],
             });
@@ -415,7 +515,11 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
             chart.render();
         },
         error: function (xhr, status, error) {
-            console.error('Erreur récupération historique:', error, xhr.responseText);
+            console.error(
+                'Erreur récupération historique:',
+                error,
+                xhr.responseText
+            );
         },
     });
 }
@@ -423,7 +527,10 @@ function retreive_historiqueData_mobileAir(sensorId, sessionId, mesure, add_mesu
 /**
  * Mise en surbrillance du point sélectionné sur la carte
  */
-function highlight_circle_on_map(selected_point_timespan, old_selected_point_timespan) {
+function highlight_circle_on_map(
+    selected_point_timespan,
+    old_selected_point_timespan
+) {
     if (circles[selected_point_timespan]) {
         circles[selected_point_timespan].setStyle({
             opacity: 1,
