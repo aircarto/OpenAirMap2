@@ -483,7 +483,7 @@ function openSidePanel_mobileAir(data, mesure) {
     toggleSessionPolylines(data.sensorId, data.sessionId, true);
 
     // Card 1
-    card1Img.src = 'img/nebuleair/NebuleAir_photo.png';
+    card1Img.src = 'img/mobileAir/mobileAir.jpg';
     card1Title.innerHTML = 'MobileAir ' + data.sensorId;
     card1Subtitle.innerHTML = 'Capteur citoyen de mesure en mobilité';
     // card1Text.innerHTML = `Session n°${data.sessionId}`;
