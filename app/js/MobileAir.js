@@ -23,7 +23,11 @@ var mobileAirDataCache = {};
 // Stockage des polylines par session pour affichage conditionnel
 var sessionPolylines = {};
 // Mémorisation de la dernière période sélectionnée pour l'auto refresh
-var lastSelectedPeriod = null;
+export let lastSelectedPeriod = null;
+
+export function setLastSelectedPeriod(value) {
+    lastSelectedPeriod = value;
+}
 
 /**
  * Popup draggable pour la sélection dynamique des dates

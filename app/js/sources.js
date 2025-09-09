@@ -15,7 +15,7 @@ import { loadModPM, loadModIcair, loadModVent } from './atmoSud_mod.js';
 import { loadSignalAir } from './SignalAir.js';
 import { loadSensorCommunity } from './sensorCommunity.js';
 import { loadPurpleAir } from './purpleAir.js';
-import { loadMobileAir } from './MobileAir.js';
+import { loadMobileAir, setLastSelectedPeriod } from './MobileAir.js';
 
 /**
  * Charge une source de données spécifique
@@ -317,6 +317,11 @@ function handleSourceClick(source, button) {
         }
     } else {
         addItemToLocalStorageArray('sources_local', sourceCode);
+        if (sourceCode ==='mobileair') {
+            console.log('Réinitialisation de la période pour MobileAir');
+            console.log(window.lastSelectedPeriod);
+            setLastSelectedPeriod(null);
+        }
         loadSource(sourceCode);
         button.classList.add('active');
     }
