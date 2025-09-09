@@ -113,6 +113,7 @@ export function openSidePanelNebuleAir(data, pasDeTemps, historique, mesures) {
     if (pasDeTemps === 'd') {
         state.historiqueChart = '7d';
     }
+    document.getElementById('togglePollutants').style.display = 'block';
     document.getElementById('btn_historique').style.display = 'block';
     document.getElementById('btn_pasDeTemps').style.display = 'block';
     document.getElementById('dateRangePicker').style.display = 'block';

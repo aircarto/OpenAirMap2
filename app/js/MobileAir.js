@@ -494,7 +494,9 @@ function openSidePanel_mobileAir(data, mesure) {
         Il est équipé d'une puce GPS qui permet la géolocalisation des données.`;
     card2Link.innerHTML = 'AirCarto.fr';
 
-    // Masquer le sélecteur de période
+    // Masquer le sélecteur de période et polluants
+    document.getElementById('togglePollutants').style.display = 'none';
+
     document.getElementById('btn_historique').style.display = 'none';
     document.getElementById('btn_pasDeTemps').style.display = 'none';
     document.getElementById('dateRangePicker').style.display = 'none';

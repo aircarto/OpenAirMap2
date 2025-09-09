@@ -556,6 +556,7 @@ export function openSidePanelStationRef(deviceId, station_name, mesure) {
     } else if (state.pasDeTemps[0] === 'instantane') {
         state.pasDeTempsAtmo = 'quart-horaire';
     }
+    document.getElementById('togglePollutants').style.display = 'block';
     document.getElementById('btn_historique').style.display = 'block';
     document.getElementById('btn_pasDeTemps').style.display = 'block';
     document.getElementById('dateRangePicker').style.display = 'block';
