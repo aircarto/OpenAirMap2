@@ -113,15 +113,9 @@ export function openSidePanelNebuleAir(data, pasDeTemps, historique, mesures) {
     if (pasDeTemps === 'd') {
         state.historiqueChart = '7d';
     }
-    document.getElementById('togglePollutants').disabled = false;
-    document.getElementById('btn_historique_3h').disabled = false;
-    document.getElementById('btn_historique_24h').disabled = false;
-    document.getElementById('btn_historique_7d').disabled = false;
-    document.getElementById('btn_historique_365d').disabled = false;
-    document.getElementById('btn_pasDeTemps_scan').disabled = false;
-    document.getElementById('btn_pasDeTemps_qh').disabled = false;
-    document.getElementById('btn_pasDeTemps_h').disabled = false;
-    document.getElementById('btn_pasDeTemps_d').disabled = false;
+    document.getElementById('btn_historique').style.display = 'block';
+    document.getElementById('btn_pasDeTemps').style.display = 'block';
+    document.getElementById('dateRangePicker').style.display = 'block';
 
     // Stockage des données du capteur sélectionné
     window.lastSelectedDeviceData = data;

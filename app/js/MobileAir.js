@@ -12,6 +12,7 @@ import {
     openSidePanelGeneric,
     closeSidePanel,
 } from './sidePanel.js';
+import { stopSpinner, startSpinner } from './spinnerManager.js';
 
 var selected_point_timespan = null;
 var old_selected_point_timespan = null;
@@ -207,7 +208,7 @@ function showDatePickerPopupMobileAir() {
                 endDate: end,
             };
 
-            popup.remove();
+            // popup.remove();
             mobileair_layer.clearLayers();
             loadMobileAir(start, end);
         });
@@ -291,6 +292,7 @@ export function loadMobileAir(startDate, endDate) {
 
     const fullUrl_mobileair_list = `https://api.aircarto.fr/capteurs/metadata?capteurType=MobileAir&format=JSON`;
 
+    startSpinner(`Chargement des données MobileAir ...`);
     $.ajax({
         method: 'GET',
         url: fullUrl_mobileair_list,
@@ -341,6 +343,7 @@ function getDataMobileAir(
         method: 'GET',
         url: fullUrl_mobileair,
         success: function (data) {
+            stopSpinner();
             if (!data || data.length === 0) {
                 // console.warn('No data received for sensor ' + sensorToken);
                 return;
@@ -491,15 +494,10 @@ function openSidePanel_mobileAir(data, mesure) {
         Il est équipé d'une puce GPS qui permet la géolocalisation des données.`;
     card2Link.innerHTML = 'AirCarto.fr';
 
-    document.getElementById('togglePollutants').disabled = true;
-    document.getElementById('btn_historique_3h').disabled = true;
-    document.getElementById('btn_historique_24h').disabled = true;
-    document.getElementById('btn_historique_7d').disabled = true;
-    document.getElementById('btn_historique_365d').disabled = true;
-    document.getElementById('btn_pasDeTemps_scan').disabled = true;
-    document.getElementById('btn_pasDeTemps_qh').disabled = true;
-    document.getElementById('btn_pasDeTemps_h').disabled = true;
-    document.getElementById('btn_pasDeTemps_d').disabled = true;
+    // Masquer le sélecteur de période
+    document.getElementById('btn_historique').style.display = 'none';
+    document.getElementById('btn_pasDeTemps').style.display = 'none';
+    document.getElementById('dateRangePicker').style.display = 'none';
 
     // Données historiques
     retreive_historiqueData_mobileAir(
