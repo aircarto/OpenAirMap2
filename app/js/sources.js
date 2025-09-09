@@ -167,10 +167,10 @@ export function updateButtonDisplay() {
         if (!activeSources.includes(sourceCode)) {
             return;
         }
-
+        console.log(selectedMeasure);
         if (
             sourceCode === 'nebuleair' &&
-            !['pm1', 'pm25', 'pm10'].includes(selectedMeasure)
+            !['pm1', 'pm25', 'pm10', 'bruit', 'TEMP', 'HUM'].includes(selectedMeasure)
         ) {
             removeItemFromLocalStorageArray('sources_local', sourceCode);
             createCustomToast({
@@ -286,7 +286,7 @@ function handleSourceClick(source, button) {
     // Vérification spéciale pour NebuleAir
     if (
         sourceCode === 'nebuleair' &&
-        !['pm1', 'pm25', 'pm10'].includes(selectedMeasure)
+        !['pm1', 'pm25', 'pm10', 'bruit', 'TEMP', 'HUM'].includes(selectedMeasure)
     ) {
         createCustomToast({
             message: `La mesure ${formatPollutantName(selectedMeasure)} n'est pas disponible pour les capteurs NebuleAir opérés par AirCarto, <strong>désactivation de la source</strong>.`,

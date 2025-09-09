@@ -19,6 +19,10 @@ export const mesures = {
     no2: { name: 'NO2', code: 'no2', activated: false }, // Dioxyde d'azote
     so2: { name: 'SO2', code: 'so2', activated: false }, // Dioxyde de soufre
     o3: { name: 'O3', code: 'o3', activated: false }, // Ozone
+    bruit: { name: 'Bruit', code: 'bruit', activated: false }, // Niveau de bruit
+    temperature: { name: 'Température', code: 'TEMP', activated: false }, // Température
+    humidity: { name: 'Humidité', code: 'HUM', activated: false }, // Humidité
+    // co: { name: 'CO', code: 'co', activated: false }, // Monoxyde de carbone
     // h2s: { name: 'H2S', code: 'h2s', activated: false }, // Sulfure d'hydrogène
     // nh3: { name: 'NH3', code: 'nh3', activated: false }, // Ammoniac
     // c6h6: { name: 'C6H6', code: 'c6h6', activated: false }, // Benzène

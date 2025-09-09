@@ -61,7 +61,7 @@ export function loadNebuleAir() {
     const mesures = getArrayFromLocalStorage('mesuresLocal');
 
     // Vérification si le polluant est supporté
-    if (!['pm1', 'pm25', 'pm10'].includes(mesures[0])) {
+    if (!['pm1', 'pm25', 'pm10', 'bruit', 'TEMP', 'HUM'].includes(mesures[0])) {
         return;
     }
 
@@ -86,6 +86,7 @@ export function loadNebuleAir() {
             return response.json();
         })
         .then((data) => {
+            // console.log('Données NebuleAir chargées:', data);
             const displayed = data.filter((e) => e.displayMap == true);
             displayed.forEach((value) => {
                 const { nebuleAirMarker, textMarker } = createNebuleAirMarker(

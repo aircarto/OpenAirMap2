@@ -20,13 +20,14 @@ import { createThresholdLegend } from './mapConfig.js';
  * @param {string} measure - Le code de la mesure sélectionnée
  */
 export function handleMeasureChange(measure) {
+    console.log(`Changement de mesure: ${measure}`);
     // Vérification des sources incompatibles
     const activeSources = getArrayFromLocalStorage('sources_local');
 
     // Vérification pour NebuleAir
     if (
         activeSources.includes('nebuleair') &&
-        !['pm1', 'pm25', 'pm10'].includes(measure)
+        !['pm1', 'pm25', 'pm10', 'bruit', 'TEMP', 'HUM'].includes(measure)
     ) {
         removeItemFromLocalStorageArray('sources_local', 'nebuleair');
         clearLayer('nebuleair');
