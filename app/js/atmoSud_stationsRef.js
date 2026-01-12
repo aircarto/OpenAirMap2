@@ -109,9 +109,6 @@ function createChart(root, stationName) {
                 maxColumns: 1,
                 fixedWidthGrid: true,
             }),
-            colors: {
-                colors: [],
-            },
             height: am5.percent(100),
             paddingRight: 15,
         })

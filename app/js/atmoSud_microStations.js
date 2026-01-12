@@ -532,9 +532,6 @@ const createChart = (root, sensorName) => {
                 maxColumns: 1,
                 fixedWidthGrid: true,
             }),
-            colors: {
-                colors: [],
-            },
             height: am5.percent(100),
         })
     );

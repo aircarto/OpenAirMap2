@@ -86,7 +86,7 @@ export function loadNebuleAir() {
             return response.json();
         })
         .then((data) => {
-            // console.log('Données NebuleAir chargées:', data);
+            console.log('Données NebuleAir chargées:', data);
             const displayed = data.filter((e) => e.displayMap == true);
             displayed.forEach((value) => {
                 const { nebuleAirMarker, textMarker } = createNebuleAirMarker(
@@ -282,9 +282,6 @@ function createChart(root, sensorName) {
                 maxColumns: 1,
                 fixedWidthGrid: true,
             }),
-            colors: {
-                colors: [],
-            },
             height: am5.percent(100),
             paddingRight: 15,
         })
